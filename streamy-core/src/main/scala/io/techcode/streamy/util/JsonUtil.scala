@@ -42,6 +42,7 @@ object JsonUtil {
       case x: JsObject => 1 + x.keys.map(_.length + 2).sum + x.values.map(size).sum + (x.value.size * 2) // {"element": $el}
       case x: JsString => x.value.length + 2 // "element"
       case x: JsArray => x.value.map(size).sum + 1 + x.value.size // ["element", 1, 1.0]
+      case x: JsNumber => x.value.toString().length // 2.0
       case JsTrue => 4
       case JsFalse => 5
       case JsNull => 4
