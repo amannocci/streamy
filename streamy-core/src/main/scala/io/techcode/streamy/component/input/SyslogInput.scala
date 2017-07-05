@@ -62,38 +62,26 @@ class SyslogInput(spec: Map[String, String]) extends Input[JsObject] {
 
     // Read PRIVAL
     expect(buf, '<')
-    if (facility.isDefined) {
-      mapping.put(facility.get, buf.readBytes(FindSup).utf8String)
-    } else buf.skipBytes(FindSup)
+    capture(buf, facility, FindSup, mapping)
 
     // Read version
     expect(buf, '1')
     expect(buf, ' ')
 
     // Read timestamp
-    if (timestamp.isDefined) {
-      mapping.put(timestamp.get, buf.readBytes(FindSpace).utf8String)
-    } else buf.skipBytes(FindSpace)
+    capture(buf, timestamp, FindSpace, mapping)
 
     // Read hostname
-    if (hostname.isDefined) {
-      mapping.put(hostname.get, buf.readBytes(FindSpace).utf8String)
-    } else buf.skipBytes(FindSpace)
+    capture(buf, hostname, FindSpace, mapping)
 
     // Read app name
-    if (app.isDefined) {
-      mapping.put(app.get, buf.readBytes(FindSpace).utf8String)
-    } else buf.skipBytes(FindSpace)
+    capture(buf, app, FindSpace, mapping)
 
     // Read proc id
-    if (proc.isDefined) {
-      mapping.put(proc.get, buf.readBytes(FindSpace).utf8String)
-    } else buf.skipBytes(FindSpace)
+    capture(buf, proc, FindSpace, mapping)
 
     // Read message id
-    if (msgId.isDefined) {
-      mapping.put(msgId.get, buf.readBytes(FindSpace).utf8String)
-    } else buf.skipBytes(FindSpace)
+    capture(buf, proc, FindSpace, mapping)
 
     // Read message
     if (message.isDefined) {
@@ -102,6 +90,14 @@ class SyslogInput(spec: Map[String, String]) extends Input[JsObject] {
 
     // Split header and message
     JsObject(mapping.mapValues(JsString))
+  }
+
+  private def capture(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor, mapping: mutable.Map[String, String]): Unit = {
+    if (ref.isDefined) {
+      mapping.put(ref.get, buf.readBytes(processor).utf8String)
+    } else {
+      buf.skipBytes(processor)
+    }
   }
 
   private def expect(buf: ByteBuf, ch: Char): Unit = {

@@ -31,7 +31,7 @@ import play.api.libs.json.JsObject
 /**
   * Syslog RFC3164 output implementation.
   */
-private [output] class SyslogRFC3164Output(spec: Map[String, String]) extends Output[JsObject] {
+private[output] class SyslogRFC3164Output(spec: Map[String, String]) extends Output[JsObject] {
 
   // Default hostname
   private val hostName = InetAddress.getLocalHost.getHostName
@@ -85,7 +85,7 @@ private [output] class SyslogRFC3164Output(spec: Map[String, String]) extends Ou
 /**
   * Syslog RFC5424 output implementation.
   */
-private [output] class SyslogRFC5424Output(spec: Map[String, String]) extends Output[JsObject] {
+private[output] class SyslogRFC5424Output(spec: Map[String, String]) extends Output[JsObject] {
 
   // Set all pref
   val facility: Option[String] = spec.get(SyslogOutput.FacilityId).orElse(Option(SyslogOutput.FacilityId))
@@ -176,7 +176,7 @@ object SyslogOutput {
     * @param spec enable features.
     * @return syslog output RCF5424 compilant.
     */
-  def createRFC5424(spec: Map[String, String]) = new SyslogRFC5424Output(spec)
+  def createRFC5424(spec: Map[String, String]): Output[JsObject] = new SyslogRFC5424Output(spec)
 
   /**
     * Create a syslog output RCF3126 compilant.
@@ -184,6 +184,6 @@ object SyslogOutput {
     * @param spec enable features.
     * @return syslog output RCF3126 compilant.
     */
-  def createRFC3164(spec: Map[String, String]) = new SyslogRFC3164Output(spec)
+  def createRFC3164(spec: Map[String, String]): Output[JsObject] = new SyslogRFC3164Output(spec)
 
 }

@@ -58,7 +58,7 @@ object Metrics {
     * @param conf        reporter configuration.
     * @return a new json reporter.
     */
-  def reporter(actorSystem: ActorSystem, log: Logger, conf: Config) = new JsonReporter(actorSystem, Registry, log, conf)
+  def reporter(actorSystem: ActorSystem, log: Logger, conf: Config): Reporter = new JsonReporter(actorSystem, Registry, log, conf)
 
   class JsonReporter(system: ActorSystem, registry: MetricRegistry, log: Logger, conf: Config) extends Reporter {
 

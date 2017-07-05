@@ -31,6 +31,11 @@ import play.api.libs.json._
   */
 object JsonUtil {
 
+  // Various length
+  private val TrueLength: Int = 4
+  private val FalseLength: Int = 5
+  private val NullLength: Int = 4
+
   /**
     * Size of an element in Json.
     *
@@ -43,9 +48,9 @@ object JsonUtil {
       case x: JsString => x.value.length + 2 // "element"
       case x: JsArray => x.value.map(size).sum + 1 + x.value.size // ["element", 1, 1.0]
       case x: JsNumber => x.value.toString().length // 2.0
-      case JsTrue => 4
-      case JsFalse => 5
-      case JsNull => 4
+      case JsTrue => TrueLength
+      case JsFalse => FalseLength
+      case JsNull => NullLength
     }
   }
 
@@ -64,11 +69,17 @@ object JsonUtil {
     */
   def flatten(js: JsValue, prefix: String = ""): JsObject = js.as[JsObject].fields.foldLeft(Json.obj()) {
     case (acc, (k, v: JsObject)) =>
-      if (prefix.isEmpty) acc.deepMerge(flatten(v, k))
-      else acc.deepMerge(flatten(v, s"$prefix.$k"))
+      if (prefix.isEmpty) {
+        acc.deepMerge(flatten(v, k))
+      } else {
+        acc.deepMerge(flatten(v, s"$prefix.$k"))
+      }
     case (acc, (k, v)) =>
-      if (prefix.isEmpty) acc + (k -> v)
-      else acc + (s"$prefix.$k" -> v)
+      if (prefix.isEmpty) {
+        acc + (k -> v)
+      } else {
+        acc + (s"$prefix.$k" -> v)
+      }
   }
 
 }
