@@ -99,7 +99,7 @@ class ByteBuf(private var buf: ByteString) {
     * @throws IndexOutOfBoundsException if readableBytes is less than 1.
     */
   def readByte: Byte = {
-    _getByte(increment = true)
+    readOrGetByte(updateIndex = true)
   }
 
   /**
@@ -108,7 +108,7 @@ class ByteBuf(private var buf: ByteString) {
     * @throws IndexOutOfBoundsException if readableBytes is less than 1.
     */
   def getByte: Byte = {
-    _getByte(increment = false)
+    readOrGetByte(updateIndex = false)
   }
 
   /**
@@ -117,7 +117,7 @@ class ByteBuf(private var buf: ByteString) {
     * @throws IndexOutOfBoundsException if readableBytes is less than 4.
     */
   def readInt(): Int = {
-    _getInt(increment = true)
+    readOrGetInt(updateIndex = true)
   }
 
   /**
@@ -126,10 +126,10 @@ class ByteBuf(private var buf: ByteString) {
     * @throws IndexOutOfBoundsException if readableBytes is less than 4.
     */
   def getInt: Int = {
-    _getInt(increment = false)
+    readOrGetInt(updateIndex = false)
   }
 
-  @inline private def _getInt(increment: Boolean): Int = {
+  @inline private def readOrGetInt(updateIndex: Boolean): Int = {
     if (_readerIndex + 4 >= buf.length) {
       throw new IndexOutOfBoundsException()
     } else {
@@ -139,19 +139,19 @@ class ByteBuf(private var buf: ByteString) {
         buf(_readerIndex + 2),
         buf(_readerIndex + 3)
       )).getInt()
-      if (increment) {
+      if (updateIndex) {
         _readerIndex += 4
       }
       value
     }
   }
 
-  @inline private def _getByte(increment: Boolean): Byte = {
+  @inline private def readOrGetByte(updateIndex: Boolean): Byte = {
     if (_readerIndex + 1 >= buf.length) {
       throw new IndexOutOfBoundsException()
     } else {
       val value = buf(_readerIndex)
-      if (increment) {
+      if (updateIndex) {
         _readerIndex += 1
       }
       value
