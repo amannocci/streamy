@@ -31,27 +31,21 @@ import play.api.libs.json.{JsObject, JsString}
 
 import scala.collection.mutable
 
-/**
-  * Syslog input implementation.
-  */
-class SyslogInput(spec: Map[String, String]) extends Input[JsObject] {
 
-  // ByteBuf processor
-  val FindInf = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != '<'
-  }
-  val FindSup = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != '>'
-  }
+/**
+  * Syslog RFC5424 input implementation.
+  */
+private[input] class SyslogRFC5424Input(spec: Map[String, String]) extends Input[JsObject] {
 
   // Set all pref
-  val facility: Option[String] = spec.get(SyslogInput.FacilityId)
-  val timestamp: Option[String] = spec.get(SyslogInput.TimestampId)
-  val hostname: Option[String] = spec.get(SyslogInput.HostnameId)
-  val app: Option[String] = spec.get(SyslogInput.AppId)
-  val proc: Option[String] = spec.get(SyslogInput.ProcId)
-  val msgId: Option[String] = spec.get(SyslogInput.MsgId)
-  val message: Option[String] = spec.get(SyslogInput.MessageId)
+  val facility: Option[String] = spec.get(SyslogInput.Id.Facility)
+  val timestamp: Option[String] = spec.get(SyslogInput.Id.Timestamp)
+  val hostname: Option[String] = spec.get(SyslogInput.Id.Hostname)
+  val app: Option[String] = spec.get(SyslogInput.Id.App)
+  val proc: Option[String] = spec.get(SyslogInput.Id.Proc)
+  val msgId: Option[String] = spec.get(SyslogInput.Id.Msg)
+  val structDataId: Option[String] = spec.get(SyslogInput.Id.StructData)
+  val message: Option[String] = spec.get(SyslogInput.Id.Message)
 
   override def apply(pkt: ByteString): JsObject = {
     // Grab new buffer
@@ -62,7 +56,7 @@ class SyslogInput(spec: Map[String, String]) extends Input[JsObject] {
 
     // Read PRIVAL
     expect(buf, '<')
-    capture(buf, facility, FindSup, mapping)
+    capture(buf, facility, FindCloseQuote, mapping)
 
     // Read version
     expect(buf, '1')
@@ -81,7 +75,10 @@ class SyslogInput(spec: Map[String, String]) extends Input[JsObject] {
     capture(buf, proc, FindSpace, mapping)
 
     // Read message id
-    capture(buf, proc, FindSpace, mapping)
+    capture(buf, msgId, FindSpace, mapping)
+
+    // Read structured data
+    captureStructData(buf, structDataId, mapping)
 
     // Read message
     if (message.isDefined) {
@@ -93,10 +90,22 @@ class SyslogInput(spec: Map[String, String]) extends Input[JsObject] {
   }
 
   private def capture(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor, mapping: mutable.Map[String, String]): Unit = {
-    if (ref.isDefined) {
+    if (ref.isDefined && buf.getByte != '-') {
       mapping.put(ref.get, buf.readBytes(processor).utf8String)
     } else {
       buf.skipBytes(processor)
+    }
+  }
+
+  private def captureStructData(buf: ByteBuf, ref: Option[String], mapping: mutable.Map[String, String]): Unit = {
+    if (ref.isDefined && buf.getByte != '-') {
+      buf.skipBytes(FindOpenBracket)
+      mapping.put(ref.get, buf.readBytes(FindCloseBracket).utf8String)
+    } else {
+      if (buf.getByte != '-') {
+        buf.skipBytes(FindCloseBracket)
+      }
+      buf.skipBytes(FindSpace)
     }
   }
 
@@ -108,12 +117,28 @@ class SyslogInput(spec: Map[String, String]) extends Input[JsObject] {
 
 }
 
+/**
+  * Syslog input companion.
+  */
 object SyslogInput {
-  val FacilityId = "facility"
-  val TimestampId = "timestamp"
-  val HostnameId = "hostname"
-  val AppId = "app"
-  val ProcId = "proc"
-  val MsgId = "msgId"
-  val MessageId = "message"
+
+  object Id {
+    val Facility = "facility"
+    val Timestamp = "timestamp"
+    val Hostname = "hostname"
+    val App = "app"
+    val Proc = "proc"
+    val Msg = "msgId"
+    val StructData = "structDataId"
+    val Message = "message"
+  }
+
+  /**
+    * Create a syslog input RCF5424 compilant.
+    *
+    * @param spec enable features.
+    * @return syslog input RCF5424 compilant.
+    */
+  def createRFC5424(spec: Map[String, String]): Input[JsObject] = new SyslogRFC5424Input(spec)
+
 }

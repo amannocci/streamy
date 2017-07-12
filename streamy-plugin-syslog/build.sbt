@@ -1,0 +1,1 @@
+name := name.value + "-plugin-syslog"

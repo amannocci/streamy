@@ -37,12 +37,12 @@ private[output] class SyslogRFC3164Output(spec: Map[String, String]) extends Out
   private val hostName = InetAddress.getLocalHost.getHostName
 
   // Set all pref
-  val facility: Option[String] = spec.get(SyslogOutput.FacilityId).orElse(Option(SyslogOutput.FacilityId))
-  val timestamp: Option[String] = spec.get(SyslogOutput.TimestampId).orElse(Option(SyslogOutput.TimestampId))
-  val hostname: Option[String] = spec.get(SyslogOutput.HostnameId).orElse(Option(SyslogOutput.HostnameId))
-  val app: Option[String] = spec.get(SyslogOutput.AppId).orElse(Option(SyslogOutput.AppId))
-  val proc: Option[String] = spec.get(SyslogOutput.ProcId).orElse(Option(SyslogOutput.ProcId))
-  val message: Option[String] = spec.get(SyslogOutput.MessageId).orElse(Option(SyslogOutput.MessageId))
+  val facility: Option[String] = spec.get(SyslogOutput.Id.Facility).orElse(Option(SyslogOutput.Id.Facility))
+  val timestamp: Option[String] = spec.get(SyslogOutput.Id.Timestamp).orElse(Option(SyslogOutput.Id.Timestamp))
+  val hostname: Option[String] = spec.get(SyslogOutput.Id.Hostname).orElse(Option(SyslogOutput.Id.Hostname))
+  val app: Option[String] = spec.get(SyslogOutput.Id.App).orElse(Option(SyslogOutput.Id.App))
+  val proc: Option[String] = spec.get(SyslogOutput.Id.Proc).orElse(Option(SyslogOutput.Id.Proc))
+  val message: Option[String] = spec.get(SyslogOutput.Id.Message).orElse(Option(SyslogOutput.Id.Message))
 
   override def apply(pkt: JsObject): ByteString = {
     val buf = ByteString.createBuilder
@@ -88,13 +88,13 @@ private[output] class SyslogRFC3164Output(spec: Map[String, String]) extends Out
 private[output] class SyslogRFC5424Output(spec: Map[String, String]) extends Output[JsObject] {
 
   // Set all pref
-  val facility: Option[String] = spec.get(SyslogOutput.FacilityId).orElse(Option(SyslogOutput.FacilityId))
-  val timestamp: Option[String] = spec.get(SyslogOutput.TimestampId).orElse(Option(SyslogOutput.TimestampId))
-  val hostname: Option[String] = spec.get(SyslogOutput.HostnameId).orElse(Option(SyslogOutput.HostnameId))
-  val app: Option[String] = spec.get(SyslogOutput.AppId).orElse(Option(SyslogOutput.AppId))
-  val proc: Option[String] = spec.get(SyslogOutput.ProcId).orElse(Option(SyslogOutput.ProcId))
-  val msgId: Option[String] = spec.get(SyslogOutput.MsgId).orElse(Option(SyslogOutput.MsgId))
-  val message: Option[String] = spec.get(SyslogOutput.MessageId).orElse(Option(SyslogOutput.MessageId))
+  val facility: Option[String] = spec.get(SyslogOutput.Id.Facility).orElse(Option(SyslogOutput.Id.Facility))
+  val timestamp: Option[String] = spec.get(SyslogOutput.Id.Timestamp).orElse(Option(SyslogOutput.Id.Timestamp))
+  val hostname: Option[String] = spec.get(SyslogOutput.Id.Hostname).orElse(Option(SyslogOutput.Id.Hostname))
+  val app: Option[String] = spec.get(SyslogOutput.Id.App).orElse(Option(SyslogOutput.Id.App))
+  val proc: Option[String] = spec.get(SyslogOutput.Id.Proc).orElse(Option(SyslogOutput.Id.Proc))
+  val msgId: Option[String] = spec.get(SyslogOutput.Id.Msg).orElse(Option(SyslogOutput.Id.Msg))
+  val message: Option[String] = spec.get(SyslogOutput.Id.Message).orElse(Option(SyslogOutput.Id.Message))
 
   override def apply(pkt: JsObject): ByteString = {
     val buf = ByteString.createBuilder
@@ -146,6 +146,17 @@ private[output] class SyslogRFC5424Output(spec: Map[String, String]) extends Out
   * Some constants
   */
 object SyslogOutput {
+
+  object Id {
+    val Facility = "facility"
+    val Timestamp = "timestamp"
+    val Hostname = "hostname"
+    val App = "app"
+    val Proc = "proc"
+    val Msg = "msgId"
+    val Message = "message"
+  }
+
   val Nil: String = "-"
   val NilByte: Byte = '-'.toByte
   val Space: Byte = ' '
@@ -161,14 +172,6 @@ object SyslogOutput {
   val OpenBracket: Byte = '['
   val CloseBracket: Byte = ']'
   val Version: String = "1 "
-
-  val FacilityId = "facility"
-  val TimestampId = "timestamp"
-  val HostnameId = "hostname"
-  val AppId = "app"
-  val ProcId = "proc"
-  val MsgId = "msgId"
-  val MessageId = "message"
 
   /**
     * Create a syslog output RCF5424 compilant.

@@ -92,4 +92,32 @@ object ByteBufProcessor {
     override def process(value: Byte): Boolean = value != ' '
   }
 
+  /**
+    * Aborts on an open bracket ('[').
+    */
+  val FindOpenBracket = new ByteBufProcessor {
+    override def process(value: Byte): Boolean = value != '['
+  }
+
+  /**
+    * Aborts on a close bracket (']').
+    */
+  val FindCloseBracket = new ByteBufProcessor {
+    override def process(value: Byte): Boolean = value != ']'
+  }
+
+  /**
+    * Aborts on an open quote ('<').
+    */
+  val FindOpenQuote = new ByteBufProcessor {
+    override def process(value: Byte): Boolean = value != '<'
+  }
+
+  /**
+    * Aborts on a close quote ('>').
+    */
+  val FindCloseQuote = new ByteBufProcessor {
+    override def process(value: Byte): Boolean = value != '>'
+  }
+
 }

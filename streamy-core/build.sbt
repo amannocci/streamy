@@ -1,4 +1,4 @@
-name := name + "-core"
+name := name.value + "-core"
 
 maintainer := "Adrien Mannocci <adrien.mannocci@gmail.com>"
 
@@ -9,7 +9,6 @@ packageDescription := "Streamy"
 lazy val akkaVersion = "2.5.3"
 lazy val playVersion = "2.6.0"
 lazy val logbackVersion = "1.2.3"
-lazy val scalaTest = "3.0.1"
 lazy val logbackContribVersion = "0.2.1"
 lazy val riemannVersion = "0.4.5"
 lazy val commonsLangVersion = "3.5"
@@ -33,8 +32,7 @@ libraryDependencies ++= Seq(
   "io.riemann" % "riemann-java-client" % riemannVersion,
   "io.techcode.logback.contrib" % "logback-json-layout" % logbackContribVersion,
   "nl.grons" %% "metrics-scala" % metricsScalaVersion,
-  "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion,
-  "org.scalatest" %% "scalatest" % scalaTest % "test"
+  "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion
 )
 
 enablePlugins(JavaAppPackaging)
