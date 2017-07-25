@@ -42,7 +42,7 @@ private[output] class SyslogRFC3164Output(spec: Map[String, String]) extends Out
   val hostname: Option[String] = spec.get(SyslogOutput.Id.Hostname).orElse(Option(SyslogOutput.Id.Hostname))
   val app: Option[String] = spec.get(SyslogOutput.Id.App).orElse(Option(SyslogOutput.Id.App))
   val proc: Option[String] = spec.get(SyslogOutput.Id.Proc).orElse(Option(SyslogOutput.Id.Proc))
-  val message: Option[String] = spec.get(SyslogOutput.Id.Message).orElse(Option(SyslogOutput.Id.Message))
+  val message: Option[String] = spec.get(SyslogOutput.Id.Message)
 
   override def apply(pkt: JsObject): ByteString = {
     val buf = ByteString.createBuilder
@@ -94,7 +94,7 @@ private[output] class SyslogRFC5424Output(spec: Map[String, String]) extends Out
   val app: Option[String] = spec.get(SyslogOutput.Id.App).orElse(Option(SyslogOutput.Id.App))
   val proc: Option[String] = spec.get(SyslogOutput.Id.Proc).orElse(Option(SyslogOutput.Id.Proc))
   val msgId: Option[String] = spec.get(SyslogOutput.Id.Msg).orElse(Option(SyslogOutput.Id.Msg))
-  val message: Option[String] = spec.get(SyslogOutput.Id.Message).orElse(Option(SyslogOutput.Id.Message))
+  val message: Option[String] = spec.get(SyslogOutput.Id.Message)
 
   override def apply(pkt: JsObject): ByteString = {
     val buf = ByteString.createBuilder

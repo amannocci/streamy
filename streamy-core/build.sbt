@@ -6,6 +6,7 @@ packageSummary := "Streamy"
 
 packageDescription := "Streamy"
 
+// Dependencies version
 lazy val akkaVersion = "2.5.3"
 lazy val playVersion = "2.6.0"
 lazy val logbackVersion = "1.2.3"
@@ -15,11 +16,12 @@ lazy val commonsLangVersion = "3.5"
 lazy val metricsScalaVersion = "3.5.8_a2.4"
 lazy val metricsJvmVersion = "3.2.2"
 
+// Custom resolvers
 resolvers ++= Seq(
-  "Techcode" at "https://nexus.techcode.io/repository/maven-public",
-  "Clojars" at "http://clojars.org/repo"
+  "Techcode" at "https://nexus.techcode.io/repository/maven-public"
 )
 
+// All libraries
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
@@ -35,4 +37,10 @@ libraryDependencies ++= Seq(
   "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion
 )
 
-enablePlugins(JavaAppPackaging)
+// Jmh settings
+sourceDirectory in Jmh := new File((sourceDirectory in Test).value.getParentFile, "bench")
+classDirectory in Jmh := (classDirectory in Test).value
+dependencyClasspath in Jmh := (dependencyClasspath in Test).value
+
+// Enable some plugins
+enablePlugins(JavaAppPackaging, JmhPlugin)
