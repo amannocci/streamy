@@ -1,0 +1,26 @@
+# Language spec
+language: scala
+sudo: false
+
+# Supported jdk
+jdk:
+  - openjdk8
+  - oraclejdk8
+
+# Run
+script:
+  - ./sbt ";test:compile;scalastyle"
+
+# Caching
+before_cache:
+  - 'find $HOME/.ivy2 -name "ivydata-*.properties" -print -delete'
+  - 'find $HOME/.sbt  -name "*.lock"               -print -delete'
+cache:
+  directories:
+    - '$HOME/.m2'
+    - '$HOME/.ivy2/cache'
+    - '$HOME/.sbt/boot'
+
+# Notify
+notifications:
+  email: false
