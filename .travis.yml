@@ -9,7 +9,7 @@ jdk:
 
 # Run
 script:
-  - chmod +x sbt sbt-dist/* scripts/*
+  - chmod -R +x sbt sbt-dist/* scripts/*
   - ./sbt ";test:compile;scalastyle"
 
 # Caching
