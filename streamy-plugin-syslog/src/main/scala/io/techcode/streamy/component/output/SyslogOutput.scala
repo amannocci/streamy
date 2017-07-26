@@ -26,6 +26,7 @@ package io.techcode.streamy.component.output
 import java.net.InetAddress
 
 import akka.util.ByteString
+import io.techcode.streamy.component.Output
 import play.api.libs.json.JsObject
 
 /**

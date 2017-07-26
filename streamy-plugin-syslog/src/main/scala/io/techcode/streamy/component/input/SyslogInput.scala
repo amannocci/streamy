@@ -27,6 +27,7 @@ import akka.stream.scaladsl.Framing.FramingException
 import akka.util.ByteString
 import io.techcode.streamy.buffer.ByteBufProcessor._
 import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
+import io.techcode.streamy.component.Input
 import play.api.libs.json.{JsObject, JsString}
 
 import scala.collection.mutable

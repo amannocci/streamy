@@ -16,5 +16,9 @@ lazy val pluginSyslog = (project in file("streamy-plugin-syslog"))
   .settings(commonSettings)
   .dependsOn(core)
 
+lazy val pluginJson = (project in file("streamy-plugin-json"))
+  .settings(commonSettings)
+  .dependsOn(core)
+
 lazy val root = (project in file("."))
-  .aggregate(core, pluginSyslog)
+  .aggregate(core, pluginSyslog, pluginJson)

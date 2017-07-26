@@ -23,7 +23,40 @@
  */
 package io.techcode.streamy.component.transform
 
+import io.techcode.streamy.component.Transform
+import play.api.libs.json._
+
+import scala.util.{Failure, Success, Try}
+
 /**
-  * Trait to mark a transform.
+  * Json transform implementation.
   */
-trait Transform[In, Out] extends ((In) => Out)
+class JsonTransform(field: JsPath, wrapped: Boolean = true) extends Transform[JsObject, JsObject] {
+
+  // Transformation function
+  val function: Reads[JsObject] = field.json.update(__.read[String].map(msg => {
+    if (msg.startsWith("{") && msg.endsWith("}")) {
+      Try(Json.parse(msg)) match {
+        case Success(succ) =>
+          succ
+        case Failure(_) =>
+          if (wrapped) {
+            Json.obj("message" -> msg)
+          } else {
+            JsString(msg)
+          }
+      }
+    } else {
+      if (wrapped) {
+        Json.obj("message" -> msg)
+      } else {
+        JsString(msg)
+      }
+    }
+  }))
+
+  override def apply(pkt: JsObject): JsObject = {
+    pkt.transform(function).get
+  }
+
+}

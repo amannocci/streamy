@@ -21,12 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.output
+package io.techcode.streamy.component
 
 import akka.util.ByteString
-import play.api.libs.json.JsObject
 
 /**
-  * Trait to mark an output.
+  * Trait to mark an input.
   */
-trait Output[In] extends ((In) => ByteString)
+trait Input[Out] extends ((ByteString) => Out)
