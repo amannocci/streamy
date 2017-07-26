@@ -6,4 +6,4 @@ classDirectory in Jmh := (classDirectory in Test).value
 dependencyClasspath in Jmh := (dependencyClasspath in Test).value
 
 // Enable some plugins
-enablePlugins(JavaAppPackaging, JmhPlugin)
+enablePlugins(JmhPlugin)
