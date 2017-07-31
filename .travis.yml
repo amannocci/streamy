@@ -2,6 +2,10 @@
 language: scala
 sudo: false
 
+# Scala version
+scala:
+  - "2.12.2"
+
 # Supported jdk
 jdk:
   - openjdk8
