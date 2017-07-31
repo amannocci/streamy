@@ -17,7 +17,7 @@ before_install: unset SBT_OPTS JVM_OPTS
 # Run
 script:
   - chmod -R +x sbt sbt-dist/* scripts/*
-  - ./sbt ";test:compile;scalastyle"
+  - ./sbt ";compile;test;scalastyle"
 
 # Caching
 before_cache:
