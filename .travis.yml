@@ -11,6 +11,9 @@ jdk:
   - openjdk8
   - oraclejdk8
 
+# Use local
+before_install: unset SBT_OPTS JVM_OPTS
+
 # Run
 script:
   - chmod -R +x sbt sbt-dist/* scripts/*
