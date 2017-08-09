@@ -9,16 +9,16 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion % "test")
 )
 
-lazy val core = (project in file("streamy-core"))
+lazy val core = (project in file("core"))
   .settings(commonSettings)
 
-lazy val pluginSyslog = (project in file("streamy-plugin-syslog"))
+lazy val `plugin-syslog` = (project in file("plugin-syslog"))
   .settings(commonSettings)
   .dependsOn(core)
 
-lazy val pluginJson = (project in file("streamy-plugin-json"))
+lazy val `plugin-json` = (project in file("plugin-json"))
   .settings(commonSettings)
   .dependsOn(core)
 
 lazy val root = (project in file("."))
-  .aggregate(core, pluginSyslog, pluginJson)
+  .aggregate(core, `plugin-syslog`, `plugin-json`)
