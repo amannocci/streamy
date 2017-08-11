@@ -24,6 +24,10 @@
 package io.techcode.streamy.component.transform
 
 import io.techcode.streamy.component.Transform
+import io.techcode.streamy.component.transform.JsonTransform.Behaviour.Behaviour
+import io.techcode.streamy.component.transform.JsonTransform.{Behaviour, Config}
+import io.techcode.streamy.stream.StreamException
+import play.api.libs.json.Reads._
 import play.api.libs.json._
 
 import scala.util.{Failure, Success, Try}
@@ -31,32 +35,96 @@ import scala.util.{Failure, Success, Try}
 /**
   * Json transform implementation.
   */
-class JsonTransform(field: JsPath, wrapped: Boolean = true) extends Transform[JsObject, JsObject] {
+class JsonTransform(config: Config) extends Transform[JsObject, JsObject] {
 
-  // Transformation function
-  val function: Reads[JsObject] = field.json.update(__.read[String].map(msg => {
-    if (msg.startsWith("{") && msg.endsWith("}")) {
-      Try(Json.parse(msg)) match {
-        case Success(succ) =>
-          succ
-        case Failure(_) =>
-          if (wrapped) {
-            Json.obj("message" -> msg)
-          } else {
-            JsString(msg)
-          }
-      }
+  // Attempt to convert a string into a json structure inplace
+  private lazy val sourceInplace: Reads[JsObject] = parseInplace(config.source)
+
+  // Attempt to convert a string into a json structrue from a source path to a target path
+  private lazy val sourceToTarget: Reads[JsObject] = parseInplace(config.source)
+    .andThen(config.target.get.json.copyFrom(config.source.json.pick))
+
+  // Choose right transform function
+  private val function: ((JsObject) => JsObject) = {
+    if (config.target.isEmpty || config.source == config.target.get) {
+      // Parse inplace
+      (pkt: JsObject) => pkt.transform(sourceInplace).get
     } else {
-      if (wrapped) {
-        Json.obj("message" -> msg)
-      } else {
-        JsString(msg)
+      // Parse inplace and then copy to target
+      (pkt: JsObject) => {
+        // Transform target and extract
+        val branch = pkt.transform(sourceToTarget).get
+
+        // Remove source if needed
+        {
+          if (config.removeSource) {
+            pkt.transform(config.source.json.prune).get
+          } else {
+            pkt
+          }
+        }.deepMerge(branch)
       }
     }
-  }))
-
-  override def apply(pkt: JsObject): JsObject = {
-    pkt.transform(function).get
   }
+
+  /**
+    * Parse a string field into a json structure.
+    *
+    * @param path path to string field.
+    * @return json structure.
+    */
+  private def parseInplace(path: JsPath): Reads[JsObject] = path.json.update(
+    __.read[String].map(msg =>
+      // Try to avoid parsing of wrong json
+      if (msg.startsWith("{") && msg.endsWith("}")) {
+        // Try to parse
+        Try(Json.parse(msg)) match {
+          case Success(succ) => succ
+          case Failure(_) => onError(msg)
+        }
+      } else {
+        onError(msg)
+      }
+    )
+  )
+
+  /**
+    * Handle parsing error by discarding or wrapping or skipping.
+    *
+    * @param msg value of field when error is raised.
+    * @return result json value.
+    */
+  private def onError(msg: String): JsValue = {
+    config.onError match {
+      case Behaviour.Discard =>
+        throw new StreamException("Source field can't be parse as Json")
+      case Behaviour.Skip =>
+        JsString(msg)
+    }
+  }
+
+  override def apply(pkt: JsObject): JsObject = function(pkt)
+
+}
+
+/**
+  * Json transform companion.
+  */
+object JsonTransform {
+
+  // Component configuration
+  case class Config(
+    source: JsPath,
+    target: Option[JsPath] = None,
+    removeSource: Boolean = false,
+    onError: Behaviour = Behaviour.Skip
+  )
+
+  // Behaviour on error
+  object Behaviour extends Enumeration {
+    type Behaviour = Value
+    val Discard, Skip = Value
+  }
+
 
 }
