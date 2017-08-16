@@ -14,6 +14,7 @@ lazy val logbackContribVersion = "0.3.0"
 lazy val commonsLangVersion = "3.6"
 lazy val metricsScalaVersion = "3.5.9"
 lazy val metricsJvmVersion = "3.2.3"
+lazy val guavaVersion = "23.0"
 
 // Custom resolvers
 resolvers ++= Seq(
@@ -31,6 +32,7 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-lang3" % commonsLangVersion,
   "ch.qos.logback" % "logback-classic" % logbackVersion,
   "io.techcode.logback.contrib" % "logback-json-layout" % logbackContribVersion,
+  "com.google.guava" % "guava" % guavaVersion,
   "nl.grons" %% "metrics-scala" % metricsScalaVersion,
   "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion
 )
