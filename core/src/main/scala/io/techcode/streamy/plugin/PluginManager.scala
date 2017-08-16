@@ -62,9 +62,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
   /**
     * Stop all plugins.
     */
-  def stop(): Unit = {
-    _plugins = Map.empty
-  }
+  def stop(): Unit = _plugins = Map.empty
 
   /**
     * Returns collections of plugins backed by actor ref.

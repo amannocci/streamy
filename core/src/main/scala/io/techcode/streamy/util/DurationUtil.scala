@@ -24,6 +24,7 @@
 package io.techcode.streamy.util
 
 import scala.concurrent.duration.FiniteDuration
+import scala.language.implicitConversions
 
 /**
   * Helper for duration conversion.

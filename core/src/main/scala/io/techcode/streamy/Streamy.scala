@@ -41,7 +41,7 @@ object Streamy extends App {
   val ApplicationName = "streamy"
 
   // Actor system
-  implicit val system = ActorSystem(ApplicationName)
+  implicit val system: ActorSystem = ActorSystem(ApplicationName)
 
   // Logger
   val log = Logger(ApplicationName)
@@ -55,7 +55,7 @@ object Streamy extends App {
     log.error("An error occured", ex)
     Supervision.Resume
   }
-  implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
   // Loading configuration
   log.info(Json.obj(
