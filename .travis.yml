@@ -17,7 +17,11 @@ before_install: unset SBT_OPTS JVM_OPTS
 # Run
 script:
   - chmod -R +x sbt sbt-dist/* scripts/*
-  - ./sbt ";compile;test;scalastyle"
+  - ./sbt ";compile;scalastyle;test;coverage;coverageReport"
+
+# Upload codecov
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 # Caching
 before_cache:
