@@ -13,5 +13,11 @@ It is fully free and fully open source. The license is MIT, meaning you are pret
 * [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 * [Sbt](http://www.scala-sbt.org/)
 
+## Clone
+The following steps will ensure your project is cloned properly.
+1. git clone https://github.com/amannocci/streamy
+2. cd streamy
+3. ./scripts/install-hooks.sh
+
 ## Features
 * Coming soon
