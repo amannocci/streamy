@@ -17,7 +17,7 @@ before_install: unset SBT_OPTS JVM_OPTS
 # Run
 script:
   - chmod -R +x sbt sbt-dist/* scripts/*
-  - ./sbt ";compile;scalastyle;test;coverage;coverageReport"
+  - ./sbt ";compile;scalastyle;coverage;test;coverageReport;coverageAggregate"
 
 # Upload codecov
 after_success:
