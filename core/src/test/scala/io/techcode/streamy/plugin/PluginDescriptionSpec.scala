@@ -23,39 +23,21 @@
  */
 package io.techcode.streamy.plugin
 
-import akka.actor.{Actor, ActorLogging, ActorSystem}
-import akka.stream.Materializer
-import com.typesafe.config.Config
+import org.scalatest._
+
+import scala.reflect.io.Path
 
 /**
-  * Abstract plugin implementation based on Actor.
+  * Plugin description spec.
   */
-abstract class Plugin(
-  private val system: ActorSystem,
-  private val materializer: Materializer,
-  val description: PluginDescription,
-  val conf: Config
-) extends Actor with ActorLogging {
+class PluginDescriptionSpec extends FlatSpec with Matchers with Inside {
 
-  implicit val systemImpl: ActorSystem = system
-  implicit val materializerImpl: Materializer = materializer
-
-  override def receive: PartialFunction[Any, Unit] = {
-    case _ => log.info("Plugin can't handle anything")
+  "PluginDescription" should "contains all informations" in {
+    val description = PluginDescription(name = "test", version = "1.0.0", file = Path(".").toURL)
+    inside(description) { case PluginDescription(name, version, _, _, _, _, _) =>
+      name should be("test")
+      version should be("1.0.0")
+    }
   }
-
-  override def preStart(): Unit = onStart()
-
-  override def postStop(): Unit = onStop()
-
-  /**
-    * Fired when the plugin is starting.
-    */
-  def onStart()
-
-  /**
-    * Fired when the plugin is stopping.
-    */
-  def onStop()
 
 }

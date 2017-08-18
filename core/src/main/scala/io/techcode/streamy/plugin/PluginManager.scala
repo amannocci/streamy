@@ -23,40 +23,63 @@
  */
 package io.techcode.streamy.plugin
 
+import java.net.{URL, URLClassLoader}
+
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.stream.Materializer
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import io.techcode.streamy.util.JsonUtil._
 import org.slf4j.Logger
 import play.api.libs.json.Json
+
+import scala.collection.mutable
+import scala.language.postfixOps
+import scala.reflect.io.{Directory, File, Path}
 
 /**
   * The plugin manager that handle all plugins stuff.
   */
 class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer, conf: Config) {
 
-  // Actor ref
+  // Actor refs
   private var _plugins: Map[String, ActorRef] = Map.empty
+
+  // Plugin class loader
+  private var _pluginClassLoader: ClassLoader = _
 
   /**
     * Start all plugins.
     */
   def start(): Unit = {
-    // Build plugins access
-    val tmp = Map.newBuilder[String, ActorRef]
-    conf.getObject("plugin").forEach((key, value) => {
+    // Retrieve all plugin description
+    val pluginDescriptions = getPluginDescriptions
+
+    // Check dependencies & prepare loading
+    val toLoads = checkDependencies(pluginDescriptions)
+
+    // Load all valid jars
+    val plugins = mutable.HashMap.empty[String, ActorRef]
+    _pluginClassLoader = new URLClassLoader(toLoads.map(_.file).toArray, getClass.getClassLoader)
+    toLoads.foreach(pluginDescription => {
       try {
-        val typed = Class.forName(value.unwrapped().toString)
-        val actorRef = system.actorOf(Props(typed, system, materializer, conf.getConfig(s"stream.$key")))
-        tmp += (key -> actorRef)
+        val path = s"plugin.${pluginDescription.name}"
+        val typed = Class.forName(pluginDescription.main.get, true, _pluginClassLoader)
+        val actorRef = system.actorOf(Props(
+          typed,
+          system,
+          materializer,
+          pluginDescription,
+          if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig
+        ))
+        plugins += (pluginDescription.name -> actorRef)
       } catch {
         case ex: Exception => log.error(Json.obj(
-          "message" -> s"Can't load '$key' plugin",
+          "message" -> s"Can't load '${pluginDescription.name}' plugin",
           "type" -> "lifecycle"
         ), ex)
       }
     })
-    _plugins = tmp.result()
+    _plugins = plugins.toMap
   }
 
   /**
@@ -69,4 +92,81 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     */
   def plugins: Map[String, ActorRef] = _plugins
 
+  /**
+    * Returns the plugin class loader used to load all plugins.
+    *
+    * @return plugin class loader.
+    */
+  def pluginClassLoader: ClassLoader = _pluginClassLoader
+
+  /**
+    * Retrieve all plugins descriptions from jar file.
+    *
+    * @return all plugins descriptions.
+    */
+  private def getPluginDescriptions: mutable.HashMap[String, PluginDescription] = {
+    // Retrieve all jar files
+    val jarFiles = PluginManager.PluginFolder.files.filter((x: File) => Path.isExtensionJarOrZip(x.jfile))
+
+    // Attempt to load all plugins
+    val pluginDescriptions = mutable.HashMap.empty[String, PluginDescription]
+    for (jar <- jarFiles) {
+      // Retrieve configuration details
+      val conf = ConfigFactory.parseURL(new URL(s"jar:file:/${jar.toAbsolute.toString()}!/plugin.conf"))
+
+      // Attempt to convert configuration to plugin description
+      try {
+        val description = PluginDescription.create(new URL(s"file:/${jar.toAbsolute.toString()}"), conf)
+        pluginDescriptions += (description.name -> description)
+      } catch {
+        case _: ConfigException.Missing => log.error(Json.obj(
+          "message" -> s"Can't load '${jar.name}' plugin",
+          "type" -> "lifecycle"
+        ))
+      }
+    }
+    pluginDescriptions
+  }
+
+  /**
+    * Check dependencies between plugins.
+    *
+    * @param pluginDescriptions all plugins descriptions.
+    * @return list of plugins to load.
+    */
+  private def checkDependencies(pluginDescriptions: mutable.Map[String, PluginDescription]) = {
+    val toLoads = mutable.ArrayBuffer.empty[PluginDescription]
+    for (pluginDescription <- pluginDescriptions.values) {
+      if (pluginDescription.main.isDefined) {
+        // Condition
+        val satisfy = pluginDescription.depends.forall(dependency => {
+          if (pluginDescriptions.contains(dependency)) {
+            true
+          } else {
+            log.error(Json.obj(
+              "message" -> s"Can't load '${pluginDescription.name}' plugin because of unknown dependency '$dependency'",
+              "type" -> "lifecycle"
+            ))
+            false
+          }
+        })
+
+        // We can load if every dependencies are known
+        if (satisfy) {
+          toLoads += pluginDescription
+        }
+      }
+    }
+    toLoads
+  }
+
+}
+
+/**
+  * Plugin manager companion.
+  */
+object PluginManager {
+  val PluginFolder: Directory = Path("plugins") toDirectory
+
+  val EmptyPluginConfig: Config = ConfigFactory.empty()
 }
