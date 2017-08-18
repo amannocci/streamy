@@ -26,7 +26,6 @@ package io.techcode.streamy
 import akka.actor.ActorSystem
 import akka.event.slf4j.Logger
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
-import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.plugin.PluginManager
 import io.techcode.streamy.util.JsonUtil._
 import io.techcode.streamy.util.{ConfigConstants, Metrics}
@@ -62,7 +61,7 @@ object Streamy extends App {
     "message" -> "Loading configuration with fallback",
     "type" -> "lifecycle"
   ))
-  val conf = ConfigFactory.load().withFallback(ConfigFactory.defaultReference())
+  val conf = system.settings.config
 
   // Launch reporter
   if (!conf.getDuration(ConfigConstants.MetricDelay).isNegative) {
