@@ -23,16 +23,56 @@
  */
 package io.techcode.streamy.buffer
 
-import akka.util.ByteString
-import org.scalatest.FlatSpec
+import org.scalatest._
 
 /**
   * ByteBuf processor spec.
   */
-class ByteBufProcessorSpec extends FlatSpec {
+class ByteBufProcessorSpec extends FlatSpec with Matchers {
 
-  "A ByteBuf processor" must "be able to wrap a bytestring" in {
-    new ByteBuf(ByteString("foobar"))
+  // When false then stop processing otherwise continue
+  "A ByteBuf processor" must "be able to detect a nul byte" in {
+    ByteBufProcessor.FindNul.process('\0') should be(false)
+  }
+
+  it must "be able to detect a non nul byte" in {
+    ByteBufProcessor.FindNonNul.process('e') should be(false)
+  }
+
+  it must "be able to detect a cr byte" in {
+    ByteBufProcessor.FindCR.process('\r') should be(false)
+  }
+
+  it must "be able to detect a non cr byte" in {
+    ByteBufProcessor.FindNonCR.process('e') should be(false)
+  }
+
+  it must "be able to detect a lf byte" in {
+    ByteBufProcessor.FindLf.process('\n') should be(false)
+  }
+
+  it must "be able to detect a non lf byte" in {
+    ByteBufProcessor.FindNonLf.process('e') should be(false)
+  }
+
+  it must "be able to detect a space byte" in {
+    ByteBufProcessor.FindSpace.process(' ') should be(false)
+  }
+
+  it must "be able to detect an open bracket byte" in {
+    ByteBufProcessor.FindOpenBracket.process('[') should be(false)
+  }
+
+  it must "be able to detect an close bracket byte" in {
+    ByteBufProcessor.FindCloseBracket.process(']') should be(false)
+  }
+
+  it must "be able to detect an open quote byte" in {
+    ByteBufProcessor.FindOpenQuote.process('<') should be(false)
+  }
+
+  it must "be able to detect an close quote byte" in {
+    ByteBufProcessor.FindCloseQuote.process('>') should be(false)
   }
 
 }

@@ -23,8 +23,6 @@
  */
 package io.techcode.streamy.buffer
 
-import java.nio.ByteBuffer
-
 import akka.util.ByteString
 
 /**
@@ -38,10 +36,9 @@ class ByteBuf(private var buf: ByteString) {
   /**
     * Gets a current bytestring.
     *
-    * @param buf current bytestring.
     * @return current bytestring.
     */
-  def getBuffer(buf: ByteString): ByteString = {
+  def getBuffer: ByteString = {
     buf
   }
 
@@ -130,15 +127,13 @@ class ByteBuf(private var buf: ByteString) {
   }
 
   @inline private def readOrGetInt(updateIndex: Boolean): Int = {
-    if (_readerIndex + 4 >= buf.length) {
+    if (_readerIndex + 4 > buf.length) {
       throw new IndexOutOfBoundsException()
     } else {
-      val value = ByteBuffer.wrap(Array[Byte](
-        buf(_readerIndex),
-        buf(_readerIndex + 1),
-        buf(_readerIndex + 2),
-        buf(_readerIndex + 3)
-      )).getInt()
+      var value = buf(_readerIndex) << 24
+      value |= (buf(_readerIndex + 1) & 255) << 16
+      value |= (buf(_readerIndex + 2) & 255) << 8
+      value |= buf(_readerIndex + 3) & 255
       if (updateIndex) {
         _readerIndex += 4
       }
@@ -147,7 +142,7 @@ class ByteBuf(private var buf: ByteString) {
   }
 
   @inline private def readOrGetByte(updateIndex: Boolean): Byte = {
-    if (_readerIndex + 1 >= buf.length) {
+    if (_readerIndex + 1 > buf.length) {
       throw new IndexOutOfBoundsException()
     } else {
       val value = buf(_readerIndex)

@@ -24,7 +24,7 @@
 package io.techcode.streamy.util
 
 import org.scalatest._
-import play.api.libs.json.Json
+import play.api.libs.json.{JsNull, Json}
 
 /**
   * JsonUtil spec.
@@ -32,36 +32,50 @@ import play.api.libs.json.Json
 class JsonUtilSpec extends FlatSpec with Matchers {
 
   "JsonUtil" must "return correct size for an int" in {
-    JsonUtil.size(Json.toJson(4)) should equal (1)
+    JsonUtil.size(Json.toJson(4)) should equal(1)
   }
 
   it must "return correct size for a float" in {
-    JsonUtil.size(Json.toJson(2.0)) should equal (3)
+    JsonUtil.size(Json.toJson(2.0)) should equal(3)
   }
 
   it must "return correct size for an object" in {
-    JsonUtil.size(Json.obj("test" -> "test")) should equal (15) // {"test":"test"}
+    JsonUtil.size(Json.obj("test" -> "test")) should equal(15) // {"test":"test"}
   }
 
   it must "return correct size for a boolean" in {
-    JsonUtil.size(Json.toJson(true)) should equal (4)
-    JsonUtil.size(Json.toJson(false)) should equal (5)
+    JsonUtil.size(Json.toJson(true)) should equal(4)
+    JsonUtil.size(Json.toJson(false)) should equal(5)
   }
 
   it must "return correct size for an array" in {
-    JsonUtil.size(Json.arr("test", 2, Json.obj("test" -> "test"), 4.0)) should equal (30) // ["test",2,{"test":"test"},4.0]
+    JsonUtil.size(Json.arr("test", 2, Json.obj("test" -> "test"), 4.0)) should equal(30) // ["test",2,{"test":"test"},4.0]
+  }
+
+  it must "return correct size for a null" in {
+    JsonUtil.size(JsNull) should equal(4)
   }
 
   it must "return correct size for a string" in {
-    JsonUtil.size(Json.toJson("test")) should equal (6) // "test"
+    JsonUtil.size(Json.toJson("test")) should equal(6) // "test"
   }
 
   it must "flatten correctly a json object" in {
-    JsonUtil.flatten(Json.obj("test" -> Json.obj("test" -> "foobar"))) should equal (Json.obj("test.test" -> "foobar"))
+    JsonUtil.flatten(Json.obj(
+      "foobar" -> 0,
+      "test" -> Json.obj(
+        "test" -> "foobar",
+        "foobar" -> Json.obj("test" -> 0)
+      )
+    )) should equal(Json.obj(
+      "foobar" -> 0,
+      "test.test" -> "foobar",
+      "test.foobar.test" -> 0
+    ))
   }
 
   it must "provide a shortcut to convert json object in string" in {
-    JsonUtil.asString(Json.obj("test" -> "test")) should equal ("""{"test":"test"}""")
+    JsonUtil.asString(Json.obj("test" -> "test")) should equal("""{"test":"test"}""")
   }
 
 }
