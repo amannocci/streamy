@@ -25,6 +25,7 @@ package io.techcode.streamy.buffer
 
 import akka.util.ByteString
 import com.google.common.primitives.Ints
+import io.techcode.streamy.stream.StreamException
 import org.scalatest._
 
 /**
@@ -94,6 +95,21 @@ class ByteBufSpec extends FlatSpec with Matchers {
     byteBuf.readerIndex should equal(0)
   }
 
+  it should "skip a byte correctly" in {
+    val input = ByteString("foobar")
+    val byteBuf = new ByteBuf(input)
+    byteBuf.skipByte()
+    byteBuf.readerIndex should equal(1)
+  }
+
+  it should "throw an error when read byte on out of bounds" in {
+    val input = ByteString()
+    val byteBuf = new ByteBuf(input)
+    assertThrows[IndexOutOfBoundsException] {
+      byteBuf.readInt()
+    }
+  }
+
   it should "read an int correctly" in {
     val input = ByteString(Ints.toByteArray(1))
     val byteBuf = new ByteBuf(input)
@@ -106,6 +122,21 @@ class ByteBufSpec extends FlatSpec with Matchers {
     val byteBuf = new ByteBuf(input)
     byteBuf.getInt should equal(13)
     byteBuf.readerIndex should equal(0)
+  }
+
+  it should "skip an int correctly" in {
+    val input = ByteString("foobar")
+    val byteBuf = new ByteBuf(input)
+    byteBuf.skipInt()
+    byteBuf.readerIndex should equal(4)
+  }
+
+  it should "throw an error when read int on out of bounds" in {
+    val input = ByteString()
+    val byteBuf = new ByteBuf(input)
+    assertThrows[IndexOutOfBoundsException] {
+      byteBuf.readInt()
+    }
   }
 
 }

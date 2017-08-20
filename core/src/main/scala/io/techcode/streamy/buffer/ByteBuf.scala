@@ -109,6 +109,13 @@ class ByteBuf(private var buf: ByteString) {
   }
 
   /**
+    * Skip a byte at the current readerIndex and increases the readerIndex by 1 in this buffer.
+    */
+  def skipByte(): Unit = {
+    _readerIndex += 1
+  }
+
+  /**
     * Gets an int at the current readerIndex and increases the readerIndex by 4 in this buffer.
     *
     * @throws IndexOutOfBoundsException if readableBytes is less than 4.
@@ -124,6 +131,13 @@ class ByteBuf(private var buf: ByteString) {
     */
   def getInt: Int = {
     readOrGetInt(updateIndex = false)
+  }
+
+  /**
+    * Skip a atn int the current readerIndex and increases the readerIndex by 1 in this buffer.
+    */
+  def skipInt(): Unit = {
+    _readerIndex += 4
   }
 
   @inline private def readOrGetInt(updateIndex: Boolean): Int = {
