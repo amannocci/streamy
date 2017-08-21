@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.stream
 
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, Json}
 
 import scala.util.control.NoStackTrace
 
@@ -33,4 +33,23 @@ import scala.util.control.NoStackTrace
   * @param msg error message.
   * @param pkt pkt involved.
   */
-class StreamException(msg: String, pkt: Option[JsObject] = None) extends RuntimeException(msg) with NoStackTrace
+class StreamException(msg: String, pkt: Option[JsObject] = None) extends RuntimeException(msg) with NoStackTrace {
+
+  /**
+    * Convert the exception to a json object.
+    *
+    * @return json object.
+    */
+  def toJson: JsObject = Json.obj(
+    "message" -> msg,
+    "packet" -> pkt.getOrElse[JsObject](StreamException.Empty)
+  )
+
+}
+
+/**
+  * Stream exception companion.
+  */
+private[this] object StreamException {
+  val Empty: JsObject = Json.obj()
+}

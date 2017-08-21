@@ -27,6 +27,7 @@ import akka.actor.ActorSystem
 import akka.event.slf4j.Logger
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import io.techcode.streamy.plugin.PluginManager
+import io.techcode.streamy.stream.StreamException
 import io.techcode.streamy.util.JsonUtil._
 import io.techcode.streamy.util.{ConfigConstants, Metrics}
 import play.api.libs.json.Json
@@ -51,7 +52,10 @@ object Streamy extends App {
     "type" -> "lifecycle"
   ))
   val decider: Supervision.Decider = { ex =>
-    log.error("An error occured", ex)
+    ex match {
+      case streamEx: StreamException => log.error(streamEx.toJson)
+      case _ => log.error("An error occured", ex)
+    }
     Supervision.Resume
   }
   implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
