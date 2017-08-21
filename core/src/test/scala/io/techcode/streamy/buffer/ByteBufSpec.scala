@@ -122,7 +122,7 @@ class ByteBufSpec extends FlatSpec with Matchers {
     val input = ByteString()
     val byteBuf = new ByteBuf(input)
     assertThrows[IndexOutOfBoundsException] {
-      byteBuf.readInt()
+      byteBuf.readByte
     }
   }
 
