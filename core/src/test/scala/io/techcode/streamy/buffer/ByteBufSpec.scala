@@ -25,7 +25,6 @@ package io.techcode.streamy.buffer
 
 import akka.util.ByteString
 import com.google.common.primitives.Ints
-import io.techcode.streamy.stream.StreamException
 import org.scalatest._
 
 /**
@@ -35,6 +34,10 @@ class ByteBufSpec extends FlatSpec with Matchers {
 
   "A ByteBuf" must "be able to wrap a bytestring" in {
     new ByteBuf(ByteString("foobar"))
+  }
+
+  it should "be created without new" in {
+    ByteBuf(ByteString("foobar"))
   }
 
   it must "return current bytestring" in {
@@ -60,11 +63,24 @@ class ByteBufSpec extends FlatSpec with Matchers {
     byteBuf.readerIndex should equal(1)
   }
 
+  it should "return correct number of readable bytes" in {
+    val input = ByteString("foobar")
+    val byteBuf = new ByteBuf(input)
+    byteBuf.readableBytes() should equal(6)
+  }
+
   it should "read bytes based on bytebuf processor" in {
     val input = ByteString("foo\nbar")
     val byteBuf = new ByteBuf(input)
     val result = byteBuf.readBytes(ByteBufProcessor.FindLf)
-    result should equal(ByteString("foo"))
+    result.getBuffer should equal(ByteString("foo"))
+  }
+
+  it should "read string based on bytebuf processor" in {
+    val input = ByteString("foo\nbar")
+    val byteBuf = new ByteBuf(input)
+    val result = byteBuf.readString(ByteBufProcessor.FindLf)
+    result should equal("foo")
   }
 
   it should "skip bytes based on bytebuf processor" in {
@@ -82,14 +98,14 @@ class ByteBufSpec extends FlatSpec with Matchers {
   }
 
   it should "read a byte correctly" in {
-    val input = ByteString("foobar")
+    val input = ByteString("f")
     val byteBuf = new ByteBuf(input)
     byteBuf.readByte should equal('f')
     byteBuf.readerIndex should equal(1)
   }
 
   it should "get a byte correctly" in {
-    val input = ByteString("foobar")
+    val input = ByteString("f")
     val byteBuf = new ByteBuf(input)
     byteBuf.getByte should equal('f')
     byteBuf.readerIndex should equal(0)

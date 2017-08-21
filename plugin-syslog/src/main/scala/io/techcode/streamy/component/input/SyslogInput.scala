@@ -92,7 +92,7 @@ private[input] class SyslogRFC5424Input(spec: Map[String, String]) extends Input
 
   private def capture(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor, mapping: mutable.Map[String, String]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
-      mapping.put(ref.get, buf.readBytes(processor).utf8String)
+      mapping.put(ref.get, buf.readString(processor))
     } else {
       buf.skipBytes(processor)
     }
@@ -101,7 +101,7 @@ private[input] class SyslogRFC5424Input(spec: Map[String, String]) extends Input
   private def captureStructData(buf: ByteBuf, ref: Option[String], mapping: mutable.Map[String, String]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
       buf.skipBytes(FindOpenBracket)
-      mapping.put(ref.get, buf.readBytes(FindCloseBracket).utf8String)
+      mapping.put(ref.get, buf.readString(FindCloseBracket))
     } else {
       if (buf.getByte != '-') {
         buf.skipBytes(FindCloseBracket)

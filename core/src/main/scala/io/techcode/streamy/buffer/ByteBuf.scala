@@ -38,9 +38,7 @@ class ByteBuf(private var buf: ByteString) {
     *
     * @return current bytestring.
     */
-  def getBuffer: ByteString = {
-    buf
-  }
+  def getBuffer: ByteString = buf
 
   /**
     * Sets a current bytestring.
@@ -58,17 +56,20 @@ class ByteBuf(private var buf: ByteString) {
   def readerIndex: Int = _readerIndex
 
   /**
-    * Increases the current readerIndex based on processor.
+    * Transfers this buffer's data to a newly created buffer starting at the current
+    * readerIndex and increases the readerIndex by the number of the transferred bytes.
+    * The returned buffer's readerIndex is 0.
     *
     * @param processor processor.
+    * @return the newly created buffer which contains the transferred bytes.
     */
-  def readBytes(processor: ByteBufProcessor): ByteString = {
+  def readBytes(processor: ByteBufProcessor): ByteBuf = {
     val index = _readerIndex
     var value: Byte = 0
     do {
       value = readByte
     } while (processor.process(value))
-    buf.slice(index, _readerIndex - 1)
+    ByteBuf(buf.slice(index, _readerIndex - 1).compact)
   }
 
   /**
@@ -84,11 +85,30 @@ class ByteBuf(private var buf: ByteString) {
   }
 
   /**
+    * Gets a string at the current readerIndex and increases the readerIndex by n in this buffer.
+    * n depends of the ByteBufProcessor.
+    *
+    * @param processor byte buf processor.
+    * @return decoded string from bytebuf.
+    */
+  def readString(processor: ByteBufProcessor): String = {
+    // Compact method is invoke implicitly
+    readBytes(processor).buf.utf8String
+  }
+
+  /**
     * Returns a slice of this buffer's readable bytes.
     */
   def slice(): ByteString = {
     buf.slice(_readerIndex, buf.length)
   }
+
+  /**
+    * Returns the number of readable bytes which is equal to (length - readerIndex)
+    *
+    * @return the number of readable bytes.
+    */
+  def readableBytes(): Int = buf.length - _readerIndex
 
   /**
     * Gets a byte at the current readerIndex and increases the readerIndex by 1 in this buffer.
@@ -134,14 +154,14 @@ class ByteBuf(private var buf: ByteString) {
   }
 
   /**
-    * Skip a atn int the current readerIndex and increases the readerIndex by 1 in this buffer.
+    * Skip an int at the current readerIndex and increases the readerIndex by 1 in this buffer.
     */
   def skipInt(): Unit = {
     _readerIndex += 4
   }
 
   @inline private def readOrGetInt(updateIndex: Boolean): Int = {
-    if (_readerIndex + 4 > buf.length) {
+    if (readableBytes() < 4) {
       throw new IndexOutOfBoundsException()
     } else {
       var value = buf(_readerIndex) << 24
@@ -156,7 +176,7 @@ class ByteBuf(private var buf: ByteString) {
   }
 
   @inline private def readOrGetByte(updateIndex: Boolean): Byte = {
-    if (_readerIndex + 1 > buf.length) {
+    if (readableBytes() < 1) {
       throw new IndexOutOfBoundsException()
     } else {
       val value = buf(_readerIndex)
@@ -166,5 +186,20 @@ class ByteBuf(private var buf: ByteString) {
       value
     }
   }
+
+}
+
+/**
+  * ByteBuf object companion.
+  */
+object ByteBuf {
+
+  /**
+    * Create a new bytebuf based on given bytestring.
+    *
+    * @param buf bytestring involved.
+    * @return newly created bytebuf.
+    */
+  def apply(buf: ByteString): ByteBuf = new ByteBuf(buf)
 
 }
