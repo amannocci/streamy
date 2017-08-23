@@ -25,55 +25,49 @@ package io.techcode.streamy.component.output
 
 import java.net.InetAddress
 
-import akka.util.ByteString
+import akka.util.{ByteString, ByteStringBuilder}
 import io.techcode.streamy.component.Output
+import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
 import play.api.libs.json.JsObject
 
 /**
   * Syslog RFC3164 output implementation.
   */
-private[output] class SyslogRFC3164Output(spec: Map[String, String]) extends Output[JsObject] {
+private[output] class SyslogRFC3164Output(config: RFC3164Config) extends Output[JsObject] {
 
   // Default hostname
   private val hostName = InetAddress.getLocalHost.getHostName
 
-  // Set all pref
-  val facility: Option[String] = spec.get(SyslogOutput.Id.Facility).orElse(Option(SyslogOutput.Id.Facility))
-  val timestamp: Option[String] = spec.get(SyslogOutput.Id.Timestamp).orElse(Option(SyslogOutput.Id.Timestamp))
-  val hostname: Option[String] = spec.get(SyslogOutput.Id.Hostname).orElse(Option(SyslogOutput.Id.Hostname))
-  val app: Option[String] = spec.get(SyslogOutput.Id.App).orElse(Option(SyslogOutput.Id.App))
-  val proc: Option[String] = spec.get(SyslogOutput.Id.Proc).orElse(Option(SyslogOutput.Id.Proc))
-  val message: Option[String] = spec.get(SyslogOutput.Id.Message)
-
-  override def apply(pkt: JsObject): ByteString = {
-    val buf = ByteString.createBuilder
+  override def apply(p: JsObject): ByteString = {
+    implicit val pkt: JsObject = p
+    implicit val buf: ByteStringBuilder = ByteString.createBuilder
 
     // Add PRIVAL
     buf.putByte(SyslogOutput.Inf)
-    buf.putBytes((pkt \ facility.get).asOpt[String].getOrElse(SyslogOutput.Facility).getBytes)
+    populate(config.facility, SyslogOutput.Facility)
     buf.putByte(SyslogOutput.Sup)
 
     // Add timestamp
-    buf.putBytes((pkt \ timestamp.get).asOpt[String].getOrElse(SyslogOutput.DateStamp).getBytes)
+    populate(config.timestamp, SyslogOutput.DateStamp)
     buf.putByte(SyslogOutput.Space)
 
     // Add hostname
-    buf.putBytes((pkt \ hostname.get).asOpt[String].getOrElse(hostName).getBytes)
+    populate(config.hostname, hostName)
     buf.putByte(SyslogOutput.Space)
 
     // Add app name
-    buf.putBytes((pkt \ app.get).asOpt[String].getOrElse(SyslogOutput.App).getBytes)
+    populate(config.app, SyslogOutput.App)
 
     // Add proc id
     buf.putByte(SyslogOutput.OpenBracket)
-    buf.putBytes((pkt \ proc.get).asOpt[String].getOrElse(SyslogOutput.Proc).getBytes)
+    populate(config.proc, SyslogOutput.Proc)
     buf.putByte(SyslogOutput.CloseBracket)
-    buf.putByte(SyslogOutput.SemiColon)
-    buf.putByte(SyslogOutput.Space)
 
     // Add message
-    if (message.isDefined) {
-      buf.putBytes((pkt \ message.get).as[String].getBytes)
+    if (config.message.isDefined) {
+      buf.putByte(SyslogOutput.SemiColon)
+      buf.putByte(SyslogOutput.Space)
+      buf.putBytes((pkt \ config.message.get).as[String].getBytes)
     }
     buf.putByte(SyslogOutput.NewLine)
 
@@ -81,64 +75,88 @@ private[output] class SyslogRFC3164Output(spec: Map[String, String]) extends Out
     buf.result()
   }
 
+  /**
+    * Populate data part to format syslog message.
+    *
+    * @param conf         name of the field.
+    * @param defaultValue default value.
+    * @param pkt          packet involved.
+    * @param buf          bytestring builder involved.
+    */
+  private def populate(conf: Option[String], defaultValue: String)(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
+    if (conf.isDefined) {
+      buf.putBytes((pkt \ conf.get).asOpt[String].getOrElse(defaultValue).getBytes)
+    } else {
+      buf.putBytes(defaultValue.getBytes)
+    }
+  }
+
 }
 
 /**
   * Syslog RFC5424 output implementation.
   */
-private[output] class SyslogRFC5424Output(spec: Map[String, String]) extends Output[JsObject] {
+private[output] class SyslogRFC5424Output(config: RFC5424Config) extends Output[JsObject] {
 
-  // Set all pref
-  val facility: Option[String] = spec.get(SyslogOutput.Id.Facility).orElse(Option(SyslogOutput.Id.Facility))
-  val timestamp: Option[String] = spec.get(SyslogOutput.Id.Timestamp).orElse(Option(SyslogOutput.Id.Timestamp))
-  val hostname: Option[String] = spec.get(SyslogOutput.Id.Hostname).orElse(Option(SyslogOutput.Id.Hostname))
-  val app: Option[String] = spec.get(SyslogOutput.Id.App).orElse(Option(SyslogOutput.Id.App))
-  val proc: Option[String] = spec.get(SyslogOutput.Id.Proc).orElse(Option(SyslogOutput.Id.Proc))
-  val msgId: Option[String] = spec.get(SyslogOutput.Id.Msg).orElse(Option(SyslogOutput.Id.Msg))
-  val message: Option[String] = spec.get(SyslogOutput.Id.Message)
-
-  override def apply(pkt: JsObject): ByteString = {
-    val buf = ByteString.createBuilder
+  override def apply(p: JsObject): ByteString = {
+    implicit val pkt: JsObject = p
+    implicit val buf: ByteStringBuilder = ByteString.createBuilder
 
     // Add PRIVAL
     buf.putByte(SyslogOutput.Inf)
-    buf.putBytes((pkt \ facility.get).asOpt[String].getOrElse(SyslogOutput.Facility).getBytes)
+    populate(config.facility, SyslogOutput.Facility)
     buf.putByte(SyslogOutput.Sup)
 
     // Add version
     buf.putBytes(SyslogOutput.Version.getBytes())
 
     // Add timestamp
-    buf.putBytes((pkt \ timestamp.get).asOpt[String].getOrElse(SyslogOutput.Date).getBytes)
+    populate(config.timestamp, SyslogOutput.Date)
     buf.putByte(SyslogOutput.Space)
 
     // Add hostname
-    buf.putBytes((pkt \ hostname.get).asOpt[String].getOrElse(SyslogOutput.Nil).getBytes)
+    populate(config.hostname, SyslogOutput.Nil)
     buf.putByte(SyslogOutput.Space)
 
     // Add app name
-    buf.putBytes((pkt \ app.get).asOpt[String].getOrElse(SyslogOutput.Nil).getBytes)
+    populate(config.app, SyslogOutput.Nil)
     buf.putByte(SyslogOutput.Space)
 
     // Add proc id
-    buf.putBytes((pkt \ proc.get).asOpt[String].getOrElse(SyslogOutput.Nil).getBytes)
+    populate(config.proc, SyslogOutput.Nil)
     buf.putByte(SyslogOutput.Space)
 
     // Add message id
-    buf.putBytes((pkt \ msgId.get).asOpt[String].getOrElse(SyslogOutput.Nil).getBytes)
+    populate(config.msgId, SyslogOutput.Nil)
     buf.putByte(SyslogOutput.Space)
 
     // Skip structured data
     buf.putByte(SyslogOutput.NilByte)
-    buf.putByte(SyslogOutput.Space)
 
     // Add message
-    if (message.isDefined) {
-      buf.putBytes((pkt \ message.get).as[String].getBytes)
+    if (config.message.isDefined) {
+      buf.putByte(SyslogOutput.Space)
+      buf.putBytes((pkt \ config.message.get).as[String].getBytes)
     }
 
     // Build result
     buf.result()
+  }
+
+  /**
+    * Populate data part to format syslog message.
+    *
+    * @param conf         name of the field.
+    * @param defaultValue default value.
+    * @param pkt          packet involved.
+    * @param buf          bytestring builder involved.
+    */
+  private def populate(conf: Option[String], defaultValue: String)(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
+    if (conf.isDefined) {
+      buf.putBytes((pkt \ conf.get).asOpt[String].getOrElse(defaultValue).getBytes)
+    } else {
+      buf.putBytes(defaultValue.getBytes)
+    }
   }
 
 }
@@ -154,7 +172,7 @@ object SyslogOutput {
     val Hostname = "hostname"
     val App = "app"
     val Proc = "proc"
-    val Msg = "msgId"
+    val MsgId = "msgId"
     val Message = "message"
   }
 
@@ -174,20 +192,40 @@ object SyslogOutput {
   val CloseBracket: Byte = ']'
   val Version: String = "1 "
 
+  // Component configuration
+  case class RFC5424Config(
+    facility: Option[String] = None,
+    timestamp: Option[String] = None,
+    hostname: Option[String] = None,
+    app: Option[String] = None,
+    proc: Option[String] = None,
+    msgId: Option[String] = None,
+    message: Option[String] = None
+  )
+
+  case class RFC3164Config(
+    facility: Option[String] = None,
+    timestamp: Option[String] = None,
+    hostname: Option[String] = None,
+    app: Option[String] = None,
+    proc: Option[String] = None,
+    message: Option[String] = None
+  )
+
   /**
     * Create a syslog output RCF5424 compilant.
     *
-    * @param spec enable features.
+    * @param config output configuration.
     * @return syslog output RCF5424 compilant.
     */
-  def createRFC5424(spec: Map[String, String]): Output[JsObject] = new SyslogRFC5424Output(spec)
+  def createRFC5424(config: RFC5424Config): Output[JsObject] = new SyslogRFC5424Output(config)
 
   /**
     * Create a syslog output RCF3126 compilant.
     *
-    * @param spec enable features.
+    * @param config output configuration.
     * @return syslog output RCF3126 compilant.
     */
-  def createRFC3164(spec: Map[String, String]): Output[JsObject] = new SyslogRFC3164Output(spec)
+  def createRFC3164(config: RFC3164Config): Output[JsObject] = new SyslogRFC3164Output(config)
 
 }

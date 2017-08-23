@@ -160,6 +160,10 @@ class ByteBuf(private var buf: ByteString) {
     _readerIndex += 4
   }
 
+  override def toString: String =
+    // Compact is called implicitly
+    slice().utf8String
+
   @inline private def readOrGetInt(updateIndex: Boolean): Int = {
     if (readableBytes() < 4) {
       throw new IndexOutOfBoundsException()

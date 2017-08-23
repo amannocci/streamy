@@ -24,6 +24,8 @@
 package io.techcode.streamy.component.input
 
 import akka.util.ByteString
+import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
+import io.techcode.streamy.stream.StreamException
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.libs.json.Json
 
@@ -40,7 +42,7 @@ class SyslogInputSpec extends FlatSpec with Matchers {
     (result \ SyslogInput.Id.Hostname).get  should equal (Json.toJson("mymachine.example.com"))
     (result \ SyslogInput.Id.App).get  should equal (Json.toJson("su"))
     (result \ SyslogInput.Id.Proc).get  should equal (Json.toJson("77042"))
-    (result \ SyslogInput.Id.Msg).get  should equal (Json.toJson("ID47"))
+    (result \ SyslogInput.Id.MsgId).get  should equal (Json.toJson("ID47"))
     (result \ SyslogInput.Id.StructData).get  should equal (Json.toJson("""sigSig ver="1""""))
     (result \ SyslogInput.Id.Message).get  should equal (Json.toJson("'su root' failed for lonvick on /dev/pts/8"))
   }
@@ -84,7 +86,7 @@ class SyslogInputSpec extends FlatSpec with Matchers {
     val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureMsg)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
-    (result \ SyslogInput.Id.Msg).get  should equal (Json.toJson("ID47"))
+    (result \ SyslogInput.Id.MsgId).get  should equal (Json.toJson("ID47"))
   }
 
   it must "capture only struct data when set" in {
@@ -101,27 +103,35 @@ class SyslogInputSpec extends FlatSpec with Matchers {
     (result \ SyslogInput.Id.Message).get  should equal (Json.toJson("'su root' failed for lonvick on /dev/pts/8"))
   }
 
+  it must "throw an error when syslog message is malformed" in {
+    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureAll)
+    assertThrows[StreamException] {
+      input.apply(SyslogInputSpec.Malformed)
+    }
+  }
+
 }
 
 object SyslogInputSpec {
-  val CaptureAll = Map(
-    SyslogInput.Id.Facility -> SyslogInput.Id.Facility,
-    SyslogInput.Id.Timestamp -> SyslogInput.Id.Timestamp,
-    SyslogInput.Id.Hostname -> SyslogInput.Id.Hostname,
-    SyslogInput.Id.App -> SyslogInput.Id.App,
-    SyslogInput.Id.Proc -> SyslogInput.Id.Proc,
-    SyslogInput.Id.Msg -> SyslogInput.Id.Msg,
-    SyslogInput.Id.StructData -> SyslogInput.Id.StructData,
-    SyslogInput.Id.Message -> SyslogInput.Id.Message
+  val CaptureAll = RFC5424Config(
+    facility = Some(SyslogInput.Id.Facility),
+    timestamp = Some(SyslogInput.Id.Timestamp),
+    hostname = Some(SyslogInput.Id.Hostname),
+    app = Some(SyslogInput.Id.App),
+    proc = Some(SyslogInput.Id.Proc),
+    msgId = Some(SyslogInput.Id.MsgId),
+    structData = Some(SyslogInput.Id.StructData),
+    message = Some(SyslogInput.Id.Message)
   )
-  val CaptureFacility = Map(SyslogInput.Id.Facility -> SyslogInput.Id.Facility)
-  val CaptureTimestamp = Map(SyslogInput.Id.Timestamp -> SyslogInput.Id.Timestamp)
-  val CaptureHostname = Map(SyslogInput.Id.Hostname -> SyslogInput.Id.Hostname)
-  val CaptureApp = Map(SyslogInput.Id.App -> SyslogInput.Id.App)
-  val CaptureProc = Map(SyslogInput.Id.Proc -> SyslogInput.Id.Proc)
-  val CaptureMsg = Map(SyslogInput.Id.Msg -> SyslogInput.Id.Msg)
-  val CaptureStructData = Map(SyslogInput.Id.StructData -> SyslogInput.Id.StructData)
-  val CaptureMessage = Map(SyslogInput.Id.Message -> SyslogInput.Id.Message)
+  val CaptureFacility = RFC5424Config(facility = Some(SyslogInput.Id.Facility))
+  val CaptureTimestamp = RFC5424Config(timestamp = Some(SyslogInput.Id.Timestamp))
+  val CaptureHostname = RFC5424Config(hostname = Some(SyslogInput.Id.Hostname))
+  val CaptureApp = RFC5424Config(app = Some(SyslogInput.Id.App))
+  val CaptureProc = RFC5424Config(proc = Some(SyslogInput.Id.Proc))
+  val CaptureMsg = RFC5424Config(msgId = Some(SyslogInput.Id.MsgId))
+  val CaptureStructData = RFC5424Config(structData = Some(SyslogInput.Id.StructData))
+  val CaptureMessage = RFC5424Config(message = Some(SyslogInput.Id.Message))
 
   val Simple = ByteString("""<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
+  val Malformed = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
 }

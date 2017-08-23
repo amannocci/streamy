@@ -23,12 +23,13 @@
  */
 package io.techcode.streamy.component.input
 
-import akka.stream.scaladsl.Framing.FramingException
 import akka.util.ByteString
 import io.techcode.streamy.buffer.ByteBufProcessor._
 import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
 import io.techcode.streamy.component.Input
-import play.api.libs.json.{JsObject, JsString}
+import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
+import io.techcode.streamy.stream.StreamException
+import play.api.libs.json.{JsObject, JsString, Json}
 
 import scala.collection.mutable
 
@@ -36,17 +37,7 @@ import scala.collection.mutable
 /**
   * Syslog RFC5424 input implementation.
   */
-private[input] class SyslogRFC5424Input(spec: Map[String, String]) extends Input[JsObject] {
-
-  // Set all pref
-  val facility: Option[String] = spec.get(SyslogInput.Id.Facility)
-  val timestamp: Option[String] = spec.get(SyslogInput.Id.Timestamp)
-  val hostname: Option[String] = spec.get(SyslogInput.Id.Hostname)
-  val app: Option[String] = spec.get(SyslogInput.Id.App)
-  val proc: Option[String] = spec.get(SyslogInput.Id.Proc)
-  val msgId: Option[String] = spec.get(SyslogInput.Id.Msg)
-  val structDataId: Option[String] = spec.get(SyslogInput.Id.StructData)
-  val message: Option[String] = spec.get(SyslogInput.Id.Message)
+private[input] class SyslogRFC5424Input(config: RFC5424Config) extends Input[JsObject] {
 
   override def apply(pkt: ByteString): JsObject = {
     // Grab new buffer
@@ -57,39 +48,47 @@ private[input] class SyslogRFC5424Input(spec: Map[String, String]) extends Input
 
     // Read PRIVAL
     expect(buf, '<')
-    capture(buf, facility, FindCloseQuote, mapping)
+    capture(buf, config.facility, FindCloseQuote, mapping)
 
     // Read version
     expect(buf, '1')
     expect(buf, ' ')
 
     // Read timestamp
-    capture(buf, timestamp, FindSpace, mapping)
+    capture(buf, config.timestamp, FindSpace, mapping)
 
     // Read hostname
-    capture(buf, hostname, FindSpace, mapping)
+    capture(buf, config.hostname, FindSpace, mapping)
 
     // Read app name
-    capture(buf, app, FindSpace, mapping)
+    capture(buf, config.app, FindSpace, mapping)
 
     // Read proc id
-    capture(buf, proc, FindSpace, mapping)
+    capture(buf, config.proc, FindSpace, mapping)
 
     // Read message id
-    capture(buf, msgId, FindSpace, mapping)
+    capture(buf, config.msgId, FindSpace, mapping)
 
     // Read structured data
-    captureStructData(buf, structDataId, mapping)
+    captureStructData(buf, config.structData, mapping)
 
     // Read message
-    if (message.isDefined) {
-      mapping.put(message.get, buf.slice().utf8String.trim)
+    if (config.message.isDefined) {
+      mapping.put(config.message.get, buf.slice().utf8String.trim)
     }
 
     // Split header and message
     JsObject(mapping.mapValues(JsString))
   }
 
+  /**
+    * Capture a syslog part.
+    *
+    * @param buf       current bytebuf
+    * @param ref       reference part.
+    * @param processor bytebuf processor used to delimite part.
+    * @param mapping   mapping accumulator.
+    */
   private def capture(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor, mapping: mutable.Map[String, String]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
       mapping.put(ref.get, buf.readString(processor))
@@ -98,6 +97,13 @@ private[input] class SyslogRFC5424Input(spec: Map[String, String]) extends Input
     }
   }
 
+  /**
+    * Capture a syslog part.
+    *
+    * @param buf     current bytebuf.
+    * @param ref     reference part.
+    * @param mapping mapping accumulator.
+    */
   private def captureStructData(buf: ByteBuf, ref: Option[String], mapping: mutable.Map[String, String]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
       buf.skipBytes(FindOpenBracket)
@@ -110,9 +116,15 @@ private[input] class SyslogRFC5424Input(spec: Map[String, String]) extends Input
     }
   }
 
+  /**
+    * Except a given character.
+    *
+    * @param buf current bytebuf.
+    * @param ch  excepted character.
+    */
   private def expect(buf: ByteBuf, ch: Char): Unit = {
     if (buf.readByte != ch) {
-      throw new FramingException(s"Expected $ch at index ${buf.readerIndex}")
+      throw new StreamException(s"Expected $ch at index ${buf.readerIndex}", Some(Json.obj("message" -> buf.toString)))
     }
   }
 
@@ -129,17 +141,29 @@ object SyslogInput {
     val Hostname = "hostname"
     val App = "app"
     val Proc = "proc"
-    val Msg = "msgId"
+    val MsgId = "msgId"
     val StructData = "structDataId"
     val Message = "message"
   }
 
+  // Component configuration
+  case class RFC5424Config(
+    facility: Option[String] = None,
+    timestamp: Option[String] = None,
+    hostname: Option[String] = None,
+    app: Option[String] = None,
+    proc: Option[String] = None,
+    msgId: Option[String] = None,
+    structData: Option[String] = None,
+    message: Option[String] = None
+  )
+
   /**
     * Create a syslog input RCF5424 compilant.
     *
-    * @param spec enable features.
+    * @param config input configuration.
     * @return syslog input RCF5424 compilant.
     */
-  def createRFC5424(spec: Map[String, String]): Input[JsObject] = new SyslogRFC5424Input(spec)
+  def createRFC5424(config: RFC5424Config): Input[JsObject] = new SyslogRFC5424Input(config)
 
 }

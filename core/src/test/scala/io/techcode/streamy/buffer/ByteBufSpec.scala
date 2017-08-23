@@ -154,5 +154,11 @@ class ByteBufSpec extends FlatSpec with Matchers {
       byteBuf.readInt()
     }
   }
+  it should "be convertible to string" in {
+    val input = ByteString("foobar")
+    val byteBuf = new ByteBuf(input)
+    byteBuf.skipByte()
+    byteBuf.toString should equal("oobar")
+  }
 
 }
