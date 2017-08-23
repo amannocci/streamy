@@ -92,13 +92,13 @@ class SyslogOutputSpec extends FlatSpec with Matchers {
   it must "format correctly when only facility is set" in {
     val input = SyslogOutput.createRFC3164(SyslogOutputSpec.RFC3164FormatFacility)
     val result = input.apply(SyslogOutputSpec.RFC3164Simple)
-    result should equal(ByteString("<34>Jan 1 00:00:00.000 EB-OR6125073 streamy[1]\n"))
+    result should equal(ByteString(s"<34>Jan 1 00:00:00.000 ${SyslogOutputSpec.Hostname} streamy[1]\n"))
   }
 
   it must "format correctly when only timestamp is set" in {
     val input = SyslogOutput.createRFC3164(SyslogOutputSpec.RFC3164FormatTimestamp)
     val result = input.apply(SyslogOutputSpec.RFC3164Simple)
-    result should equal(ByteString("<30>Aug 24 05:34:00 EB-OR6125073 streamy[1]\n"))
+    result should equal(ByteString(s"<30>Aug 24 05:34:00 ${SyslogOutputSpec.Hostname} streamy[1]\n"))
   }
 
   it must "format correctly when only hostname is set" in {
@@ -110,19 +110,19 @@ class SyslogOutputSpec extends FlatSpec with Matchers {
   it must "format correctly when only app is set" in {
     val input = SyslogOutput.createRFC3164(SyslogOutputSpec.RFC3164FormatApp)
     val result = input.apply(SyslogOutputSpec.RFC3164Simple)
-    result should equal(ByteString("<30>Jan 1 00:00:00.000 EB-OR6125073 su[1]\n"))
+    result should equal(ByteString(s"<30>Jan 1 00:00:00.000 ${SyslogOutputSpec.Hostname} su[1]\n"))
   }
 
   it must "format correctly when only proc is set" in {
     val input = SyslogOutput.createRFC3164(SyslogOutputSpec.RFC3164FormatProc)
     val result = input.apply(SyslogOutputSpec.RFC3164Simple)
-    result should equal(ByteString("<30>Jan 1 00:00:00.000 EB-OR6125073 streamy[77042]\n"))
+    result should equal(ByteString(s"<30>Jan 1 00:00:00.000 ${SyslogOutputSpec.Hostname} streamy[77042]\n"))
   }
 
   it must "format correctly when only message is set" in {
     val input = SyslogOutput.createRFC3164(SyslogOutputSpec.RFC3164FormatMessage)
     val result = input.apply(SyslogOutputSpec.RFC3164Simple)
-    result should equal(ByteString("<30>Jan 1 00:00:00.000 EB-OR6125073 streamy[1]: 'su root' failed for lonvick on /dev/pts/8\n"))
+    result should equal(ByteString(s"<30>Jan 1 00:00:00.000 ${SyslogOutputSpec.Hostname} streamy[1]: 'su root' failed for lonvick on /dev/pts/8\n"))
   }
 
 }
