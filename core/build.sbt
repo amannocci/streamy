@@ -2,10 +2,6 @@ name := name.value + "-core"
 
 maintainer := "Adrien Mannocci <adrien.mannocci@gmail.com>"
 
-packageSummary := "Streamy"
-
-packageDescription := "Streamy"
-
 // Dependencies version
 lazy val akkaVersion = "2.5.4"
 lazy val playVersion = "2.6.3"
@@ -41,6 +37,10 @@ libraryDependencies ++= Seq(
 sourceDirectory in Jmh := new File((sourceDirectory in Test).value.getParentFile, "bench")
 classDirectory in Jmh := (classDirectory in Test).value
 dependencyClasspath in Jmh := (dependencyClasspath in Test).value
+
+// Debian packaging
+packageSummary := "Streamy Package"
+packageDescription := "Transport and process your logs, events, or other data"
 
 // Enable some plugins
 enablePlugins(JavaAppPackaging, JmhPlugin)
