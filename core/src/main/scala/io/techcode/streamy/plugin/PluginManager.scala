@@ -112,11 +112,11 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     val pluginDescriptions = mutable.HashMap.empty[String, PluginDescription]
     for (jar <- jarFiles) {
       // Retrieve configuration details
-      val conf = ConfigFactory.parseURL(new URL(s"jar:file:/${jar.toAbsolute.toString()}!/plugin.conf"))
+      val conf = ConfigFactory.parseURL(new URL(s"jar:file:${jar.toAbsolute.toString()}!/plugin.conf"))
 
       // Attempt to convert configuration to plugin description
       try {
-        val description = PluginDescription.create(new URL(s"file:/${jar.toAbsolute.toString()}"), conf)
+        val description = PluginDescription.create(jar.toURL, conf)
         pluginDescriptions += (description.name -> description)
       } catch {
         case _: ConfigException.Missing => log.error(Json.obj(
