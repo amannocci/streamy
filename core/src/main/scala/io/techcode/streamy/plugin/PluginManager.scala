@@ -59,7 +59,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
 
     // Load all valid jars
     val plugins = mutable.HashMap.empty[String, ActorRef]
-    _pluginClassLoader = new URLClassLoader(toLoads.map(_.file).toArray, getClass.getClassLoader)
+    _pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file).toArray, getClass.getClassLoader)
     toLoads.foreach(pluginDescription => {
       try {
         val path = s"plugin.${pluginDescription.name}"
