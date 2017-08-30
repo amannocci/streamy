@@ -62,14 +62,19 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     _pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file).toArray, getClass.getClassLoader)
     toLoads.foreach(pluginDescription => {
       try {
+        // Merge application configuration and plugin configuration
         val path = s"plugin.${pluginDescription.name}"
+        val pluginConf = ConfigFactory.parseURL(new URL(s"jar:${pluginDescription.file}!/config.conf"))
+          .withFallback(if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig)
+
+        // Load main plugin class
         val typed = Class.forName(pluginDescription.main.get, true, _pluginClassLoader)
         val actorRef = system.actorOf(Props(
           typed,
           system,
           materializer,
           pluginDescription,
-          if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig
+          pluginConf
         ))
         plugins += (pluginDescription.name -> actorRef)
       } catch {
