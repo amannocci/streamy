@@ -35,4 +35,14 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
     new StreamException("foobar").getStackTrace.length should equal(0)
   }
 
+  it should "be convert to json without packet" in {
+    new StreamException("foobar").toJson should equal(Json.obj("message" -> "foobar", "packet" -> Json.obj()))
+  }
+
+  it should "be concert to json with packet" in {
+    new StreamException("foobar", Some(Json.obj("details" -> "test"))).toJson should equal(Json.obj(
+      "message" -> "foobar", "packet" -> Json.obj("details" -> "test")
+    ))
+  }
+
 }
