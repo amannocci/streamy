@@ -29,7 +29,8 @@ import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
 import io.techcode.streamy.component.Input
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
-import play.api.libs.json.{JsObject, JsString, Json}
+import io.techcode.streamy.util.JsonUtil
+import play.api.libs.json.{JsObject, Json}
 
 import scala.collection.mutable
 
@@ -44,33 +45,33 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends Input[JsO
     val buf: ByteBuf = new ByteBuf(pkt)
 
     // Populate
-    val mapping: mutable.Map[String, String] = new mutable.LinkedHashMap[String, String]
+    implicit val mapping: mutable.Map[String, Any] = new mutable.LinkedHashMap[String, Any]
 
     // Read PRIVAL
     expect(buf, '<')
-    capture(buf, config.facility, FindCloseQuote, mapping)
+    capturePrival(buf, config)
 
     // Read version
     expect(buf, '1')
     expect(buf, ' ')
 
     // Read timestamp
-    capture(buf, config.timestamp, FindSpace, mapping)
+    captureString(buf, config.timestamp, FindSpace)
 
     // Read hostname
-    capture(buf, config.hostname, FindSpace, mapping)
+    captureString(buf, config.hostname, FindSpace)
 
     // Read app name
-    capture(buf, config.app, FindSpace, mapping)
+    captureString(buf, config.app, FindSpace)
 
     // Read proc id
-    capture(buf, config.proc, FindSpace, mapping)
+    captureString(buf, config.proc, FindSpace)
 
     // Read message id
-    capture(buf, config.msgId, FindSpace, mapping)
+    captureString(buf, config.msgId, FindSpace)
 
     // Read structured data
-    captureStructData(buf, config.structData, mapping)
+    captureStructData(buf, config.structData)
 
     // Read message
     if (config.message.isDefined) {
@@ -78,7 +79,7 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends Input[JsO
     }
 
     // Split header and message
-    JsObject(mapping.mapValues(JsString))
+    JsonUtil.toJson(mapping)
   }
 
   /**
@@ -87,9 +88,8 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends Input[JsO
     * @param buf       current bytebuf
     * @param ref       reference part.
     * @param processor bytebuf processor used to delimite part.
-    * @param mapping   mapping accumulator.
     */
-  private def capture(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor, mapping: mutable.Map[String, String]): Unit = {
+  private def captureString(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor)(implicit mapping: mutable.Map[String, Any]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
       mapping.put(ref.get, buf.readString(processor))
     } else {
@@ -100,11 +100,33 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends Input[JsO
   /**
     * Capture a syslog part.
     *
-    * @param buf     current bytebuf.
-    * @param ref     reference part.
-    * @param mapping mapping accumulator.
+    * @param buf  current bytebuf.
+    * @param conf reference part.
     */
-  private def captureStructData(buf: ByteBuf, ref: Option[String], mapping: mutable.Map[String, String]): Unit = {
+  private def capturePrival(buf: ByteBuf, conf: RFC5424Config)(implicit mapping: mutable.Map[String, Any]): Unit = {
+    if (config.facility.isDefined || config.severity.isDefined) {
+      // Read prival in tmp
+      val prival = buf.readDigit(FindCloseQuote)
+
+      // Read severity or facility
+      if (config.facility.isDefined) {
+        mapping.put(config.facility.get, prival >> 3)
+      }
+      if (config.severity.isDefined) {
+        mapping.put(config.severity.get, prival & 7)
+      }
+    } else {
+      buf.skipBytes(FindCloseQuote)
+    }
+  }
+
+  /**
+    * Capture a syslog part.
+    *
+    * @param buf current bytebuf.
+    * @param ref reference part.
+    */
+  private def captureStructData(buf: ByteBuf, ref: Option[String])(implicit mapping: mutable.Map[String, Any]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
       buf.skipBytes(FindOpenBracket)
       mapping.put(ref.get, buf.readString(FindCloseBracket))
@@ -137,6 +159,7 @@ object SyslogInput {
 
   object Id {
     val Facility = "facility"
+    val Severity = "severity"
     val Timestamp = "timestamp"
     val Hostname = "hostname"
     val App = "app"
@@ -149,6 +172,7 @@ object SyslogInput {
   // Component configuration
   case class RFC5424Config(
     facility: Option[String] = None,
+    severity: Option[String] = None,
     timestamp: Option[String] = None,
     hostname: Option[String] = None,
     app: Option[String] = None,

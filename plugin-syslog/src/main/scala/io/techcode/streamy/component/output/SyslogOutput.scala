@@ -44,7 +44,7 @@ private[output] class SyslogRFC3164Output(config: RFC3164Config) extends Output[
 
     // Add PRIVAL
     buf.putByte(SyslogOutput.Inf)
-    populate(config.facility, SyslogOutput.Facility)
+    populatePrival(config.facility, config.severity)
     buf.putByte(SyslogOutput.Sup)
 
     // Add timestamp
@@ -91,6 +91,29 @@ private[output] class SyslogRFC3164Output(config: RFC3164Config) extends Output[
     }
   }
 
+  /**
+    * Populate data part to format syslog message.
+    *
+    * @param facilityConf configuration for facility.
+    * @param severityConf configuration for severity.
+    * @param pkt          packet involved.
+    * @param buf          bytestring builder involved.
+    */
+  private def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
+    var prival = 0
+    if (severityConf.isDefined) {
+      prival = (pkt \ severityConf.get).asOpt[Int].getOrElse(SyslogOutput.Facility)
+    } else {
+      prival = SyslogOutput.Severity
+    }
+    if (facilityConf.isDefined) {
+      prival += (pkt \ facilityConf.get).asOpt[Int].getOrElse(SyslogOutput.Facility) << 3
+    } else {
+      prival += SyslogOutput.Facility << 3
+    }
+    buf.putBytes(prival.toString.getBytes())
+  }
+
 }
 
 /**
@@ -104,7 +127,7 @@ private[output] class SyslogRFC5424Output(config: RFC5424Config) extends Output[
 
     // Add PRIVAL
     buf.putByte(SyslogOutput.Inf)
-    populate(config.facility, SyslogOutput.Facility)
+    populatePrival(config.facility, config.severity)
     buf.putByte(SyslogOutput.Sup)
 
     // Add version
@@ -146,6 +169,29 @@ private[output] class SyslogRFC5424Output(config: RFC5424Config) extends Output[
   /**
     * Populate data part to format syslog message.
     *
+    * @param facilityConf configuration for facility.
+    * @param severityConf configuration for severity.
+    * @param pkt          packet involved.
+    * @param buf          bytestring builder involved.
+    */
+  private def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
+    var prival = 0
+    if (severityConf.isDefined) {
+      prival = (pkt \ severityConf.get).asOpt[Int].getOrElse(SyslogOutput.Facility)
+    } else {
+      prival = SyslogOutput.Severity
+    }
+    if (facilityConf.isDefined) {
+      prival += (pkt \ facilityConf.get).asOpt[Int].getOrElse(SyslogOutput.Facility) << 3
+    } else {
+      prival += SyslogOutput.Facility << 3
+    }
+    buf.putBytes(prival.toString.getBytes())
+  }
+
+  /**
+    * Populate data part to format syslog message.
+    *
     * @param conf         name of the field.
     * @param defaultValue default value.
     * @param pkt          packet involved.
@@ -168,6 +214,7 @@ object SyslogOutput {
 
   object Id {
     val Facility = "facility"
+    val Severity = "severity"
     val Timestamp = "timestamp"
     val Hostname = "hostname"
     val App = "app"
@@ -183,7 +230,8 @@ object SyslogOutput {
   val DateStamp: String = "Jan 1 00:00:00.000"
   val Proc: String = "1"
   val App: String = "streamy"
-  val Facility: String = "30"
+  val Facility: Int = 3
+  val Severity: Int = 6
   val SemiColon: Byte = ':'
   val NewLine: Byte = '\n'
   val Inf: Byte = '<'
@@ -195,6 +243,7 @@ object SyslogOutput {
   // Component configuration
   case class RFC5424Config(
     facility: Option[String] = None,
+    severity: Option[String] = None,
     timestamp: Option[String] = None,
     hostname: Option[String] = None,
     app: Option[String] = None,
@@ -205,6 +254,7 @@ object SyslogOutput {
 
   case class RFC3164Config(
     facility: Option[String] = None,
+    severity: Option[String] = None,
     timestamp: Option[String] = None,
     hostname: Option[String] = None,
     app: Option[String] = None,

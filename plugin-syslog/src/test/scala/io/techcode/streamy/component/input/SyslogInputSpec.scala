@@ -37,7 +37,8 @@ class SyslogInputSpec extends FlatSpec with Matchers {
   "Syslog RFC5424 input" must "handle correctly simple syslog message" in {
     val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureAll)
     val result = input.apply(SyslogInputSpec.Simple)
-    (result \ SyslogInput.Id.Facility).get  should equal (Json.toJson("34"))
+    (result \ SyslogInput.Id.Facility).get  should equal (Json.toJson(4))
+    (result \ SyslogInput.Id.Severity).get  should equal (Json.toJson(2))
     (result \ SyslogInput.Id.Timestamp).get  should equal (Json.toJson("2003-10-11T22:14:15.003Z"))
     (result \ SyslogInput.Id.Hostname).get  should equal (Json.toJson("mymachine.example.com"))
     (result \ SyslogInput.Id.App).get  should equal (Json.toJson("su"))
@@ -51,7 +52,14 @@ class SyslogInputSpec extends FlatSpec with Matchers {
     val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureFacility)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
-    (result \ SyslogInput.Id.Facility).get  should equal (Json.toJson("34"))
+    (result \ SyslogInput.Id.Facility).get  should equal (Json.toJson(4))
+  }
+
+  it must "capture only severity when set" in {
+    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureSeverity)
+    val result = input.apply(SyslogInputSpec.Simple)
+    result.fields.size should equal (1)
+    (result \ SyslogInput.Id.Severity).get  should equal (Json.toJson(2))
   }
 
   it must "capture only timestamp when set" in {
@@ -115,6 +123,7 @@ class SyslogInputSpec extends FlatSpec with Matchers {
 object SyslogInputSpec {
   val CaptureAll = RFC5424Config(
     facility = Some(SyslogInput.Id.Facility),
+    severity = Some(SyslogInput.Id.Severity),
     timestamp = Some(SyslogInput.Id.Timestamp),
     hostname = Some(SyslogInput.Id.Hostname),
     app = Some(SyslogInput.Id.App),
@@ -124,6 +133,7 @@ object SyslogInputSpec {
     message = Some(SyslogInput.Id.Message)
   )
   val CaptureFacility = RFC5424Config(facility = Some(SyslogInput.Id.Facility))
+  val CaptureSeverity = RFC5424Config(severity = Some(SyslogInput.Id.Severity))
   val CaptureTimestamp = RFC5424Config(timestamp = Some(SyslogInput.Id.Timestamp))
   val CaptureHostname = RFC5424Config(hostname = Some(SyslogInput.Id.Hostname))
   val CaptureApp = RFC5424Config(app = Some(SyslogInput.Id.App))

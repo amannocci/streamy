@@ -44,7 +44,13 @@ class SyslogOutputSpec extends FlatSpec with Matchers {
   it must "format correctly when only facility is set" in {
     val input = SyslogOutput.createRFC5424(SyslogOutputSpec.RFC5424FormatFacility)
     val result = input.apply(SyslogOutputSpec.RFC5424Simple)
-    result should equal(ByteString("<34>1 1970-01-01T00:00:00.000Z - - - - -"))
+    result should equal(ByteString("<38>1 1970-01-01T00:00:00.000Z - - - - -"))
+  }
+
+  it must "format correctly when only severity is set" in {
+    val input = SyslogOutput.createRFC5424(SyslogOutputSpec.RFC5424FormatSeverity)
+    val result = input.apply(SyslogOutputSpec.RFC5424Simple)
+    result should equal(ByteString("<26>1 1970-01-01T00:00:00.000Z - - - - -"))
   }
 
   it must "format correctly when only timestamp is set" in {
@@ -92,7 +98,13 @@ class SyslogOutputSpec extends FlatSpec with Matchers {
   it must "format correctly when only facility is set" in {
     val input = SyslogOutput.createRFC3164(SyslogOutputSpec.RFC3164FormatFacility)
     val result = input.apply(SyslogOutputSpec.RFC3164Simple)
-    result should equal(ByteString(s"<34>Jan 1 00:00:00.000 ${SyslogOutputSpec.Hostname} streamy[1]\n"))
+    result should equal(ByteString(s"<38>Jan 1 00:00:00.000 ${SyslogOutputSpec.Hostname} streamy[1]\n"))
+  }
+
+  it must "format correctly when only severity is set" in {
+    val input = SyslogOutput.createRFC3164(SyslogOutputSpec.RFC3164FormatSeverity)
+    val result = input.apply(SyslogOutputSpec.RFC3164Simple)
+    result should equal(ByteString(s"<26>Jan 1 00:00:00.000 ${SyslogOutputSpec.Hostname} streamy[1]\n"))
   }
 
   it must "format correctly when only timestamp is set" in {
@@ -130,6 +142,7 @@ class SyslogOutputSpec extends FlatSpec with Matchers {
 object SyslogOutputSpec {
   val RFC5424FormatAll = RFC5424Config(
     facility = Some(SyslogOutput.Id.Facility),
+    severity = Some(SyslogOutput.Id.Severity),
     timestamp = Some(SyslogOutput.Id.Timestamp),
     hostname = Some(SyslogOutput.Id.Hostname),
     app = Some(SyslogOutput.Id.App),
@@ -138,6 +151,7 @@ object SyslogOutputSpec {
     message = Some(SyslogOutput.Id.Message)
   )
   val RFC5424FormatFacility = RFC5424Config(facility = Some(SyslogOutput.Id.Facility))
+  val RFC5424FormatSeverity = RFC5424Config(severity = Some(SyslogOutput.Id.Severity))
   val RFC5424FormatTimestamp = RFC5424Config(timestamp = Some(SyslogOutput.Id.Timestamp))
   val RFC5424FormatHostname = RFC5424Config(hostname = Some(SyslogOutput.Id.Hostname))
   val RFC5424FormatApp = RFC5424Config(app = Some(SyslogOutput.Id.App))
@@ -146,7 +160,8 @@ object SyslogOutputSpec {
   val RFC5424FormatMessage = RFC5424Config(message = Some(SyslogOutput.Id.Message))
 
   val RFC5424Simple: JsObject = Json.obj(
-    SyslogOutput.Id.Facility -> "34",
+    SyslogOutput.Id.Facility -> 4,
+    SyslogOutput.Id.Severity -> 2,
     SyslogOutput.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
     SyslogOutput.Id.Hostname -> "mymachine.example.com",
     SyslogOutput.Id.App -> "su",
@@ -159,6 +174,7 @@ object SyslogOutputSpec {
 
   val RFC3164FormatAll = RFC3164Config(
     facility = Some(SyslogOutput.Id.Facility),
+    severity = Some(SyslogOutput.Id.Severity),
     timestamp = Some(SyslogOutput.Id.Timestamp),
     hostname = Some(SyslogOutput.Id.Hostname),
     app = Some(SyslogOutput.Id.App),
@@ -166,6 +182,7 @@ object SyslogOutputSpec {
     message = Some(SyslogOutput.Id.Message)
   )
   val RFC3164FormatFacility = RFC3164Config(facility = Some(SyslogOutput.Id.Facility))
+  val RFC3164FormatSeverity = RFC3164Config(severity = Some(SyslogOutput.Id.Severity))
   val RFC3164FormatTimestamp = RFC3164Config(timestamp = Some(SyslogOutput.Id.Timestamp))
   val RFC3164FormatHostname = RFC3164Config(hostname = Some(SyslogOutput.Id.Hostname))
   val RFC3164FormatApp = RFC3164Config(app = Some(SyslogOutput.Id.App))
@@ -173,7 +190,8 @@ object SyslogOutputSpec {
   val RFC3164FormatMessage = RFC3164Config(message = Some(SyslogOutput.Id.Message))
 
   val RFC3164Simple: JsObject = Json.obj(
-    SyslogOutput.Id.Facility -> "34",
+    SyslogOutput.Id.Facility -> 4,
+    SyslogOutput.Id.Severity -> 2,
     SyslogOutput.Id.Timestamp -> "Aug 24 05:34:00",
     SyslogOutput.Id.Hostname -> "mymachine.example.com",
     SyslogOutput.Id.App -> "su",

@@ -97,6 +97,18 @@ class ByteBuf(private var buf: ByteString) {
   }
 
   /**
+    * Gets an int at the current readerIndex and increases the readerIndex by n in this buffer.
+    * n depends of the ByteBufProcessor.
+    *
+    * @param processor byte buf processor.
+    * @return decoded integer from bytebuf.
+    */
+  def readDigit(processor: ByteBufProcessor): Int = {
+    // Compact method is invoke implicitly
+    readString(processor).toInt
+  }
+
+  /**
     * Returns a slice of this buffer's readable bytes.
     */
   def slice(): ByteString = {
