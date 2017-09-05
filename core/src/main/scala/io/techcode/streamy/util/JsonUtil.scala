@@ -24,7 +24,7 @@
 package io.techcode.streamy.util
 
 import play.api.libs.json._
-
+import scala.collection.mutable
 import scala.language.implicitConversions
 
 
@@ -55,6 +55,20 @@ object JsonUtil {
       case JsNull => NullLength
     }
   }
+
+  /**
+    * Convert a map to json.
+    *
+    * @param map map with any values.
+    * @return json object.
+    */
+  def toJson(map: mutable.Map[String, Any]): JsObject = JsObject(map.mapValues[JsValue] {
+    case value: Int => Json.toJson[Int](value)
+    case value: Long => Json.toJson[Long](value)
+    case value: Double => Json.toJson[Double](value)
+    case value: Float => Json.toJson[Float](value)
+    case value => JsString(value.toString)
+  })
 
   /**
     * Convert a json value to string.

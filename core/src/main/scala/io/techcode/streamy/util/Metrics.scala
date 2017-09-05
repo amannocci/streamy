@@ -73,13 +73,7 @@ object Metrics {
       Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
 
       // Log
-      log.info(Json.obj("type" -> "metrics").deepMerge(JsObject(entry.mapValues[JsValue] {
-        case value: Int => Json.toJson[Int](value)
-        case value: Long => Json.toJson[Long](value)
-        case value: Double => Json.toJson[Double](value)
-        case value: Float => Json.toJson[Float](value)
-        case value => JsString(value.toString)
-      })))
+      log.info(Json.obj("type" -> "metrics").deepMerge(JsonUtil.toJson(entry)))
     })
   }
 

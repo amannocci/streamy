@@ -26,6 +26,8 @@ package io.techcode.streamy.util
 import org.scalatest._
 import play.api.libs.json.{JsNull, Json}
 
+import scala.collection.mutable
+
 /**
   * JsonUtil spec.
   */
@@ -76,6 +78,22 @@ class JsonUtilSpec extends FlatSpec with Matchers {
 
   it must "provide a shortcut to convert json object in string" in {
     JsonUtil.asString(Json.obj("test" -> "test")) should equal("""{"test":"test"}""")
+  }
+
+  it must "convert correctly a map to json object" in {
+    val map: mutable.Map[String, Any] = new mutable.LinkedHashMap()
+    map.put("string", "string")
+    map.put("int", 10)
+    map.put("long", 10L)
+    map.put("float", 1.0F)
+    map.put("double", 1.0D)
+    JsonUtil.toJson(map) should equal(Json.obj(
+      "string" -> "string",
+      "int" -> 10,
+      "long" -> 10L,
+      "float" -> 1.0F,
+      "double" -> 1.0D
+    ))
   }
 
 }
