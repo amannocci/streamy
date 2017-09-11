@@ -146,7 +146,7 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends Input[JsO
     */
   private def expect(buf: ByteBuf, ch: Char): Unit = {
     if (buf.readByte != ch) {
-      throw new StreamException(s"Expected $ch at index ${buf.readerIndex}", Some(Json.obj("message" -> buf.toString)))
+      throw new StreamException(s"Expected $ch at index ${buf.readerIndex}", Some(Json.obj("raw" -> buf.toString)))
     }
   }
 
