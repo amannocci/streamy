@@ -97,7 +97,7 @@ class JsonTransform(config: Config) extends Transform[JsObject, JsObject] {
   private def onError(msg: String): JsValue = {
     config.onError match {
       case Behaviour.Discard =>
-        throw new StreamException("Source field can't be parse as Json")
+        throw new StreamException("Source field can't be parse as Json", Some(Json.obj("raw" -> msg)))
       case Behaviour.Skip =>
         JsString(msg)
     }
