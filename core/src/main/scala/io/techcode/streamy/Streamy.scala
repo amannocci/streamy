@@ -65,7 +65,7 @@ object Streamy extends App {
     "message" -> "Loading configuration with fallback",
     "type" -> "lifecycle"
   ))
-  val conf = system.settings.config
+  val conf = system.settings.config.resolve()
 
   // Launch reporter
   if (!conf.getDuration(ConfigConstants.MetricDelay).isNegative) {
