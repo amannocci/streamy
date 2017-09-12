@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.stream
 
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.scalatest._
 import play.api.libs.json.Json
 

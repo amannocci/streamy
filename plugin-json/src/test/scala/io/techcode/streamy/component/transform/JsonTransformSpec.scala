@@ -59,4 +59,10 @@ class JsonTransformSpec extends FlatSpec with Matchers {
     component.apply(input) should equal(Json.obj("message" -> "foobar"))
   }
 
+  it must "skip correctly a packet with a wrong source field" in {
+    val input = Json.obj("message" -> "{foobar}")
+    val component = new JsonTransform(Config(__ \ "message"))
+    component.apply(input) should equal(Json.obj("message" -> "{foobar}"))
+  }
+
 }
