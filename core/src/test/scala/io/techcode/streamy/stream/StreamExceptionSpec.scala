@@ -42,7 +42,7 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
     generic.toJson should equal(Json.obj(
       "message" -> "foobar",
       "state" -> "{}",
-      "exception" -> "io.techcode.streamy.stream.StreamException: foobar\r\n"
+      "exception" -> s"io.techcode.streamy.stream.StreamException: foobar${scala.util.Properties.lineSeparator}"
     ))
   }
 
@@ -50,13 +50,13 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
     new StreamException("foobar", Some(Json.obj("details" -> "test"))).toJson should equal(Json.obj(
       "message" -> "foobar",
       "state" -> Json.asciiStringify(Json.obj("details" -> "test")),
-      "exception" -> "io.techcode.streamy.stream.StreamException: foobar\r\n"
+      "exception" -> s"io.techcode.streamy.stream.StreamException: foobar${scala.util.Properties.lineSeparator}"
     ))
   }
 
   it should "be concert to json with exception" in {
     new StreamException("foobar", ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
-      "message" -> "foobar", "state" -> "{}", "exception" -> "io.techcode.streamy.stream.StreamException: test\r\n"
+      "message" -> "foobar", "state" -> "{}", "exception" -> s"io.techcode.streamy.stream.StreamException: test${scala.util.Properties.lineSeparator}"
     ))
   }
 
@@ -64,7 +64,7 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
     new StreamException("foobar", state = Some(Json.obj("details" -> "test")), ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
       "message" -> "foobar",
       "state" -> Json.asciiStringify(Json.obj("details" -> "test")),
-      "exception" -> "io.techcode.streamy.stream.StreamException: test\r\n"
+      "exception" -> s"io.techcode.streamy.stream.StreamException: test${scala.util.Properties.lineSeparator}"
     ))
   }
 
