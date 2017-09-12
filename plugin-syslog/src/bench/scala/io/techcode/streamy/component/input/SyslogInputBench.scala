@@ -34,9 +34,10 @@ import play.api.libs.json._
   */
 class SyslogInputBench {
 
-  @Benchmark def benchSimple(): JsObject = {
+  @Benchmark def benchSimpleRFC5424(): JsObject = {
     SyslogInput.createRFC5424(RFC5424Config(
       facility = Some(SyslogInput.Id.Facility),
+      severity = Some(SyslogInput.Id.Severity),
       timestamp = Some(SyslogInput.Id.Timestamp),
       hostname = Some(SyslogInput.Id.Hostname),
       app = Some(SyslogInput.Id.App),
@@ -47,11 +48,11 @@ class SyslogInputBench {
     )).apply(SyslogInputBench.Simple)
   }
 
-  @Benchmark def benchSimpleMessage(): JsObject = {
+  @Benchmark def benchSimpleMessageRFC5424(): JsObject = {
     SyslogInput.createRFC5424(RFC5424Config(message = Some(SyslogInput.Id.Message))).apply(SyslogInputBench.Simple)
   }
 
-  @Benchmark def benchSimpleFailure(): JsObject = {
+  @Benchmark def benchSimpleFailureRFC5424(): JsObject = {
     try {
       SyslogInput.createRFC5424(RFC5424Config()).apply(SyslogInputBench.Failure)
     } catch {
