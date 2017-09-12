@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.stream
 
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.scalatest._
 import play.api.libs.json.Json
 
@@ -31,17 +32,39 @@ import play.api.libs.json.Json
   */
 class StreamExceptionSpec extends FlatSpec with Matchers {
 
+  val generic = new StreamException("foobar")
+
   "StreamException" must "not have a stacktrace" in {
-    new StreamException("foobar").getStackTrace.length should equal(0)
+    generic.getStackTrace.length should equal(0)
   }
 
-  it should "be convert to json without packet" in {
-    new StreamException("foobar").toJson should equal(Json.obj("message" -> "foobar", "packet" -> Json.obj()))
+  it should "be convert to json" in {
+    generic.toJson should equal(Json.obj(
+      "message" -> "foobar",
+      "state" -> "{}",
+      "exception" -> "io.techcode.streamy.stream.StreamException: foobar\r\n"
+    ))
   }
 
-  it should "be concert to json with packet" in {
+  it should "be concert to json with state" in {
     new StreamException("foobar", Some(Json.obj("details" -> "test"))).toJson should equal(Json.obj(
-      "message" -> "foobar", "packet" -> Json.obj("details" -> "test")
+      "message" -> "foobar",
+      "state" -> Json.asciiStringify(Json.obj("details" -> "test")),
+      "exception" -> "io.techcode.streamy.stream.StreamException: foobar\r\n"
+    ))
+  }
+
+  it should "be concert to json with exception" in {
+    new StreamException("foobar", ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
+      "message" -> "foobar", "state" -> "{}", "exception" -> "io.techcode.streamy.stream.StreamException: test\r\n"
+    ))
+  }
+
+  it should "be concert to json with exception and state" in {
+    new StreamException("foobar", state = Some(Json.obj("details" -> "test")), ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
+      "message" -> "foobar",
+      "state" -> Json.asciiStringify(Json.obj("details" -> "test")),
+      "exception" -> "io.techcode.streamy.stream.StreamException: test\r\n"
     ))
   }
 

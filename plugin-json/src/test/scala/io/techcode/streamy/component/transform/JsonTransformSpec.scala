@@ -23,8 +23,7 @@
  */
 package io.techcode.streamy.component.transform
 
-import io.techcode.streamy.component.transform.JsonTransform.{Behaviour, Config}
-import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.component.transform.JsonTransform.Config
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.libs.json._
 
@@ -54,51 +53,10 @@ class JsonTransformSpec extends FlatSpec with Matchers {
     component.apply(input) should equal(Json.obj("message" -> "foobar"))
   }
 
-  it must "transform correctly a packet with a specific target" in {
-    val input = Json.obj("message" -> """{"test":"foobar"}""")
-    val component = new JsonTransform(Config(__ \ "message", Some(__ \ "target")))
-    component.apply(input) should equal(Json.obj(
-      "message" -> """{"test":"foobar"}""",
-      "target" -> Json.obj("test" -> "foobar")
-    ))
-  }
-
-  it must "transform correctly a packet with a specific target and remove source" in {
-    val input = Json.obj("message" -> """{"test":"foobar"}""")
-    val component = new JsonTransform(Config(__ \ "message", Some(__ \ "target"), removeSource = true))
-    component.apply(input) should equal(Json.obj("target" -> Json.obj("test" -> "foobar")))
-  }
-
   it must "fast skip correctly a packet with a wrong source field" in {
     val input = Json.obj("message" -> "foobar")
-    val component = new JsonTransform(Config(__ \ "message", onError = Behaviour.Skip))
+    val component = new JsonTransform(Config(__ \ "message"))
     component.apply(input) should equal(Json.obj("message" -> "foobar"))
-  }
-
-  it must "skip correctly a packet with a wrong source field" in {
-    val input = Json.obj("message" -> "{foobar}")
-    val component = new JsonTransform(Config(__ \ "message", onError = Behaviour.Skip))
-    component.apply(input) should equal(Json.obj("message" -> "{foobar}"))
-  }
-
-  it must "skip correctly a packet with a wrong source field with a specific target" in {
-    val input = Json.obj("message" -> "foobar")
-    val component = new JsonTransform(Config(__ \ "message", Some(__ \ "target"), onError = Behaviour.Skip))
-    component.apply(input) should equal(Json.obj("message" -> "foobar", "target" -> "foobar"))
-  }
-
-  it must "skip correctly a packet with a wrong source field with a specific target and remove source" in {
-    val input = Json.obj("message" -> "foobar")
-    val component = new JsonTransform(Config(__ \ "message", Some(__ \ "target"), removeSource = true, onError = Behaviour.Skip))
-    component.apply(input) should equal(Json.obj("target" -> "foobar"))
-  }
-
-  it must "discard correctly a packet with a wrong source field by throwing an error" in {
-    val input = Json.obj("message" -> "foobar")
-    val component = new JsonTransform(Config(__ \ "message", onError = Behaviour.Discard))
-    assertThrows[StreamException] {
-      component.apply(input)
-    }
   }
 
 }

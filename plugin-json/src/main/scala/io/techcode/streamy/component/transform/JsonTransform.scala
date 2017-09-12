@@ -24,9 +24,10 @@
 package io.techcode.streamy.component.transform
 
 import io.techcode.streamy.component.Transform
-import io.techcode.streamy.component.transform.JsonTransform.Behaviour.Behaviour
-import io.techcode.streamy.component.transform.JsonTransform.{Behaviour, Config}
-import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.component.Transform.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.component.Transform.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.Transform.{ErrorBehaviour, SuccessBehaviour}
+import io.techcode.streamy.component.transform.JsonTransform.Config
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
@@ -35,75 +36,22 @@ import scala.util.{Failure, Success, Try}
 /**
   * Json transform implementation.
   */
-class JsonTransform(config: Config) extends Transform[JsObject, JsObject] {
+class JsonTransform(config: Config) extends Transform[JsObject, JsObject](config) {
 
-  // Attempt to convert a string into a json structure inplace
-  private lazy val sourceInplace: Reads[JsObject] = parseInplace(config.source)
-
-  // Attempt to convert a string into a json structrue from a source path to a target path
-  private lazy val sourceToTarget: Reads[JsObject] = parseInplace(config.source)
-    .andThen(config.target.get.json.copyFrom(config.source.json.pick))
-
-  // Choose right transform function
-  private val function: ((JsObject) => JsObject) = {
-    if (config.target.isEmpty || config.source == config.target.get) {
-      // Parse inplace
-      (pkt: JsObject) => pkt.transform(sourceInplace).get
-    } else {
-      // Parse inplace and then copy to target
-      (pkt: JsObject) => {
-        // Transform target and extract
-        val branch = pkt.transform(sourceToTarget).get
-
-        // Remove source if needed
-        {
-          if (config.removeSource) {
-            pkt.transform(config.source.json.prune).get
-          } else {
-            pkt
-          }
-        }.deepMerge(branch)
-      }
-    }
-  }
-
-  /**
-    * Parse a string field into a json structure.
-    *
-    * @param path path to string field.
-    * @return json structure.
-    */
-  private def parseInplace(path: JsPath): Reads[JsObject] = path.json.update(
-    __.read[String].map(msg =>
+  override def parseInplace(path: JsPath): Reads[JsObject] = path.json.update(
+    of[JsString].map { field =>
       // Try to avoid parsing of wrong json
-      if (msg.startsWith("{") && msg.endsWith("}")) {
+      if (field.value.startsWith("{") && field.value.endsWith("}")) {
         // Try to parse
-        Try(Json.parse(msg)) match {
+        Try(Json.parse(field.value)) match {
           case Success(succ) => succ
-          case Failure(_) => onError(msg)
+          case Failure(_) => onError(state = field)
         }
       } else {
-        onError(msg)
+        onError(state = field)
       }
-    )
-  )
-
-  /**
-    * Handle parsing error by discarding or wrapping or skipping.
-    *
-    * @param msg value of field when error is raised.
-    * @return result json value.
-    */
-  private def onError(msg: String): JsValue = {
-    config.onError match {
-      case Behaviour.Discard =>
-        throw new StreamException("Source field can't be parse as Json", Some(Json.obj("raw" -> msg)))
-      case Behaviour.Skip =>
-        JsString(msg)
     }
-  }
-
-  override def apply(pkt: JsObject): JsObject = function(pkt)
+  )
 
 }
 
@@ -114,16 +62,10 @@ object JsonTransform {
 
   // Component configuration
   case class Config(
-    source: JsPath,
-    target: Option[JsPath] = None,
-    removeSource: Boolean = false,
-    onError: Behaviour = Behaviour.Skip
-  )
-
-  // Behaviour on error
-  object Behaviour extends Enumeration {
-    type Behaviour = Value
-    val Discard, Skip = Value
-  }
+    override val source: JsPath,
+    override val target: Option[JsPath] = None,
+    override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
+    override val onError: ErrorBehaviour = ErrorBehaviour.Skip
+  ) extends Transform.Config(source, target, onSuccess, onError)
 
 }

@@ -21,38 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.stream
-
-import org.apache.commons.lang3.exception.ExceptionUtils
-import play.api.libs.json.{JsObject, JsValue, Json}
-
-import scala.util.control.NoStackTrace
+package io.techcode.streamy.plugin
 
 /**
-  * A stream exception raised when an error occured in a stream.
-  *
-  * @param msg   error message.
-  * @param state current pkt state.
-  * @param ex    parent exception raised.
+  * The PluginLogger class is a modified Logger that add all
+  * logging calls with the name of the plugin doing the logging.
   */
-class StreamException(msg: String, state: Option[JsValue] = None, ex: Option[Throwable] = None) extends RuntimeException(msg) with NoStackTrace {
+class PluginLogger {
 
-  /**
-    * Convert the exception to a json object.
-    *
-    * @return json object.
-    */
-  def toJson: JsObject = Json.obj(
-    "message" -> msg,
-    "exception" -> ExceptionUtils.getStackTrace(ex.getOrElse(this)),
-    "state" -> state.getOrElse[JsValue](StreamException.Empty).toString()
-  )
-
-}
-
-/**
-  * Stream exception companion.
-  */
-private[this] object StreamException {
-  val Empty: JsObject = Json.obj()
 }
