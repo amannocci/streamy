@@ -28,6 +28,10 @@ lazy val commonSettings = Seq(
 lazy val core = (project in file("core"))
   .settings(commonSettings)
 
+lazy val `plugin-fingerprint` = (project in file("plugin-fingerprint"))
+  .settings(commonSettings)
+  .dependsOn(core)
+
 lazy val `plugin-syslog` = (project in file("plugin-syslog"))
   .settings(commonSettings)
   .dependsOn(core)
@@ -38,4 +42,4 @@ lazy val `plugin-json` = (project in file("plugin-json"))
 
 lazy val root = (project in file("."))
   .settings(Seq(publish := {}))
-  .aggregate(core, `plugin-syslog`, `plugin-json`)
+  .aggregate(core, `plugin-fingerprint`, `plugin-syslog`, `plugin-json`)
