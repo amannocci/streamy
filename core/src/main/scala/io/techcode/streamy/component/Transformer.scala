@@ -31,7 +31,7 @@ import play.api.libs.json.JsValue
 /**
   * Abstract transformer implementation that provide a good way to handle errors.
   */
-abstract class Transformer[In, Out](config: Config) extends ((In) => Out) {
+abstract class Transformer[In, Out](config: Config = Transformer.DefaultConfig) extends ((In) => Out) {
 
   /**
     * Handle parsing error by discarding or wrapping or skipping.
@@ -60,8 +60,11 @@ object Transformer {
   // Generic error message
   val GenericErrorMsg = "Transformer failed to apply transformation"
 
+  // Default configuration
+  val DefaultConfig = new Config()
+
   // Component configuration
-  abstract class Config(
+  class Config(
     val onError: ErrorBehaviour = ErrorBehaviour.Skip
   )
 

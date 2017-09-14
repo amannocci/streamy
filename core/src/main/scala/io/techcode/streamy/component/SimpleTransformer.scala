@@ -101,7 +101,7 @@ abstract class SimpleTransformer(config: Config) extends Transformer[JsObject, J
 object SimpleTransformer {
 
   // Component configuration
-  abstract class Config(
+  class Config(
     val source: JsPath,
     val target: Option[JsPath] = None,
     val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
