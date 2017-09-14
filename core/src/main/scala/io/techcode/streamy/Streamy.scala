@@ -68,7 +68,7 @@ object Streamy extends App {
   val conf = system.settings.config.resolve()
 
   // Launch reporter
-  if (!conf.getDuration(ConfigConstants.MetricDelay).isNegative) {
+  if (!conf.getDuration(ConfigConstants.MetricInitialDelay).isNegative) {
     Metrics.reporter(system, log, conf)
   }
 

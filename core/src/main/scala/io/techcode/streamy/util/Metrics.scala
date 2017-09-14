@@ -65,7 +65,7 @@ object Metrics {
     import system.dispatcher
 
     // Schedule report
-    system.scheduler.schedule(conf.getDuration(ConfigConstants.MetricDelay), conf.getDuration(ConfigConstants.MetricInterval), () => {
+    system.scheduler.schedule(conf.getDuration(ConfigConstants.MetricInitialDelay), conf.getDuration(ConfigConstants.MetricInterval), () => {
       // Create a new entry
       val entry: mutable.Map[String, Any] = new mutable.LinkedHashMap[String, Any]
 

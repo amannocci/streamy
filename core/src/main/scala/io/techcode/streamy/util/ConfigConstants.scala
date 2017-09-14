@@ -27,6 +27,6 @@ package io.techcode.streamy.util
   * All configurations constants.
   */
 object ConfigConstants {
-  val MetricDelay = "metric.delay"
+  val MetricInitialDelay = "metric.initialDelay"
   val MetricInterval = "metric.interval"
 }
