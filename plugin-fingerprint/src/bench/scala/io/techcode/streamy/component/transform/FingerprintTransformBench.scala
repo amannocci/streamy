@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.component.transform
 
-import io.techcode.streamy.component.transform.FingerprintTransform.Config
+import io.techcode.streamy.component.transform.FingerprintTransformer.Config
 import org.openjdk.jmh.annotations.Benchmark
 import play.api.libs.json.{JsObject, Json, __}
 
@@ -33,51 +33,51 @@ import play.api.libs.json.{JsObject, Json, __}
 class FingerprintTransformBench {
 
   @Benchmark def benchMd5(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "md5")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "md5")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSha1(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "sha1")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "sha1")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSha256(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "sha256")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "sha256")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSha384(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "sha384")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "sha384")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSha512(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "sha512")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "sha512")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchAlder32(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "alder32")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "alder32")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchCrc32(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "crc32")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "crc32")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchCrc32c(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "crc32c")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "crc32c")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchMurmur3_32(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "murmur3_32")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "murmur3_32")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchMurmur3_128(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "murmur3_128")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "murmur3_128")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSipHash24(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "sipHash24")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "sipHash24")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchFarmHashFingerprint64(): Unit = {
-    new FingerprintTransform(Config(source = __ \ "message", hashing = "farmHashFingerprint64")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = __ \ "message", hashing = "farmHashFingerprint64")).apply(FingerprintTransformBench.Simple)
   }
 
 }

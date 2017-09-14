@@ -26,14 +26,13 @@ package io.techcode.streamy.component.output
 import java.net.InetAddress
 
 import akka.util.{ByteString, ByteStringBuilder}
-import io.techcode.streamy.component.Output
 import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
 import play.api.libs.json.JsObject
 
 /**
   * Syslog RFC3164 output implementation.
   */
-private[output] class SyslogRFC3164Output(config: RFC3164Config) extends Output[JsObject] {
+private[output] class SyslogRFC3164Output(config: RFC3164Config) extends ((JsObject) => ByteString) {
 
   // Default hostname
   private val hostName = InetAddress.getLocalHost.getHostName
@@ -119,7 +118,7 @@ private[output] class SyslogRFC3164Output(config: RFC3164Config) extends Output[
 /**
   * Syslog RFC5424 output implementation.
   */
-private[output] class SyslogRFC5424Output(config: RFC5424Config) extends Output[JsObject] {
+private[output] class SyslogRFC5424Output(config: RFC5424Config) extends ((JsObject) => ByteString) {
 
   override def apply(p: JsObject): ByteString = {
     implicit val pkt: JsObject = p
@@ -268,7 +267,7 @@ object SyslogOutput {
     * @param config output configuration.
     * @return syslog output RCF5424 compilant.
     */
-  def createRFC5424(config: RFC5424Config): Output[JsObject] = new SyslogRFC5424Output(config)
+  def createRFC5424(config: RFC5424Config): ((JsObject) => ByteString) = new SyslogRFC5424Output(config)
 
   /**
     * Create a syslog output RCF3126 compilant.
@@ -276,6 +275,6 @@ object SyslogOutput {
     * @param config output configuration.
     * @return syslog output RCF3126 compilant.
     */
-  def createRFC3164(config: RFC3164Config): Output[JsObject] = new SyslogRFC3164Output(config)
+  def createRFC3164(config: RFC3164Config): ((JsObject) => ByteString) = new SyslogRFC3164Output(config)
 
 }

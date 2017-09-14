@@ -23,24 +23,24 @@
  */
 package io.techcode.streamy.component.transform
 
-import io.techcode.streamy.component.transform.JsonTransform.Config
+import io.techcode.streamy.component.transform.JsonTransformer.Config
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.libs.json._
 
 /**
   * Json transform spec.
   */
-class JsonTransformSpec extends FlatSpec with Matchers {
+class JsonTransformerSpec extends FlatSpec with Matchers {
 
   "Json transform " must "transform correctly a packet inplace" in {
     val input = Json.obj("message" -> """{"message":"foobar"}""")
-    val component = new JsonTransform(Config(__ \ "message"))
+    val component = new JsonTransformer(Config(__ \ "message"))
     component.apply(input) should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
   }
 
   it must "transform correctly a packet with a root target" in {
     val input = Json.obj("message" -> """{"test":"foobar"}""")
-    val component = new JsonTransform(Config(__ \ "message", Some(__)))
+    val component = new JsonTransformer(Config(__ \ "message", Some(__)))
     component.apply(input) should equal(Json.obj(
       "message" -> """{"test":"foobar"}""",
       "test" -> "foobar"
@@ -49,19 +49,19 @@ class JsonTransformSpec extends FlatSpec with Matchers {
 
   it must "transform correctly a packet with a root target equal to an existing field" in {
     val input = Json.obj("message" -> """{"message":"foobar"}""")
-    val component = new JsonTransform(Config(__ \ "message", Some(__)))
+    val component = new JsonTransformer(Config(__ \ "message", Some(__)))
     component.apply(input) should equal(Json.obj("message" -> "foobar"))
   }
 
   it must "fast skip correctly a packet with a wrong source field" in {
     val input = Json.obj("message" -> "foobar")
-    val component = new JsonTransform(Config(__ \ "message"))
+    val component = new JsonTransformer(Config(__ \ "message"))
     component.apply(input) should equal(Json.obj("message" -> "foobar"))
   }
 
   it must "skip correctly a packet with a wrong source field" in {
     val input = Json.obj("message" -> "{foobar}")
-    val component = new JsonTransform(Config(__ \ "message"))
+    val component = new JsonTransformer(Config(__ \ "message"))
     component.apply(input) should equal(Json.obj("message" -> "{foobar}"))
   }
 

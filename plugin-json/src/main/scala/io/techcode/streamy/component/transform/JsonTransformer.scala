@@ -23,11 +23,12 @@
  */
 package io.techcode.streamy.component.transform
 
-import io.techcode.streamy.component.Transform
-import io.techcode.streamy.component.Transform.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.Transform.SuccessBehaviour.SuccessBehaviour
-import io.techcode.streamy.component.Transform.{ErrorBehaviour, SuccessBehaviour}
-import io.techcode.streamy.component.transform.JsonTransform.Config
+import io.techcode.streamy.component.SimpleTransformer
+import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
+import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.Transformer.ErrorBehaviour
+import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.component.transform.JsonTransformer.Config
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
@@ -36,7 +37,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * Json transform implementation.
   */
-class JsonTransform(config: Config) extends Transform[JsObject, JsObject](config) {
+class JsonTransformer(config: Config) extends SimpleTransformer(config) {
 
   override def parseInplace(path: JsPath): Reads[JsObject] = path.json.update(
     of[JsString].map { field =>
@@ -58,7 +59,7 @@ class JsonTransform(config: Config) extends Transform[JsObject, JsObject](config
 /**
   * Json transform companion.
   */
-object JsonTransform {
+object JsonTransformer {
 
   // Component configuration
   case class Config(
@@ -66,6 +67,6 @@ object JsonTransform {
     override val target: Option[JsPath] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip
-  ) extends Transform.Config(source, target, onSuccess, onError)
+  ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
 
 }

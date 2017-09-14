@@ -23,16 +23,17 @@
  */
 package io.techcode.streamy.component
 
-import io.techcode.streamy.component.Transform.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.Transform.SuccessBehaviour.SuccessBehaviour
-import io.techcode.streamy.component.Transform.{Config, ErrorBehaviour, SuccessBehaviour}
-import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.SimpleTransformer.{Config, SuccessBehaviour}
+import io.techcode.streamy.component.Transformer.ErrorBehaviour
+import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import play.api.libs.json._
 
 /**
-  * Trait to mark a transform.
+  * Simple transformer abstract implementation that provide
+  * a convenient way to process an update on json object.
   */
-abstract class Transform[In, Out](config: Config) extends ((In) => Out) {
+abstract class SimpleTransformer(config: Config) extends Transformer[JsObject, JsObject](config) {
 
   // Attempt to convert a string into a json structure inplace
   private lazy val sourceInplace: Reads[JsObject] = parseInplace(config.source)
@@ -92,51 +93,25 @@ abstract class Transform[In, Out](config: Config) extends ((In) => Out) {
     */
   def apply(pkt: JsObject): JsObject = function(pkt)
 
-  /**
-    * Handle parsing error by discarding or wrapping or skipping.
-    *
-    * @param state value of field when error is raised.
-    * @param ex    exception if one is raised.
-    * @return result json value.
-    */
-  def onError(msg: String = Transform.GenericErrorMsg, state: JsValue, ex: Option[Throwable] = None): JsValue = {
-    config.onError match {
-      case ErrorBehaviour.Discard =>
-        throw new StreamException(msg, state = Some(state))
-      case ErrorBehaviour.DiscardAndReport =>
-        throw new StreamException(msg, state = Some(state), ex)
-      case ErrorBehaviour.Skip => state
-    }
-  }
-
 }
 
 /**
-  * Transform companion.
+  * Simple transformer companion.
   */
-object Transform {
-
-  // Generic error message
-  val GenericErrorMsg = "Source field can't be transform"
+object SimpleTransformer {
 
   // Component configuration
   abstract class Config(
     val source: JsPath,
     val target: Option[JsPath] = None,
     val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
-    val onError: ErrorBehaviour = ErrorBehaviour.Skip
-  )
+    override val onError: ErrorBehaviour = ErrorBehaviour.Skip
+  ) extends Transformer.Config(onError)
 
   // Behaviour on error
   object SuccessBehaviour extends Enumeration {
     type SuccessBehaviour = Value
     val Remove, Skip = Value
-  }
-
-  // Behaviour on error
-  object ErrorBehaviour extends Enumeration {
-    type ErrorBehaviour = Value
-    val Discard, DiscardAndReport, Skip = Value
   }
 
 }

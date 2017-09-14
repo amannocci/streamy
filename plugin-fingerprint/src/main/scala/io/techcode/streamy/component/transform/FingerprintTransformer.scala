@@ -26,21 +26,22 @@ package io.techcode.streamy.component.transform
 import java.nio.charset.StandardCharsets
 
 import com.google.common.hash.{HashFunction, Hashing}
-import io.techcode.streamy.component.Transform
-import io.techcode.streamy.component.Transform.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.Transform.SuccessBehaviour.SuccessBehaviour
-import io.techcode.streamy.component.Transform.{ErrorBehaviour, SuccessBehaviour}
-import io.techcode.streamy.component.transform.FingerprintTransform.Config
+import io.techcode.streamy.component.SimpleTransformer
+import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
+import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.Transformer.ErrorBehaviour
+import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.component.transform.FingerprintTransformer.Config
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
 /**
   * Fingerprint transform implementation.
   */
-class FingerprintTransform(config: Config) extends Transform[JsObject, JsObject](config) {
+class FingerprintTransformer(config: Config) extends SimpleTransformer(config) {
 
   // Choose right transform function
-  private val hashFunc: ((String) => String) = FingerprintTransform.Hashings(config.hashing)
+  private val hashFunc: ((String) => String) = FingerprintTransformer.Hashings(config.hashing)
     .hashString(_, StandardCharsets.UTF_8).toString
 
   override def parseInplace(path: JsPath): Reads[JsObject] = path.json
@@ -51,7 +52,7 @@ class FingerprintTransform(config: Config) extends Transform[JsObject, JsObject]
 /**
   * Fingerprint transform companion.
   */
-object FingerprintTransform {
+object FingerprintTransformer {
 
   // All supported hashing
   val Hashings: Map[String, HashFunction] = Map.newBuilder
@@ -76,6 +77,6 @@ object FingerprintTransform {
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
     hashing: String
-  ) extends Transform.Config(source, target, onSuccess, onError)
+  ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
 
 }

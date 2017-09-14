@@ -26,7 +26,6 @@ package io.techcode.streamy.component.input
 import akka.util.ByteString
 import io.techcode.streamy.buffer.ByteBufProcessor._
 import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
-import io.techcode.streamy.component.Input
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
 import io.techcode.streamy.util.JsonUtil
@@ -38,7 +37,7 @@ import scala.collection.mutable
 /**
   * Syslog RFC5424 input implementation.
   */
-private[input] class SyslogRFC5424Input(config: RFC5424Config) extends Input[JsObject] {
+private[input] class SyslogRFC5424Input(config: RFC5424Config) extends ((ByteString) => JsObject) {
 
   override def apply(pkt: ByteString): JsObject = {
     // Grab new buffer
@@ -188,6 +187,6 @@ object SyslogInput {
     * @param config input configuration.
     * @return syslog input RCF5424 compilant.
     */
-  def createRFC5424(config: RFC5424Config): Input[JsObject] = new SyslogRFC5424Input(config)
+  def createRFC5424(config: RFC5424Config): ((ByteString) => JsObject) = new SyslogRFC5424Input(config)
 
 }

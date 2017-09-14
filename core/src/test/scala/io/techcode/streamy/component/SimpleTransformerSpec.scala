@@ -23,9 +23,10 @@
  */
 package io.techcode.streamy.component
 
-import io.techcode.streamy.component.Transform.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.Transform.SuccessBehaviour.SuccessBehaviour
-import io.techcode.streamy.component.Transform.{ErrorBehaviour, SuccessBehaviour}
+import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
+import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.Transformer.ErrorBehaviour
+import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.stream.StreamException
 import org.scalatest._
 import play.api.libs.json.Reads._
@@ -34,9 +35,9 @@ import play.api.libs.json._
 /**
   * Transform spec.
   */
-class TransformSpec extends FlatSpec with Matchers {
+class SimpleTransformerSpec extends FlatSpec with Matchers {
 
-  class Impl(config: ImplConfig) extends Transform[JsObject, JsObject](config) {
+  class Impl(config: ImplConfig) extends SimpleTransformer(config) {
     override def parseInplace(path: JsPath): Reads[JsObject] = path.json.update(
       Reads.of[JsString].map(field => JsString(s"${field.value}bar"))
     )
@@ -48,7 +49,7 @@ class TransformSpec extends FlatSpec with Matchers {
     override val target: Option[JsPath] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip
-  ) extends Transform.Config(source, target, onSuccess, onError)
+  ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
 
   "Impl transform" must "transform correctly a packet inplace" in {
     val input = Json.obj("message" -> "foo")

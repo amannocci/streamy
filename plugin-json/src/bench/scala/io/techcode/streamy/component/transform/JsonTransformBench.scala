@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.component.transform
 
-import io.techcode.streamy.component.transform.JsonTransform.Config
+import io.techcode.streamy.component.transform.JsonTransformer.Config
 import org.openjdk.jmh.annotations.Benchmark
 import play.api.libs.json._
 
@@ -33,17 +33,17 @@ import play.api.libs.json._
 class JsonTransformBench {
 
   @Benchmark def benchSimpleSource(): JsObject = {
-    new JsonTransform(Config(source = __ \ "message"))
+    new JsonTransformer(Config(source = __ \ "message"))
       .apply(Json.obj("message" -> """{"test":"test"}"""))
   }
 
   @Benchmark def benchSimpleSourceAndTarget(): JsObject = {
-    new JsonTransform(Config(source = __ \ "message", target = Some(__ \ "target")))
+    new JsonTransformer(Config(source = __ \ "message", target = Some(__ \ "target")))
       .apply(Json.obj("message" -> """{"test":"test"}"""))
   }
 
   @Benchmark def benchSimpleFailure(): JsObject = {
-    new JsonTransform(Config(source = __ \ "message"))
+    new JsonTransformer(Config(source = __ \ "message"))
       .apply(Json.obj("message" -> "test"))
   }
 
