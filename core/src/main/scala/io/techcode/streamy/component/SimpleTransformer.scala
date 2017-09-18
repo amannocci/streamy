@@ -27,7 +27,10 @@ import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessB
 import io.techcode.streamy.component.SimpleTransformer.{Config, SuccessBehaviour}
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.stream.StreamException
 import play.api.libs.json._
+
+import scala.language.postfixOps
 
 /**
   * Simple transformer abstract implementation that provide
@@ -38,40 +41,27 @@ abstract class SimpleTransformer(config: Config) extends Transformer[JsObject, J
   // Attempt to convert a string into a json structure inplace
   private lazy val sourceInplace: Reads[JsObject] = parseInplace(config.source)
 
-  // Attempt to convert a string into a json structrue from a source path to a target path
+  // Attempt to convert a string into a json structure from a source path to a target path
   private lazy val sourceToTarget: Reads[JsObject] = parseInplace(config.source)
     .andThen(config.target.get.json.copyFrom(config.source.json.pick))
 
   // Choose right transform function
-  private val function: ((JsObject) => JsObject) = {
+  private val function: (JsObject => JsObject) = {
     if (config.target.isEmpty || config.source == config.target.get) {
       // Parse inplace
-      (pkt: JsObject) => {
-        val result = pkt.transform(sourceInplace).asOpt
-        if (result.isDefined) {
-          result.get
-        } else {
-          // An error will be raised if we error handler return everything but a json object
-          onError(state = pkt).as[JsObject]
-        }
-      }
+      (pkt: JsObject) => transform(pkt, sourceInplace)
     } else {
       // Parse inplace and then copy to target
       (pkt: JsObject) => {
-        // Transform target and extract
-        val branch = pkt.transform(sourceToTarget).asOpt
-        if (branch.isDefined) {
-          // Remove source if needed
-          {
+        val result = pkt.transform(sourceToTarget)
+        result match {
+          case succ: JsSuccess[JsObject] =>
             if (config.onSuccess == SuccessBehaviour.Remove) {
-              pkt.transform(config.source.json.prune).get
+              transform(pkt ++ succ.value, config.source.json.prune)
             } else {
-              pkt
+              pkt ++ succ.value
             }
-          }.deepMerge(branch.get)
-        } else {
-          // An error will be raised if we error handler return everything but a json object
-          onError(state = pkt).as[JsObject]
+          case err: JsError => onError(state = pkt, ex = Some(StreamException.create(Transformer.GenericErrorMsg, err)))
         }
       }
     }

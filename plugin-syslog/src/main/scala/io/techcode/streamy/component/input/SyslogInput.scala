@@ -37,7 +37,7 @@ import scala.collection.mutable
 /**
   * Syslog RFC5424 input implementation.
   */
-private[input] class SyslogRFC5424Input(config: RFC5424Config) extends ((ByteString) => JsObject) {
+private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteString => JsObject) {
 
   override def apply(pkt: ByteString): JsObject = {
     // Grab new buffer

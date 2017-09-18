@@ -62,8 +62,8 @@ class SimpleTransformerSpec extends FlatSpec with Matchers {
     val component = new Impl(ImplConfig(__ \ "message", Some(__ \ "target")))
     component.apply(input) should equal(Json.obj(
       "message" -> "foo",
-      "target" -> "foobar")
-    )
+      "target" -> "foobar"
+    ))
   }
 
   it must "transform correctly a packet with a specific target and remove source" in {

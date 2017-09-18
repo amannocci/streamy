@@ -32,7 +32,7 @@ import play.api.libs.json.JsObject
 /**
   * Syslog RFC3164 output implementation.
   */
-private[output] class SyslogRFC3164Output(config: RFC3164Config) extends ((JsObject) => ByteString) {
+private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (JsObject => ByteString) {
 
   // Default hostname
   private val hostName = InetAddress.getLocalHost.getHostName

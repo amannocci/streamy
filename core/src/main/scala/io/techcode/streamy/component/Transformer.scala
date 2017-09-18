@@ -26,7 +26,7 @@ package io.techcode.streamy.component
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.{Config, ErrorBehaviour}
 import io.techcode.streamy.stream.StreamException
-import play.api.libs.json.JsValue
+import play.api.libs.json._
 
 /**
   * Abstract transformer implementation that provide a good way to handle errors.
@@ -40,13 +40,28 @@ abstract class Transformer[In, Out](config: Config = Transformer.DefaultConfig) 
     * @param ex    exception if one is raised.
     * @return result json value.
     */
-  def onError(msg: String = Transformer.GenericErrorMsg, state: JsValue, ex: Option[Throwable] = None): JsValue = {
+  def onError[T <: JsValue](msg: String = Transformer.GenericErrorMsg, state: T, ex: Option[Throwable] = None): T = {
     config.onError match {
       case ErrorBehaviour.Discard =>
         throw new StreamException(msg, state = Some(state))
       case ErrorBehaviour.DiscardAndReport =>
         throw new StreamException(msg, state = Some(state), ex)
       case ErrorBehaviour.Skip => state
+    }
+  }
+
+  /**
+    * Attempt to transform an incoming packet.
+    *
+    * @param pkt       packet involved.
+    * @param processor transformation processor.
+    * @return packet transformed.
+    */
+  def transform(pkt: JsObject, processor: Reads[JsObject]): JsObject = {
+    val result = pkt.transform(processor)
+    result match {
+      case succ: JsSuccess[JsObject] => succ.value
+      case err: JsError => onError(state = pkt, ex = Some(StreamException.create(Transformer.GenericErrorMsg, err)))
     }
   }
 

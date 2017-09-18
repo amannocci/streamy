@@ -32,7 +32,7 @@ import play.api.libs.json._
   */
 class JsonTransformerSpec extends FlatSpec with Matchers {
 
-  "Json transform " must "transform correctly a packet inplace" in {
+  "Json transformer" must "transform correctly a packet inplace" in {
     val input = Json.obj("message" -> """{"message":"foobar"}""")
     val component = new JsonTransformer(Config(__ \ "message"))
     component.apply(input) should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
