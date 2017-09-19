@@ -46,78 +46,61 @@ object ByteBufProcessor {
   /**
     * Aborts on a NUL ('0x00').
     */
-  val FindNul = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != 0
-  }
+  val FindNul: ByteBufProcessor = (value: Byte) => value != 0
 
   /**
     * Aborts on a non NUL ('0x00').
     */
-  val FindNonNul = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value == 0
-  }
+  val FindNonNul: ByteBufProcessor = (value: Byte) => value == 0
 
   /**
     * Aborts on a CR ('\r').
     */
-  val FindCR = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != '\r'
-  }
+  val FindCR: ByteBufProcessor = (value: Byte) => value != '\r'
 
   /**
     * Aborts on a non CR ('\r').
     */
-  val FindNonCR = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value == '\r'
-  }
+  val FindNonCR: ByteBufProcessor = (value: Byte) => value == '\r'
 
   /**
     * Aborts on a Lf ('\n').
     */
-  val FindLf = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != '\n'
-  }
+  val FindLf: ByteBufProcessor = (value: Byte) => value != '\n'
 
   /**
     * Aborts on a non Lf ('\n').
     */
-  val FindNonLf = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value == '\n'
-  }
+  val FindNonLf: ByteBufProcessor = (value: Byte) => value == '\n'
 
   /**
     * Aborts on a Space (' ').
     */
-  val FindSpace = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != ' '
-  }
+  val FindSpace: ByteBufProcessor = (value: Byte) => value != ' '
+
+  /**
+    * Aborts on a semi colon (':').
+    */
+  val FindSemiColon: ByteBufProcessor = (value: Byte) => value != ':'
 
   /**
     * Aborts on an open bracket ('[').
     */
-  val FindOpenBracket = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != '['
-  }
+  val FindOpenBracket: ByteBufProcessor = (value: Byte) => value != '['
 
   /**
     * Aborts on a close bracket (']').
     */
-  val FindCloseBracket = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != ']'
-  }
+  val FindCloseBracket: ByteBufProcessor = (value: Byte) => value != ']'
 
   /**
     * Aborts on an open quote ('<').
     */
-  val FindOpenQuote = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != '<'
-  }
+  val FindOpenQuote: ByteBufProcessor = (value: Byte) => value != '<'
 
   /**
     * Aborts on a close quote ('>').
     */
-  val FindCloseQuote = new ByteBufProcessor {
-    override def process(value: Byte): Boolean = value != '>'
-  }
+  val FindCloseQuote: ByteBufProcessor = (value: Byte) => value != '>'
 
 }
