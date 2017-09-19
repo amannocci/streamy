@@ -46,7 +46,7 @@ class JsonTransformer(config: Config) extends SimpleTransformer(config) {
         // Try to parse
         Try(Json.parse(field.value)) match {
           case Success(succ) => succ
-          case Failure(_) => onError(state = field)
+          case Failure(ex) => onError(state = field, ex = Some(ex))
         }
       } else {
         onError(state = field)
