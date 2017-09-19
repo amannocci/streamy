@@ -29,7 +29,7 @@ import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
 import io.techcode.streamy.util.JsonUtil
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.{JsObject, JsString, Json}
 
 import scala.collection.mutable
 
@@ -145,7 +145,7 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     */
   private def expect(buf: ByteBuf, ch: Char): Unit = {
     if (buf.readByte != ch) {
-      throw new StreamException(s"Expected $ch at index ${buf.readerIndex}", Some(Json.obj("raw" -> buf.toString)))
+      throw new StreamException(s"Expected $ch at index ${buf.readerIndex}", Some(JsString(buf.toString)))
     }
   }
 
