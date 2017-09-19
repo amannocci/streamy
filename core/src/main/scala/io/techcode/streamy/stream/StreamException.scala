@@ -24,7 +24,7 @@
 package io.techcode.streamy.stream
 
 import org.apache.commons.lang3.exception.ExceptionUtils
-import play.api.libs.json.{JsError, JsObject, JsValue, Json}
+import play.api.libs.json._
 
 import scala.util.control.NoStackTrace
 
@@ -42,11 +42,17 @@ class StreamException(msg: String, state: Option[JsValue] = None, ex: Option[Thr
     *
     * @return json object.
     */
-  def toJson: JsObject = Json.obj(
-    "message" -> msg,
-    "exception" -> ExceptionUtils.getStackTrace(ex.getOrElse(this)),
-    "state" -> state.getOrElse[JsValue](StreamException.Empty).toString()
-  )
+  def toJson: JsObject = {
+    val stateMsg = state match {
+      case Some(value: JsString) => value.value
+      case _ => state.getOrElse[JsValue](StreamException.Empty).toString()
+    }
+    Json.obj(
+      "message" -> msg,
+      "exception" -> ExceptionUtils.getStackTrace(ex.getOrElse(this)),
+      "state" -> stateMsg
+    )
+  }
 
 }
 

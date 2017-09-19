@@ -24,7 +24,7 @@
 package io.techcode.streamy.stream
 
 import org.scalatest._
-import play.api.libs.json.{JsError, Json}
+import play.api.libs.json.{JsError, JsString, Json}
 
 /**
   * Stream exception spec.
@@ -49,6 +49,14 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
     new StreamException("foobar", Some(Json.obj("details" -> "test"))).toJson should equal(Json.obj(
       "message" -> "foobar",
       "state" -> Json.asciiStringify(Json.obj("details" -> "test")),
+      "exception" -> s"io.techcode.streamy.stream.StreamException: foobar${scala.util.Properties.lineSeparator}"
+    ))
+  }
+
+  it should "be convert to json with string state" in {
+    new StreamException("foobar", Some(JsString("test"))).toJson should equal(Json.obj(
+      "message" -> "foobar",
+      "state" -> "test",
       "exception" -> s"io.techcode.streamy.stream.StreamException: foobar${scala.util.Properties.lineSeparator}"
     ))
   }
