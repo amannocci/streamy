@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.stream
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import play.api.libs.json._
 
@@ -49,7 +50,7 @@ class StreamException(msg: String, state: Option[JsValue] = None, ex: Option[Thr
     }
     Json.obj(
       "message" -> msg,
-      "exception" -> ExceptionUtils.getStackTrace(ex.getOrElse(this)),
+      "exception" -> ex.map(ExceptionUtils.getStackTrace).getOrElse[String](StringUtils.EMPTY),
       "state" -> stateMsg
     )
   }

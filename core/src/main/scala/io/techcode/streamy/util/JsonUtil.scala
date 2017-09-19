@@ -23,7 +23,9 @@
  */
 package io.techcode.streamy.util
 
+import org.apache.commons.lang3.StringUtils
 import play.api.libs.json._
+
 import scala.collection.mutable
 import scala.language.implicitConversions
 
@@ -83,7 +85,7 @@ object JsonUtil {
     *
     * @return json object with doc notation.
     */
-  def flatten(js: JsValue, prefix: String = ""): JsObject = js.as[JsObject].fields.foldLeft(Json.obj()) {
+  def flatten(js: JsValue, prefix: String = StringUtils.EMPTY): JsObject = js.as[JsObject].fields.foldLeft(Json.obj()) {
     case (acc, (k, v: JsObject)) =>
       if (prefix.isEmpty) {
         acc.deepMerge(flatten(v, k))

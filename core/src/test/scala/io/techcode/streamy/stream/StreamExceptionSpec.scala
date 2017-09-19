@@ -41,7 +41,7 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
     generic.toJson should equal(Json.obj(
       "message" -> "foobar",
       "state" -> "{}",
-      "exception" -> s"io.techcode.streamy.stream.StreamException: foobar${scala.util.Properties.lineSeparator}"
+      "exception" -> ""
     ))
   }
 
@@ -49,7 +49,7 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
     new StreamException("foobar", Some(Json.obj("details" -> "test"))).toJson should equal(Json.obj(
       "message" -> "foobar",
       "state" -> Json.asciiStringify(Json.obj("details" -> "test")),
-      "exception" -> s"io.techcode.streamy.stream.StreamException: foobar${scala.util.Properties.lineSeparator}"
+      "exception" -> ""
     ))
   }
 
@@ -57,7 +57,7 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
     new StreamException("foobar", Some(JsString("test"))).toJson should equal(Json.obj(
       "message" -> "foobar",
       "state" -> "test",
-      "exception" -> s"io.techcode.streamy.stream.StreamException: foobar${scala.util.Properties.lineSeparator}"
+      "exception" -> ""
     ))
   }
 
@@ -78,7 +78,7 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
   it should "be create from json error" in {
     StreamException.create(msg = "test", JsError("error")).toJson should equal(Json.obj(
       "message" -> "test",
-      "exception" -> s"io.techcode.streamy.stream.StreamException: test${scala.util.Properties.lineSeparator}",
+      "exception" -> "",
       "state" -> "{\"obj\":[{\"msg\":[\"error\"],\"args\":[]}]}"
     ))
   }
