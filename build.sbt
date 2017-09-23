@@ -1,12 +1,16 @@
 import sbt.Keys.{libraryDependencies, publishTo, scalacOptions}
 
 lazy val scalaTestVersion = "3.0.1"
+lazy val mockitoVersion = "2.10.0"
 
 lazy val commonSettings = Seq(
   name := "streamy",
   version := "0.1.0-SNAPSHOT",
   scalaVersion := "2.12.3",
-  libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion % "test"),
+  libraryDependencies ++= Seq(
+    "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
+    "org.mockito" % "mockito-core" % mockitoVersion % Test
+  ),
   organization := "io.techcode.streamy",
   publishTo := {
     val nexus = "https://nexus.techcode.io/"
