@@ -18,7 +18,7 @@ It is fully free and fully open source. The license is MIT, meaning you are pret
 The following steps will ensure your project is cloned properly.
 1. git clone https://github.com/amannocci/streamy
 2. cd streamy
-3. ./scripts/install-hooks.sh
+3. chmod +x ./scripts/setup-project.sh && ./scripts/setup-project.sh
 
 ## Features
 * Coming soon
