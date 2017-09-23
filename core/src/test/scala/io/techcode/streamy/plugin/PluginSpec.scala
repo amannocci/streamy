@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.plugin
 
-import akka.actor.{ActorSystem, Kill, Props}
+import akka.actor.{ActorRef, ActorSystem, Kill, Props}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
@@ -44,7 +44,19 @@ class PluginSpec extends FlatSpec with Matchers with MockitoSugar {
 
   implicit val materializer: Materializer = ActorMaterializer(ActorMaterializerSettings(system))
 
-  "Plugin" can "be started and stopped" in {
+  "Plugin" can "be started" in {
+    newPlugin()
+  }
+
+  it can "be stopped" in {
+    newPlugin() ! Kill
+  }
+
+  it can "not receive message by default" in {
+    newPlugin() ! "test"
+  }
+
+  private def newPlugin(): ActorRef = {
     val conf: Config = ConfigFactory.empty()
     val description: PluginDescription = PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
     val typed: Class[_] = classOf[Impl]
