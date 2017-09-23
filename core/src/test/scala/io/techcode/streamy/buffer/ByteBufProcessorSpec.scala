@@ -75,4 +75,8 @@ class ByteBufProcessorSpec extends FlatSpec with Matchers {
     ByteBufProcessor.FindCloseQuote.process('>') should be(false)
   }
 
+  it must "be able to detect a semi colon" in {
+    ByteBufProcessor.FindSemiColon.process(':') should be(false)
+  }
+
 }
