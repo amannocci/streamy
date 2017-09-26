@@ -30,6 +30,12 @@ import play.api.libs.json._
 
 /**
   * Syslog output bench.
+  *
+  * Benchmark                                                    Mode  Cnt        Score      Error  Units
+  * i.t.s.c.output.SyslogOutputBench.benchSimpleMessageRFC3164  thrpt  200  1174470,547 ± 4150,416  ops/s
+  * i.t.s.c.output.SyslogOutputBench.benchSimpleMessageRFC5424  thrpt  200  1417185,753 ± 4276,020  ops/s
+  * i.t.s.c.output.SyslogOutputBench.benchSimpleRFC3164         thrpt  200  1259505,547 ± 7281,476  ops/s
+  * i.t.s.c.output.SyslogOutputBench.benchSimpleRFC5424         thrpt  200  1070430,041 ± 3007,258  ops/s
   */
 class SyslogOutputBench {
 
@@ -74,6 +80,7 @@ private[this] object SyslogOutputBench {
     SyslogOutput.Id.Severity -> 2,
     SyslogOutput.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
     SyslogOutput.Id.Hostname -> "mymachine.example.com",
+    SyslogOutput.Id.App -> "streamy",
     SyslogOutput.Id.Proc -> "77042",
     SyslogOutput.Id.MsgId -> "ID47",
     SyslogOutput.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"

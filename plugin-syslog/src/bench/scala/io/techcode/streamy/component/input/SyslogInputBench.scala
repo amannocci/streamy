@@ -31,6 +31,11 @@ import play.api.libs.json._
 
 /**
   * Syslog input bench.
+  *
+  * Benchmark                                                    Mode  Cnt        Score       Error  Units
+  * i.t.s.c.input.SyslogInputBench.benchSimpleFailureRFC5424    thrpt  200  1901373,090 ± 14922,741  ops/s
+  * i.t.s.c.input.SyslogInputBench.benchSimpleMessageRFC5424    thrpt  200  2316509,137 ±  8539,845  ops/s
+  * i.t.s.c.input.SyslogInputBench.benchSimpleRFC5424           thrpt  200   774565,181 ±  5865,947  ops/s
   */
 class SyslogInputBench {
 

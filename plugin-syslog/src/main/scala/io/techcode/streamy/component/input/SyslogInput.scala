@@ -29,7 +29,7 @@ import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
 import io.techcode.streamy.util.JsonUtil
-import play.api.libs.json.{JsObject, JsString, Json}
+import play.api.libs.json.{JsObject, JsString}
 
 import scala.collection.mutable
 

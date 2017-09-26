@@ -27,46 +27,46 @@ import java.net.InetAddress
 
 import akka.util.{ByteString, ByteStringBuilder}
 import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
-import play.api.libs.json.JsObject
+import io.techcode.streamy.util.JsonUtil
+import org.apache.commons.lang3.StringUtils
+import play.api.libs.json.Reads._
+import play.api.libs.json._
 
 /**
   * Syslog RFC3164 output implementation.
   */
 private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (JsObject => ByteString) {
 
-  // Default hostname
-  private val hostName = InetAddress.getLocalHost.getHostName
-
   override def apply(p: JsObject): ByteString = {
     implicit val pkt: JsObject = p
-    implicit val buf: ByteStringBuilder = ByteString.createBuilder
+    implicit val buf: ByteStringBuilder = ByteString.newBuilder
 
     // Add PRIVAL
     buf.putByte(SyslogOutput.Inf)
-    populatePrival(config.facility, config.severity)
+    SyslogOutput.populatePrival(config.facility, config.severity)
     buf.putByte(SyslogOutput.Sup)
 
     // Add timestamp
-    populate(config.timestamp, SyslogOutput.DateStamp)
+    SyslogOutput.populate(config.timestamp, SyslogOutput.DateStamp)
     buf.putByte(SyslogOutput.Space)
 
     // Add hostname
-    populate(config.hostname, hostName)
+    SyslogOutput.populate(config.hostname, SyslogOutput.HostName)
     buf.putByte(SyslogOutput.Space)
 
     // Add app name
-    populate(config.app, SyslogOutput.App)
+    SyslogOutput.populate(config.app, SyslogOutput.App)
 
     // Add proc id
     buf.putByte(SyslogOutput.OpenBracket)
-    populate(config.proc, SyslogOutput.Proc)
+    SyslogOutput.populate(config.proc, SyslogOutput.Proc)
     buf.putByte(SyslogOutput.CloseBracket)
 
     // Add message
     if (config.message.isDefined) {
       buf.putByte(SyslogOutput.SemiColon)
       buf.putByte(SyslogOutput.Space)
-      buf.putBytes((pkt \ config.message.get).as[String].getBytes)
+      buf.putBytes(JsonUtil.asOpt[String](pkt \ config.message.get).getOrElse(StringUtils.EMPTY).getBytes)
     }
     buf.putByte(SyslogOutput.NewLine)
 
@@ -74,51 +74,12 @@ private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (JsObje
     buf.result()
   }
 
-  /**
-    * Populate data part to format syslog message.
-    *
-    * @param conf         name of the field.
-    * @param defaultValue default value.
-    * @param pkt          packet involved.
-    * @param buf          bytestring builder involved.
-    */
-  private def populate(conf: Option[String], defaultValue: String)(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
-    if (conf.isDefined) {
-      buf.putBytes((pkt \ conf.get).asOpt[String].getOrElse(defaultValue).getBytes)
-    } else {
-      buf.putBytes(defaultValue.getBytes)
-    }
-  }
-
-  /**
-    * Populate data part to format syslog message.
-    *
-    * @param facilityConf configuration for facility.
-    * @param severityConf configuration for severity.
-    * @param pkt          packet involved.
-    * @param buf          bytestring builder involved.
-    */
-  private def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
-    var prival = 0
-    if (severityConf.isDefined) {
-      prival = (pkt \ severityConf.get).asOpt[Int].getOrElse(SyslogOutput.Facility)
-    } else {
-      prival = SyslogOutput.Severity
-    }
-    if (facilityConf.isDefined) {
-      prival += (pkt \ facilityConf.get).asOpt[Int].getOrElse(SyslogOutput.Facility) << 3
-    } else {
-      prival += SyslogOutput.Facility << 3
-    }
-    buf.putBytes(prival.toString.getBytes())
-  }
-
 }
 
 /**
   * Syslog RFC5424 output implementation.
   */
-private[output] class SyslogRFC5424Output(config: RFC5424Config) extends ((JsObject) => ByteString) {
+private[output] class SyslogRFC5424Output(config: RFC5424Config) extends (JsObject => ByteString) {
 
   override def apply(p: JsObject): ByteString = {
     implicit val pkt: JsObject = p
@@ -126,30 +87,30 @@ private[output] class SyslogRFC5424Output(config: RFC5424Config) extends ((JsObj
 
     // Add PRIVAL
     buf.putByte(SyslogOutput.Inf)
-    populatePrival(config.facility, config.severity)
+    SyslogOutput.populatePrival(config.facility, config.severity)
     buf.putByte(SyslogOutput.Sup)
 
     // Add version
     buf.putBytes(SyslogOutput.Version.getBytes())
 
     // Add timestamp
-    populate(config.timestamp, SyslogOutput.Date)
+    SyslogOutput.populate(config.timestamp, SyslogOutput.Date)
     buf.putByte(SyslogOutput.Space)
 
     // Add hostname
-    populate(config.hostname, SyslogOutput.Nil)
+    SyslogOutput.populate(config.hostname, SyslogOutput.Nil)
     buf.putByte(SyslogOutput.Space)
 
     // Add app name
-    populate(config.app, SyslogOutput.Nil)
+    SyslogOutput.populate(config.app, SyslogOutput.Nil)
     buf.putByte(SyslogOutput.Space)
 
     // Add proc id
-    populate(config.proc, SyslogOutput.Nil)
+    SyslogOutput.populate(config.proc, SyslogOutput.Nil)
     buf.putByte(SyslogOutput.Space)
 
     // Add message id
-    populate(config.msgId, SyslogOutput.Nil)
+    SyslogOutput.populate(config.msgId, SyslogOutput.Nil)
     buf.putByte(SyslogOutput.Space)
 
     // Skip structured data
@@ -158,50 +119,11 @@ private[output] class SyslogRFC5424Output(config: RFC5424Config) extends ((JsObj
     // Add message
     if (config.message.isDefined) {
       buf.putByte(SyslogOutput.Space)
-      buf.putBytes((pkt \ config.message.get).as[String].getBytes)
+      buf.putBytes(JsonUtil.asOpt[String](pkt \ config.message.get).getOrElse(StringUtils.EMPTY).getBytes)
     }
 
     // Build result
     buf.result()
-  }
-
-  /**
-    * Populate data part to format syslog message.
-    *
-    * @param facilityConf configuration for facility.
-    * @param severityConf configuration for severity.
-    * @param pkt          packet involved.
-    * @param buf          bytestring builder involved.
-    */
-  private def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
-    var prival = 0
-    if (severityConf.isDefined) {
-      prival = (pkt \ severityConf.get).asOpt[Int].getOrElse(SyslogOutput.Facility)
-    } else {
-      prival = SyslogOutput.Severity
-    }
-    if (facilityConf.isDefined) {
-      prival += (pkt \ facilityConf.get).asOpt[Int].getOrElse(SyslogOutput.Facility) << 3
-    } else {
-      prival += SyslogOutput.Facility << 3
-    }
-    buf.putBytes(prival.toString.getBytes())
-  }
-
-  /**
-    * Populate data part to format syslog message.
-    *
-    * @param conf         name of the field.
-    * @param defaultValue default value.
-    * @param pkt          packet involved.
-    * @param buf          bytestring builder involved.
-    */
-  private def populate(conf: Option[String], defaultValue: String)(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
-    if (conf.isDefined) {
-      buf.putBytes((pkt \ conf.get).asOpt[String].getOrElse(defaultValue).getBytes)
-    } else {
-      buf.putBytes(defaultValue.getBytes)
-    }
   }
 
 }
@@ -239,6 +161,9 @@ object SyslogOutput {
   val CloseBracket: Byte = ']'
   val Version: String = "1 "
 
+  // Default hostname
+  val HostName: String = InetAddress.getLocalHost.getHostName
+
   // Component configuration
   case class RFC5424Config(
     facility: Option[String] = None,
@@ -262,12 +187,48 @@ object SyslogOutput {
   )
 
   /**
+    * Populate data part to format syslog message.
+    *
+    * @param conf         name of the field.
+    * @param defaultValue default value.
+    * @param pkt          packet involved.
+    * @param buf          bytestring builder involved.
+    */
+  private[output] def populate(conf: Option[String], defaultValue: String)(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
+    conf match {
+      case Some(key) => buf.putBytes(JsonUtil.asOpt[String](pkt \ key).getOrElse(defaultValue).getBytes())
+      case None => buf.putBytes(defaultValue.getBytes())
+    }
+  }
+
+  /**
+    * Populate data part to format syslog message.
+    *
+    * @param facilityConf configuration for facility.
+    * @param severityConf configuration for severity.
+    * @param pkt          packet involved.
+    * @param buf          bytestring builder involved.
+    */
+  private[output] def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
+    var prival = 0
+    severityConf match {
+      case Some(severityKey) => prival = JsonUtil.asOpt[Int](pkt \ severityKey).getOrElse(SyslogOutput.Facility)
+      case None => prival = SyslogOutput.Severity
+    }
+    facilityConf match {
+      case Some(facilityKey) => prival += JsonUtil.asOpt[Int](pkt \ facilityKey).getOrElse(SyslogOutput.Facility) << 3
+      case None => prival += SyslogOutput.Facility << 3
+    }
+    buf.putBytes(prival.toString.getBytes)
+  }
+
+  /**
     * Create a syslog output RCF5424 compilant.
     *
     * @param config output configuration.
     * @return syslog output RCF5424 compilant.
     */
-  def createRFC5424(config: RFC5424Config): ((JsObject) => ByteString) = new SyslogRFC5424Output(config)
+  def createRFC5424(config: RFC5424Config): (JsObject => ByteString) = new SyslogRFC5424Output(config)
 
   /**
     * Create a syslog output RCF3126 compilant.
@@ -275,6 +236,6 @@ object SyslogOutput {
     * @param config output configuration.
     * @return syslog output RCF3126 compilant.
     */
-  def createRFC3164(config: RFC3164Config): ((JsObject) => ByteString) = new SyslogRFC3164Output(config)
+  def createRFC3164(config: RFC3164Config): (JsObject => ByteString) = new SyslogRFC3164Output(config)
 
 }
