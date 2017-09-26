@@ -59,6 +59,17 @@ object JsonUtil {
   }
 
   /**
+    * Tries to convert the node into T.
+    *
+    * @param lookup lookup result.
+    * @return option jsvalue.
+    */
+  def asOpt[T](lookup: JsLookupResult)(implicit fjs: Reads[T]): Option[T] = lookup match {
+    case _: JsUndefined => None
+    case value: JsDefined => value.asOpt[T]
+  }
+
+  /**
     * Convert a map to json.
     *
     * @param map map with any values.

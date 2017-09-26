@@ -96,4 +96,16 @@ class JsonUtilSpec extends FlatSpec with Matchers {
     ))
   }
 
+  it must "convert a lookup to option when valid" in {
+    JsonUtil.asOpt[String](Json.parse("""{"test":"test"}""") \ "test") should equal(Some("test"))
+  }
+
+  it must "convert a lookup to option when miss" in {
+    JsonUtil.asOpt[String](Json.parse("""{"test":"test"}""") \ "miss") should equal(None)
+  }
+
+  it must "convert a lookup to option when invalid" in {
+    JsonUtil.asOpt[Int](Json.parse("""{"test":"test"}""") \ "test") should equal(None)
+  }
+
 }
