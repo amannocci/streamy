@@ -7,6 +7,7 @@
 *Streamy is a tool for managing events and logs. You can use it to collect logs, parse them, and store them for later use.
 It is fully free and fully open source. The license is MIT, meaning you are pretty much free to use it however you want in whatever way.*
 * [Source](https://github.com/amannocci/streamy)
+* [Documentation](https://streamy.techcode.io/)
 * [Issues](https://github.com/amannocci/streamy/issues)
 * [Contact](mailto:adrien.mannocci@gmail.com)
 
