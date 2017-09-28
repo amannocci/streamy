@@ -16,4 +16,4 @@
 * [FAQ](/docs/faq/README.md)
   * [Performance](/docs/faq/Performance.md)
 * [Troubleshooting](/docs/Troubleshooting.md)
-* [Change Log](/CHANGELOG.md)
+* [Change Log](../CHANGELOG.md)
