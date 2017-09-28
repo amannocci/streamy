@@ -1,19 +1,24 @@
-# Table of Contents
+# Streamy
+[![Build Status](https://travis-ci.org/amannocci/streamy.svg?branch=master)](https://travis-ci.org/amannocci/streamy)
+[![codecov](https://codecov.io/gh/amannocci/streamy/branch/master/graph/badge.svg)](https://codecov.io/gh/amannocci/streamy)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-* [Read Me](/README.md)
-* [Introduction](/docs/introduction/README.md)
-  * [Motivation](/docs/introduction/Motivation.md)
-  * [Core Concepts](/docs/introduction/CoreConcepts.md)
-  * [Prior Art](/docs/introduction/PriorArt.md)
-  * [Ecosystem](/docs/introduction/Ecosystem.md)
-  * [Examples](/docs/introduction/Examples.md)
-* [Plugins](/docs/plugins/README.md)
-  * [Json](/docs/plugins/Json.md)
-  * [Fingerprint](/docs/plugins/Fingerprint.md)
-  * [Syslog](/docs/plugins/Syslog.md)
-* [Recipes](/docs/recipes/README.md)
-  * [Migrating to Streamy](/docs/recipes/MigratingToStreamy.md)
-* [FAQ](/docs/faq/README.md)
-  * [Performance](/docs/faq/Performance.md)
-* [Troubleshooting](/docs/Troubleshooting.md)
-* [Change Log](/CHANGELOG.md)
+**Currently not stable and under heavy development!**  
+*Streamy is a tool for managing events and logs. You can use it to collect logs, parse them, and store them for later use.
+It is fully free and fully open source. The license is MIT, meaning you are pretty much free to use it however you want in whatever way.*
+* [Source](https://github.com/amannocci/streamy)
+* [Issues](https://github.com/amannocci/streamy/issues)
+* [Contact](mailto:adrien.mannocci@gmail.com)
+
+## Prerequisites
+* [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+* [Sbt](http://www.scala-sbt.org/)
+
+## Clone
+The following steps will ensure your project is cloned properly.
+1. git clone https://github.com/amannocci/streamy
+2. cd streamy
+3. chmod +x ./scripts/setup-project.sh && ./scripts/setup-project.sh
+
+## Features
+* Coming soon
