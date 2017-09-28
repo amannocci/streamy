@@ -1,6 +1,6 @@
-# Table of Contents
+# Summary
 
-* [Read Me](../README.md)
+* [Read Me](README.md)
 * [Introduction](/docs/introduction/README.md)
   * [Motivation](/docs/introduction/Motivation.md)
   * [Core Concepts](/docs/introduction/CoreConcepts.md)
@@ -17,3 +17,4 @@
   * [Performance](/docs/faq/Performance.md)
 * [Troubleshooting](/docs/Troubleshooting.md)
 * [Change Log](../CHANGELOG.md)
+
