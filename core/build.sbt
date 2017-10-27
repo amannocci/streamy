@@ -3,7 +3,7 @@ name := name.value + "-core"
 maintainer := "Adrien Mannocci <adrien.mannocci@gmail.com>"
 
 // Dependencies version
-lazy val akkaVersion = "2.5.4"
+lazy val akkaVersion = "2.5.6"
 lazy val playVersion = "2.6.6"
 lazy val logbackVersion = "1.2.3"
 lazy val logbackContribVersion = "0.3.0"
