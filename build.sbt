@@ -6,7 +6,7 @@ lazy val mockitoVersion = "2.10.0"
 lazy val commonSettings = Seq(
   name := "streamy",
   version := "0.1.0-SNAPSHOT",
-  scalaVersion := "2.12.3",
+  scalaVersion := "2.12.4",
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test
