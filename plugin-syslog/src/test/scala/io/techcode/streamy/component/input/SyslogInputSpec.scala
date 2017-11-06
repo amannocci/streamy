@@ -35,7 +35,7 @@ import play.api.libs.json.Json
 class SyslogInputSpec extends FlatSpec with Matchers {
 
   "Syslog RFC5424 input" must "handle correctly simple syslog message" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureAll)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureAll)
     val result = input.apply(SyslogInputSpec.Simple)
     (result \ SyslogInput.Id.Facility).get  should equal (Json.toJson(4))
     (result \ SyslogInput.Id.Severity).get  should equal (Json.toJson(2))
@@ -49,70 +49,70 @@ class SyslogInputSpec extends FlatSpec with Matchers {
   }
 
   it must "capture only facility when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureFacility)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureFacility)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.Facility).get  should equal (Json.toJson(4))
   }
 
   it must "capture only severity when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureSeverity)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureSeverity)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.Severity).get  should equal (Json.toJson(2))
   }
 
   it must "capture only timestamp when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureTimestamp)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureTimestamp)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.Timestamp).get  should equal (Json.toJson("2003-10-11T22:14:15.003Z"))
   }
 
   it must "capture only hostname when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureHostname)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureHostname)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.Hostname).get  should equal (Json.toJson("mymachine.example.com"))
   }
 
   it must "capture only app when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureApp)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureApp)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.App).get  should equal (Json.toJson("su"))
   }
 
   it must "capture only proc when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureProc)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureProc)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.Proc).get  should equal (Json.toJson("77042"))
   }
 
   it must "capture only msg when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureMsg)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureMsg)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.MsgId).get  should equal (Json.toJson("ID47"))
   }
 
   it must "capture only struct data when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureStructData)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureStructData)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.StructData).get  should equal (Json.toJson("""sigSig ver="1""""))
   }
 
   it must "capture only message when set" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureMessage)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureMessage)
     val result = input.apply(SyslogInputSpec.Simple)
     result.fields.size should equal (1)
     (result \ SyslogInput.Id.Message).get  should equal (Json.toJson("'su root' failed for lonvick on /dev/pts/8"))
   }
 
   it must "throw an error when syslog message is malformed" in {
-    val input = SyslogInput.createRFC5424(SyslogInputSpec.CaptureAll)
+    val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureAll)
     assertThrows[StreamException] {
       input.apply(SyslogInputSpec.Malformed)
     }

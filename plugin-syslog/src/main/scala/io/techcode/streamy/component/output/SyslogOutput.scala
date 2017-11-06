@@ -83,7 +83,7 @@ private[output] class SyslogRFC5424Output(config: RFC5424Config) extends (JsObje
 
   override def apply(p: JsObject): ByteString = {
     implicit val pkt: JsObject = p
-    implicit val buf: ByteStringBuilder = ByteString.createBuilder
+    implicit val buf: ByteStringBuilder = ByteString.newBuilder
 
     // Add PRIVAL
     buf.putByte(SyslogOutput.Inf)
@@ -228,7 +228,7 @@ object SyslogOutput {
     * @param config output configuration.
     * @return syslog output RCF5424 compilant.
     */
-  def createRFC5424(config: RFC5424Config): (JsObject => ByteString) = new SyslogRFC5424Output(config)
+  def rfc5424(config: RFC5424Config): JsObject => ByteString = new SyslogRFC5424Output(config)
 
   /**
     * Create a syslog output RCF3126 compilant.
@@ -236,6 +236,6 @@ object SyslogOutput {
     * @param config output configuration.
     * @return syslog output RCF3126 compilant.
     */
-  def createRFC3164(config: RFC3164Config): (JsObject => ByteString) = new SyslogRFC3164Output(config)
+  def rfc3164(config: RFC3164Config): JsObject => ByteString = new SyslogRFC3164Output(config)
 
 }

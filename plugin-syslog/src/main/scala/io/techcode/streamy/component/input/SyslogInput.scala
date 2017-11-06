@@ -187,6 +187,6 @@ object SyslogInput {
     * @param config input configuration.
     * @return syslog input RCF5424 compilant.
     */
-  def createRFC5424(config: RFC5424Config): ((ByteString) => JsObject) = new SyslogRFC5424Input(config)
+  def rfc5424(config: RFC5424Config): ByteString => JsObject = new SyslogRFC5424Input(config)
 
 }

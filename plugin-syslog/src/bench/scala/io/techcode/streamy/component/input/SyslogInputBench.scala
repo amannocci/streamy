@@ -39,27 +39,16 @@ import play.api.libs.json._
   */
 class SyslogInputBench {
 
-  @Benchmark def benchSimpleRFC5424(): JsObject = {
-    SyslogInput.createRFC5424(RFC5424Config(
-      facility = Some(SyslogInput.Id.Facility),
-      severity = Some(SyslogInput.Id.Severity),
-      timestamp = Some(SyslogInput.Id.Timestamp),
-      hostname = Some(SyslogInput.Id.Hostname),
-      app = Some(SyslogInput.Id.App),
-      proc = Some(SyslogInput.Id.Proc),
-      msgId = Some(SyslogInput.Id.MsgId),
-      structData = Some(SyslogInput.Id.StructData),
-      message = Some(SyslogInput.Id.Message)
-    )).apply(SyslogInputBench.Simple)
-  }
+  @Benchmark def benchSimpleRFC5424(): JsObject =
+    SyslogInputBench.SimpleRFC5424.apply(SyslogInputBench.Simple)
 
-  @Benchmark def benchSimpleMessageRFC5424(): JsObject = {
-    SyslogInput.createRFC5424(RFC5424Config(message = Some(SyslogInput.Id.Message))).apply(SyslogInputBench.Simple)
-  }
+
+  @Benchmark def benchSimpleMessageRFC5424(): JsObject =
+    SyslogInputBench.SimpleMessageRFC5424.apply(SyslogInputBench.Simple)
 
   @Benchmark def benchSimpleFailureRFC5424(): JsObject = {
     try {
-      SyslogInput.createRFC5424(RFC5424Config()).apply(SyslogInputBench.Failure)
+      SyslogInputBench.SimpleFailureRFC5424.apply(SyslogInputBench.Failure)
     } catch {
       case _: StreamException => Json.obj()
     }
@@ -68,6 +57,25 @@ class SyslogInputBench {
 }
 
 private[this] object SyslogInputBench {
+
   val Simple = ByteString("""<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
+
   val Failure = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
+
+  val SimpleRFC5424: ByteString => JsObject = SyslogInput.rfc5424(RFC5424Config(
+    facility = Some(SyslogInput.Id.Facility),
+    severity = Some(SyslogInput.Id.Severity),
+    timestamp = Some(SyslogInput.Id.Timestamp),
+    hostname = Some(SyslogInput.Id.Hostname),
+    app = Some(SyslogInput.Id.App),
+    proc = Some(SyslogInput.Id.Proc),
+    msgId = Some(SyslogInput.Id.MsgId),
+    structData = Some(SyslogInput.Id.StructData),
+    message = Some(SyslogInput.Id.Message)
+  ))
+
+  val SimpleMessageRFC5424: ByteString => JsObject = SyslogInput.rfc5424(RFC5424Config(message = Some(SyslogInput.Id.Message)))
+
+  val SimpleFailureRFC5424: ByteString => JsObject = SyslogInput.rfc5424(RFC5424Config())
+
 }

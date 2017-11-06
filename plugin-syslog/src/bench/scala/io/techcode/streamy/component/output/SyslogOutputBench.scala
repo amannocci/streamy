@@ -39,42 +39,23 @@ import play.api.libs.json._
   */
 class SyslogOutputBench {
 
-  @Benchmark def benchSimpleRFC5424(): ByteString = {
-    SyslogOutput.createRFC5424(RFC5424Config(
-      facility = Some(SyslogOutput.Id.Facility),
-      severity = Some(SyslogOutput.Id.Severity),
-      timestamp = Some(SyslogOutput.Id.Timestamp),
-      hostname = Some(SyslogOutput.Id.Hostname),
-      app = Some(SyslogOutput.Id.App),
-      proc = Some(SyslogOutput.Id.Proc),
-      msgId = Some(SyslogOutput.Id.MsgId),
-      message = Some(SyslogOutput.Id.Message)
-    )).apply(SyslogOutputBench.Simple)
-  }
+  @Benchmark def benchSimpleRFC5424(): ByteString =
+    SyslogOutputBench.SimpleRFC5424.apply(SyslogOutputBench.Simple)
 
-  @Benchmark def benchSimpleMessageRFC5424(): ByteString = {
-    SyslogOutput.createRFC5424(RFC5424Config(message = Some(SyslogOutput.Id.Message))).apply(SyslogOutputBench.Simple)
-  }
+  @Benchmark def benchSimpleMessageRFC5424(): ByteString =
+    SyslogOutputBench.SimpleMessageRFC5424.apply(SyslogOutputBench.Simple)
 
-  @Benchmark def benchSimpleRFC3164(): ByteString = {
-    SyslogOutput.createRFC3164(RFC3164Config(
-      facility = Some(SyslogOutput.Id.Facility),
-      severity = Some(SyslogOutput.Id.Severity),
-      timestamp = Some(SyslogOutput.Id.Timestamp),
-      hostname = Some(SyslogOutput.Id.Hostname),
-      app = Some(SyslogOutput.Id.App),
-      proc = Some(SyslogOutput.Id.Proc),
-      message = Some(SyslogOutput.Id.Message)
-    )).apply(SyslogOutputBench.Simple)
-  }
+  @Benchmark def benchSimpleRFC3164(): ByteString =
+    SyslogOutputBench.SimpleRFC3164.apply(SyslogOutputBench.Simple)
 
   @Benchmark def benchSimpleMessageRFC3164(): ByteString = {
-    SyslogOutput.createRFC3164(RFC3164Config(message = Some(SyslogOutput.Id.Message))).apply(SyslogOutputBench.Simple)
+    SyslogOutputBench.SimpleMessageRFC3164.apply(SyslogOutputBench.Simple)
   }
 
 }
 
 private[this] object SyslogOutputBench {
+
   val Simple: JsObject = Json.obj(
     SyslogOutput.Id.Facility -> 4,
     SyslogOutput.Id.Severity -> 2,
@@ -85,4 +66,33 @@ private[this] object SyslogOutputBench {
     SyslogOutput.Id.MsgId -> "ID47",
     SyslogOutput.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
   )
+
+  val SimpleRFC5424: JsObject => ByteString = SyslogOutput.rfc5424(RFC5424Config(
+    facility = Some(SyslogOutput.Id.Facility),
+    severity = Some(SyslogOutput.Id.Severity),
+    timestamp = Some(SyslogOutput.Id.Timestamp),
+    hostname = Some(SyslogOutput.Id.Hostname),
+    app = Some(SyslogOutput.Id.App),
+    proc = Some(SyslogOutput.Id.Proc),
+    msgId = Some(SyslogOutput.Id.MsgId),
+    message = Some(SyslogOutput.Id.Message)
+  ))
+
+  val SimpleMessageRFC5424: JsObject => ByteString =
+    SyslogOutput.rfc5424(RFC5424Config(message = Some(SyslogOutput.Id.Message)))
+
+  val SimpleRFC3164: JsObject => ByteString =
+    SyslogOutput.rfc3164(RFC3164Config(
+      facility = Some(SyslogOutput.Id.Facility),
+      severity = Some(SyslogOutput.Id.Severity),
+      timestamp = Some(SyslogOutput.Id.Timestamp),
+      hostname = Some(SyslogOutput.Id.Hostname),
+      app = Some(SyslogOutput.Id.App),
+      proc = Some(SyslogOutput.Id.Proc),
+      message = Some(SyslogOutput.Id.Message)
+    ))
+
+  val SimpleMessageRFC3164: JsObject => ByteString =
+    SyslogOutput.rfc3164(RFC3164Config(message = Some(SyslogOutput.Id.Message)))
+
 }
