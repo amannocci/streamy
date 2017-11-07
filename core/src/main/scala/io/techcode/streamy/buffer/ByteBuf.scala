@@ -91,10 +91,9 @@ class ByteBuf(private var buf: ByteString) {
     * @param processor byte buf processor.
     * @return decoded string from bytebuf.
     */
-  def readString(processor: ByteBufProcessor): String = {
+  def readString(processor: ByteBufProcessor): String =
     // Compact method is invoke implicitly
     readBytes(processor).buf.utf8String
-  }
 
   /**
     * Gets an int at the current readerIndex and increases the readerIndex by n in this buffer.
@@ -103,17 +102,14 @@ class ByteBuf(private var buf: ByteString) {
     * @param processor byte buf processor.
     * @return decoded integer from bytebuf.
     */
-  def readDigit(processor: ByteBufProcessor): Int = {
+  def readDigit(processor: ByteBufProcessor): Int =
     // Compact method is invoke implicitly
     readString(processor).toInt
-  }
 
   /**
     * Returns a slice of this buffer's readable bytes.
     */
-  def slice(): ByteString = {
-    buf.slice(_readerIndex, buf.length)
-  }
+  def slice(): ByteString = buf.slice(_readerIndex, buf.length)
 
   /**
     * Returns the number of readable bytes which is equal to (length - readerIndex)
@@ -127,53 +123,42 @@ class ByteBuf(private var buf: ByteString) {
     *
     * @throws IndexOutOfBoundsException if readableBytes is less than 1.
     */
-  def readByte: Byte = {
-    readOrGetByte(updateIndex = true)
-  }
+  def readByte: Byte = readOrGetByte(updateIndex = true)
 
   /**
     * Gets a byte at the current readerIndex in this buffer.
     *
     * @throws IndexOutOfBoundsException if readableBytes is less than 1.
     */
-  def getByte: Byte = {
-    readOrGetByte(updateIndex = false)
-  }
+  def getByte: Byte = readOrGetByte(updateIndex = false)
 
   /**
     * Skip a byte at the current readerIndex and increases the readerIndex by 1 in this buffer.
     */
-  def skipByte(): Unit = {
-    _readerIndex += 1
-  }
+  def skipByte(): Unit = _readerIndex += 1
 
   /**
     * Gets an int at the current readerIndex and increases the readerIndex by 4 in this buffer.
     *
     * @throws IndexOutOfBoundsException if readableBytes is less than 4.
     */
-  def readInt(): Int = {
-    readOrGetInt(updateIndex = true)
-  }
+  def readInt(): Int = readOrGetInt(updateIndex = true)
+
 
   /**
     * Gets an int at the current readerIndex in this buffer.
     *
     * @throws IndexOutOfBoundsException if readableBytes is less than 4.
     */
-  def getInt: Int = {
-    readOrGetInt(updateIndex = false)
-  }
+  def getInt: Int = readOrGetInt(updateIndex = false)
 
   /**
     * Skip an int at the current readerIndex and increases the readerIndex by 1 in this buffer.
     */
-  def skipInt(): Unit = {
-    _readerIndex += 4
-  }
+  def skipInt(): Unit = _readerIndex += 4
 
   override def toString: String =
-    // Compact is called implicitly
+  // Compact is called implicitly
     slice().utf8String
 
   @inline private def readOrGetInt(updateIndex: Boolean): Int = {
@@ -210,6 +195,8 @@ class ByteBuf(private var buf: ByteString) {
   */
 object ByteBuf {
 
+  import scala.language.implicitConversions
+
   /**
     * Create a new bytebuf based on given bytestring.
     *
@@ -217,5 +204,13 @@ object ByteBuf {
     * @return newly created bytebuf.
     */
   def apply(buf: ByteString): ByteBuf = new ByteBuf(buf)
+
+  /**
+    * Implicit conversion from bytestring to bytebuf.
+    *
+    * @param x bytestring to wrap.
+    * @return bytebuf.
+    */
+  implicit def byteString2byteBuf(x: ByteString): ByteBuf = ByteBuf(x)
 
 }
