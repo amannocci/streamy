@@ -14,6 +14,7 @@ cd ${BASE_PROJECT}
 if [ $? -ne 0 ]
 then
   error "The project isn't valid"
+  exit 1
 else
   info "The project is valid"
 fi
