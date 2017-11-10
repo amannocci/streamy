@@ -31,7 +31,7 @@ import play.api.libs.json._
 /**
   * Abstract transformer implementation that provide a good way to handle errors.
   */
-abstract class Transformer[In, Out](config: Config = Transformer.DefaultConfig) extends ((In) => Out) {
+abstract class Transformer[In, Out](config: Config = Transformer.DefaultConfig) extends (In => Out) {
 
   /**
     * Handle parsing error by discarding or wrapping or skipping.
