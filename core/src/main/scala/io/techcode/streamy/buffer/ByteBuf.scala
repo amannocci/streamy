@@ -51,6 +51,16 @@ class ByteBuf(private var buf: ByteString) {
   }
 
   /**
+    * Returns true if a byte can be read, otherwise false.
+    */
+  def isReadable: Boolean = readableBytes() > 0
+
+  /**
+    * Returns true if and only if this buffer contains equal to or more than the specified number of elements.
+    */
+  def isReadable(size: Int): Boolean = size < readableBytes()
+
+  /**
     * Returns the readerIndex of this buffer.
     */
   def readerIndex: Int = _readerIndex

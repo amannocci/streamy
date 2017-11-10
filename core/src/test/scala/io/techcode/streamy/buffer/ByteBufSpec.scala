@@ -154,11 +154,41 @@ class ByteBufSpec extends FlatSpec with Matchers {
       byteBuf.readInt()
     }
   }
+
   it should "be convertible to string" in {
     val input = ByteString("foobar")
     val byteBuf = new ByteBuf(input)
     byteBuf.skipByte()
     byteBuf.toString should equal("oobar")
+  }
+
+  it should "be implicitly created" in {
+    val input = ByteString("foobar")
+    val byteBuf: ByteBuf = input
+  }
+
+  it should "return true if we can read bytes" in {
+    val input = ByteString("foobar")
+    val byteBuf: ByteBuf = input
+    byteBuf.isReadable should equal(true)
+  }
+
+  it should "return false if we can't read bytes" in {
+    val input = ByteString.empty
+    val byteBuf: ByteBuf = input
+    byteBuf.isReadable should equal(false)
+  }
+
+  it should "return true if we can read n bytes" in {
+    val input = ByteString("12")
+    val byteBuf: ByteBuf = input
+    byteBuf.isReadable(2) should equal(false)
+  }
+
+  it should "return false if we can't read n bytes" in {
+    val input = ByteString.empty
+    val byteBuf: ByteBuf = input
+    byteBuf.isReadable(2) should equal(false)
   }
 
 }
