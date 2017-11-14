@@ -23,9 +23,9 @@
  */
 package io.techcode.streamy.stream
 
-import org.apache.commons.lang3.StringUtils
+import io.circe._
+import io.techcode.streamy.util.JsonUtil._
 import org.apache.commons.lang3.exception.ExceptionUtils
-import play.api.libs.json._
 
 import scala.util.control.NoStackTrace
 
@@ -36,42 +36,22 @@ import scala.util.control.NoStackTrace
   * @param state current pkt state.
   * @param ex    parent exception raised.
   */
-class StreamException(msg: String, state: Option[JsValue] = None, ex: Option[Throwable] = None) extends RuntimeException(msg) with NoStackTrace {
+class StreamException(msg: String, state: Option[Json] = None, ex: Option[Throwable] = None) extends RuntimeException(msg) with NoStackTrace {
 
   /**
     * Convert the exception to a json object.
     *
     * @return json object.
     */
-  def toJson: JsObject = {
-    val stateMsg = state match {
-      case Some(value: JsString) => value.value
-      case _ => state.getOrElse[JsValue](StreamException.Empty).toString()
+  def toJson: Json = {
+    var result: JsonObject = JsonObject.singleton("message", msg)
+    if (state.isDefined) {
+      result = result.add("state", state.get)
     }
-    Json.obj(
-      "message" -> msg,
-      "exception" -> ex.map(ExceptionUtils.getStackTrace).getOrElse[String](StringUtils.EMPTY),
-      "state" -> stateMsg
-    )
+    if (ex.isDefined) {
+      result = result.add("exception", ExceptionUtils.getStackTrace(ex.get))
+    }
+    Json.fromJsonObject(result)
   }
-
-}
-
-/**
-  * Stream exception companion.
-  */
-object StreamException {
-
-  // Empty json object
-  private val Empty: JsObject = Json.obj()
-
-  /**
-    * Create a stream exception based on Json error.
-    *
-    * @param msg reason message.
-    * @param err json error involved.
-    * @return stream exception.
-    */
-  def create(msg: String, err: JsError): StreamException = new StreamException(msg, state = Some(JsError.toJson(err)))
 
 }

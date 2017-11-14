@@ -24,12 +24,13 @@
 package io.techcode.streamy.component.input
 
 import akka.util.ByteString
+import io.circe.Json
 import io.techcode.streamy.buffer.ByteBufProcessor._
 import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
 import io.techcode.streamy.util.JsonUtil
-import play.api.libs.json.{JsObject, JsString}
+import io.techcode.streamy.util.JsonUtil._
 
 import scala.collection.mutable
 
@@ -37,9 +38,9 @@ import scala.collection.mutable
 /**
   * Syslog RFC5424 input implementation.
   */
-private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteString => JsObject) {
+private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteString => Json) {
 
-  override def apply(pkt: ByteString): JsObject = {
+  override def apply(pkt: ByteString): Json = {
     // Grab new buffer
     val buf: ByteBuf = new ByteBuf(pkt)
 
@@ -78,7 +79,7 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     }
 
     // Split header and message
-    JsonUtil.toJson(mapping)
+    JsonUtil.fromMap(mapping)
   }
 
   /**
@@ -145,7 +146,7 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     */
   private def expect(buf: ByteBuf, ch: Char): Unit = {
     if (buf.readByte != ch) {
-      throw new StreamException(s"Expected $ch at index ${buf.readerIndex}", Some(JsString(buf.toString)))
+      throw new StreamException(s"Expected $ch at index ${buf.readerIndex}", Some(buf.toString))
     }
   }
 
@@ -187,6 +188,6 @@ object SyslogInput {
     * @param config input configuration.
     * @return syslog input RCF5424 compilant.
     */
-  def rfc5424(config: RFC5424Config): ByteString => JsObject = new SyslogRFC5424Input(config)
+  def rfc5424(config: RFC5424Config): ByteString => Json = new SyslogRFC5424Input(config)
 
 }

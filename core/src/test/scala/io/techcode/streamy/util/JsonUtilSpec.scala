@@ -23,8 +23,9 @@
  */
 package io.techcode.streamy.util
 
+import io.circe._
+import io.techcode.streamy.util.JsonUtil._
 import org.scalatest._
-import play.api.libs.json.{JsNull, Json}
 
 import scala.collection.mutable
 
@@ -34,11 +35,11 @@ import scala.collection.mutable
 class JsonUtilSpec extends FlatSpec with Matchers {
 
   "JsonUtil" must "return correct size for an int" in {
-    JsonUtil.size(Json.toJson(4)) should equal(1)
+    JsonUtil.size(4) should equal(1)
   }
 
   it must "return correct size for a float" in {
-    JsonUtil.size(Json.toJson(2.0)) should equal(3)
+    JsonUtil.size(2.0) should equal(3)
   }
 
   it must "return correct size for an object" in {
@@ -46,8 +47,8 @@ class JsonUtilSpec extends FlatSpec with Matchers {
   }
 
   it must "return correct size for a boolean" in {
-    JsonUtil.size(Json.toJson(true)) should equal(4)
-    JsonUtil.size(Json.toJson(false)) should equal(5)
+    JsonUtil.size(Json.True) should equal(4)
+    JsonUtil.size(Json.False) should equal(5)
   }
 
   it must "return correct size for an array" in {
@@ -55,11 +56,11 @@ class JsonUtilSpec extends FlatSpec with Matchers {
   }
 
   it must "return correct size for a null" in {
-    JsonUtil.size(JsNull) should equal(4)
+    JsonUtil.size(Json.Null) should equal(4)
   }
 
   it must "return correct size for a string" in {
-    JsonUtil.size(Json.toJson("test")) should equal(6) // "test"
+    JsonUtil.size("test") should equal(6) // "test"
   }
 
   it must "flatten correctly a json object" in {
@@ -76,8 +77,32 @@ class JsonUtilSpec extends FlatSpec with Matchers {
     ))
   }
 
-  it must "provide a shortcut to convert json object in string" in {
-    JsonUtil.asString(Json.obj("test" -> "test")) should equal("""{"test":"test"}""")
+  it must "provide a shortcut to convert json in string" in {
+    JsonUtil.jsonToString(Json.obj("test" -> "test")) should equal("""{"test":"test"}""")
+  }
+
+  it must "provide a shortcut to convert string in json" in {
+    JsonUtil.stringToJson("""{"test":"test"}""") should equal(Json.fromString("""{"test":"test"}"""))
+  }
+
+  it must "provide a shortcut to convert float in json" in {
+    JsonUtil.floatToJson(2.0F) should equal(Json.fromFloatOrNull(2.0F))
+  }
+
+  it must "provide a shortcut to convert double in json" in {
+    JsonUtil.doubleToJson(2.0D) should equal(Json.fromDoubleOrNull(2.0D))
+  }
+
+  it must "provide a shortcut to convert int in json" in {
+    JsonUtil.intToJson(2) should equal(Json.fromInt(2))
+  }
+
+  it must "provide a shortcut to convert long in json" in {
+    JsonUtil.longToJson(2L) should equal(Json.fromLong(2L))
+  }
+
+  it must "provide a shortcut to convert boolean in json" in {
+    JsonUtil.booleanToJson(true) should equal(Json.fromBoolean(true))
   }
 
   it must "convert correctly a map to json object" in {
@@ -87,25 +112,13 @@ class JsonUtilSpec extends FlatSpec with Matchers {
     map.put("long", 10L)
     map.put("float", 1.0F)
     map.put("double", 1.0D)
-    JsonUtil.toJson(map) should equal(Json.obj(
+    JsonUtil.fromMap(map) should equal(Json.obj(
       "string" -> "string",
       "int" -> 10,
       "long" -> 10L,
       "float" -> 1.0F,
       "double" -> 1.0D
     ))
-  }
-
-  it must "convert a lookup to option when valid" in {
-    JsonUtil.asOpt[String](Json.parse("""{"test":"test"}""") \ "test") should equal(Some("test"))
-  }
-
-  it must "convert a lookup to option when miss" in {
-    JsonUtil.asOpt[String](Json.parse("""{"test":"test"}""") \ "miss") should equal(None)
-  }
-
-  it must "convert a lookup to option when invalid" in {
-    JsonUtil.asOpt[Int](Json.parse("""{"test":"test"}""") \ "test") should equal(None)
   }
 
 }

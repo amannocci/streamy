@@ -23,8 +23,8 @@
  */
 package io.techcode.streamy.util
 
+import io.circe._
 import org.apache.commons.lang3.StringUtils
-import play.api.libs.json._
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -46,27 +46,20 @@ object JsonUtil {
     * @param el element to evaluate.
     * @return size of the element.
     */
-  def size(el: JsValue): Long = {
-    el match {
-      case x: JsObject => 1 + x.keys.map(_.length + 2).sum + x.values.map(size).sum + (x.value.size * 2) // {"element": $el}
-      case x: JsString => x.value.length + 2 // "element"
-      case x: JsArray => x.value.map(size).sum + 1 + x.value.size // ["element", 1, 1.0]
-      case x: JsNumber => x.value.toString().length // 2.0
-      case JsTrue => TrueLength
-      case JsFalse => FalseLength
-      case JsNull => NullLength
+  def size(el: Json): Long = {
+    if (el.isObject) {
+      el.asObject.map(x => 1 + x.fields.map(_.length + 2).sum + x.values.map(size).sum + (x.values.size * 2)).get // {"element": $el}
+    } else if (el.isArray) {
+      el.asArray.map(x => x.map(size).sum + 1 + x.size).get // ["element", 1, 1.0]
+    } else if (el.isBoolean) {
+      el.asBoolean.map(x => if (x) TrueLength else FalseLength).get
+    } else if (el.isNull) {
+      NullLength
+    } else if (el.isNumber) {
+      el.asNumber.map(x => x.toString.length).get // 2.0
+    } else {
+      el.asString.map(x => x.length + 2).get // "element"
     }
-  }
-
-  /**
-    * Tries to convert the node into T.
-    *
-    * @param lookup lookup result.
-    * @return option jsvalue.
-    */
-  def asOpt[T](lookup: JsLookupResult)(implicit fjs: Reads[T]): Option[T] = lookup match {
-    case _: JsUndefined => None
-    case value: JsDefined => value.asOpt[T]
   }
 
   /**
@@ -75,12 +68,12 @@ object JsonUtil {
     * @param map map with any values.
     * @return json object.
     */
-  def toJson(map: mutable.Map[String, Any]): JsObject = JsObject(map.mapValues[JsValue] {
-    case value: Int => Json.toJson[Int](value)
-    case value: Long => Json.toJson[Long](value)
-    case value: Double => Json.toJson[Double](value)
-    case value: Float => Json.toJson[Float](value)
-    case value => JsString(value.toString)
+  def fromMap(map: mutable.Map[String, Any]): Json = Json.fromFields(map.mapValues[Json] {
+    case value: Int => Json.fromInt(value)
+    case value: Long => Json.fromLong(value)
+    case value: Double => Json.fromDoubleOrNull(value)
+    case value: Float => Json.fromFloatOrNull(value)
+    case value => Json.fromString(value.toString)
   })
 
   /**
@@ -89,25 +82,75 @@ object JsonUtil {
     * @param value js value.
     * @return string.
     */
-  implicit def asString(value: JsValue): String = value.toString()
+  implicit def jsonToString(value: Json): String = value.noSpaces
+
+  /**
+    * Convert a string to json value.
+    *
+    * @param value string value.
+    * @return json.
+    */
+  implicit def stringToJson(value: String): Json = Json.fromString(value)
+
+  /**
+    * Convert a float to json value.
+    *
+    * @param value float value.
+    * @return json.
+    */
+  implicit def floatToJson(value: Float): Json = Json.fromFloatOrNull(value)
+
+  /**
+    * Convert a double to json value.
+    *
+    * @param value double value.
+    * @return json.
+    */
+  implicit def doubleToJson(value: Double): Json = Json.fromDoubleOrNull(value)
+
+  /**
+    * Convert a int to json value.
+    *
+    * @param value int value.
+    * @return json.
+    */
+  implicit def intToJson(value: Int): Json = Json.fromInt(value)
+
+  /**
+    * Convert a long to json value.
+    *
+    * @param value long value.
+    * @return json.
+    */
+  implicit def longToJson(value: Long): Json = Json.fromLong(value)
+
+  /**
+    * Convert a boolean to json value.
+    *
+    * @param value boolean value.
+    * @return json.
+    */
+  implicit def booleanToJson(value: Boolean): Json = Json.fromBoolean(value)
 
   /**
     * Convert a json object to dot notation.
     *
     * @return json object with doc notation.
     */
-  def flatten(js: JsValue, prefix: String = StringUtils.EMPTY): JsObject = js.as[JsObject].fields.foldLeft(Json.obj()) {
-    case (acc, (k, v: JsObject)) =>
-      if (prefix.isEmpty) {
-        acc.deepMerge(flatten(v, k))
+  def flatten(js: Json, prefix: String = StringUtils.EMPTY): Json = js.asObject.get.toVector.foldLeft(Json.obj()) {
+    case (acc, (k, v: Json)) =>
+      if (v.isObject) {
+        if (prefix.isEmpty) {
+          acc.deepMerge(flatten(v, k))
+        } else {
+          acc.deepMerge(flatten(v, s"$prefix.$k"))
+        }
       } else {
-        acc.deepMerge(flatten(v, s"$prefix.$k"))
-      }
-    case (acc, (k, v)) =>
-      if (prefix.isEmpty) {
-        acc + (k -> v)
-      } else {
-        acc + (s"$prefix.$k" -> v)
+        if (prefix.isEmpty) {
+          Json.fromJsonObject(acc.asObject.get.add(k, v))
+        } else {
+          Json.fromJsonObject(acc.asObject.get.add(s"$prefix.$k", v))
+        }
       }
   }
 

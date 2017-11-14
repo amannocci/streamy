@@ -26,19 +26,19 @@ package io.techcode.streamy.component.output
 import java.net.InetAddress
 
 import akka.util.{ByteString, ByteStringBuilder}
+import gnieh.diffson.Pointer._
+import gnieh.diffson.circe._
+import io.circe.Json
 import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
-import io.techcode.streamy.util.JsonUtil
 import org.apache.commons.lang3.StringUtils
-import play.api.libs.json.Reads._
-import play.api.libs.json._
 
 /**
   * Syslog RFC3164 output implementation.
   */
-private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (JsObject => ByteString) {
+private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (Json => ByteString) {
 
-  override def apply(p: JsObject): ByteString = {
-    implicit val pkt: JsObject = p
+  override def apply(p: Json): ByteString = {
+    implicit val pkt: Json = p
     implicit val buf: ByteStringBuilder = ByteString.newBuilder
 
     // Add PRIVAL
@@ -66,7 +66,7 @@ private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (JsObje
     if (config.message.isDefined) {
       buf.putByte(SyslogOutput.SemiColon)
       buf.putByte(SyslogOutput.Space)
-      buf.putBytes(JsonUtil.asOpt[String](pkt \ config.message.get).getOrElse(StringUtils.EMPTY).getBytes)
+      buf.putBytes(pointer.evaluate(pkt, root / config.message.get).asString.getOrElse(StringUtils.EMPTY).getBytes)
     }
     buf.putByte(SyslogOutput.NewLine)
 
@@ -79,10 +79,10 @@ private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (JsObje
 /**
   * Syslog RFC5424 output implementation.
   */
-private[output] class SyslogRFC5424Output(config: RFC5424Config) extends (JsObject => ByteString) {
+private[output] class SyslogRFC5424Output(config: RFC5424Config) extends (Json => ByteString) {
 
-  override def apply(p: JsObject): ByteString = {
-    implicit val pkt: JsObject = p
+  override def apply(p: Json): ByteString = {
+    implicit val pkt: Json = p
     implicit val buf: ByteStringBuilder = ByteString.newBuilder
 
     // Add PRIVAL
@@ -119,7 +119,7 @@ private[output] class SyslogRFC5424Output(config: RFC5424Config) extends (JsObje
     // Add message
     if (config.message.isDefined) {
       buf.putByte(SyslogOutput.Space)
-      buf.putBytes(JsonUtil.asOpt[String](pkt \ config.message.get).getOrElse(StringUtils.EMPTY).getBytes)
+      buf.putBytes(pointer.evaluate(pkt, root / config.message.get).asString.getOrElse(StringUtils.EMPTY).getBytes)
     }
 
     // Build result
@@ -194,9 +194,9 @@ object SyslogOutput {
     * @param pkt          packet involved.
     * @param buf          bytestring builder involved.
     */
-  private[output] def populate(conf: Option[String], defaultValue: String)(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
+  private[output] def populate(conf: Option[String], defaultValue: String)(implicit pkt: Json, buf: ByteStringBuilder): Unit = {
     conf match {
-      case Some(key) => buf.putBytes(JsonUtil.asOpt[String](pkt \ key).getOrElse(defaultValue).getBytes())
+      case Some(key) => buf.putBytes(pointer.evaluate(pkt, root / key).asString.getOrElse(defaultValue).getBytes())
       case None => buf.putBytes(defaultValue.getBytes())
     }
   }
@@ -209,14 +209,14 @@ object SyslogOutput {
     * @param pkt          packet involved.
     * @param buf          bytestring builder involved.
     */
-  private[output] def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: JsObject, buf: ByteStringBuilder): Unit = {
+  private[output] def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: Json, buf: ByteStringBuilder): Unit = {
     var prival = 0
     severityConf match {
-      case Some(severityKey) => prival = JsonUtil.asOpt[Int](pkt \ severityKey).getOrElse(SyslogOutput.Facility)
+      case Some(severityKey) => prival = pointer.evaluate(pkt, root / severityKey).asNumber.flatMap(_.toInt).getOrElse(SyslogOutput.Facility)
       case None => prival = SyslogOutput.Severity
     }
     facilityConf match {
-      case Some(facilityKey) => prival += JsonUtil.asOpt[Int](pkt \ facilityKey).getOrElse(SyslogOutput.Facility) << 3
+      case Some(facilityKey) => prival += pointer.evaluate(pkt, root / facilityKey).asNumber.flatMap(_.toInt).getOrElse(SyslogOutput.Facility) << 3
       case None => prival += SyslogOutput.Facility << 3
     }
     buf.putBytes(prival.toString.getBytes)
@@ -228,7 +228,7 @@ object SyslogOutput {
     * @param config output configuration.
     * @return syslog output RCF5424 compilant.
     */
-  def rfc5424(config: RFC5424Config): JsObject => ByteString = new SyslogRFC5424Output(config)
+  def rfc5424(config: RFC5424Config): Json => ByteString = new SyslogRFC5424Output(config)
 
   /**
     * Create a syslog output RCF3126 compilant.
@@ -236,6 +236,6 @@ object SyslogOutput {
     * @param config output configuration.
     * @return syslog output RCF3126 compilant.
     */
-  def rfc3164(config: RFC3164Config): JsObject => ByteString = new SyslogRFC3164Output(config)
+  def rfc3164(config: RFC3164Config): Json => ByteString = new SyslogRFC3164Output(config)
 
 }

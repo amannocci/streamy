@@ -26,14 +26,15 @@ package io.techcode.streamy.component.transform
 import java.nio.charset.StandardCharsets
 
 import com.google.common.hash.{HashFunction, Hashing}
+import gnieh.diffson.Pointer
+import io.circe.Json
 import io.techcode.streamy.component.SimpleTransformer
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.transform.FingerprintTransformer.Config
-import play.api.libs.json.Reads._
-import play.api.libs.json._
+import io.techcode.streamy.util.JsonUtil._
 
 /**
   * Fingerprint transform implementation.
@@ -41,11 +42,11 @@ import play.api.libs.json._
 class FingerprintTransformer(config: Config) extends SimpleTransformer(config) {
 
   // Choose right transform function
-  private val hashFunc: ((String) => String) = FingerprintTransformer.Hashings(config.hashing)
+  private val hashFunc: (String => String) = FingerprintTransformer.Hashings(config.hashing)
     .hashString(_, StandardCharsets.UTF_8).toString
 
-  override def parseInplace(path: JsPath): Reads[JsObject] = path.json
-    .update(of[JsString].map(x => JsString(hashFunc(x.value))))
+  override def transform(value: Json): Option[Json] =
+    value.asString.map(x => hashFunc(x))
 
 }
 
@@ -72,8 +73,8 @@ object FingerprintTransformer {
 
   // Component configuration
   case class Config(
-    override val source: JsPath,
-    override val target: Option[JsPath] = None,
+    override val source: Pointer,
+    override val target: Option[Pointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
     hashing: String

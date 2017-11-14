@@ -29,10 +29,10 @@ import akka.actor.ActorSystem
 import com.codahale.metrics._
 import com.codahale.metrics.jvm._
 import com.typesafe.config.Config
+import io.circe._
 import io.techcode.streamy.util.DurationUtil._
 import io.techcode.streamy.util.JsonUtil._
 import org.slf4j.Logger
-import play.api.libs.json._
 
 import scala.collection.mutable
 
@@ -73,7 +73,7 @@ object Metrics {
       Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
 
       // Log
-      log.info(Json.obj("type" -> "metrics").deepMerge(JsonUtil.toJson(entry)))
+      log.info(Json.obj("type" -> "metrics").deepMerge(JsonUtil.fromMap(entry)))
     })
   }
 

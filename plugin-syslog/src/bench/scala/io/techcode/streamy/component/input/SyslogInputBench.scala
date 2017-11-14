@@ -24,10 +24,10 @@
 package io.techcode.streamy.component.input
 
 import akka.util.ByteString
+import io.circe._
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
 import org.openjdk.jmh.annotations.Benchmark
-import play.api.libs.json._
 
 /**
   * Syslog input bench.
@@ -39,14 +39,14 @@ import play.api.libs.json._
   */
 class SyslogInputBench {
 
-  @Benchmark def benchSimpleRFC5424(): JsObject =
+  @Benchmark def benchSimpleRFC5424(): Json =
     SyslogInputBench.SimpleRFC5424.apply(SyslogInputBench.Simple)
 
 
-  @Benchmark def benchSimpleMessageRFC5424(): JsObject =
+  @Benchmark def benchSimpleMessageRFC5424(): Json =
     SyslogInputBench.SimpleMessageRFC5424.apply(SyslogInputBench.Simple)
 
-  @Benchmark def benchSimpleFailureRFC5424(): JsObject = {
+  @Benchmark def benchSimpleFailureRFC5424(): Json = {
     try {
       SyslogInputBench.SimpleFailureRFC5424.apply(SyslogInputBench.Failure)
     } catch {
@@ -62,7 +62,7 @@ private[this] object SyslogInputBench {
 
   val Failure = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
 
-  val SimpleRFC5424: ByteString => JsObject = SyslogInput.rfc5424(RFC5424Config(
+  val SimpleRFC5424: ByteString => Json = SyslogInput.rfc5424(RFC5424Config(
     facility = Some(SyslogInput.Id.Facility),
     severity = Some(SyslogInput.Id.Severity),
     timestamp = Some(SyslogInput.Id.Timestamp),
@@ -74,8 +74,8 @@ private[this] object SyslogInputBench {
     message = Some(SyslogInput.Id.Message)
   ))
 
-  val SimpleMessageRFC5424: ByteString => JsObject = SyslogInput.rfc5424(RFC5424Config(message = Some(SyslogInput.Id.Message)))
+  val SimpleMessageRFC5424: ByteString => Json = SyslogInput.rfc5424(RFC5424Config(message = Some(SyslogInput.Id.Message)))
 
-  val SimpleFailureRFC5424: ByteString => JsObject = SyslogInput.rfc5424(RFC5424Config())
+  val SimpleFailureRFC5424: ByteString => Json = SyslogInput.rfc5424(RFC5424Config())
 
 }

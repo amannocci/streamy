@@ -23,8 +23,9 @@
  */
 package io.techcode.streamy.stream
 
+import io.circe._
+import io.techcode.streamy.util.JsonUtil._
 import org.scalatest._
-import play.api.libs.json.{JsError, JsString, Json}
 
 /**
   * Stream exception spec.
@@ -38,48 +39,34 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
   }
 
   it should "be convert to json" in {
-    generic.toJson should equal(Json.obj(
-      "message" -> "foobar",
-      "state" -> "{}",
-      "exception" -> ""
-    ))
+    generic.toJson should equal(Json.fromJsonObject(JsonObject.singleton("message", "foobar")))
   }
 
   it should "be convert to json with state" in {
     new StreamException("foobar", Some(Json.obj("details" -> "test"))).toJson should equal(Json.obj(
       "message" -> "foobar",
-      "state" -> Json.asciiStringify(Json.obj("details" -> "test")),
-      "exception" -> ""
+      "state" -> Json.obj("details" -> "test")
     ))
   }
 
   it should "be convert to json with string state" in {
-    new StreamException("foobar", Some(JsString("test"))).toJson should equal(Json.obj(
+    new StreamException("foobar", Some("test")).toJson should equal(Json.obj(
       "message" -> "foobar",
-      "state" -> "test",
-      "exception" -> ""
+      "state" -> "test"
     ))
   }
 
   it should "be convert to json with exception" in {
     new StreamException("foobar", ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
-      "message" -> "foobar", "state" -> "{}", "exception" -> s"io.techcode.streamy.stream.StreamException: test${scala.util.Properties.lineSeparator}"
+      "message" -> "foobar", "exception" -> s"io.techcode.streamy.stream.StreamException: test${scala.util.Properties.lineSeparator}"
     ))
   }
 
   it should "be convert to json with exception and state" in {
     new StreamException("foobar", state = Some(Json.obj("details" -> "test")), ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
       "message" -> "foobar",
-      "state" -> Json.asciiStringify(Json.obj("details" -> "test")),
+      "state" -> Json.obj("details" -> "test"),
       "exception" -> s"io.techcode.streamy.stream.StreamException: test${scala.util.Properties.lineSeparator}"
-    ))
-  }
-
-  it should "be create from json error" in {
-    StreamException.create(msg = "test", JsError("error")).toJson should equal(Json.obj(
-      "message" -> "test",
-      "exception" -> "",
-      "state" -> "{\"obj\":[{\"msg\":[\"error\"],\"args\":[]}]}"
     ))
   }
 

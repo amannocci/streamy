@@ -24,10 +24,12 @@
 package io.techcode.streamy.component.input
 
 import akka.util.ByteString
+import gnieh.diffson.Pointer._
+import gnieh.diffson.circe._
+import io.circe._
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
 import org.scalatest.{FlatSpec, Matchers}
-import play.api.libs.json.Json
 
 /**
   * Syslog input spec.
@@ -37,78 +39,78 @@ class SyslogInputSpec extends FlatSpec with Matchers {
   "Syslog RFC5424 input" must "handle correctly simple syslog message" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureAll)
     val result = input.apply(SyslogInputSpec.Simple)
-    (result \ SyslogInput.Id.Facility).get  should equal (Json.toJson(4))
-    (result \ SyslogInput.Id.Severity).get  should equal (Json.toJson(2))
-    (result \ SyslogInput.Id.Timestamp).get  should equal (Json.toJson("2003-10-11T22:14:15.003Z"))
-    (result \ SyslogInput.Id.Hostname).get  should equal (Json.toJson("mymachine.example.com"))
-    (result \ SyslogInput.Id.App).get  should equal (Json.toJson("su"))
-    (result \ SyslogInput.Id.Proc).get  should equal (Json.toJson("77042"))
-    (result \ SyslogInput.Id.MsgId).get  should equal (Json.toJson("ID47"))
-    (result \ SyslogInput.Id.StructData).get  should equal (Json.toJson("""sigSig ver="1""""))
-    (result \ SyslogInput.Id.Message).get  should equal (Json.toJson("'su root' failed for lonvick on /dev/pts/8"))
+    pointer.evaluate(result, root / SyslogInput.Id.Facility) should equal(Json.fromInt(4))
+    pointer.evaluate(result, root / SyslogInput.Id.Severity) should equal(Json.fromInt(2))
+    pointer.evaluate(result, root / SyslogInput.Id.Timestamp) should equal(Json.fromString("2003-10-11T22:14:15.003Z"))
+    pointer.evaluate(result, root / SyslogInput.Id.Hostname) should equal(Json.fromString("mymachine.example.com"))
+    pointer.evaluate(result, root / SyslogInput.Id.App) should equal(Json.fromString("su"))
+    pointer.evaluate(result, root / SyslogInput.Id.Proc) should equal(Json.fromString("77042"))
+    pointer.evaluate(result, root / SyslogInput.Id.MsgId) should equal(Json.fromString("ID47"))
+    pointer.evaluate(result, root / SyslogInput.Id.StructData) should equal(Json.fromString("""sigSig ver="1""""))
+    pointer.evaluate(result, root / SyslogInput.Id.Message) should equal(Json.fromString("'su root' failed for lonvick on /dev/pts/8"))
   }
 
   it must "capture only facility when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureFacility)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.Facility).get  should equal (Json.toJson(4))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.Facility) should equal(Json.fromInt(4))
   }
 
   it must "capture only severity when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureSeverity)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.Severity).get  should equal (Json.toJson(2))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.Severity) should equal(Json.fromInt(2))
   }
 
   it must "capture only timestamp when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureTimestamp)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.Timestamp).get  should equal (Json.toJson("2003-10-11T22:14:15.003Z"))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.Timestamp) should equal(Json.fromString("2003-10-11T22:14:15.003Z"))
   }
 
   it must "capture only hostname when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureHostname)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.Hostname).get  should equal (Json.toJson("mymachine.example.com"))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.Hostname) should equal(Json.fromString("mymachine.example.com"))
   }
 
   it must "capture only app when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureApp)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.App).get  should equal (Json.toJson("su"))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.App) should equal(Json.fromString("su"))
   }
 
   it must "capture only proc when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureProc)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.Proc).get  should equal (Json.toJson("77042"))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.Proc) should equal(Json.fromString("77042"))
   }
 
   it must "capture only msg when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureMsg)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.MsgId).get  should equal (Json.toJson("ID47"))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.MsgId) should equal(Json.fromString("ID47"))
   }
 
   it must "capture only struct data when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureStructData)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.StructData).get  should equal (Json.toJson("""sigSig ver="1""""))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.StructData) should equal(Json.fromString("""sigSig ver="1""""))
   }
 
   it must "capture only message when set" in {
     val input = SyslogInput.rfc5424(SyslogInputSpec.CaptureMessage)
     val result = input.apply(SyslogInputSpec.Simple)
-    result.fields.size should equal (1)
-    (result \ SyslogInput.Id.Message).get  should equal (Json.toJson("'su root' failed for lonvick on /dev/pts/8"))
+    result.asObject.get.fields.size should equal(1)
+    pointer.evaluate(result, root / SyslogInput.Id.Message) should equal(Json.fromString("'su root' failed for lonvick on /dev/pts/8"))
   }
 
   it must "throw an error when syslog message is malformed" in {

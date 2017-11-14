@@ -168,7 +168,7 @@ class ByteBuf(private var buf: ByteString) {
   def skipInt(): Unit = _readerIndex += 4
 
   override def toString: String =
-  // Compact is called implicitly
+    // Compact is called implicitly
     slice().utf8String
 
   @inline private def readOrGetInt(updateIndex: Boolean): Int = {

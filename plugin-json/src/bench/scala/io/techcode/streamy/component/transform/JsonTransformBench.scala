@@ -23,27 +23,29 @@
  */
 package io.techcode.streamy.component.transform
 
+import gnieh.diffson.Pointer._
+import io.circe._
 import io.techcode.streamy.component.transform.JsonTransformer.Config
+import io.techcode.streamy.util.JsonUtil._
 import org.openjdk.jmh.annotations.Benchmark
-import play.api.libs.json._
 
 /**
   * Json transform bench.
   */
 class JsonTransformBench {
 
-  @Benchmark def benchSimpleSource(): JsObject = {
-    new JsonTransformer(Config(source = __ \ "message"))
+  @Benchmark def benchSimpleSource(): Json = {
+    new JsonTransformer(Config(source = root / "message"))
       .apply(Json.obj("message" -> """{"test":"test"}"""))
   }
 
-  @Benchmark def benchSimpleSourceAndTarget(): JsObject = {
-    new JsonTransformer(Config(source = __ \ "message", target = Some(__ \ "target")))
+  @Benchmark def benchSimpleSourceAndTarget(): Json = {
+    new JsonTransformer(Config(source = root / "message", target = Some(root / "target")))
       .apply(Json.obj("message" -> """{"test":"test"}"""))
   }
 
-  @Benchmark def benchSimpleFailure(): JsObject = {
-    new JsonTransformer(Config(source = __ \ "message"))
+  @Benchmark def benchSimpleFailure(): Json = {
+    new JsonTransformer(Config(source = root / "message"))
       .apply(Json.obj("message" -> "test"))
   }
 

@@ -23,8 +23,8 @@
  */
 package io.techcode.streamy.util
 
+import io.techcode.streamy.util.JsonUtil._
 import org.openjdk.jmh.annotations.Benchmark
-import play.api.libs.json.JsString
 
 /**
   * JsonUtil bench.
@@ -32,7 +32,7 @@ import play.api.libs.json.JsString
 class JsonUtilBench {
 
   @Benchmark def size(): Long = {
-    JsonUtil.size(JsString("20"))
+    JsonUtil.size("20")
   }
 
 }

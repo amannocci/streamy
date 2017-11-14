@@ -26,9 +26,10 @@ package io.techcode.streamy.component.output
 import java.net.InetAddress
 
 import akka.util.ByteString
+import io.circe.Json
 import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
+import io.techcode.streamy.util.JsonUtil._
 import org.scalatest.{FlatSpec, Matchers}
-import play.api.libs.json.{JsObject, Json}
 
 /**
   * Syslog output spec.
@@ -159,7 +160,7 @@ object SyslogOutputSpec {
   val RFC5424FormatMsgId = RFC5424Config(msgId = Some(SyslogOutput.Id.MsgId))
   val RFC5424FormatMessage = RFC5424Config(message = Some(SyslogOutput.Id.Message))
 
-  val RFC5424Simple: JsObject = Json.obj(
+  val RFC5424Simple: Json = Json.obj(
     SyslogOutput.Id.Facility -> 4,
     SyslogOutput.Id.Severity -> 2,
     SyslogOutput.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
@@ -189,7 +190,7 @@ object SyslogOutputSpec {
   val RFC3164FormatProc = RFC3164Config(proc = Some(SyslogOutput.Id.Proc))
   val RFC3164FormatMessage = RFC3164Config(message = Some(SyslogOutput.Id.Message))
 
-  val RFC3164Simple: JsObject = Json.obj(
+  val RFC3164Simple: Json = Json.obj(
     SyslogOutput.Id.Facility -> 4,
     SyslogOutput.Id.Severity -> 2,
     SyslogOutput.Id.Timestamp -> "Aug 24 05:34:00",

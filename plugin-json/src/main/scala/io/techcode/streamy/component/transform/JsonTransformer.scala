@@ -23,36 +23,35 @@
  */
 package io.techcode.streamy.component.transform
 
+import gnieh.diffson.Pointer
+import io.circe._
+import io.circe.parser._
 import io.techcode.streamy.component.SimpleTransformer
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.transform.JsonTransformer.Config
-import play.api.libs.json.Reads._
-import play.api.libs.json._
-
-import scala.util.{Failure, Success, Try}
 
 /**
   * Json transform implementation.
   */
 class JsonTransformer(config: Config) extends SimpleTransformer(config) {
 
-  override def parseInplace(path: JsPath): Reads[JsObject] = path.json.update(
-    of[JsString].map { field =>
+  override def transform(value: Json): Option[Json] = {
+    value.asString.map { field =>
       // Try to avoid parsing of wrong json
-      if (field.value.startsWith("{") && field.value.endsWith("}")) {
+      if (field.startsWith("{") && field.endsWith("}")) {
         // Try to parse
-        Try(Json.parse(field.value)) match {
-          case Success(succ) => succ
-          case Failure(ex) => onError(state = field, ex = Some(ex))
+        parse(field) match {
+          case Right(succ) => succ
+          case Left(ex) => onError(state = value, ex = Some(ex))
         }
       } else {
-        onError(state = field)
+        onError(state = value)
       }
     }
-  )
+  }
 
 }
 
@@ -63,8 +62,8 @@ object JsonTransformer {
 
   // Component configuration
   case class Config(
-    override val source: JsPath,
-    override val target: Option[JsPath] = None,
+    override val source: Pointer,
+    override val target: Option[Pointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip
   ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
