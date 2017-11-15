@@ -31,14 +31,20 @@ import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.transform.JsonTransformer.Config
+import io.techcode.streamy.component.transform.JsonTransformer.Mode.Mode
+import io.techcode.streamy.component.transform.JsonTransformer.{Config, Mode}
+import io.techcode.streamy.util.JsonUtil._
 
 /**
   * Json transform implementation.
   */
 class JsonTransformer(config: Config) extends SimpleTransformer(config) {
 
-  override def transform(value: Json): Option[Json] = {
+  // Serialize function
+  lazy val serialize: Json => Option[Json] = (value: Json) => Some(value.noSpaces)
+
+  // Deserialize function
+  lazy val deserialize: Json => Option[Json] = (value: Json) => {
     value.asString.map { field =>
       // Try to avoid parsing of wrong json
       if (field.startsWith("{") && field.endsWith("}")) {
@@ -53,6 +59,14 @@ class JsonTransformer(config: Config) extends SimpleTransformer(config) {
     }
   }
 
+  // Determine at runtime witch function to use and allow inline
+  val function: Json => Option[Json] = config.mode match {
+    case Mode.Serialize => serialize
+    case Mode.Deserialize => deserialize
+  }
+
+  @inline override def transform(value: Json): Option[Json] = function(value)
+
 }
 
 /**
@@ -65,7 +79,14 @@ object JsonTransformer {
     override val source: Pointer,
     override val target: Option[Pointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
-    override val onError: ErrorBehaviour = ErrorBehaviour.Skip
+    override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
+    mode: Mode = Mode.Deserialize
   ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
+
+  // Mode implementation
+  object Mode extends Enumeration {
+    type Mode = Value
+    val Serialize, Deserialize = Value
+  }
 
 }

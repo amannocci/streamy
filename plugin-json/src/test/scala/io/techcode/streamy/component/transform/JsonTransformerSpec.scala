@@ -25,7 +25,7 @@ package io.techcode.streamy.component.transform
 
 import gnieh.diffson.Pointer._
 import io.circe._
-import io.techcode.streamy.component.transform.JsonTransformer.Config
+import io.techcode.streamy.component.transform.JsonTransformer.{Config, Mode}
 import io.techcode.streamy.util.JsonUtil._
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -34,13 +34,13 @@ import org.scalatest.{FlatSpec, Matchers}
   */
 class JsonTransformerSpec extends FlatSpec with Matchers {
 
-  "Json transformer" must "transform correctly a packet inplace" in {
+  "Json transformer" must "deserialize correctly a packet inplace" in {
     val input = Json.obj("message" -> """{"message":"foobar"}""")
     val component = new JsonTransformer(Config(root / "message"))
     component.apply(input) should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
   }
 
-  it must "transform correctly a packet with a root target" in {
+  it must "deserialize correctly a packet with a root target" in {
     val input = Json.obj("message" -> """{"test":"foobar"}""")
     val component = new JsonTransformer(Config(root / "message", Some(root)))
     component.apply(input) should equal(Json.obj(
@@ -49,7 +49,7 @@ class JsonTransformerSpec extends FlatSpec with Matchers {
     ))
   }
 
-  it must "transform correctly a packet with a root target equal to an existing field" in {
+  it must "deserialize correctly a packet with a root target equal to an existing field" in {
     val input = Json.obj("message" -> """{"message":"foobar"}""")
     val component = new JsonTransformer(Config(root / "message", Some(root)))
     component.apply(input) should equal(Json.obj("message" -> "foobar"))
@@ -65,6 +65,29 @@ class JsonTransformerSpec extends FlatSpec with Matchers {
     val input = Json.obj("message" -> "{foobar}")
     val component = new JsonTransformer(Config(root / "message"))
     component.apply(input) should equal(Json.obj("message" -> "{foobar}"))
+  }
+
+  it must "serialize correctly a packet inplace" in {
+    val input = Json.obj("message" -> Json.obj("message" -> "foobar"))
+    val component = new JsonTransformer(Config(root / "message", mode = Mode.Serialize))
+    component.apply(input) should equal(Json.obj("message" -> """{"message":"foobar"}"""))
+  }
+
+  it must "serialize correctly a packet with a root source" in {
+    val input = Json.obj("test" -> "foobar")
+    val component = new JsonTransformer(Config(root, Some(root / "message"), mode = Mode.Serialize))
+    component.apply(input) should equal(Json.obj(
+      "message" -> """{"test":"foobar"}""",
+      "test" -> "foobar"
+    ))
+  }
+
+  it must "serialize correctly a packet with a root target equal to an existing field" in {
+    val input = Json.obj("test" -> "foobar")
+    val component = new JsonTransformer(Config(root, Some(root / "test"), mode = Mode.Serialize))
+    component.apply(input) should equal(Json.obj(
+      "test" -> """{"test":"foobar"}"""
+    ))
   }
 
 }
