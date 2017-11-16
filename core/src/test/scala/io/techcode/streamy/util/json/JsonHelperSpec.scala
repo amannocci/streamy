@@ -40,6 +40,10 @@ class JsonHelperSpec extends FlatSpec with Matchers {
     io.techcode.streamy.util.json.exist(Json.obj("test" -> "test"), root / "fail") should equal(false)
   }
 
+  it must "return false if a value doesn't exist in deep object" in {
+    io.techcode.streamy.util.json.exist(Json.obj("test" -> Json.obj("test" -> "test")), root / "fail" / "fail") should equal(false)
+  }
+
   it must "evaluate correctly a path on a given json value" in {
     evaluate(Json.obj("test" -> "test"), root / "test") should equal(Json.fromString("test"))
   }
