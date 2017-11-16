@@ -21,10 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.util
+package io.techcode.streamy.util.json
 
 import io.circe._
-import io.techcode.streamy.util.JsonUtil._
 import org.scalatest._
 
 import scala.collection.mutable
@@ -75,34 +74,6 @@ class JsonUtilSpec extends FlatSpec with Matchers {
       "test.test" -> "foobar",
       "test.foobar.test" -> 0
     ))
-  }
-
-  it must "provide a shortcut to convert json in string" in {
-    JsonUtil.jsonToString(Json.obj("test" -> "test")) should equal("""{"test":"test"}""")
-  }
-
-  it must "provide a shortcut to convert string in json" in {
-    JsonUtil.stringToJson("""{"test":"test"}""") should equal(Json.fromString("""{"test":"test"}"""))
-  }
-
-  it must "provide a shortcut to convert float in json" in {
-    JsonUtil.floatToJson(2.0F) should equal(Json.fromFloatOrNull(2.0F))
-  }
-
-  it must "provide a shortcut to convert double in json" in {
-    JsonUtil.doubleToJson(2.0D) should equal(Json.fromDoubleOrNull(2.0D))
-  }
-
-  it must "provide a shortcut to convert int in json" in {
-    JsonUtil.intToJson(2) should equal(Json.fromInt(2))
-  }
-
-  it must "provide a shortcut to convert long in json" in {
-    JsonUtil.longToJson(2L) should equal(Json.fromLong(2L))
-  }
-
-  it must "provide a shortcut to convert boolean in json" in {
-    JsonUtil.booleanToJson(true) should equal(Json.fromBoolean(true))
   }
 
   it must "convert correctly a map to json object" in {

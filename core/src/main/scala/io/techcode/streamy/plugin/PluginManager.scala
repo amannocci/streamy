@@ -29,7 +29,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import io.circe._
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json._
 import org.slf4j.Logger
 
 import scala.collection.mutable

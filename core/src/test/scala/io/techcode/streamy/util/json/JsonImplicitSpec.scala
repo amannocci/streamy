@@ -21,31 +21,42 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.transform
+package io.techcode.streamy.util.json
 
 import io.circe._
-import io.techcode.streamy.component.transform.JsonTransformer.Config
-import io.techcode.streamy.util.json._
-import org.openjdk.jmh.annotations.Benchmark
+import org.scalatest._
 
 /**
-  * Json transform bench.
+  * JsonImplicit spec.
   */
-class JsonTransformBench {
+class JsonImplicitSpec extends FlatSpec with Matchers {
 
-  @Benchmark def benchSimpleSource(): Json = {
-    new JsonTransformer(Config(source = root / "message"))
-      .apply(Json.obj("message" -> """{"test":"test"}"""))
+  "JsonImplicit" must "provide a shortcut to convert json in string" in {
+    jsonToString(Json.obj("test" -> Json.fromString("test"))) should equal("""{"test":"test"}""")
   }
 
-  @Benchmark def benchSimpleSourceAndTarget(): Json = {
-    new JsonTransformer(Config(source = root / "message", target = Some(root / "target")))
-      .apply(Json.obj("message" -> """{"test":"test"}"""))
+  it must "provide a shortcut to convert string in json" in {
+    stringToJson("""{"test":"test"}""") should equal(Json.fromString("""{"test":"test"}"""))
   }
 
-  @Benchmark def benchSimpleFailure(): Json = {
-    new JsonTransformer(Config(source = root / "message"))
-      .apply(Json.obj("message" -> "test"))
+  it must "provide a shortcut to convert float in json" in {
+    floatToJson(2.0F) should equal(Json.fromFloatOrNull(2.0F))
+  }
+
+  it must "provide a shortcut to convert double in json" in {
+    doubleToJson(2.0D) should equal(Json.fromDoubleOrNull(2.0D))
+  }
+
+  it must "provide a shortcut to convert int in json" in {
+    intToJson(2) should equal(Json.fromInt(2))
+  }
+
+  it must "provide a shortcut to convert long in json" in {
+    longToJson(2L) should equal(Json.fromLong(2L))
+  }
+
+  it must "provide a shortcut to convert boolean in json" in {
+    booleanToJson(true) should equal(Json.fromBoolean(true))
   }
 
 }

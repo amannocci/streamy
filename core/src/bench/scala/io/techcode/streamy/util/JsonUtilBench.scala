@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.util
 
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json.{JsonUtil, _}
 import org.openjdk.jmh.annotations.Benchmark
 
 /**

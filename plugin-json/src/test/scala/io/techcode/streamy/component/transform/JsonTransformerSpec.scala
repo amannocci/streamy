@@ -23,10 +23,9 @@
  */
 package io.techcode.streamy.component.transform
 
-import gnieh.diffson.Pointer._
 import io.circe._
 import io.techcode.streamy.component.transform.JsonTransformer.{Config, Mode}
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json._
 import org.scalatest.{FlatSpec, Matchers}
 
 /**

@@ -21,31 +21,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.transform
+package io.techcode.streamy.util.json
 
+import gnieh.diffson.circe._
 import io.circe._
-import io.techcode.streamy.component.transform.JsonTransformer.Config
-import io.techcode.streamy.util.json._
-import org.openjdk.jmh.annotations.Benchmark
+import org.scalatest._
 
 /**
-  * Json transform bench.
+  * JsonHelper spec.
   */
-class JsonTransformBench {
+class JsonHelperSpec extends FlatSpec with Matchers {
 
-  @Benchmark def benchSimpleSource(): Json = {
-    new JsonTransformer(Config(source = root / "message"))
-      .apply(Json.obj("message" -> """{"test":"test"}"""))
+  "JsonHelper" must "return true if a value exist" in {
+    io.techcode.streamy.util.json.exist(Json.obj("test" -> "test"), root / "test") should equal(true)
   }
 
-  @Benchmark def benchSimpleSourceAndTarget(): Json = {
-    new JsonTransformer(Config(source = root / "message", target = Some(root / "target")))
-      .apply(Json.obj("message" -> """{"test":"test"}"""))
+  it must "return false if a value doesn't exist" in {
+    io.techcode.streamy.util.json.exist(Json.obj("test" -> "test"), root / "fail") should equal(false)
   }
 
-  @Benchmark def benchSimpleFailure(): Json = {
-    new JsonTransformer(Config(source = root / "message"))
-      .apply(Json.obj("message" -> "test"))
+  it must "evaluate correctly a path on a given json value" in {
+    evaluate(Json.obj("test" -> "test"), root / "test") should equal(Json.fromString("test"))
+  }
+
+  it must "patch correctly a json value" in {
+    patch(Json.obj("test" -> "test"), Add(root / "test", "changed")) should equal(Json.obj("test" -> "changed"))
   }
 
 }

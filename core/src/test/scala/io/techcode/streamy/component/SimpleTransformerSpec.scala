@@ -24,14 +24,13 @@
 package io.techcode.streamy.component
 
 import gnieh.diffson.Pointer
-import gnieh.diffson.Pointer._
 import io.circe._
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.stream.StreamException
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json._
 import org.scalatest._
 
 /**

@@ -31,7 +31,7 @@ import com.codahale.metrics.jvm._
 import com.typesafe.config.Config
 import io.circe._
 import io.techcode.streamy.util.DurationUtil._
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json._
 import org.slf4j.Logger
 
 import scala.collection.mutable

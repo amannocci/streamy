@@ -34,7 +34,7 @@ import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessB
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.transform.FingerprintTransformer.Config
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json._
 
 /**
   * Fingerprint transform implementation.

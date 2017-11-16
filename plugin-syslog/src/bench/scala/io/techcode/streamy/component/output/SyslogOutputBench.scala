@@ -26,7 +26,7 @@ package io.techcode.streamy.component.output
 import akka.util.ByteString
 import io.circe._
 import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
 /**

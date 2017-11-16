@@ -24,7 +24,7 @@
 package io.techcode.streamy.stream
 
 import io.circe._
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json._
 import org.scalatest._
 
 /**

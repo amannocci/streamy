@@ -29,7 +29,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import io.circe._
 import io.techcode.streamy.plugin.PluginManager
 import io.techcode.streamy.stream.StreamException
-import io.techcode.streamy.util.JsonUtil._
+import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.{ConfigConstants, Metrics}
 
 /**
