@@ -41,24 +41,6 @@ object JsonUtil {
   private val FalseLength: Int = 5
   private val NullLength: Int = 4
 
-  private val errHandler: PartialFunction[(Json, String, Pointer), Json] = {
-    case _ => Json.Null
-  }
-
-  private implicit val existPointer: JsonPointer = {
-    val p = new JsonPointer()
-    p.handler_=(errHandler)
-    p
-  }
-
-  val root: Pointer = Pointer.root
-
-  @inline def exist(pkt: Json, path: Pointer): Boolean = existPointer.evaluate(pkt, path) != Json.Null
-
-  @inline def evaluate(pkt: Json, path: Pointer): Json = pointer.evaluate(pkt, path)
-
-  def patch(pkt: Json, ops: Operation*): Json = JsonPatch(ops.toList)(pkt)
-
   /**
     * Size of an element in Json.
     *
