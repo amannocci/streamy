@@ -4,7 +4,7 @@ sudo: false
 
 # Scala version
 scala:
-  - "2.12.3"
+  - "2.12.4"
 
 # Supported jdk
 jdk:
