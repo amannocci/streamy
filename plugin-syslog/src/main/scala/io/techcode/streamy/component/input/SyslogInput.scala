@@ -24,7 +24,6 @@
 package io.techcode.streamy.component.input
 
 import akka.util.ByteString
-import io.circe._
 import io.techcode.streamy.buffer.ByteBufProcessor._
 import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
@@ -44,41 +43,41 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     val buf: ByteBuf = new ByteBuf(pkt)
 
     // Populate
-    implicit val mapping: mutable.Map[String, Any] = new mutable.LinkedHashMap[String, Any]
+    val mapping: mutable.Map[String, Json] = new mutable.LinkedHashMap[String, Json]
 
     // Read PRIVAL
     expect(buf, '<')
-    capturePrival(buf, config)
+    capturePrival(buf, config, mapping)
 
     // Read version
     expect(buf, '1')
     expect(buf, ' ')
 
     // Read timestamp
-    captureString(buf, config.timestamp, FindSpace)
+    captureString(buf, config.timestamp, FindSpace, mapping)
 
     // Read hostname
-    captureString(buf, config.hostname, FindSpace)
+    captureString(buf, config.hostname, FindSpace, mapping)
 
     // Read app name
-    captureString(buf, config.app, FindSpace)
+    captureString(buf, config.app, FindSpace, mapping)
 
     // Read proc id
-    captureString(buf, config.proc, FindSpace)
+    captureString(buf, config.proc, FindSpace, mapping)
 
     // Read message id
-    captureString(buf, config.msgId, FindSpace)
+    captureString(buf, config.msgId, FindSpace, mapping)
 
     // Read structured data
-    captureStructData(buf, config.structData)
+    captureStructData(buf, config.structData, mapping)
 
     // Read message
     if (config.message.isDefined) {
-      mapping.put(config.message.get, buf.slice().utf8String.trim)
+      mapping.update(config.message.get, buf.slice().utf8String.trim)
     }
 
     // Split header and message
-    JsonUtil.fromMap(mapping)
+    JsonUtil.fromJsonMap(mapping)
   }
 
   /**
@@ -88,9 +87,9 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     * @param ref       reference part.
     * @param processor bytebuf processor used to delimite part.
     */
-  private def captureString(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor)(implicit mapping: mutable.Map[String, Any]): Unit = {
+  private def captureString(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor, mapping: mutable.Map[String, Json]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
-      mapping.put(ref.get, buf.readString(processor))
+      mapping.update(ref.get, buf.readString(processor))
     } else {
       buf.skipBytes(processor)
     }
@@ -102,17 +101,17 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     * @param buf  current bytebuf.
     * @param conf reference part.
     */
-  private def capturePrival(buf: ByteBuf, conf: RFC5424Config)(implicit mapping: mutable.Map[String, Any]): Unit = {
+  private def capturePrival(buf: ByteBuf, conf: RFC5424Config, mapping: mutable.Map[String, Json]): Unit = {
     if (config.facility.isDefined || config.severity.isDefined) {
       // Read prival in tmp
       val prival = buf.readDigit(FindCloseQuote)
 
       // Read severity or facility
       if (config.facility.isDefined) {
-        mapping.put(config.facility.get, prival >> 3)
+        mapping.update(config.facility.get, prival >> 3)
       }
       if (config.severity.isDefined) {
-        mapping.put(config.severity.get, prival & 7)
+        mapping.update(config.severity.get, prival & 7)
       }
     } else {
       buf.skipBytes(FindCloseQuote)
@@ -125,10 +124,10 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     * @param buf current bytebuf.
     * @param ref reference part.
     */
-  private def captureStructData(buf: ByteBuf, ref: Option[String])(implicit mapping: mutable.Map[String, Any]): Unit = {
+  private def captureStructData(buf: ByteBuf, ref: Option[String], mapping: mutable.Map[String, Json]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
       buf.skipBytes(FindOpenBracket)
-      mapping.put(ref.get, buf.readString(FindCloseBracket))
+      mapping.update(ref.get, buf.readString(FindCloseBracket))
     } else {
       if (buf.getByte != '-') {
         buf.skipBytes(FindCloseBracket)

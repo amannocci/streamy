@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.stream
 
-import io.circe._
 import io.techcode.streamy.util.json._
 import org.scalatest._
 
@@ -39,7 +38,7 @@ class StreamExceptionSpec extends FlatSpec with Matchers {
   }
 
   it should "be convert to json" in {
-    generic.toJson should equal(Json.fromJsonObject(JsonObject.singleton("message", "foobar")))
+    generic.toJson should equal(Json.obj("message" -> "foobar"))
   }
 
   it should "be convert to json with state" in {

@@ -23,8 +23,6 @@
  */
 package io.techcode.streamy.component
 
-import gnieh.diffson.Pointer
-import io.circe._
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
@@ -44,21 +42,21 @@ class SimpleTransformerSpec extends FlatSpec with Matchers {
 
   // Component configuration
   case class ImplConfig(
-    override val source: Pointer,
-    override val target: Option[Pointer] = None,
+    override val source: JsonPointer,
+    override val target: Option[JsonPointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip
   ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
 
   "Impl transform" must "transform correctly a packet inplace" in {
     val input = Json.obj("message" -> "foo")
-    val component = new Impl(ImplConfig(root / "message"))
+    val component = new Impl(ImplConfig(Root / "message"))
     component.apply(input) should equal(Json.obj("message" -> "foobar"))
   }
 
   it must "transform correctly a packet with a specific target" in {
     val input = Json.obj("message" -> "foo")
-    val component = new Impl(ImplConfig(root / "message", Some(root / "target")))
+    val component = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
     component.apply(input) should equal(Json.obj(
       "message" -> "foo",
       "target" -> "foobar"
@@ -67,39 +65,39 @@ class SimpleTransformerSpec extends FlatSpec with Matchers {
 
   it must "transform correctly a packet with a specific target and remove source" in {
     val input = Json.obj("message" -> "foo")
-    val component = new Impl(ImplConfig(root / "message", Some(root / "target"), onSuccess = SuccessBehaviour.Remove))
+    val component = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
     component.apply(input) should equal(Json.obj("target" -> "foobar"))
   }
 
   it must "skip correctly a packet with a wrong source field" in {
-    val input = Json.obj("message" -> Json.fromInt(1))
-    val component = new Impl(ImplConfig(root / "message"))
-    component.apply(input) should equal(Json.obj("message" -> Json.fromInt(1)))
+    val input = Json.obj("message" -> 1)
+    val component = new Impl(ImplConfig(Root / "message"))
+    component.apply(input) should equal(Json.obj("message" -> 1))
   }
 
   it must "skip correctly a packet with a wrong source field with a specific target" in {
-    val input = Json.obj("message" -> Json.fromInt(1))
-    val component = new Impl(ImplConfig(root / "message", Some(root / "target")))
-    component.apply(input) should equal(Json.obj("message" -> Json.fromInt(1)))
+    val input = Json.obj("message" -> 1)
+    val component = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
+    component.apply(input) should equal(Json.obj("message" -> 1))
   }
 
   it must "skip correctly a packet with a wrong source field with a specific target and remove source" in {
-    val input = Json.obj("message" -> Json.fromInt(1))
-    val component = new Impl(ImplConfig(root / "message", Some(root / "target"), onSuccess = SuccessBehaviour.Remove))
-    component.apply(input) should equal(Json.obj("message" -> Json.fromInt(1)))
+    val input = Json.obj("message" -> 1)
+    val component = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
+    component.apply(input) should equal(Json.obj("message" -> 1))
   }
 
   it must "discard correctly a packet with a wrong source field by throwing an error" in {
-    val input = Json.obj("message" -> Json.fromInt(1))
-    val component = new Impl(ImplConfig(root / "message", onError = ErrorBehaviour.Discard))
+    val input = Json.obj("message" -> 1)
+    val component = new Impl(ImplConfig(Root / "message", onError = ErrorBehaviour.Discard))
     assertThrows[StreamException] {
       component.apply(input)
     }
   }
 
   it must "discard correctly a packet with a wrong source field by throwing an error and report" in {
-    val input = Json.obj("message" -> Json.fromInt(1))
-    val component = new Impl(ImplConfig(root / "message", onError = ErrorBehaviour.DiscardAndReport))
+    val input = Json.obj("message" -> 1)
+    val component = new Impl(ImplConfig(Root / "message", onError = ErrorBehaviour.DiscardAndReport))
     assertThrows[StreamException] {
       component.apply(input)
     }

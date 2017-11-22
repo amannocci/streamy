@@ -23,9 +23,6 @@
  */
 package io.techcode.streamy.util.json
 
-import gnieh.diffson.Pointer
-import gnieh.diffson.circe._
-import io.circe._
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable
@@ -49,18 +46,51 @@ object JsonUtil {
     */
   def size(el: Json): Long = {
     if (el.isObject) {
-      el.asObject.map(x => 1 + x.fields.map(_.length + 2).sum + x.values.map(size).sum + (x.values.size * 2)).get // {"element": $el}
+      el.asObject.map(x => 1 + x.underlying.keys.map(_.length + 2).sum + x.values.map(size).sum + (x.values.size * 2)).get // {"element": $el}
     } else if (el.isArray) {
-      el.asArray.map(x => x.map(size).sum + 1 + x.size).get // ["element", 1, 1.0]
+      el.asArray.map(x => x.underlying.map(size).sum + 1 + x.underlying.size).get // ["element", 1, 1.0]
     } else if (el.isBoolean) {
       el.asBoolean.map(x => if (x) TrueLength else FalseLength).get
     } else if (el.isNull) {
       NullLength
+    } else if (el.isInt) {
+      el.asInt.get.toString.length
+    } else if (el.isLong) {
+      el.asLong.get.toString.length
+    } else if (el.isFloat) {
+      el.asFloat.get.toString.length
+    } else if (el.isDouble) {
+      el.asDouble.get.toString.length
     } else if (el.isNumber) {
       el.asNumber.map(x => x.toString.length).get // 2.0
     } else {
-      el.asString.map(x => x.length + 2).get // "element"
+      el.asString.get.length + 2 // "element"
     }
+  }
+
+  /**
+    * Convert a json object to dot notation.
+    *
+    * @return json object with doc notation.
+    */
+  def flatten(js: Json): Option[Json] = js.asObject.map(flatten(_))
+
+  def flatten(js: JsObject, prefix: String = StringUtils.EMPTY): JsObject = js.fields.foldLeft(Json.obj()) {
+    case (acc, (k, v: Json)) =>
+      if (v.isObject) {
+        // Deep merge will always successed
+        if (prefix.isEmpty) {
+          acc.deepMerge(flatten(v.asObject.get, k)).get
+        } else {
+          acc.deepMerge(flatten(v.asObject.get, s"$prefix.$k")).get
+        }
+      } else {
+        if (prefix.isEmpty) {
+          acc.asObject.get.put(k, v)
+        } else {
+          acc.asObject.get.put(s"$prefix.$k", v)
+        }
+      }
   }
 
   /**
@@ -69,34 +99,32 @@ object JsonUtil {
     * @param map map with any values.
     * @return json object.
     */
-  def fromMap(map: mutable.Map[String, Any]): Json = Json.fromFields(map.mapValues[Json] {
-    case value: Int => Json.fromInt(value)
-    case value: Long => Json.fromLong(value)
-    case value: Double => Json.fromDoubleOrNull(value)
-    case value: Float => Json.fromFloatOrNull(value)
-    case value => Json.fromString(value.toString)
-  })
+  def fromJsonMap(map: mutable.Map[String, Json]): JsObject = {
+    val json = Json.obj()
+    val builder = json.underlying
+    map.foreach {
+      case (key: String, value: Json) => builder.put(key, value)
+    }
+    json
+  }
 
   /**
-    * Convert a json object to dot notation.
+    * Convert a map to json.
     *
-    * @return json object with doc notation.
+    * @param map map with any values.
+    * @return json object.
     */
-  def flatten(js: Json, prefix: String = StringUtils.EMPTY): Json = js.asObject.get.toVector.foldLeft(Json.obj()) {
-    case (acc, (k, v: Json)) =>
-      if (v.isObject) {
-        if (prefix.isEmpty) {
-          acc.deepMerge(flatten(v, k))
-        } else {
-          acc.deepMerge(flatten(v, s"$prefix.$k"))
-        }
-      } else {
-        if (prefix.isEmpty) {
-          Json.fromJsonObject(acc.asObject.get.add(k, v))
-        } else {
-          Json.fromJsonObject(acc.asObject.get.add(s"$prefix.$k", v))
-        }
-      }
+  def fromMap(map: mutable.Map[String, Any]): JsObject = {
+    val json = Json.obj()
+    val builder = json.underlying
+    map.foreach {
+      case (key: String, value: Int) => builder.put(key, intToJson(value))
+      case (key: String, value: Long) => builder.put(key, longToJson(value))
+      case (key: String, value: Double) => builder.put(key, doubleToJson(value))
+      case (key: String, value: Float) => builder.put(key, floatToJson(value))
+      case (key: String, value: Any) => builder.put(key, stringToJson(value.toString))
+    }
+    json
   }
 
 }

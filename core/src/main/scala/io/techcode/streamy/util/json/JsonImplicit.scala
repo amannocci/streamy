@@ -23,8 +23,6 @@
  */
 package io.techcode.streamy.util.json
 
-import io.circe.Json
-
 import scala.language.implicitConversions
 
 /**
@@ -38,7 +36,7 @@ trait JsonImplicit {
     * @param value js value.
     * @return string.
     */
-  implicit def jsonToString(value: Json): String = value.noSpaces
+  implicit def jsonToString(value: Json): String = value.toString
 
   /**
     * Convert a string to json value.
@@ -46,7 +44,7 @@ trait JsonImplicit {
     * @param value string value.
     * @return json.
     */
-  implicit def stringToJson(value: String): Json = Json.fromString(value)
+  implicit def stringToJson(value: String): Json = JsString(value)
 
   /**
     * Convert a float to json value.
@@ -54,7 +52,7 @@ trait JsonImplicit {
     * @param value float value.
     * @return json.
     */
-  implicit def floatToJson(value: Float): Json = Json.fromFloatOrNull(value)
+  implicit def floatToJson(value: Float): Json = JsFloat(value)
 
   /**
     * Convert a double to json value.
@@ -62,7 +60,23 @@ trait JsonImplicit {
     * @param value double value.
     * @return json.
     */
-  implicit def doubleToJson(value: Double): Json = Json.fromDoubleOrNull(value)
+  implicit def doubleToJson(value: Double): Json = JsDouble(value)
+
+  /**
+    * Convert a byte to json value.
+    *
+    * @param value byte value.
+    * @return json.
+    */
+  implicit def byteToJson(value: Byte): Json = JsInt(value)
+
+  /**
+    * Convert a short to json value.
+    *
+    * @param value short value.
+    * @return json.
+    */
+  implicit def shortToJson(value: Short): Json = JsInt(value)
 
   /**
     * Convert a int to json value.
@@ -70,7 +84,7 @@ trait JsonImplicit {
     * @param value int value.
     * @return json.
     */
-  implicit def intToJson(value: Int): Json = Json.fromInt(value)
+  implicit def intToJson(value: Int): Json = JsInt(value)
 
   /**
     * Convert a long to json value.
@@ -78,7 +92,7 @@ trait JsonImplicit {
     * @param value long value.
     * @return json.
     */
-  implicit def longToJson(value: Long): Json = Json.fromLong(value)
+  implicit def longToJson(value: Long): Json = JsLong(value)
 
   /**
     * Convert a boolean to json value.
@@ -86,6 +100,14 @@ trait JsonImplicit {
     * @param value boolean value.
     * @return json.
     */
-  implicit def booleanToJson(value: Boolean): Json = Json.fromBoolean(value)
+  implicit def booleanToJson(value: Boolean): Json = if (value) JsTrue else JsFalse
+
+  /**
+    * Convert a big decimal to json value.
+    *
+    * @param value big decimal value.
+    * @return json.
+    */
+  implicit def bigDecimalToJson(value: BigDecimal): Json = JsBigDecimal(value)
 
 }

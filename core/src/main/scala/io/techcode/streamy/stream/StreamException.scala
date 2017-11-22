@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.stream
 
-import io.circe._
 import io.techcode.streamy.util.json._
 import org.apache.commons.lang3.exception.ExceptionUtils
 
@@ -44,14 +43,14 @@ class StreamException(msg: String, state: Option[Json] = None, ex: Option[Throwa
     * @return json object.
     */
   def toJson: Json = {
-    var result: JsonObject = JsonObject.singleton("message", msg)
+    var result: JsObject = Json.obj("message" -> msg)
     if (state.isDefined) {
-      result = result.add("state", state.get)
+      result = result.put("state", state.get)
     }
     if (ex.isDefined) {
-      result = result.add("exception", ExceptionUtils.getStackTrace(ex.get))
+      result = result.put("exception", ExceptionUtils.getStackTrace(ex.get))
     }
-    Json.fromJsonObject(result)
+    result
   }
 
 }

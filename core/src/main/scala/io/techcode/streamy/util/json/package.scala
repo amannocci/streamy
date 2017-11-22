@@ -23,5 +23,9 @@
  */
 package io.techcode.streamy.util
 
-package object json extends JsonImplicit with JsonHelper {
+package object json extends JsonImplicit {
+
+  // Root json pointer
+  val Root: JsonPointer = JsonPointer()
+
 }

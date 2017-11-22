@@ -23,10 +23,7 @@
  */
 package io.techcode.streamy.util.json
 
-import io.circe._
 import org.scalatest._
-
-import scala.collection.mutable
 
 /**
   * JsonUtil spec.
@@ -46,8 +43,8 @@ class JsonUtilSpec extends FlatSpec with Matchers {
   }
 
   it must "return correct size for a boolean" in {
-    JsonUtil.size(Json.True) should equal(4)
-    JsonUtil.size(Json.False) should equal(5)
+    JsonUtil.size(JsTrue) should equal(4)
+    JsonUtil.size(JsFalse) should equal(5)
   }
 
   it must "return correct size for an array" in {
@@ -55,7 +52,7 @@ class JsonUtilSpec extends FlatSpec with Matchers {
   }
 
   it must "return correct size for a null" in {
-    JsonUtil.size(Json.Null) should equal(4)
+    JsonUtil.size(JsNull) should equal(4)
   }
 
   it must "return correct size for a string" in {
@@ -69,27 +66,11 @@ class JsonUtilSpec extends FlatSpec with Matchers {
         "test" -> "foobar",
         "foobar" -> Json.obj("test" -> 0)
       )
-    )) should equal(Json.obj(
+    )) should equal(Some(Json.obj(
       "foobar" -> 0,
       "test.test" -> "foobar",
       "test.foobar.test" -> 0
-    ))
-  }
-
-  it must "convert correctly a map to json object" in {
-    val map: mutable.Map[String, Any] = new mutable.LinkedHashMap()
-    map.put("string", "string")
-    map.put("int", 10)
-    map.put("long", 10L)
-    map.put("float", 1.0F)
-    map.put("double", 1.0D)
-    JsonUtil.fromMap(map) should equal(Json.obj(
-      "string" -> "string",
-      "int" -> 10,
-      "long" -> 10L,
-      "float" -> 1.0F,
-      "double" -> 1.0D
-    ))
+    )))
   }
 
 }

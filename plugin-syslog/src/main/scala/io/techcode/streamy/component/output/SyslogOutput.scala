@@ -26,10 +26,8 @@ package io.techcode.streamy.component.output
 import java.net.InetAddress
 
 import akka.util.{ByteString, ByteStringBuilder}
-import gnieh.diffson.Pointer._
-import gnieh.diffson.circe._
-import io.circe.Json
 import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
+import io.techcode.streamy.util.json._
 import org.apache.commons.lang3.StringUtils
 
 /**
@@ -66,7 +64,7 @@ private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (Json =
     if (config.message.isDefined) {
       buf.putByte(SyslogOutput.SemiColon)
       buf.putByte(SyslogOutput.Space)
-      buf.putBytes(pointer.evaluate(pkt, root / config.message.get).asString.getOrElse(StringUtils.EMPTY).getBytes)
+      buf.putBytes(pkt.evaluate(Root / config.message.get).flatMap(_.asString).getOrElse(StringUtils.EMPTY).getBytes)
     }
     buf.putByte(SyslogOutput.NewLine)
 
@@ -119,7 +117,7 @@ private[output] class SyslogRFC5424Output(config: RFC5424Config) extends (Json =
     // Add message
     if (config.message.isDefined) {
       buf.putByte(SyslogOutput.Space)
-      buf.putBytes(pointer.evaluate(pkt, root / config.message.get).asString.getOrElse(StringUtils.EMPTY).getBytes)
+      buf.putBytes(pkt.evaluate(Root / config.message.get).flatMap(_.asString).getOrElse(StringUtils.EMPTY).getBytes)
     }
 
     // Build result
@@ -196,7 +194,7 @@ object SyslogOutput {
     */
   private[output] def populate(conf: Option[String], defaultValue: String)(implicit pkt: Json, buf: ByteStringBuilder): Unit = {
     conf match {
-      case Some(key) => buf.putBytes(pointer.evaluate(pkt, root / key).asString.getOrElse(defaultValue).getBytes())
+      case Some(key) => buf.putBytes(pkt.evaluate(Root / key).get.asString.getOrElse(defaultValue).getBytes())
       case None => buf.putBytes(defaultValue.getBytes())
     }
   }
@@ -212,11 +210,11 @@ object SyslogOutput {
   private[output] def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: Json, buf: ByteStringBuilder): Unit = {
     var prival = 0
     severityConf match {
-      case Some(severityKey) => prival = pointer.evaluate(pkt, root / severityKey).asNumber.flatMap(_.toInt).getOrElse(SyslogOutput.Facility)
+      case Some(severityKey) => prival = pkt.evaluate(Root / severityKey).flatMap(_.asInt).getOrElse(SyslogOutput.Facility)
       case None => prival = SyslogOutput.Severity
     }
     facilityConf match {
-      case Some(facilityKey) => prival += pointer.evaluate(pkt, root / facilityKey).asNumber.flatMap(_.toInt).getOrElse(SyslogOutput.Facility) << 3
+      case Some(facilityKey) => prival += pkt.evaluate(Root / facilityKey).flatMap(_.asInt).getOrElse(SyslogOutput.Facility) << 3
       case None => prival += SyslogOutput.Facility << 3
     }
     buf.putBytes(prival.toString.getBytes)

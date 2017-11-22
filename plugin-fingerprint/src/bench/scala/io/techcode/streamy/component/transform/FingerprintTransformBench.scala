@@ -23,9 +23,6 @@
  */
 package io.techcode.streamy.component.transform
 
-import gnieh.diffson.Pointer._
-import io.circe._
-import io.circe.parser._
 import io.techcode.streamy.component.transform.FingerprintTransformer.Config
 import org.openjdk.jmh.annotations.Benchmark
 

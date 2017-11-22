@@ -4,15 +4,13 @@ maintainer := "Adrien Mannocci <adrien.mannocci@gmail.com>"
 
 // Dependencies version
 lazy val akkaVersion = "2.5.6"
-lazy val circeVersion = "0.8.0"
 lazy val logbackVersion = "1.2.3"
 lazy val logbackContribVersion = "0.3.0"
 lazy val commonsLangVersion = "3.6"
-lazy val jacksonVersion = "2.9.1"
+lazy val jacksonVersion = "2.9.2"
 lazy val metricsScalaVersion = "3.5.9"
 lazy val metricsJvmVersion = "3.2.3"
 lazy val guavaVersion = "23.3-jre"
-lazy val diffsonVersion = "2.2.2"
 
 // Custom resolvers
 resolvers ++= Seq(
@@ -21,33 +19,30 @@ resolvers ++= Seq(
 
 // All akka libraries
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-actor",
-  "com.typesafe.akka" %% "akka-testkit",
-  "com.typesafe.akka" %% "akka-stream",
-  "com.typesafe.akka" %% "akka-slf4j"
+  "com.typesafe.akka" %% "akka-actor", // Apache 2 License
+  "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
+  "com.typesafe.akka" %% "akka-stream", // Apache 2 License
+  "com.typesafe.akka" %% "akka-slf4j" // Apache 2 License
 ).map(_ % akkaVersion % Compile) ++ Seq(
-  "com.typesafe.akka" %% "akka-testkit",
-  "com.typesafe.akka" %% "akka-stream-testkit"
+  "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
+  "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
 ).map(_ % akkaVersion % Test)
 
-// All circe libraries
+// All jackson libraries
 libraryDependencies ++= Seq(
-  "io.circe" %% "circe-core",
-  "io.circe" %% "circe-generic",
-  "io.circe" %% "circe-parser"
-).map(_ % circeVersion)
+  "com.fasterxml.jackson.core" % "jackson-core", // Apache 2 License
+  "com.fasterxml.jackson.core" % "jackson-databind" // Apache 2 License
+).map(_ % jacksonVersion)
 
 // All other libraries
 libraryDependencies ++= Seq(
-  "org.gnieh" %% "diffson-circe" % diffsonVersion,
-  "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-  "org.apache.commons" % "commons-lang3" % commonsLangVersion,
-  "ch.qos.logback" % "logback-classic" % logbackVersion,
-  "io.techcode.logback.contrib" % "logback-json-layout" % logbackContribVersion,
-  "com.google.guava" % "guava" % guavaVersion,
-  "nl.grons" %% "metrics-scala" % metricsScalaVersion,
-  "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion
+  "org.apache.commons" % "commons-lang3" % commonsLangVersion, // Apache 2 License
+  "ch.qos.logback" % "logback-classic" % logbackVersion, // EPL/LGPL License
+  "io.techcode.logback.contrib" % "logback-json-layout" % logbackContribVersion, // MIT License
+  "com.google.guava" % "guava" % guavaVersion, // Apache 2 License
+  "nl.grons" %% "metrics-scala" % metricsScalaVersion, // Apache 2 License
+  "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion, // Apache 2 License
+  "org.scala-lang" % "scala-reflect" % scalaVersion.value
 )
 
 // Jmh settings

@@ -23,14 +23,11 @@
  */
 package io.techcode.streamy.component
 
-import gnieh.diffson.Pointer
-import gnieh.diffson.Pointer._
-import gnieh.diffson.circe._
-import io.circe._
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.{Config, SuccessBehaviour}
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.util.json._
 
 import scala.language.postfixOps
 
@@ -44,30 +41,28 @@ abstract class SimpleTransformer(config: Config) extends Transformer[Json, Json]
   private val function: (Json => Json) = {
     if (config.target.isEmpty || config.source == config.target.get) {
       // Transform inplace and report error if needed
-      (pkt: Json) => {
-        val result = transform(pointer.evaluate(pkt, config.source))
-        result match {
-          case Some(v) => JsonPatch(Replace(config.source, v))(pkt)
-          case None => onError(Transformer.GenericErrorMsg, pkt)
-        }
-      }
+      (pkt: Json) =>
+        pkt.evaluate(config.source)
+          .flatMap(transform)
+          .flatMap(x => pkt.patch(Replace(config.source, x)))
+          .getOrElse(onError(Transformer.GenericErrorMsg, pkt))
     } else {
       // Transform inplace and then copy to target
-      (pkt: Json) => {
-        val result = transform(pointer.evaluate(pkt, config.source))
-        result match {
-          case Some(v) =>
-            val operated: Json = {
-              if (config.target.get == root) {
+      (pkt: Json) =>
+        pkt.evaluate(config.source)
+          .flatMap(transform)
+          .flatMap { v =>
+            val operated: Option[Json] = {
+              if (config.target.get == Root) {
                 pkt.deepMerge(v)
               } else {
-                pkt
+                Some(pkt)
               }
             }
 
             // Combine operations if needed
-            var operations = List[Operation]()
-            if (config.target.get != root) {
+            var operations = List[JsonOperation]()
+            if (config.target.get != Root) {
               operations = operations :+ Add(config.target.get, v)
             }
             if (config.onSuccess == SuccessBehaviour.Remove) {
@@ -78,11 +73,9 @@ abstract class SimpleTransformer(config: Config) extends Transformer[Json, Json]
             if (operations.isEmpty) {
               operated
             } else {
-              JsonPatch(operations)(operated)
+              operated.flatMap(_.patch(operations))
             }
-          case None => onError(Transformer.GenericErrorMsg, pkt)
-        }
-      }
+          }.getOrElse(onError(Transformer.GenericErrorMsg, pkt))
     }
   }
 
@@ -112,8 +105,8 @@ object SimpleTransformer {
 
   // Component configuration
   class Config(
-    val source: Pointer,
-    val target: Option[Pointer] = None,
+    val source: JsonPointer,
+    val target: Option[JsonPointer] = None,
     val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip
   ) extends Transformer.Config(onError)

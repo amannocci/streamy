@@ -26,7 +26,6 @@ package io.techcode.streamy.component.output
 import java.net.InetAddress
 
 import akka.util.ByteString
-import io.circe.Json
 import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
 import io.techcode.streamy.util.json._
 import org.scalatest.{FlatSpec, Matchers}

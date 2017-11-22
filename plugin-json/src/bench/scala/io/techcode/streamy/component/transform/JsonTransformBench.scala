@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.component.transform
 
-import io.circe._
 import io.techcode.streamy.component.transform.JsonTransformer.Config
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
@@ -34,17 +33,17 @@ import org.openjdk.jmh.annotations.Benchmark
 class JsonTransformBench {
 
   @Benchmark def benchSimpleSource(): Json = {
-    new JsonTransformer(Config(source = root / "message"))
+    new JsonTransformer(Config(source = Root / "message"))
       .apply(Json.obj("message" -> """{"test":"test"}"""))
   }
 
   @Benchmark def benchSimpleSourceAndTarget(): Json = {
-    new JsonTransformer(Config(source = root / "message", target = Some(root / "target")))
+    new JsonTransformer(Config(source = Root / "message", target = Some(Root / "target")))
       .apply(Json.obj("message" -> """{"test":"test"}"""))
   }
 
   @Benchmark def benchSimpleFailure(): Json = {
-    new JsonTransformer(Config(source = root / "message"))
+    new JsonTransformer(Config(source = Root / "message"))
       .apply(Json.obj("message" -> "test"))
   }
 

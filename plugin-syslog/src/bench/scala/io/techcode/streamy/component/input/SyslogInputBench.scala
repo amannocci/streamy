@@ -24,9 +24,9 @@
 package io.techcode.streamy.component.input
 
 import akka.util.ByteString
-import io.circe._
 import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
 /**

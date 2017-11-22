@@ -23,10 +23,10 @@
  */
 package io.techcode.streamy.component
 
-import io.circe._
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.{Config, ErrorBehaviour}
 import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.util.json._
 
 /**
   * Abstract transformer implementation that provide a good way to handle errors.

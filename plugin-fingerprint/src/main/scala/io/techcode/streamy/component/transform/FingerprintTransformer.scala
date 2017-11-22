@@ -26,8 +26,6 @@ package io.techcode.streamy.component.transform
 import java.nio.charset.StandardCharsets
 
 import com.google.common.hash.{HashFunction, Hashing}
-import gnieh.diffson.Pointer
-import io.circe.Json
 import io.techcode.streamy.component.SimpleTransformer
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
@@ -46,7 +44,7 @@ class FingerprintTransformer(config: Config) extends SimpleTransformer(config) {
     .hashString(_, StandardCharsets.UTF_8).toString
 
   override def transform(value: Json): Option[Json] =
-    value.asString.map(x => hashFunc(x))
+    value.asString.map(hashFunc(_))
 
 }
 
@@ -73,8 +71,8 @@ object FingerprintTransformer {
 
   // Component configuration
   case class Config(
-    override val source: Pointer,
-    override val target: Option[Pointer] = None,
+    override val source: JsonPointer,
+    override val target: Option[JsonPointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
     hashing: String

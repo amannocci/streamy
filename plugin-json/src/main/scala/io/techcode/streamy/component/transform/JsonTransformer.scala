@@ -23,9 +23,6 @@
  */
 package io.techcode.streamy.component.transform
 
-import gnieh.diffson.Pointer
-import io.circe._
-import io.circe.parser._
 import io.techcode.streamy.component.SimpleTransformer
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
@@ -41,21 +38,19 @@ import io.techcode.streamy.util.json._
 class JsonTransformer(config: Config) extends SimpleTransformer(config) {
 
   // Serialize function
-  lazy val serialize: Json => Option[Json] = (value: Json) => Some(value.noSpaces)
+  lazy val serialize: Json => Option[Json] = (value: Json) => Some(value.toString)
 
   // Deserialize function
-  lazy val deserialize: Json => Option[Json] = (value: Json) => {
-    value.asString.map { field =>
-      // Try to avoid parsing of wrong json
-      if (field.startsWith("{") && field.endsWith("}")) {
-        // Try to parse
-        parse(field) match {
-          case Right(succ) => succ
-          case Left(ex) => onError(state = value, ex = Some(ex))
-        }
-      } else {
-        onError(state = value)
+  lazy val deserialize: Json => Option[Json] = (value: Json) => value.asString.map { field =>
+    // Try to avoid parsing of wrong json
+    if (field.startsWith("{") && field.endsWith("}")) {
+      // Try to parse
+      Json.parse(field) match {
+        case Right(succ) => succ
+        case Left(ex) => onError(state = value, ex = Some(ex))
       }
+    } else {
+      onError(state = value)
     }
   }
 
@@ -76,8 +71,8 @@ object JsonTransformer {
 
   // Component configuration
   case class Config(
-    override val source: Pointer,
-    override val target: Option[Pointer] = None,
+    override val source: JsonPointer,
+    override val target: Option[JsonPointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
     mode: Mode = Mode.Deserialize
