@@ -23,7 +23,10 @@
  */
 package io.techcode.streamy.util.json
 
+import akka.util.ByteString
 import org.scalatest._
+
+import scala.collection.mutable
 
 /**
   * JsonUtil spec.
@@ -34,8 +37,20 @@ class JsonUtilSpec extends FlatSpec with Matchers {
     JsonUtil.size(4) should equal(1)
   }
 
+  it must "return correct size for a long" in {
+    JsonUtil.size(4L) should equal(1)
+  }
+
   it must "return correct size for a float" in {
-    JsonUtil.size(2.0) should equal(3)
+    JsonUtil.size(2.0F) should equal(3)
+  }
+
+  it must "return correct size for a double" in {
+    JsonUtil.size(2.0D) should equal(3)
+  }
+
+  it must "return correct size for a number" in {
+    JsonUtil.size(BigDecimal("2e128")) should equal(6)
   }
 
   it must "return correct size for an object" in {
@@ -71,6 +86,28 @@ class JsonUtilSpec extends FlatSpec with Matchers {
       "test.test" -> "foobar",
       "test.foobar.test" -> 0
     )))
+  }
+
+  it must "convert correctly a map to json object" in {
+    val map: mutable.Map[String, Any] = new mutable.LinkedHashMap()
+    map.put("string", "string")
+    map.put("boolean", true)
+    map.put("int", 10)
+    map.put("long", 10L)
+    map.put("float", 1.0F)
+    map.put("double", 1.0D)
+    map.put("bigDecimal", BigDecimal(1))
+    map.put("byteString", ByteString("test"))
+    JsonUtil.fromMap(map) should equal(Json.obj(
+      "string" -> "string",
+      "boolean" -> true,
+      "int" -> 10,
+      "long" -> 10L,
+      "float" -> 1.0F,
+      "double" -> 1.0D,
+      "bigDecimal" -> BigDecimal(1),
+      "byteString" -> ByteString("test")
+    ))
   }
 
 }

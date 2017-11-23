@@ -200,6 +200,8 @@ private[json] object JsonValueSerializer extends JsonSerializer[Json] {
       json.writeNumber(value.asFloat.get)
     } else if (value.isDouble) {
       json.writeNumber(value.asDouble.get)
+    } else if (value.isBytes) {
+      json.writeBinary(value.asBytes.get.toArray[Byte])
     } else if (value.isNumber) {
       // Workaround #3784: Same behaviour as if JsonGenerator were
       // configured with WRITE_BIGDECIMAL_AS_PLAIN, but forced as this

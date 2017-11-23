@@ -25,6 +25,8 @@ package io.techcode.streamy.util.json
 
 import java.io.InputStream
 
+import akka.util.ByteString
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -39,6 +41,13 @@ object Json {
     * Construct a new JsArray with given values.
     */
   def arr(values: Json*): JsArray = JsArray(mutable.ArrayBuffer(values: _ *))
+
+  /**
+    * Create a new json object builder.
+    *
+    * @return json object builder.
+    */
+  def builder(): JsObjectBuilder = JsObjectBuilder()
 
   /**
     * Parses a string representing a Json input, and returns it as a [[Json]].
@@ -138,6 +147,13 @@ sealed trait Json {
   def isArray: Boolean = false
 
   /**
+    * Returns true if the json value is a json bytes.
+    *
+    * @return true if the json value is a json bytes, otherwise false.
+    */
+  def isBytes: Boolean = false
+
+  /**
     * Returns true if the json value is a json boolean.
     *
     * @return true if the json value is a json boolean, otherwise false.
@@ -206,6 +222,13 @@ sealed trait Json {
     * @return current json value as json array if possible, otherwise [[None]].
     */
   def asArray: Option[JsArray] = None
+
+  /**
+    * Returns current json value as byte string.
+    *
+    * @return current json value as byte string if possible, otherwise [[None]].
+    */
+  def asBytes: Option[ByteString] = None
 
   /**
     * Returns current json value as json boolean.
@@ -369,7 +392,7 @@ case class JsBigDecimal(value: BigDecimal) extends Json {
 /**
   * Represent a json string value.
   *
-  * @param value underlying value. were moved into scala.math.*
+  * @param value underlying value.
   *
   */
 case class JsString(value: String) extends Json {
@@ -377,6 +400,19 @@ case class JsString(value: String) extends Json {
   override val isString: Boolean = true
 
   override val asString: Option[String] = Some(value)
+
+}
+
+/**
+  * Represent a json bytes value.
+  *
+  * @param value underlying value.
+  */
+case class JsBytes(value: ByteString) extends Json {
+
+  override val isBytes: Boolean = true
+
+  override val asBytes: Option[ByteString] = Some(value)
 
 }
 
@@ -557,5 +593,54 @@ case class JsObject private[json](
   override val isObject: Boolean = true
 
   override val asObject: Option[JsObject] = Some(this)
+
+}
+
+/**
+  * Json object builder that allow zero copy json object creation.
+  *
+  * @param modifiable guard modification after result.
+  * @param underlying underlying data structure.
+  */
+case class JsObjectBuilder private (
+  private var modifiable: Boolean = true,
+  private val underlying: mutable.Map[String, Json] = new mutable.LinkedHashMap[String, Json]
+) {
+
+  /**
+    * Removes the specified key from this map if present.
+    *
+    * @param key key whose mapping is to be removed from the json object.
+    * @return json object builder.
+    */
+  def remove(key: String): JsObjectBuilder = {
+    if (modifiable) {
+      underlying.remove(key)
+    }
+    this
+  }
+
+  /**
+    * Put the specified value with the specified key in this JsObject.
+    *
+    * @param field key and value to be associated.
+    * @return json object builder.
+    */
+  def put(field: (String, Json)): JsObjectBuilder = {
+    if (modifiable) {
+      underlying += field
+    }
+    this
+  }
+
+  /**
+    * Create a new json object.
+    *
+    * @return new json object.
+    */
+  def result(): JsObject = {
+    modifiable = false
+    JsObject(underlying)
+  }
 
 }

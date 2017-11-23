@@ -23,6 +23,9 @@
  */
 package io.techcode.streamy.util.json
 
+import java.io.ByteArrayInputStream
+
+import akka.util.ByteString
 import org.scalatest._
 
 /**
@@ -68,7 +71,21 @@ class JsonSpec extends FlatSpec with Matchers {
       "field1" -> 123)
   }
 
-  it should "not be equals when there is a diffenrence" in {
+  it should "be create from builder" in {
+    val builder = Json.builder()
+    builder.put("test" -> "test")
+    builder.remove("test")
+    builder.put("foobar" -> "test")
+    builder.result()
+    builder.put("foobar" -> "notModified")
+    builder.result() should equal(Json.obj("foobar" -> "test"))
+  }
+
+  it should "return field set" in {
+    Json.obj("test" -> "test").fieldSet should equal(Set("test" -> JsString("test")))
+  }
+
+  it should "not be equals when there is a difference" in {
     Json.obj(
       "field1" -> 123,
       "field2" -> "beta",
@@ -166,6 +183,10 @@ class JsonSpec extends FlatSpec with Matchers {
     )
 
     Json.obj().deepMerge(populatedObj) should equal(Some(populatedObj))
+  }
+
+  it should "fail to deep merge a json value" in {
+    JsString("1").deepMerge(Json.obj()) should equal(None)
   }
 
   it should "should keep existing attributes where there is no collision and overwrite existing attributes on collision when value is not a JsArray or JsObject" in {
@@ -319,9 +340,9 @@ class JsonSpec extends FlatSpec with Matchers {
     input.prepend("test03") should equal(Json.arr("test03", "test01", "test02"))
   }
 
-  "Json" should "serialize long integers correctly" in {
-    val input = Json.obj("timestamp" -> 1330950829160L)
-    input.toString should equal("""{"timestamp":1330950829160}""")
+  "Json" should "stringify long integers correctly" in {
+    val input = Json.obj("l" -> 1330950829160L)
+    input.toString should equal("""{"l":1330950829160}""")
   }
 
   it should "stringify short integers correctly" in {
@@ -334,6 +355,26 @@ class JsonSpec extends FlatSpec with Matchers {
     val b: Byte = 123
     val input = Json.obj("b" -> b)
     input.toString should equal("""{"b":123}""")
+  }
+
+  it should "stringify boolean correctly" in {
+    JsTrue.toString should equal("true")
+  }
+
+  it should "stringify float correctly" in {
+    JsFloat(1.0F).toString should equal("1.0")
+  }
+
+  it should "stringify double correctly" in {
+    JsDouble(1.0D).toString should equal("1.0")
+  }
+
+  it should "stringify null correctly" in {
+    JsNull.toString should equal("null")
+  }
+
+  it should "stringify bytestring correctly" in {
+    JsBytes(ByteString("test")).toString should equal("\"dGVzdA==\"")
   }
 
   it should "stringify big decimal correctly" in {
@@ -437,6 +478,17 @@ class JsonSpec extends FlatSpec with Matchers {
     input should equal(JsNull)
   }
 
+  it should "parse json object from bytes" in {
+    val input = Json.parse("""{"test":"test"}""".getBytes).getOrElse(JsNull)
+    input should equal(Json.obj("test" -> "test"))
+  }
+
+
+  it should "parse json object from input stream" in {
+    val input = Json.parse(new ByteArrayInputStream("""{"test":"test"}""".getBytes)).getOrElse(JsNull)
+    input should equal(Json.obj("test" -> "test"))
+  }
+
   it should "asciiStringify should escape non-ascii characters" in {
     def jo = Json.obj(
       "key1" -> "\u2028\u2029\u2030",
@@ -460,6 +512,166 @@ class JsonSpec extends FlatSpec with Matchers {
     )
 
     Json.asciiStringify(jo) should equal("""{"key1":"ab\n\tcd","key2":"\"\r"}""")
+  }
+
+  it should "be convert to json object when possible" in {
+    Json.obj().asObject should equal(Some(Json.obj()))
+  }
+
+  it should "fail to be convert to json object when not possible" in {
+    JsString("10").asObject should equal(None)
+  }
+
+  it should "return true when it can be convert to json object" in {
+    Json.obj().isObject should equal(true)
+  }
+
+  it should "return false when it can be convert to json object" in {
+    JsString("10").isObject should equal(false)
+  }
+
+  it should "be convert to json array when possible" in {
+    Json.arr().asArray should equal(Some(Json.arr()))
+  }
+
+  it should "fail to be convert to json array when not possible" in {
+    JsString("10").asArray should equal(None)
+  }
+
+  it should "return true when it can be convert to json array" in {
+    Json.arr().isArray should equal(true)
+  }
+
+  it should "return false when it can be convert to json array" in {
+    JsString("10").isArray should equal(false)
+  }
+
+  it should "be convert to boolean when possible" in {
+    JsTrue.asBoolean should equal(Some(true))
+  }
+
+  it should "fail to be convert to boolean when not possible" in {
+    JsString("10").asBoolean should equal(None)
+  }
+
+  it should "return true when it can be convert to boolean" in {
+    JsTrue.isBoolean should equal(true)
+  }
+
+  it should "return false when it can be convert to boolean" in {
+    JsString("10").isBoolean should equal(false)
+  }
+
+  it should "be convert to string when possible" in {
+    JsString("10").asString should equal(Some("10"))
+  }
+
+  it should "fail to be convert to string when not possible" in {
+    JsTrue.asString should equal(None)
+  }
+
+  it should "return true when it can be convert to string" in {
+    JsString("10").isString should equal(true)
+  }
+
+  it should "return false when it can be convert to string" in {
+    JsTrue.isString should equal(false)
+  }
+
+  it should "be convert to number when possible" in {
+    JsBigDecimal(BigDecimal("1e20")).asNumber should equal(Some(BigDecimal("1e20")))
+  }
+
+  it should "fail to be convert to number when not possible" in {
+    JsTrue.asNumber should equal(None)
+  }
+
+  it should "return true when it can be convert to number" in {
+    JsBigDecimal(BigDecimal("1e20")).isNumber should equal(true)
+  }
+
+  it should "return false when it can be convert to number" in {
+    JsTrue.isNumber should equal(false)
+  }
+
+  it should "be convert to null when possible" in {
+    JsNull.asNull should equal(Some(()))
+  }
+
+  it should "fail to be convert to null when not possible" in {
+    JsTrue.asNull should equal(None)
+  }
+
+  it should "return true when it can be convert to null" in {
+    JsNull.isNull should equal(true)
+  }
+
+  it should "return false when it can be convert to null" in {
+    JsTrue.isNull should equal(false)
+  }
+
+  it should "be convert to int when possible" in {
+    JsInt(1).asInt should equal(Some(1))
+  }
+
+  it should "fail to be convert to int when not possible" in {
+    JsTrue.asInt should equal(None)
+  }
+
+  it should "return true when it can be convert to int" in {
+    JsInt(1).isInt should equal(true)
+  }
+
+  it should "return false when it can be convert to int" in {
+    JsTrue.isInt should equal(false)
+  }
+
+  it should "be convert to long when possible" in {
+    JsLong(1).asLong should equal(Some(1))
+  }
+
+  it should "fail to be convert to long when not possible" in {
+    JsTrue.asLong should equal(None)
+  }
+
+  it should "return true when it can be convert to long" in {
+    JsLong(1).isLong should equal(true)
+  }
+
+  it should "return false when it can be convert to long" in {
+    JsTrue.isLong should equal(false)
+  }
+
+  it should "be convert to float when possible" in {
+    JsFloat(1.0F).asFloat should equal(Some(1.0F))
+  }
+
+  it should "fail to be convert to float when not possible" in {
+    JsTrue.asFloat should equal(None)
+  }
+
+  it should "return true when it can be convert to float" in {
+    JsFloat(1.0F).isFloat should equal(true)
+  }
+
+  it should "return false when it can be convert to float" in {
+    JsTrue.isFloat should equal(false)
+  }
+
+  it should "be convert to double when possible" in {
+    JsDouble(1.0D).asDouble should equal(Some(1.0D))
+  }
+
+  it should "fail to be convert to double when not possible" in {
+    JsTrue.asDouble should equal(None)
+  }
+
+  it should "return true when it can be convert to double" in {
+    JsDouble(1.0D).isDouble should equal(true)
+  }
+
+  it should "return false when it can be convert to double" in {
+    JsTrue.isDouble should equal(false)
   }
 
 }

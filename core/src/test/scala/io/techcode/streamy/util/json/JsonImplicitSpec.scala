@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.util.json
 
+import akka.util.ByteString
 import org.scalatest._
 
 /**
@@ -64,6 +65,10 @@ class JsonImplicitSpec extends FlatSpec with Matchers {
 
   it must "provide a shortcut to convert boolean in json" in {
     booleanToJson(true) should equal(JsTrue)
+  }
+
+  it must "provide a shortcut to convert byte string in json" in {
+    byteStringToJson(ByteString.empty) should equal(JsBytes(ByteString.empty))
   }
 
   it must "provide a shortcut to convert big decimal in json" in {

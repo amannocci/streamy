@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.util.json
 
+import akka.util.ByteString
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable
@@ -62,19 +63,27 @@ object JsonUtil {
     } else if (el.isDouble) {
       el.asDouble.get.toString.length
     } else if (el.isNumber) {
-      el.asNumber.map(x => x.toString.length).get // 2.0
+      el.asNumber.map(_.toString.length).get // 2.0
     } else {
       el.asString.get.length + 2 // "element"
     }
   }
 
   /**
-    * Convert a json object to dot notation.
+    * Convert a json value to dot notation.
     *
-    * @return json object with doc notation.
+    * @param js json object to flatten.
+    * @return json value with dot notation.
     */
   def flatten(js: Json): Option[Json] = js.asObject.map(flatten(_))
 
+  /**
+    * Convert a json object to dot notation.
+    *
+    * @param js     json object to flatten.
+    * @param prefix accumultator.
+    * @return json object with dot notation.
+    */
   def flatten(js: JsObject, prefix: String = StringUtils.EMPTY): JsObject = js.fields.foldLeft(Json.obj()) {
     case (acc, (k, v: Json)) =>
       if (v.isObject) {
@@ -122,6 +131,9 @@ object JsonUtil {
       case (key: String, value: Long) => builder.put(key, longToJson(value))
       case (key: String, value: Double) => builder.put(key, doubleToJson(value))
       case (key: String, value: Float) => builder.put(key, floatToJson(value))
+      case (key: String, value: BigDecimal) => builder.put(key, bigDecimalToJson(value))
+      case (key: String, value: Boolean) => builder.put(key, booleanToJson(value))
+      case (key: String, value: ByteString) => builder.put(key, byteStringToJson(value))
       case (key: String, value: Any) => builder.put(key, stringToJson(value.toString))
     }
     json

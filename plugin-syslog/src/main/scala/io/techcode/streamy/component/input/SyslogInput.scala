@@ -43,41 +43,41 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     val buf: ByteBuf = new ByteBuf(pkt)
 
     // Populate
-    val mapping: mutable.Map[String, Json] = new mutable.LinkedHashMap[String, Json]
+    val builder: JsObjectBuilder = Json.builder()
 
     // Read PRIVAL
     expect(buf, '<')
-    capturePrival(buf, config, mapping)
+    capturePrival(builder, buf, config)
 
     // Read version
     expect(buf, '1')
     expect(buf, ' ')
 
     // Read timestamp
-    captureString(buf, config.timestamp, FindSpace, mapping)
+    captureString(builder, buf, config.timestamp, FindSpace)
 
     // Read hostname
-    captureString(buf, config.hostname, FindSpace, mapping)
+    captureString(builder, buf, config.hostname, FindSpace)
 
     // Read app name
-    captureString(buf, config.app, FindSpace, mapping)
+    captureString(builder, buf, config.app, FindSpace)
 
     // Read proc id
-    captureString(buf, config.proc, FindSpace, mapping)
+    captureString(builder, buf, config.proc, FindSpace)
 
     // Read message id
-    captureString(buf, config.msgId, FindSpace, mapping)
+    captureString(builder, buf, config.msgId, FindSpace)
 
     // Read structured data
-    captureStructData(buf, config.structData, mapping)
+    captureStructData(builder, buf, config.structData)
 
     // Read message
     if (config.message.isDefined) {
-      mapping.update(config.message.get, buf.slice().utf8String.trim)
+      builder.put(config.message.get, buf.slice().utf8String.trim)
     }
 
     // Split header and message
-    JsonUtil.fromJsonMap(mapping)
+    builder.result()
   }
 
   /**
@@ -87,9 +87,9 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     * @param ref       reference part.
     * @param processor bytebuf processor used to delimite part.
     */
-  private def captureString(buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor, mapping: mutable.Map[String, Json]): Unit = {
+  private def captureString(builder: JsObjectBuilder, buf: ByteBuf, ref: Option[String], processor: ByteBufProcessor): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
-      mapping.update(ref.get, buf.readString(processor))
+      builder.put(ref.get, buf.readString(processor))
     } else {
       buf.skipBytes(processor)
     }
@@ -101,17 +101,17 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     * @param buf  current bytebuf.
     * @param conf reference part.
     */
-  private def capturePrival(buf: ByteBuf, conf: RFC5424Config, mapping: mutable.Map[String, Json]): Unit = {
+  private def capturePrival(builder: JsObjectBuilder, buf: ByteBuf, conf: RFC5424Config): Unit = {
     if (config.facility.isDefined || config.severity.isDefined) {
       // Read prival in tmp
       val prival = buf.readDigit(FindCloseQuote)
 
       // Read severity or facility
       if (config.facility.isDefined) {
-        mapping.update(config.facility.get, prival >> 3)
+        builder.put(config.facility.get, prival >> 3)
       }
       if (config.severity.isDefined) {
-        mapping.update(config.severity.get, prival & 7)
+        builder.put(config.severity.get, prival & 7)
       }
     } else {
       buf.skipBytes(FindCloseQuote)
@@ -124,10 +124,10 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     * @param buf current bytebuf.
     * @param ref reference part.
     */
-  private def captureStructData(buf: ByteBuf, ref: Option[String], mapping: mutable.Map[String, Json]): Unit = {
+  private def captureStructData(builder: JsObjectBuilder, buf: ByteBuf, ref: Option[String]): Unit = {
     if (ref.isDefined && buf.getByte != '-') {
       buf.skipBytes(FindOpenBracket)
-      mapping.update(ref.get, buf.readString(FindCloseBracket))
+      builder.put(ref.get, buf.readString(FindCloseBracket))
     } else {
       if (buf.getByte != '-') {
         buf.skipBytes(FindCloseBracket)

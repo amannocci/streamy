@@ -109,6 +109,12 @@ class JsonOperationSpec extends FlatSpec with Matchers {
     result should equal(None)
   }
 
+  it must "switch correctly to root value" in {
+    val input = Json.obj("test" -> "test")
+    val result = input.patch(Add(Root, Json.obj("test" -> "foobar")))
+    result should equal(Some(Json.obj("test" -> "foobar")))
+  }
+
   "Json test operation" must "return none on failure" in {
     val input = Json.obj("test" -> "test")
     val result = input.patch(Test(Root / "test", JsInt(0)))
@@ -209,6 +215,12 @@ class JsonOperationSpec extends FlatSpec with Matchers {
     result should equal(None)
   }
 
+  it must "switch correctly to root value" in {
+    val input = Json.obj("test" -> "test")
+    val result = input.patch(Replace(Root, Json.obj("test" -> "foobar")))
+    result should equal(Some(Json.obj("test" -> "foobar")))
+  }
+
   "Json remove operation" must "remove correctly a field in json object" in {
     val input = Json.obj("test" -> "test")
     val result = input.patch(Remove(Root / "test"))
@@ -263,6 +275,18 @@ class JsonOperationSpec extends FlatSpec with Matchers {
   it must "fail to remove a value in json object if we fail to evaluate path on json array" in {
     val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
     val result = input.patch(Remove(Root / "test" / 1 / "test"))
+    result should equal(None)
+  }
+
+  it must "fail to remove a field in json object" in {
+    val input = Json.obj("test" -> "test")
+    val result = input.patch(Remove(Root / "fail"))
+    result should equal(None)
+  }
+
+  it must "fail to remove a field in json array" in {
+    val input = Json.arr("test", "test")
+    val result = input.patch(Remove(Root / 2))
     result should equal(None)
   }
 

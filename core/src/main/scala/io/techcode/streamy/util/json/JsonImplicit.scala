@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.util.json
 
+import akka.util.ByteString
+
 import scala.language.implicitConversions
 
 /**
@@ -101,6 +103,14 @@ trait JsonImplicit {
     * @return json.
     */
   implicit def booleanToJson(value: Boolean): Json = if (value) JsTrue else JsFalse
+
+  /**
+    * Convert a byte string to json bytes.
+    *
+    * @param value byte string value.
+    * @return json.
+    */
+  implicit def byteStringToJson(value: ByteString): Json = JsBytes(value)
 
   /**
     * Convert a big decimal to json value.

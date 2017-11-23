@@ -78,12 +78,28 @@ private[json] abstract class SimpleOperation(path: JsonPointer) extends JsonOper
 
 case class Add(path: JsonPointer, value: Json) extends SimpleOperation(path) {
 
+  override def apply(json: Json): Option[Json] = {
+    if (path.underlying.isEmpty) {
+      Some(value)
+    } else {
+      apply(path, 0, Some(json))
+    }
+  }
+
   def operate(accessor: JsonAccessor, current: Option[Json]): Option[Json] =
     accessor.add(current.get, value)
 
 }
 
 case class Replace(path: JsonPointer, value: Json) extends SimpleOperation(path) {
+
+  override def apply(json: Json): Option[Json] = {
+    if (path.underlying.isEmpty) {
+      Some(value)
+    } else {
+      apply(path, 0, Some(json))
+    }
+  }
 
   def operate(accessor: JsonAccessor, current: Option[Json]): Option[Json] =
     accessor.replace(current.get, value)
@@ -102,7 +118,7 @@ case class Move(from: JsonPointer, to: JsonPointer) extends JsonOperation {
   def apply(json: Json): Option[Json] = {
     val result = json.evaluate(from)
     if (result.isDefined) {
-      Remove(from).apply(json).flatMap(Add(to, result.get).apply(_))
+      Remove(from)(json).flatMap(Add(to, result.get)(_))
     } else {
       result
     }
@@ -115,7 +131,7 @@ case class Copy(from: JsonPointer, to: JsonPointer) extends JsonOperation {
   def apply(json: Json): Option[Json] = {
     val result = json.evaluate(from)
     if (result.isDefined) {
-      Add(to, result.get).apply(json)
+      Add(to, result.get)(json)
     } else {
       result
     }
