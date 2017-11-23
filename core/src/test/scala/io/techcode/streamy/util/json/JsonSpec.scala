@@ -674,4 +674,20 @@ class JsonSpec extends FlatSpec with Matchers {
     JsTrue.isDouble should equal(false)
   }
 
+  it should "be convert to bytes when possible" in {
+    JsBytes(ByteString("test")).asBytes should equal(Some(ByteString("test")))
+  }
+
+  it should "fail to be convert to bytes when not possible" in {
+    JsTrue.asBytes should equal(None)
+  }
+
+  it should "return true when it can be convert to bytes" in {
+    JsBytes(ByteString("test")).isBytes should equal(true)
+  }
+
+  it should "return false when it can be convert to bytes" in {
+    JsTrue.isBytes should equal(false)
+  }
+
 }

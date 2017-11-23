@@ -72,7 +72,7 @@ object Metrics {
       Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
 
       // Log
-      log.info(Json.obj("type" -> "metrics").deepMerge(JsonUtil.fromMap(entry)).get)
+      log.info(Json.obj("type" -> "metrics").deepMerge(JsonUtil.fromRawMap(entry)).get)
     })
   }
 

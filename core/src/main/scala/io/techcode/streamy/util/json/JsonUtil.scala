@@ -123,7 +123,7 @@ object JsonUtil {
     * @param map map with any values.
     * @return json object.
     */
-  def fromMap(map: mutable.Map[String, Any]): JsObject = {
+  def fromRawMap(map: mutable.Map[String, Any]): JsObject = {
     val json = Json.obj()
     val builder = json.underlying
     map.foreach {

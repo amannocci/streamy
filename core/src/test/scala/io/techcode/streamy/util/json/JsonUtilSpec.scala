@@ -98,7 +98,51 @@ class JsonUtilSpec extends FlatSpec with Matchers {
     map.put("double", 1.0D)
     map.put("bigDecimal", BigDecimal(1))
     map.put("byteString", ByteString("test"))
-    JsonUtil.fromMap(map) should equal(Json.obj(
+    JsonUtil.fromRawMap(map) should equal(Json.obj(
+      "string" -> "string",
+      "boolean" -> true,
+      "int" -> 10,
+      "long" -> 10L,
+      "float" -> 1.0F,
+      "double" -> 1.0D,
+      "bigDecimal" -> BigDecimal(1),
+      "byteString" -> ByteString("test")
+    ))
+  }
+
+  it must "convert correctly a raw map to json object" in {
+    val map: mutable.Map[String, Any] = new mutable.LinkedHashMap()
+    map.put("string", "string")
+    map.put("boolean", true)
+    map.put("int", 10)
+    map.put("long", 10L)
+    map.put("float", 1.0F)
+    map.put("double", 1.0D)
+    map.put("bigDecimal", BigDecimal(1))
+    map.put("byteString", ByteString("test"))
+    JsonUtil.fromRawMap(map) should equal(Json.obj(
+      "string" -> "string",
+      "boolean" -> true,
+      "int" -> 10,
+      "long" -> 10L,
+      "float" -> 1.0F,
+      "double" -> 1.0D,
+      "bigDecimal" -> BigDecimal(1),
+      "byteString" -> ByteString("test")
+    ))
+  }
+
+  it must "convert correctly a json map to json object" in {
+    val map: mutable.Map[String, Json] = new mutable.LinkedHashMap()
+    map.put("string", "string")
+    map.put("boolean", true)
+    map.put("int", 10)
+    map.put("long", 10L)
+    map.put("float", 1.0F)
+    map.put("double", 1.0D)
+    map.put("bigDecimal", BigDecimal(1))
+    map.put("byteString", ByteString("test"))
+    JsonUtil.fromJsonMap(map) should equal(Json.obj(
       "string" -> "string",
       "boolean" -> true,
       "int" -> 10,

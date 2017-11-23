@@ -254,6 +254,12 @@ class JsonOperationSpec extends FlatSpec with Matchers {
     Some(input) should not equal result
   }
 
+  it must "remove correctly a json value at root" in {
+    val input = Json.obj("test" -> "test")
+    val result = input.patch(Remove(Root))
+    result should equal(Some(input))
+  }
+
   it must "fail to remove a value in json array if we point a json object" in {
     val input = Json.arr("test", "test")
     val result = input.patch(Remove(Root / "fail"))
