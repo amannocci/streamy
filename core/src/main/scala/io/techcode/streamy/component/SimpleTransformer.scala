@@ -33,7 +33,7 @@ import scala.language.postfixOps
 
 /**
   * Simple transformer abstract implementation that provide
-  * a convenient way to process an update on json object.Test
+  * a convenient way to process an update on json object.
   */
 abstract class SimpleTransformer(config: Config) extends Transformer[Json, Json](config) {
 

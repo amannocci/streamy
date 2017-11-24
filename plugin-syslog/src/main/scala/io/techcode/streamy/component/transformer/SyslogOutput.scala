@@ -21,19 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.output
+package io.techcode.streamy.component.transformer
 
 import java.net.InetAddress
 
 import akka.util.{ByteString, ByteStringBuilder}
-import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
+import io.techcode.streamy.component.Transformer
+import io.techcode.streamy.component.transformer.SyslogOutput.{RFC3164Config, RFC5424Config}
 import io.techcode.streamy.util.json._
 import org.apache.commons.lang3.StringUtils
 
 /**
-  * Syslog RFC3164 output implementation.
+  * Syslog RFC3164 output transformer implementation.
   */
-private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (Json => ByteString) {
+private[transformer] class SyslogRFC3164Output(config: RFC3164Config) extends Transformer[Json, ByteString] {
 
   override def apply(p: Json): ByteString = {
     implicit val pkt: Json = p
@@ -75,9 +76,9 @@ private[output] class SyslogRFC3164Output(config: RFC3164Config) extends (Json =
 }
 
 /**
-  * Syslog RFC5424 output implementation.
+  * Syslog RFC5424 output transformer implementation.
   */
-private[output] class SyslogRFC5424Output(config: RFC5424Config) extends (Json => ByteString) {
+private[transformer] class SyslogRFC5424Output(config: RFC5424Config) extends Transformer[Json, ByteString] {
 
   override def apply(p: Json): ByteString = {
     implicit val pkt: Json = p
@@ -192,7 +193,7 @@ object SyslogOutput {
     * @param pkt          packet involved.
     * @param buf          bytestring builder involved.
     */
-  private[output] def populate(conf: Option[String], defaultValue: String)(implicit pkt: Json, buf: ByteStringBuilder): Unit = {
+  private[transformer] def populate(conf: Option[String], defaultValue: String)(implicit pkt: Json, buf: ByteStringBuilder): Unit = {
     conf match {
       case Some(key) => buf.putBytes(pkt.evaluate(Root / key).get.asString.getOrElse(defaultValue).getBytes())
       case None => buf.putBytes(defaultValue.getBytes())
@@ -207,7 +208,7 @@ object SyslogOutput {
     * @param pkt          packet involved.
     * @param buf          bytestring builder involved.
     */
-  private[output] def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: Json, buf: ByteStringBuilder): Unit = {
+  private[transformer] def populatePrival(facilityConf: Option[String], severityConf: Option[String])(implicit pkt: Json, buf: ByteStringBuilder): Unit = {
     var prival = 0
     severityConf match {
       case Some(severityKey) => prival = pkt.evaluate(Root / severityKey).flatMap(_.asInt).getOrElse(SyslogOutput.Facility)
@@ -219,21 +220,5 @@ object SyslogOutput {
     }
     buf.putBytes(prival.toString.getBytes)
   }
-
-  /**
-    * Create a syslog output RCF5424 compilant.
-    *
-    * @param config output configuration.
-    * @return syslog output RCF5424 compilant.
-    */
-  def rfc5424(config: RFC5424Config): Json => ByteString = new SyslogRFC5424Output(config)
-
-  /**
-    * Create a syslog output RCF3126 compilant.
-    *
-    * @param config output configuration.
-    * @return syslog output RCF3126 compilant.
-    */
-  def rfc3164(config: RFC3164Config): Json => ByteString = new SyslogRFC3164Output(config)
 
 }

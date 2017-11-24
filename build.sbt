@@ -1,5 +1,6 @@
 import sbt.Keys.{libraryDependencies, publishTo, scalacOptions}
 
+lazy val akkaVersion = "2.5.7"
 lazy val scalaTestVersion = "3.0.1"
 lazy val mockitoVersion = "2.10.0"
 
@@ -8,9 +9,13 @@ lazy val commonSettings = Seq(
   version := "0.1.0-SNAPSHOT",
   scalaVersion := "2.12.4",
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
-    "org.mockito" % "mockito-core" % mockitoVersion % Test
-  ),
+    "org.scalatest" %% "scalatest" % scalaTestVersion,
+    "org.mockito" % "mockito-core" % mockitoVersion
+  ).map(_ % Test),
+  libraryDependencies ++= Seq(
+    "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
+    "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
+  ).map(_ % akkaVersion % Test),
   organization := "io.techcode.streamy",
   publishTo := {
     val nexus = "https://nexus.techcode.io/"

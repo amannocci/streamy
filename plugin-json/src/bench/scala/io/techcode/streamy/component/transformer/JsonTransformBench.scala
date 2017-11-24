@@ -21,18 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.util
+package io.techcode.streamy.component.transformer
 
-import io.techcode.streamy.util.json.{JsonUtil, _}
+import io.techcode.streamy.component.transformer.JsonTransformer.Config
+import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
 /**
-  * JsonUtil bench.
+  * Json transform bench.
   */
-class JsonUtilBench {
+class JsonTransformBench {
 
-  @Benchmark def size(): Long = {
-    JsonUtil.size("20")
+  @Benchmark def benchSimpleSource(): Json = {
+    new JsonTransformer(Config(source = Root / "message"))
+      .apply(Json.obj("message" -> """{"test":"test"}"""))
+  }
+
+  @Benchmark def benchSimpleSourceAndTarget(): Json = {
+    new JsonTransformer(Config(source = Root / "message", target = Some(Root / "target")))
+      .apply(Json.obj("message" -> """{"test":"test"}"""))
+  }
+
+  @Benchmark def benchSimpleFailure(): Json = {
+    new JsonTransformer(Config(source = Root / "message"))
+      .apply(Json.obj("message" -> "test"))
   }
 
 }

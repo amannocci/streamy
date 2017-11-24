@@ -21,9 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.transform
+package io.techcode.streamy.component.transformer
 
-import io.techcode.streamy.component.transform.FingerprintTransformer.Config
+import io.techcode.streamy.component.transformer.FingerprintTransformer.Config
+import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
 /**
@@ -32,55 +33,55 @@ import org.openjdk.jmh.annotations.Benchmark
 class FingerprintTransformBench {
 
   @Benchmark def benchMd5(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "md5")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "md5")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSha1(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "sha1")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "sha1")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSha256(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "sha256")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "sha256")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSha384(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "sha384")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "sha384")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSha512(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "sha512")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "sha512")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchAlder32(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "alder32")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "alder32")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchCrc32(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "crc32")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "crc32")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchCrc32c(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "crc32c")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "crc32c")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchMurmur3_32(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "murmur3_32")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "murmur3_32")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchMurmur3_128(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "murmur3_128")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "murmur3_128")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchSipHash24(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "sipHash24")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "sipHash24")).apply(FingerprintTransformBench.Simple)
   }
 
   @Benchmark def benchFarmHashFingerprint64(): Unit = {
-    new FingerprintTransformer(Config(source = root / "message", hashing = "farmHashFingerprint64")).apply(FingerprintTransformBench.Simple)
+    new FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64")).apply(FingerprintTransformBench.Simple)
   }
 
 }
 
 object FingerprintTransformBench {
-  val Simple: Json = parse("""{"message":"test"}""").getOrElse(Json.Null)
+  val Simple: Json = Json.parse("""{"message":"test"}""").getOrElse(JsNull)
 }

@@ -21,22 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.input
+package io.techcode.streamy.component.transformer
 
 import akka.util.ByteString
 import io.techcode.streamy.buffer.ByteBufProcessor._
 import io.techcode.streamy.buffer.{ByteBuf, ByteBufProcessor}
-import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
-import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.component.Transformer
+import io.techcode.streamy.component.transformer.SyslogInput.RFC5424Config
 import io.techcode.streamy.util.json._
-
-import scala.collection.mutable
 
 
 /**
-  * Syslog RFC5424 input implementation.
+  * Syslog RFC5424 input transformer implementation.
   */
-private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteString => Json) {
+private[transformer] class SyslogRFC5424Input(config: RFC5424Config) extends Transformer[ByteString, Json] {
 
   override def apply(pkt: ByteString): Json = {
     // Grab new buffer
@@ -144,7 +142,7 @@ private[input] class SyslogRFC5424Input(config: RFC5424Config) extends (ByteStri
     */
   private def expect(buf: ByteBuf, ch: Char): Unit = {
     if (buf.readByte != ch) {
-      throw new StreamException(s"Expected $ch at index ${buf.readerIndex}", Some(buf.toString))
+      onError(s"Expected $ch at index ${buf.readerIndex}", JsString(buf.toString))
     }
   }
 
@@ -179,13 +177,5 @@ object SyslogInput {
     structData: Option[String] = None,
     message: Option[String] = None
   )
-
-  /**
-    * Create a syslog input RCF5424 compilant.
-    *
-    * @param config input configuration.
-    * @return syslog input RCF5424 compilant.
-    */
-  def rfc5424(config: RFC5424Config): ByteString => Json = new SyslogRFC5424Input(config)
 
 }

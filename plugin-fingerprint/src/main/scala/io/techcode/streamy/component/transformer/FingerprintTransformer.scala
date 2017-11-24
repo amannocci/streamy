@@ -21,23 +21,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.transform
+package io.techcode.streamy.component.transformer
 
 import java.nio.charset.StandardCharsets
 
+import akka.NotUsed
+import akka.stream.scaladsl.Flow
 import com.google.common.hash.{HashFunction, Hashing}
 import io.techcode.streamy.component.SimpleTransformer
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.transform.FingerprintTransformer.Config
+import io.techcode.streamy.component.transformer.FingerprintTransformer.Config
 import io.techcode.streamy.util.json._
 
 /**
-  * Fingerprint transform implementation.
+  * Fingerprint transformer implementation.
   */
-class FingerprintTransformer(config: Config) extends SimpleTransformer(config) {
+private[transformer] class FingerprintTransformer(config: Config) extends SimpleTransformer(config) {
 
   // Choose right transform function
   private val hashFunc: (String => String) = FingerprintTransformer.Hashings(config.hashing)
@@ -49,7 +51,7 @@ class FingerprintTransformer(config: Config) extends SimpleTransformer(config) {
 }
 
 /**
-  * Fingerprint transform companion.
+  * Fingerprint transformer companion.
   */
 object FingerprintTransformer {
 
@@ -77,5 +79,14 @@ object FingerprintTransformer {
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
     hashing: String
   ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
+
+  /**
+    * Create a fingerprint transformer flow that transform incoming [[Json]] objects.
+    *
+    * @param conf flow configuration.
+    * @return new fingerprint flow.
+    */
+  def transformer(conf: Config): Flow[Json, Json, NotUsed] =
+    Flow.fromFunction(new FingerprintTransformer(conf))
 
 }

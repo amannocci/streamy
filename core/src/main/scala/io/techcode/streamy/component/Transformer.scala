@@ -65,7 +65,7 @@ object Transformer {
 
   // Component configuration
   class Config(
-    val onError: ErrorBehaviour = ErrorBehaviour.Skip
+    val onError: ErrorBehaviour = ErrorBehaviour.DiscardAndReport
   )
 
   // Behaviour on error

@@ -21,10 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.input
+package io.techcode.streamy.component.transformer
 
 import akka.util.ByteString
-import io.techcode.streamy.component.input.SyslogInput.RFC5424Config
+import io.techcode.streamy.component.transformer.SyslogInput.RFC5424Config
 import io.techcode.streamy.stream.StreamException
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
@@ -62,7 +62,7 @@ private[this] object SyslogInputBench {
 
   val Failure = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
 
-  val SimpleRFC5424: ByteString => Json = SyslogInput.rfc5424(RFC5424Config(
+  val SimpleRFC5424: ByteString => Json = new SyslogRFC5424Input(RFC5424Config(
     facility = Some(SyslogInput.Id.Facility),
     severity = Some(SyslogInput.Id.Severity),
     timestamp = Some(SyslogInput.Id.Timestamp),
@@ -74,8 +74,8 @@ private[this] object SyslogInputBench {
     message = Some(SyslogInput.Id.Message)
   ))
 
-  val SimpleMessageRFC5424: ByteString => Json = SyslogInput.rfc5424(RFC5424Config(message = Some(SyslogInput.Id.Message)))
+  val SimpleMessageRFC5424: ByteString => Json = new SyslogRFC5424Input(RFC5424Config(message = Some(SyslogInput.Id.Message)))
 
-  val SimpleFailureRFC5424: ByteString => Json = SyslogInput.rfc5424(RFC5424Config())
+  val SimpleFailureRFC5424: ByteString => Json = new SyslogRFC5424Input(RFC5424Config())
 
 }

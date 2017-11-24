@@ -21,21 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.transform
+package io.techcode.streamy.component.transformer
 
+import akka.NotUsed
+import akka.stream.scaladsl.Flow
 import io.techcode.streamy.component.SimpleTransformer
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
 import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.transform.JsonTransformer.Mode.Mode
-import io.techcode.streamy.component.transform.JsonTransformer.{Config, Mode}
+import io.techcode.streamy.component.transformer.JsonTransformer.Mode.Mode
+import io.techcode.streamy.component.transformer.JsonTransformer.{Config, Mode}
 import io.techcode.streamy.util.json._
 
 /**
-  * Json transform implementation.
+  * Json transformer implementation.
   */
-class JsonTransformer(config: Config) extends SimpleTransformer(config) {
+private[transformer] class JsonTransformer(config: Config) extends SimpleTransformer(config) {
 
   // Serialize function
   lazy val serialize: Json => Option[Json] = (value: Json) => Some(value.toString)
@@ -83,5 +85,14 @@ object JsonTransformer {
     type Mode = Value
     val Serialize, Deserialize = Value
   }
+
+  /**
+    * Create a json transformer flow that transform incoming [[Json]] objects.
+    *
+    * @param conf flow configuration.
+    * @return new json flow.
+    */
+  def transformer(conf: Config): Flow[Json, Json, NotUsed] =
+    Flow.fromFunction(new JsonTransformer(conf))
 
 }

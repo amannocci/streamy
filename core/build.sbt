@@ -20,13 +20,9 @@ resolvers ++= Seq(
 // All akka libraries
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor", // Apache 2 License
-  "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
   "com.typesafe.akka" %% "akka-stream", // Apache 2 License
   "com.typesafe.akka" %% "akka-slf4j" // Apache 2 License
-).map(_ % akkaVersion % Compile) ++ Seq(
-  "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
-  "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
-).map(_ % akkaVersion % Test)
+).map(_ % akkaVersion % Compile)
 
 // All jackson libraries
 libraryDependencies ++= Seq(

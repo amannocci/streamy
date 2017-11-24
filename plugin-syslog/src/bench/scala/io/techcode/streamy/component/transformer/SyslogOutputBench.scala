@@ -21,10 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component.output
+package io.techcode.streamy.component.transformer
 
 import akka.util.ByteString
-import io.techcode.streamy.component.output.SyslogOutput.{RFC3164Config, RFC5424Config}
+import io.techcode.streamy.component.transformer.SyslogOutput.{RFC3164Config, RFC5424Config}
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -67,7 +67,7 @@ private[this] object SyslogOutputBench {
     SyslogOutput.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
   )
 
-  val SimpleRFC5424: Json => ByteString = SyslogOutput.rfc5424(RFC5424Config(
+  val SimpleRFC5424: Json => ByteString = new SyslogRFC5424Output(RFC5424Config(
     facility = Some(SyslogOutput.Id.Facility),
     severity = Some(SyslogOutput.Id.Severity),
     timestamp = Some(SyslogOutput.Id.Timestamp),
@@ -79,10 +79,10 @@ private[this] object SyslogOutputBench {
   ))
 
   val SimpleMessageRFC5424: Json => ByteString =
-    SyslogOutput.rfc5424(RFC5424Config(message = Some(SyslogOutput.Id.Message)))
+    new SyslogRFC5424Output(RFC5424Config(message = Some(SyslogOutput.Id.Message)))
 
   val SimpleRFC3164: Json => ByteString =
-    SyslogOutput.rfc3164(RFC3164Config(
+    new SyslogRFC3164Output(RFC3164Config(
       facility = Some(SyslogOutput.Id.Facility),
       severity = Some(SyslogOutput.Id.Severity),
       timestamp = Some(SyslogOutput.Id.Timestamp),
@@ -93,6 +93,6 @@ private[this] object SyslogOutputBench {
     ))
 
   val SimpleMessageRFC3164: Json => ByteString =
-    SyslogOutput.rfc3164(RFC3164Config(message = Some(SyslogOutput.Id.Message)))
+    new SyslogRFC3164Output(RFC3164Config(message = Some(SyslogOutput.Id.Message)))
 
 }
