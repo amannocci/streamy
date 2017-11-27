@@ -663,6 +663,14 @@ case class JsObjectBuilder private(
 ) {
 
   /**
+    * Returns true if this map contains a mappping for the specified key.
+    *
+    * @param key key whose presence in this map is to be tested.
+    * @return true if this map contains a mapping for the specified key.
+    */
+  @inline def contains(key: String): Boolean = underlying.contains(key)
+
+  /**
     * Removes the specified key from this map if present.
     *
     * @param key key whose mapping is to be removed from the json object.
