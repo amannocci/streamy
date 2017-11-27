@@ -47,7 +47,14 @@ object Json {
     *
     * @return json object builder.
     */
-  def builder(): JsObjectBuilder = JsObjectBuilder()
+  def objectBuilder(): JsObjectBuilder = JsObjectBuilder()
+
+  /**
+    * Create a new json array builder.
+    *
+    * @return json array builder.
+    */
+  def arrayBuilder(): JsArrayBuilder = JsArrayBuilder()
 
   /**
     * Parses a string representing a Json input, and returns it as a [[Json]].
@@ -498,6 +505,54 @@ case class JsArray private[json](
 }
 
 /**
+  * Json array builder that allow zero copy json array creation.
+  *
+  * @param modifiable guard modification after result.
+  * @param underlying underlying data structure.
+  */
+case class JsArrayBuilder private(
+  private var modifiable: Boolean = true,
+  private val underlying: mutable.ArrayBuffer[Json] = new mutable.ArrayBuffer[Json]
+) {
+
+  /**
+    * Removes the last element from this json array.
+    *
+    * @return json array builder.
+    */
+  def remove(): JsArrayBuilder = {
+    if (modifiable) {
+      underlying.remove(underlying.length - 1)
+    }
+    this
+  }
+
+  /**
+    * Add the specified value in this json array.
+    *
+    * @param el value to add.
+    * @return json array builder.
+    */
+  def add(el: Json): JsArrayBuilder = {
+    if (modifiable) {
+      underlying += el
+    }
+    this
+  }
+
+  /**
+    * Create a new json array.
+    *
+    * @return new json array.
+    */
+  def result(): JsArray = {
+    modifiable = false
+    JsArray(underlying)
+  }
+
+}
+
+/**
   * Represent a json object value.
   *
   * @param underlying underlying structure.
@@ -602,7 +657,7 @@ case class JsObject private[json](
   * @param modifiable guard modification after result.
   * @param underlying underlying data structure.
   */
-case class JsObjectBuilder private (
+case class JsObjectBuilder private(
   private var modifiable: Boolean = true,
   private val underlying: mutable.Map[String, Json] = new mutable.LinkedHashMap[String, Json]
 ) {

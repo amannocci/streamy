@@ -72,7 +72,7 @@ class JsonSpec extends FlatSpec with Matchers {
   }
 
   it should "be create from builder" in {
-    val builder = Json.builder()
+    val builder = Json.objectBuilder()
     builder.put("test" -> "test")
     builder.remove("test")
     builder.put("foobar" -> "test")
@@ -318,6 +318,17 @@ class JsonSpec extends FlatSpec with Matchers {
   it should "return none if absent" in {
     val input = Json.arr("test", "foobar")
     input(2) should equal(None)
+  }
+
+  it should "be create from builder" in {
+    val builder = Json.arrayBuilder()
+    builder.add("test")
+    builder.remove()
+    builder.add("foobar")
+    builder.result()
+    builder.remove()
+    builder.add("notModified")
+    builder.result() should equal(Json.arr("foobar"))
   }
 
   it should "append json array correctly" in {

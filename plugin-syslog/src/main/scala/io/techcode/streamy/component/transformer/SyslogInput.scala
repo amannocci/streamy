@@ -41,7 +41,7 @@ private[transformer] class SyslogRFC5424Input(config: RFC5424Config) extends Tra
     val buf: ByteBuf = new ByteBuf(pkt)
 
     // Populate
-    val builder: JsObjectBuilder = Json.builder()
+    val builder: JsObjectBuilder = Json.objectBuilder()
 
     // Read PRIVAL
     expect(buf, '<')
