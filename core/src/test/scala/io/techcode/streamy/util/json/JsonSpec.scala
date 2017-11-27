@@ -334,6 +334,26 @@ class JsonSpec extends FlatSpec with Matchers {
     builder.result() should equal(Json.arr("foobar"))
   }
 
+  it should "return head of json array if present" in {
+    val input = Json.arr("test", "foobar")
+    input.head() should equal(Some(JsString("test")))
+  }
+
+  it should "return head of json array if not present" in {
+    val input = Json.arr()
+    input.head() should equal(None)
+  }
+
+  it should "return last of json array if present" in {
+    val input = Json.arr("test", "foobar")
+    input.last() should equal(Some(JsString("foobar")))
+  }
+
+  it should "return last of json array if not present" in {
+    val input = Json.arr()
+    input.last() should equal(None)
+  }
+
   it should "append json array correctly" in {
     val input = Json.arr("test01", "test02")
     input.append(Json.arr("test03")) should equal(Json.arr("test01", "test02", "test03"))

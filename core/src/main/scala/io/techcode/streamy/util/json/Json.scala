@@ -424,7 +424,7 @@ case class JsBytes(value: ByteString) extends Json {
 }
 
 /**
-  * Represent a json string value.
+  * Represent a json array value.
   *
   * @param underlying underlying structure.
   */
@@ -441,6 +441,32 @@ case class JsArray private[json](
   def apply(idx: Int): Option[Json] = {
     if (idx >= 0 && idx < underlying.length) {
       Some(underlying(idx))
+    } else {
+      None
+    }
+  }
+
+  /**
+    * Retrieve the head element of this json array.
+    *
+    * @return head element of this json array.
+    */
+  def head(): Option[Json] = {
+    if (underlying.nonEmpty) {
+      Some(underlying(0))
+    } else {
+      None
+    }
+  }
+
+  /**
+    * Retrieve the last element of this json array.
+    *
+    * @return last element of this json array.
+    */
+  def last(): Option[Json] = {
+    if (underlying.nonEmpty) {
+      Some(underlying(underlying.length - 1))
     } else {
       None
     }
