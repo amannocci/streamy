@@ -81,6 +81,7 @@ class JsonSpec extends FlatSpec with Matchers {
     builder.result() should equal(Json.obj("foobar" -> "test"))
     builder.contains("foobar") should equal(true)
     builder.contains("notPresent") should equal(false)
+    builder.get("foobar") should equal(Some(JsString("test")))
   }
 
   it should "return field set" in {

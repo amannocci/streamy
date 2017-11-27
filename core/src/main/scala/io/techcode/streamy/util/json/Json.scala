@@ -663,6 +663,14 @@ case class JsObjectBuilder private(
 ) {
 
   /**
+    * Returns the value to which the specified key is mapped.
+    *
+    * @param key the key whose associated value is to be returned.
+    * @return the value to which the specified key is mapped, or [[None]] if this map contains no mapping for the key.
+    */
+  def get(key: String): Option[Json] = underlying.get(key)
+
+  /**
     * Returns true if this map contains a mappping for the specified key.
     *
     * @param key key whose presence in this map is to be tested.
