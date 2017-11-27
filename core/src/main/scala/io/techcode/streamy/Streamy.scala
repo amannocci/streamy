@@ -67,11 +67,25 @@ object Streamy extends App {
   val conf = system.settings.config.resolve()
 
   // Launch reporter
-  if (!conf.getDuration(ConfigConstants.MetricInitialDelay).isNegative) {
+  if (!conf.getDuration(ConfigConstants.StreamyMetricInitialDelay).isNegative) {
     Metrics.reporter(system, log, conf)
   }
 
   // Attempt to deploy plugins
   val pluginManager = new PluginManager(log, system, materializer, conf)
+  log.info(Json.obj(
+    "message" -> "Starting all plugins",
+    "type" -> "lifecycle"
+  ))
   pluginManager.start()
+
+  // Graceful shutdown
+  sys.addShutdownHook({
+    log.info(Json.obj(
+      "message" -> "Stopping all plugins",
+      "type" -> "lifecycle"
+    ))
+    pluginManager.stop()
+    system.terminate()
+  })
 }

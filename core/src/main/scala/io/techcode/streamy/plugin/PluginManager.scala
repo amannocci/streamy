@@ -26,14 +26,19 @@ package io.techcode.streamy.plugin
 import java.net.{URL, URLClassLoader}
 
 import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.pattern.gracefulStop
 import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import io.techcode.streamy.util.ConfigConstants
+import io.techcode.streamy.util.DurationUtil._
 import io.techcode.streamy.util.json._
 import org.slf4j.Logger
 
 import scala.collection.mutable
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 import scala.reflect.io.{Directory, File, Path}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * The plugin manager that handle all plugins stuff.
@@ -89,7 +94,21 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
   /**
     * Stop all plugins.
     */
-  def stop(): Unit = _plugins = Map.empty
+  def stop(): Unit = {
+    try {
+      val signal = Future.sequence(_plugins.values.map(gracefulStop(_, conf.getDuration(ConfigConstants.StreamyLifecycleGracefulTimeout))))
+      Await.result(signal, conf.getDuration(ConfigConstants.StreamyLifecycleShutdownTimeout))
+      // All plugins are stopped
+    } catch {
+      // the actor wasn't stopped within 5 seconds
+      case ex: akka.pattern.AskTimeoutException =>
+        log.error(Json.obj(
+          "message" -> "Failed to graceful shutdown",
+          "type" -> "lifecycle"
+        ), ex)
+    }
+    _plugins = Map.empty
+  }
 
   /**
     * Returns collections of plugins backed by actor ref.
