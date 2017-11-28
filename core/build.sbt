@@ -28,7 +28,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core", // Apache 2 License
   "com.fasterxml.jackson.core" % "jackson-databind" // Apache 2 License
-).map(_ % jacksonVersion)
+).map(_ % jacksonVersion % Compile)
 
 // All other libraries
 libraryDependencies ++= Seq(
@@ -39,7 +39,7 @@ libraryDependencies ++= Seq(
   "nl.grons" %% "metrics-scala" % metricsScalaVersion, // Apache 2 License
   "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion, // Apache 2 License
   "org.scala-lang" % "scala-reflect" % scalaVersion.value
-)
+).map(_ % Compile)
 
 // Jmh settings
 sourceDirectory in Jmh := new File((sourceDirectory in Test).value.getParentFile, "bench")
