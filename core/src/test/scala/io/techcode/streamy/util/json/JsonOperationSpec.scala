@@ -302,9 +302,21 @@ class JsonOperationSpec extends FlatSpec with Matchers {
     result should equal(Some(Json.obj("test" -> "test")))
   }
 
+  it must "fail to remove silently a field in deep json object" in {
+    val input = Json.obj("test" -> "test")
+    val result = input.patch(Remove(Root / "test" / "test" / "fail", mustExist = false))
+    result should equal(Some(Json.obj("test" -> "test")))
+  }
+
   it must "fail to remove silently a value in json array" in {
     val input = Json.arr("test", "test")
     val result = input.patch(Remove(Root / 2, mustExist = false))
+    result should equal(Some(Json.arr("test", "test")))
+  }
+
+  it must "fail to remove silently a value in deep json array" in {
+    val input = Json.arr("test", "test")
+    val result = input.patch(Remove(Root / 0 / 1 / 2, mustExist = false))
     result should equal(Some(Json.arr("test", "test")))
   }
 

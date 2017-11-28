@@ -54,6 +54,14 @@ private[json] abstract class SimpleOperation(path: JsonPointer) extends JsonOper
     }
   }
 
+  /**
+    * Apply operation recursively.
+    *
+    * @param path    json path to use.
+    * @param idx     current position in json path.
+    * @param current current value explored.
+    * @return json value modified or [[None]].
+    */
   private[json] def apply(path: JsonPointer, idx: Int, current: Option[Json]): Option[Json] = {
     if (current.isEmpty) {
       // We fail to evaluate path
@@ -72,10 +80,23 @@ private[json] abstract class SimpleOperation(path: JsonPointer) extends JsonOper
     }
   }
 
+  /**
+    * Apply operation on current json value.
+    *
+    * @param accessor json value accessor.
+    * @param current  curren json value.
+    * @return json value modified or [[None]].
+    */
   def operate(accessor: JsonAccessor, current: Option[Json]): Option[Json]
 
 }
 
+/**
+  * Add a json value at pointed location.
+  *
+  * @param path  json path.
+  * @param value json value to add with.
+  */
 case class Add(path: JsonPointer, value: Json) extends SimpleOperation(path) {
 
   override def apply(json: Json): Option[Json] = {
@@ -91,6 +112,12 @@ case class Add(path: JsonPointer, value: Json) extends SimpleOperation(path) {
 
 }
 
+/**
+  * Replace a json value at pointed location.
+  *
+  * @param path  json path.
+  * @param value json value to replace with.
+  */
 case class Replace(path: JsonPointer, value: Json) extends SimpleOperation(path) {
 
   override def apply(json: Json): Option[Json] = {
@@ -106,13 +133,38 @@ case class Replace(path: JsonPointer, value: Json) extends SimpleOperation(path)
 
 }
 
+/**
+  * Remove a json value at pointed location.
+  *
+  * @param path      json path.
+  * @param mustExist whether the json value must exist to successed.
+  */
 case class Remove(path: JsonPointer, mustExist: Boolean = true) extends SimpleOperation(path) {
+
+  override def apply(json: Json): Option[Json] = {
+    if (path.underlying.isEmpty) {
+      Some(json)
+    } else {
+      val result = apply(path, 0, Some(json))
+      if (mustExist) {
+        result
+      } else {
+        result.orElse(Some(json))
+      }
+    }
+  }
 
   def operate(accessor: JsonAccessor, current: Option[Json]): Option[Json] =
     accessor.remove(current.get, mustExist)
 
 }
 
+/**
+  * Move a json value from pointed location to another pointed location.
+  *
+  * @param from from json path location.
+  * @param to   to json path location.
+  */
 case class Move(from: JsonPointer, to: JsonPointer) extends JsonOperation {
 
   def apply(json: Json): Option[Json] = {
@@ -126,6 +178,12 @@ case class Move(from: JsonPointer, to: JsonPointer) extends JsonOperation {
 
 }
 
+/**
+  * Copy a json value from pointed location to another pointed location.
+  *
+  * @param from from json path location.
+  * @param to   to json path location.
+  */
 case class Copy(from: JsonPointer, to: JsonPointer) extends JsonOperation {
 
   def apply(json: Json): Option[Json] = {
@@ -139,6 +197,11 @@ case class Copy(from: JsonPointer, to: JsonPointer) extends JsonOperation {
 
 }
 
+/**
+  * Test if a json value at pointed location is equal to another one.
+  * @param path json path location.
+  * @param value json value to compate with.
+  */
 case class Test(path: JsonPointer, value: Json) extends JsonOperation {
 
   def apply(json: Json): Option[Json] = path(json).flatMap { x =>
