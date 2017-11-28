@@ -724,4 +724,27 @@ class JsonSpec extends FlatSpec with Matchers {
     JsTrue.isBytes should equal(false)
   }
 
+  it should "handle patch with operations" in {
+    val input = Json.obj()
+    val result = input.patch(
+      Add(Root / "foobar", "foobar"),
+      Add(Root / "test", "test")
+    )
+    result should equal(Some(Json.obj(
+      "foobar" -> "foobar",
+      "test" -> "test"
+    )))
+  }
+
+  it should "handle patch with seq operations" in {
+    val input = Json.obj("foobar" -> "foobar")
+    val result = input.patch(Seq(
+      Remove(Root / "foobar" / "test" / "test", mustExist = false),
+      Replace(Root / "foobar", "test")
+    ))
+    result should equal(Some(Json.obj(
+      "foobar" -> "test"
+    )))
+  }
+
 }
