@@ -46,14 +46,6 @@ sealed trait JsonOperation {
   */
 private[json] abstract class SimpleOperation(path: JsonPointer) extends JsonOperation {
 
-  def apply(json: Json): Option[Json] = {
-    if (path.underlying.isEmpty) {
-      Some(json)
-    } else {
-      apply(path, 0, Some(json))
-    }
-  }
-
   /**
     * Apply operation recursively.
     *
