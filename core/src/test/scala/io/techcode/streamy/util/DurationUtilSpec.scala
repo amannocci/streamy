@@ -30,10 +30,12 @@ import org.scalatest._
 /**
   * DurationUtil spec.
   */
-class DurationUtilSpec extends FlatSpec with Matchers {
+class DurationUtilSpec extends WordSpecLike with Matchers {
 
-  "DurationUtil" must "return correct finite duration from java duration" in {
-    DurationUtil.asFiniteDuration(Duration.ofSeconds(60)).toSeconds should equal(60)
+  "DurationUtil" should {
+    "return correct finite duration from java duration" in {
+      DurationUtil.asFiniteDuration(Duration.ofSeconds(60)).toSeconds should equal(60)
+    }
   }
 
 }

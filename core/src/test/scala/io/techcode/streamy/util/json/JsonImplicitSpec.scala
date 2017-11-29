@@ -29,50 +29,52 @@ import org.scalatest._
 /**
   * JsonImplicit spec.
   */
-class JsonImplicitSpec extends FlatSpec with Matchers {
+class JsonImplicitSpec extends WordSpecLike with Matchers {
 
-  "JsonImplicit" must "provide a shortcut to convert json in string" in {
-    jsonToString(Json.obj("test" -> "test")) should equal("""{"test":"test"}""")
-  }
+  "JsonImplicit" should {
+    "provide a shortcut to convert json in string" in {
+      jsonToString(Json.obj("test" -> "test")) should equal("""{"test":"test"}""")
+    }
 
-  it must "provide a shortcut to convert string in json" in {
-    stringToJson("""{"test":"test"}""") should equal(JsString("""{"test":"test"}"""))
-  }
+    "provide a shortcut to convert string in json" in {
+      stringToJson("""{"test":"test"}""") should equal(JsString("""{"test":"test"}"""))
+    }
 
-  it must "provide a shortcut to convert float in json" in {
-    floatToJson(2.0F) should equal(JsFloat(2.0F))
-  }
+    "provide a shortcut to convert float in json" in {
+      floatToJson(2.0F) should equal(JsFloat(2.0F))
+    }
 
-  it must "provide a shortcut to convert double in json" in {
-    doubleToJson(2.0D) should equal(JsDouble(2.0D))
-  }
+    "provide a shortcut to convert double in json" in {
+      doubleToJson(2.0D) should equal(JsDouble(2.0D))
+    }
 
-  it must "provide a shortcut to convert byte in json" in {
-    byteToJson(2) should equal(JsInt(2))
-  }
+    "provide a shortcut to convert byte in json" in {
+      byteToJson(2) should equal(JsInt(2))
+    }
 
-  it must "provide a shortcut to convert short in json" in {
-    shortToJson(2) should equal(JsInt(2))
-  }
+    "provide a shortcut to convert short in json" in {
+      shortToJson(2) should equal(JsInt(2))
+    }
 
-  it must "provide a shortcut to convert int in json" in {
-    intToJson(2) should equal(JsInt(2))
-  }
+    "provide a shortcut to convert int in json" in {
+      intToJson(2) should equal(JsInt(2))
+    }
 
-  it must "provide a shortcut to convert long in json" in {
-    longToJson(2L) should equal(JsLong(2L))
-  }
+    "provide a shortcut to convert long in json" in {
+      longToJson(2L) should equal(JsLong(2L))
+    }
 
-  it must "provide a shortcut to convert boolean in json" in {
-    booleanToJson(true) should equal(JsTrue)
-  }
+    "provide a shortcut to convert boolean in json" in {
+      booleanToJson(true) should equal(JsTrue)
+    }
 
-  it must "provide a shortcut to convert byte string in json" in {
-    byteStringToJson(ByteString.empty) should equal(JsBytes(ByteString.empty))
-  }
+    "provide a shortcut to convert byte string in json" in {
+      byteStringToJson(ByteString.empty) should equal(JsBytes(ByteString.empty))
+    }
 
-  it must "provide a shortcut to convert big decimal in json" in {
-    bigDecimalToJson(BigDecimal.valueOf(0)) should equal(JsBigDecimal(BigDecimal.valueOf(0)))
+    "provide a shortcut to convert big decimal in json" in {
+      bigDecimalToJson(BigDecimal.valueOf(0)) should equal(JsBigDecimal(BigDecimal.valueOf(0)))
+    }
   }
 
 }

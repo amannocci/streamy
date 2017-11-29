@@ -28,52 +28,54 @@ import org.scalatest._
 /**
   * JsonPointer spec.
   */
-class JsonPointerSpec extends FlatSpec with Matchers {
+class JsonPointerSpec extends WordSpecLike with Matchers {
 
-  "JsonPointer" should "return same json value for root pointer" in {
-    val input = Json.obj("test" -> "foobar")
-    input.evaluate(Root) should equal(Some(input))
-  }
+  "JsonPointer" should {
+    "return same json value for root pointer" in {
+      val input = Json.obj("test" -> "foobar")
+      input.evaluate(Root) should equal(Some(input))
+    }
 
-  it should "return a value if possible when evaluate on json object" in {
-    val input = Json.obj("test" -> "foobar")
-    input.evaluate(Root / "test") should equal(Some(JsString("foobar")))
-  }
+    "return a value if possible when evaluate on json object" in {
+      val input = Json.obj("test" -> "foobar")
+      input.evaluate(Root / "test") should equal(Some(JsString("foobar")))
+    }
 
-  it should "return a value if possible when evaluate on deep json object" in {
-    val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "foobar")))
-    input.evaluate(Root / "test" / 0 / "test") should equal(Some(JsString("foobar")))
-  }
+    "return a value if possible when evaluate on deep json object" in {
+      val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "foobar")))
+      input.evaluate(Root / "test" / 0 / "test") should equal(Some(JsString("foobar")))
+    }
 
-  it should "return a none when evaluate on json object is failed" in {
-    val input = Json.obj("test" -> "foobar")
-    input.evaluate(Root / "failed") should equal(None)
-  }
+    "return a none when evaluate on json object is failed" in {
+      val input = Json.obj("test" -> "foobar")
+      input.evaluate(Root / "failed") should equal(None)
+    }
 
-  it should "return a none when evaluate on json object and excepting a json array" in {
-    val input = Json.obj("test" -> "foobar")
-    input.evaluate(Root / 0) should equal(None)
-  }
+    "return a none when evaluate on json object and excepting a json array" in {
+      val input = Json.obj("test" -> "foobar")
+      input.evaluate(Root / 0) should equal(None)
+    }
 
-  it should "return a value if possible when evaluate on json array" in {
-    val input = Json.arr("test", "foobar")
-    input.evaluate(Root / 0) should equal(Some(JsString("test")))
-    input.evaluate(Root / 1) should equal(Some(JsString("foobar")))
-  }
+    "return a value if possible when evaluate on json array" in {
+      val input = Json.arr("test", "foobar")
+      input.evaluate(Root / 0) should equal(Some(JsString("test")))
+      input.evaluate(Root / 1) should equal(Some(JsString("foobar")))
+    }
 
-  it should "return a value if possible when evaluate on deep json array" in {
-    val input = Json.obj("test" -> Json.obj("test" -> Json.arr("foobar")))
-    input.evaluate(Root / "test" / "test" / 0) should equal(Some(JsString("foobar")))
-  }
+    "return a value if possible when evaluate on deep json array" in {
+      val input = Json.obj("test" -> Json.obj("test" -> Json.arr("foobar")))
+      input.evaluate(Root / "test" / "test" / 0) should equal(Some(JsString("foobar")))
+    }
 
-  it should "return a none when evaluate on json array is failed" in {
-    val input = Json.arr()
-    input.evaluate(Root / 0) should equal(None)
-  }
+    "return a none when evaluate on json array is failed" in {
+      val input = Json.arr()
+      input.evaluate(Root / 0) should equal(None)
+    }
 
-  it should "return a none when evaluate on json array and excepting a json object" in {
-    val input = Json.arr("test", "foobar")
-    input.evaluate(Root / "failed") should equal(None)
+    "return a none when evaluate on json array and excepting a json object" in {
+      val input = Json.arr("test", "foobar")
+      input.evaluate(Root / "failed") should equal(None)
+    }
   }
 
 }

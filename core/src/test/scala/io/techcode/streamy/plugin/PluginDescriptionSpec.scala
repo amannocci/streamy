@@ -31,42 +31,44 @@ import scala.reflect.io.Path
 /**
   * Plugin description spec.
   */
-class PluginDescriptionSpec extends FlatSpec with Matchers with Inside with PrivateMethodTester {
+class PluginDescriptionSpec extends WordSpecLike with Matchers with Inside with PrivateMethodTester {
 
-  "PluginDescription" should "contains all informations" in {
-    val description = PluginDescription(name = "test", version = "1.0.0", file = Path(".").toURL)
-    inside(description) { case PluginDescription(name, version, _, _, _, _, _) =>
-      name should be("test")
-      version should be("1.0.0")
+  "PluginDescription" should {
+    "contains all informations" in {
+      val description = PluginDescription(name = "test", version = "1.0.0", file = Path(".").toURL)
+      inside(description) { case PluginDescription(name, version, _, _, _, _, _) =>
+        name should be("test")
+        version should be("1.0.0")
+      }
     }
-  }
 
-  it should "be create from Config" in {
-    PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
-  }
+    "be create from Config" in {
+      PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
+    }
 
-  it must "retrieve correctly string field" in {
-    val getString = PrivateMethod[Option[String]]('getString)
-    val result = PluginDescription invokePrivate getString(ConfigFactory.parseString("""{"test":"test"}"""), "test")
-    result should be(Some("test"))
-  }
+    "retrieve correctly string field" in {
+      val getString = PrivateMethod[Option[String]]('getString)
+      val result = PluginDescription invokePrivate getString(ConfigFactory.parseString("""{"test":"test"}"""), "test")
+      result should be(Some("test"))
+    }
 
-  it must "retrieve wrap properly a missing string field" in {
-    val getString = PrivateMethod[Option[String]]('getString)
-    val result = PluginDescription invokePrivate getString(ConfigFactory.empty(), "test")
-    result should be(None)
-  }
+    "retrieve wrap properly a missing string field" in {
+      val getString = PrivateMethod[Option[String]]('getString)
+      val result = PluginDescription invokePrivate getString(ConfigFactory.empty(), "test")
+      result should be(None)
+    }
 
-  it must "retrieve correctly seq string field" in {
-    val getStringList = PrivateMethod[Seq[String]]('getStringList)
-    val result = PluginDescription invokePrivate getStringList(ConfigFactory.parseString("""{"test":["test"]}"""), "test")
-    result should be(Seq("test"))
-  }
+    "retrieve correctly seq string field" in {
+      val getStringList = PrivateMethod[Seq[String]]('getStringList)
+      val result = PluginDescription invokePrivate getStringList(ConfigFactory.parseString("""{"test":["test"]}"""), "test")
+      result should be(Seq("test"))
+    }
 
-  it must "retrieve wrap properly a missing seq string field" in {
-    val getStringList = PrivateMethod[Seq[String]]('getStringList)
-    val result = PluginDescription invokePrivate getStringList(ConfigFactory.empty(), "test")
-    result should be(Seq.empty)
+    "retrieve wrap properly a missing seq string field" in {
+      val getStringList = PrivateMethod[Seq[String]]('getStringList)
+      val result = PluginDescription invokePrivate getStringList(ConfigFactory.empty(), "test")
+      result should be(Seq.empty)
+    }
   }
 
 }

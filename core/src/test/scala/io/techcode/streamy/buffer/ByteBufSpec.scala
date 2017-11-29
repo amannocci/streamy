@@ -30,165 +30,167 @@ import org.scalatest._
 /**
   * ByteBuf spec.
   */
-class ByteBufSpec extends FlatSpec with Matchers {
+class ByteBufSpec extends WordSpecLike with Matchers {
 
-  "A ByteBuf" must "be able to wrap a bytestring" in {
-    new ByteBuf(ByteString("foobar"))
-  }
+  "A ByteBuf" should {
+    "be able to wrap a bytestring" in {
+      new ByteBuf(ByteString("foobar"))
+    }
 
-  it should "be created without new" in {
-    ByteBuf(ByteString("foobar"))
-  }
+    "be created without new" in {
+      ByteBuf(ByteString("foobar"))
+    }
 
-  it must "return current bytestring" in {
-    val input = ByteString("foobar")
-    new ByteBuf(input).getBuffer should equal(input)
-  }
+    "return current bytestring" in {
+      val input = ByteString("foobar")
+      new ByteBuf(input).getBuffer should equal(input)
+    }
 
-  it should "accept new bytestring" in {
-    val oldBuf = ByteString("old")
-    val newBuf = ByteString("new")
-    val byteBuf = new ByteBuf(oldBuf)
-    byteBuf.readByte
-    byteBuf.readerIndex should equal(1)
-    byteBuf.setBuffer(newBuf)
-    byteBuf.getBuffer should equal(newBuf)
-    byteBuf.readerIndex should equal(0)
-  }
-
-  it should "update reader index on read operations" in {
-    val input = ByteString("foobar")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.readByte
-    byteBuf.readerIndex should equal(1)
-  }
-
-  it should "return correct number of readable bytes" in {
-    val input = ByteString("foobar")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.readableBytes() should equal(6)
-  }
-
-  it should "read bytes based on bytebuf processor" in {
-    val input = ByteString("foo\nbar")
-    val byteBuf = new ByteBuf(input)
-    val result = byteBuf.readBytes(ByteBufProcessor.FindLf)
-    result.getBuffer should equal(ByteString("foo"))
-  }
-
-  it should "read string based on bytebuf processor" in {
-    val input = ByteString("foo\nbar")
-    val byteBuf = new ByteBuf(input)
-    val result = byteBuf.readString(ByteBufProcessor.FindLf)
-    result should equal("foo")
-  }
-
-  it should "skip bytes based on bytebuf processor" in {
-    val input = ByteString("foo\nbar")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.skipBytes(ByteBufProcessor.FindLf)
-    byteBuf.slice() should equal(ByteString("bar"))
-  }
-
-  it should "return a correct slice based on readerIndex" in {
-    val input = ByteString("foobar")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.readByte
-    byteBuf.slice() should equal(ByteString("oobar"))
-  }
-
-  it should "read a byte correctly" in {
-    val input = ByteString("f")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.readByte should equal('f')
-    byteBuf.readerIndex should equal(1)
-  }
-
-  it should "get a byte correctly" in {
-    val input = ByteString("f")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.getByte should equal('f')
-    byteBuf.readerIndex should equal(0)
-  }
-
-  it should "skip a byte correctly" in {
-    val input = ByteString("foobar")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.skipByte()
-    byteBuf.readerIndex should equal(1)
-  }
-
-  it should "throw an error when read byte on out of bounds" in {
-    val input = ByteString()
-    val byteBuf = new ByteBuf(input)
-    assertThrows[IndexOutOfBoundsException] {
+    "accept new bytestring" in {
+      val oldBuf = ByteString("old")
+      val newBuf = ByteString("new")
+      val byteBuf = new ByteBuf(oldBuf)
       byteBuf.readByte
+      byteBuf.readerIndex should equal(1)
+      byteBuf.setBuffer(newBuf)
+      byteBuf.getBuffer should equal(newBuf)
+      byteBuf.readerIndex should equal(0)
     }
-  }
 
-  it should "read an int correctly" in {
-    val input = ByteString(Ints.toByteArray(1))
-    val byteBuf = new ByteBuf(input)
-    byteBuf.readInt should equal(1)
-    byteBuf.readerIndex should equal(4)
-  }
-
-  it should "get an int correctly" in {
-    val input = ByteString(Ints.toByteArray(13))
-    val byteBuf = new ByteBuf(input)
-    byteBuf.getInt should equal(13)
-    byteBuf.readerIndex should equal(0)
-  }
-
-  it should "skip an int correctly" in {
-    val input = ByteString("foobar")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.skipInt()
-    byteBuf.readerIndex should equal(4)
-  }
-
-  it should "throw an error when read int on out of bounds" in {
-    val input = ByteString()
-    val byteBuf = new ByteBuf(input)
-    assertThrows[IndexOutOfBoundsException] {
-      byteBuf.readInt()
+    "update reader index on read operations" in {
+      val input = ByteString("foobar")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.readByte
+      byteBuf.readerIndex should equal(1)
     }
-  }
 
-  it should "be convertible to string" in {
-    val input = ByteString("foobar")
-    val byteBuf = new ByteBuf(input)
-    byteBuf.skipByte()
-    byteBuf.toString should equal("oobar")
-  }
+    "return correct number of readable bytes" in {
+      val input = ByteString("foobar")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.readableBytes() should equal(6)
+    }
 
-  it should "be implicitly created" in {
-    val input = ByteString("foobar")
-    val byteBuf: ByteBuf = input
-  }
+    "read bytes based on bytebuf processor" in {
+      val input = ByteString("foo\nbar")
+      val byteBuf = new ByteBuf(input)
+      val result = byteBuf.readBytes(ByteBufProcessor.FindLf)
+      result.getBuffer should equal(ByteString("foo"))
+    }
 
-  it should "return true if we can read bytes" in {
-    val input = ByteString("foobar")
-    val byteBuf: ByteBuf = input
-    byteBuf.isReadable should equal(true)
-  }
+    "read string based on bytebuf processor" in {
+      val input = ByteString("foo\nbar")
+      val byteBuf = new ByteBuf(input)
+      val result = byteBuf.readString(ByteBufProcessor.FindLf)
+      result should equal("foo")
+    }
 
-  it should "return false if we can't read bytes" in {
-    val input = ByteString.empty
-    val byteBuf: ByteBuf = input
-    byteBuf.isReadable should equal(false)
-  }
+    "skip bytes based on bytebuf processor" in {
+      val input = ByteString("foo\nbar")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.skipBytes(ByteBufProcessor.FindLf)
+      byteBuf.slice() should equal(ByteString("bar"))
+    }
 
-  it should "return true if we can read n bytes" in {
-    val input = ByteString("12")
-    val byteBuf: ByteBuf = input
-    byteBuf.isReadable(2) should equal(false)
-  }
+    "return a correct slice based on readerIndex" in {
+      val input = ByteString("foobar")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.readByte
+      byteBuf.slice() should equal(ByteString("oobar"))
+    }
 
-  it should "return false if we can't read n bytes" in {
-    val input = ByteString.empty
-    val byteBuf: ByteBuf = input
-    byteBuf.isReadable(2) should equal(false)
+    "read a byte correctly" in {
+      val input = ByteString("f")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.readByte should equal('f')
+      byteBuf.readerIndex should equal(1)
+    }
+
+    "get a byte correctly" in {
+      val input = ByteString("f")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.getByte should equal('f')
+      byteBuf.readerIndex should equal(0)
+    }
+
+    "skip a byte correctly" in {
+      val input = ByteString("foobar")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.skipByte()
+      byteBuf.readerIndex should equal(1)
+    }
+
+    "throw an error when read byte on out of bounds" in {
+      val input = ByteString()
+      val byteBuf = new ByteBuf(input)
+      assertThrows[IndexOutOfBoundsException] {
+        byteBuf.readByte
+      }
+    }
+
+    "read an int correctly" in {
+      val input = ByteString(Ints.toByteArray(1))
+      val byteBuf = new ByteBuf(input)
+      byteBuf.readInt should equal(1)
+      byteBuf.readerIndex should equal(4)
+    }
+
+    "get an int correctly" in {
+      val input = ByteString(Ints.toByteArray(13))
+      val byteBuf = new ByteBuf(input)
+      byteBuf.getInt should equal(13)
+      byteBuf.readerIndex should equal(0)
+    }
+
+    "skip an int correctly" in {
+      val input = ByteString("foobar")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.skipInt()
+      byteBuf.readerIndex should equal(4)
+    }
+
+    "throw an error when read int on out of bounds" in {
+      val input = ByteString()
+      val byteBuf = new ByteBuf(input)
+      assertThrows[IndexOutOfBoundsException] {
+        byteBuf.readInt()
+      }
+    }
+
+    "be convertible to string" in {
+      val input = ByteString("foobar")
+      val byteBuf = new ByteBuf(input)
+      byteBuf.skipByte()
+      byteBuf.toString should equal("oobar")
+    }
+
+    "be implicitly created" in {
+      val input = ByteString("foobar")
+      val byteBuf: ByteBuf = input
+    }
+
+    "return true if we can read bytes" in {
+      val input = ByteString("foobar")
+      val byteBuf: ByteBuf = input
+      byteBuf.isReadable should equal(true)
+    }
+
+    "return false if we can't read bytes" in {
+      val input = ByteString.empty
+      val byteBuf: ByteBuf = input
+      byteBuf.isReadable should equal(false)
+    }
+
+    "return true if we can read n bytes" in {
+      val input = ByteString("12")
+      val byteBuf: ByteBuf = input
+      byteBuf.isReadable(2) should equal(false)
+    }
+
+    "return false if we can't read n bytes" in {
+      val input = ByteString.empty
+      val byteBuf: ByteBuf = input
+      byteBuf.isReadable(2) should equal(false)
+    }
   }
 
 }

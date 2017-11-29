@@ -25,6 +25,7 @@ package io.techcode.streamy.plugin
 
 import akka.actor.{ActorRef, ActorSystem, Kill, Props}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer}
+import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
@@ -34,26 +35,27 @@ import scala.reflect.io.Path
 /**
   * Plugin spec.
   */
-class PluginSpec extends FlatSpec with Matchers with MockitoSugar {
+class PluginSpec extends TestKit(ActorSystem("PluginSpec"))
+  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar {
 
-  // Name of application
-  val ApplicationName = "streamy"
+  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
 
-  // Actor system
-  implicit val system: ActorSystem = ActorSystem(ApplicationName)
-
-  implicit val materializer: Materializer = ActorMaterializer(ActorMaterializerSettings(system))
-
-  "Plugin" can "be started" in {
-    newPlugin()
+  override def afterAll {
+    TestKit.shutdownActorSystem(system)
   }
 
-  it can "be stopped" in {
-    newPlugin() ! Kill
-  }
+  "Plugin" can {
+    "be started" in {
+      newPlugin()
+    }
 
-  it can "not receive message by default" in {
-    newPlugin() ! "test"
+    "be stopped" in {
+      newPlugin() ! Kill
+    }
+
+    "not receive message by default" in {
+      newPlugin() ! "test"
+    }
   }
 
   private def newPlugin(): ActorRef = {

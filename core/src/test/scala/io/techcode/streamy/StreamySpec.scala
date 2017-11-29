@@ -23,15 +23,17 @@
  */
 package io.techcode.streamy
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{Matchers, WordSpecLike}
 
 /**
   * Streamy spec.
   */
-class StreamySpec extends FlatSpec with Matchers {
+class StreamySpec extends WordSpecLike with Matchers {
 
-  "Streamy" should "start even if there is no plugin" in {
-    Streamy.main(new Array[String](0))
+  "Streamy" should {
+    "start even if there is no plugin" in {
+      Streamy.main(new Array[String](0))
+    }
   }
 
 }

@@ -24,6 +24,8 @@
 package io.techcode.streamy.util
 
 import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+import akka.testkit.{ImplicitSender, TestKit}
 import org.mockito.Mockito._
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
@@ -32,20 +34,23 @@ import org.slf4j.Logger
 /**
   * Metrics spec.
   */
-class MetricsSpec extends FlatSpec with MockitoSugar with OneInstancePerTest with Matchers {
+class MetricsSpec extends TestKit(ActorSystem("MetricsSpec"))
+  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar with OneInstancePerTest {
 
-  // Name of application
-  val ApplicationName = "streamy"
+  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
 
-  // Actor system
-  implicit val system: ActorSystem = ActorSystem(ApplicationName)
+  override def afterAll {
+    TestKit.shutdownActorSystem(system)
+  }
 
   // Logger
   val loggerMock: Logger = mock[Logger]
 
-  "Metrics" must "logs some informations" in {
-    Metrics.reporter(system, loggerMock, system.settings.config)
-    verify(loggerMock, times(1))
+  "Metrics" should {
+    "logs some informations" in {
+      Metrics.reporter(system, loggerMock, system.settings.config)
+      verify(loggerMock, times(1))
+    }
   }
 
 }
