@@ -67,8 +67,9 @@ object Streamy extends App {
   val conf = system.settings.config.resolve()
 
   // Launch reporter
-  if (!conf.getDuration(ConfigConstants.StreamyMetricInitialDelay).isNegative) {
-    Metrics.reporter(system, log, conf)
+  Metrics.register(system, conf)
+  if (!conf.getBoolean(ConfigConstants.StreamyMetricExternal)) {
+    Metrics.source().runForeach(log.info(_))
   }
 
   // Attempt to deploy plugins

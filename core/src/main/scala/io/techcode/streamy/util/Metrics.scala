@@ -25,13 +25,15 @@ package io.techcode.streamy.util
 
 import java.lang.management.ManagementFactory
 
+import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.stream.Materializer
+import akka.stream.scaladsl.{BroadcastHub, Keep, Source}
 import com.codahale.metrics._
 import com.codahale.metrics.jvm._
 import com.typesafe.config.Config
 import io.techcode.streamy.util.DurationUtil._
 import io.techcode.streamy.util.json._
-import org.slf4j.Logger
 
 import scala.collection.mutable
 
@@ -43,37 +45,43 @@ object Metrics {
   // Metrics registry
   private val Registry = new MetricRegistry()
 
+  // Number of metrics to keep in memory before drop
+  private val InMemoryMetric = 64
+
   // Metrics to collect
   Registry.register("jvm.buffers", new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer))
   Registry.register("jvm.gc", new GarbageCollectorMetricSet())
   Registry.register("jvm.memory", new MemoryUsageGaugeSet())
   Registry.register("jvm.threads", new ThreadStatesGaugeSet())
 
+  // Source
+  private var metricSource: Source[Json, NotUsed] = Source.empty
+
   /**
-    * Create a new json reporter.
+    * Register metric source.
     *
-    * @param actorSystem actor system involved.
-    * @param log         logger output.
-    * @param conf        reporter configuration.
-    * @return a new json reporter.
+    * @param actorSystem streamy actor system.
+    * @param conf        streamy configuration.
     */
-  def reporter(actorSystem: ActorSystem, log: Logger, conf: Config): Reporter = new JsonReporter(actorSystem, Registry, log, conf)
+  private[streamy] def register(actorSystem: ActorSystem, conf: Config)(implicit materializer: Materializer): Unit = {
+    metricSource = Source.tick(conf.getDuration(ConfigConstants.StreamyMetricInitialDelay), conf.getDuration(ConfigConstants.StreamyMetricInterval), ())
+      .map { _ =>
+        // Create a new entry
+        val entry: mutable.Map[String, Any] = new mutable.LinkedHashMap[String, Any]
 
-  class JsonReporter(system: ActorSystem, registry: MetricRegistry, log: Logger, conf: Config) extends Reporter {
+        // Add all gauges (we have actually only gauges)
+        Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
 
-    import system.dispatcher
-
-    // Schedule report
-    system.scheduler.schedule(conf.getDuration(ConfigConstants.StreamyMetricInitialDelay), conf.getDuration(ConfigConstants.StreamyMetricInterval), () => {
-      // Create a new entry
-      val entry: mutable.Map[String, Any] = new mutable.LinkedHashMap[String, Any]
-
-      // Add all gauges (we have actually only gauges)
-      Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
-
-      // Log
-      log.info(Json.obj("type" -> "metrics").deepMerge(JsonUtil.fromRawMap(entry)).get)
-    })
+        // Log
+        Json.obj("type" -> "metrics").deepMerge(JsonUtil.fromRawMap(entry)).get
+      }.toMat(BroadcastHub.sink(bufferSize = InMemoryMetric))(Keep.right).run()
   }
+
+  /**
+    * Retrieve the metric json source.
+    *
+    * @return metric json source.
+    */
+  def source(): Source[Json, NotUsed] = metricSource
 
 }

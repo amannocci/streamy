@@ -29,6 +29,7 @@ package io.techcode.streamy.util
 object ConfigConstants {
   val StreamyMetricInitialDelay = "streamy.metric.initial-delay"
   val StreamyMetricInterval = "streamy.metric.interval"
+  val StreamyMetricExternal = "streamy.metric.external"
   val StreamyLifecycleShutdownTimeout = "streamy.lifecycle.shutdown-timeout"
   val StreamyLifecycleGracefulTimeout = "streamy.lifecycle.graceful-timeout"
 }

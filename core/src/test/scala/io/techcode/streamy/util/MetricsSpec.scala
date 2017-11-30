@@ -26,8 +26,10 @@ package io.techcode.streamy.util
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.testkit.{ImplicitSender, TestKit}
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest._
+import org.scalatest.concurrent._
 import org.scalatest.mockito.MockitoSugar
 import org.slf4j.Logger
 
@@ -35,7 +37,7 @@ import org.slf4j.Logger
   * Metrics spec.
   */
 class MetricsSpec extends TestKit(ActorSystem("MetricsSpec"))
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar with OneInstancePerTest {
+  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar with OneInstancePerTest with Eventually {
 
   implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
 
@@ -48,8 +50,12 @@ class MetricsSpec extends TestKit(ActorSystem("MetricsSpec"))
 
   "Metrics" should {
     "logs some informations" in {
-      Metrics.reporter(system, loggerMock, system.settings.config)
-      verify(loggerMock, times(1))
+      Metrics.register(system, system.settings.config)
+      Metrics.source().runForeach(loggerMock.info(_))
+      eventually {
+        Thread.sleep(10)
+        verify(loggerMock, times(1)).info(any())
+      }
     }
   }
 
