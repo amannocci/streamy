@@ -27,6 +27,8 @@ import akka.actor.{Actor, ActorLogging, ActorSystem}
 import akka.stream.Materializer
 import com.typesafe.config.Config
 
+import scala.reflect.io.Directory
+
 /**
   * Abstract plugin implementation based on Actor.
   */
@@ -34,7 +36,8 @@ abstract class Plugin(
   private val system: ActorSystem,
   private val materializer: Materializer,
   val description: PluginDescription,
-  val conf: Config
+  val conf: Config,
+  private val _dataFolder: Directory
 ) extends Actor with ActorLogging {
 
   implicit val systemImpl: ActorSystem = system
@@ -57,5 +60,12 @@ abstract class Plugin(
     * Fired when the plugin is stopping.
     */
   def onStop()
+
+  /**
+    * Returns the folder that the plugin data's files are located in.
+    *
+    * @return the folder lazily created if needed.
+    */
+  def dataFolder: Directory = (_dataFolder / description.name).createDirectory()
 
 }

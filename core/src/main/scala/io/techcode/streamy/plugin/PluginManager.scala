@@ -35,10 +35,10 @@ import io.techcode.streamy.util.json._
 import org.slf4j.Logger
 
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 import scala.reflect.io.{Directory, File, Path}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * The plugin manager that handle all plugins stuff.
@@ -67,8 +67,9 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     toLoads.foreach(pluginDescription => {
       try {
         // Merge application configuration and plugin configuration
-        val path = s"plugin.${pluginDescription.name}"
-        val pluginConf = (if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig)
+        val pluginConf = (PluginManager.ConfFolder / pluginDescription.name)
+          .ifFile(f => ConfigFactory.parseFile(f.jfile))
+          .getOrElse(PluginManager.EmptyPluginConfig)
           .withFallback(ConfigFactory.parseURL(new URL(s"jar:${pluginDescription.file}!/config.conf")).resolve())
 
         // Load main plugin class
@@ -78,7 +79,8 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
           system,
           materializer,
           pluginDescription,
-          pluginConf
+          pluginConf,
+          PluginManager.DataFolder
         ))
         plugins += (pluginDescription.name -> actorRef)
       } catch {
@@ -189,7 +191,13 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
   * Plugin manager companion.
   */
 object PluginManager {
-  val PluginFolder: Directory = Path("plugins") toDirectory
+
+  val PluginFolder: Directory = Path("plugin") toDirectory
+
+  val ConfFolder: Directory = Path("conf") toDirectory
+
+  val DataFolder: Directory = Path("data") toDirectory
 
   val EmptyPluginConfig: Config = ConfigFactory.empty()
+
 }

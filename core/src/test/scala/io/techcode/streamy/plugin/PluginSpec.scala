@@ -30,7 +30,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
-import scala.reflect.io.Path
+import scala.reflect.io.{Directory, Path}
 
 /**
   * Plugin spec.
@@ -56,6 +56,10 @@ class PluginSpec extends TestKit(ActorSystem("PluginSpec"))
     "not receive message by default" in {
       newPlugin() ! "test"
     }
+
+    "can use it's data folder" in {
+      newPlugin()
+    }
   }
 
   private def newPlugin(): ActorRef = {
@@ -67,7 +71,8 @@ class PluginSpec extends TestKit(ActorSystem("PluginSpec"))
       system,
       materializer,
       description,
-      conf
+      conf,
+      Path(".").toDirectory
     ))
   }
 
@@ -77,10 +82,14 @@ class Impl(
   val system: ActorSystem,
   val materializer: Materializer,
   override val description: PluginDescription,
-  override val conf: Config
-) extends Plugin(system, materializer, description, conf) {
+  override val conf: Config,
+  val folder: Directory
+) extends Plugin(system, materializer, description, conf, folder) {
 
-  override def onStart(): Unit = log.info("start")
+  override def onStart(): Unit = {
+    log.info("start")
+    dataFolder
+  }
 
   override def onStop(): Unit = log.info("stop")
 
