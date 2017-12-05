@@ -23,12 +23,13 @@
  */
 package io.techcode.streamy
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, DeadLetter, PoisonPill, Props}
 import akka.event.slf4j.Logger
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import io.techcode.streamy.plugin.PluginManager
 import io.techcode.streamy.stream.StreamException
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.monitor.DeadLetterMonitor
 import io.techcode.streamy.util.{ConfigConstants, Metrics}
 
 /**
@@ -59,6 +60,14 @@ object Streamy extends App {
   }
   implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
+  // Register all monitor
+  log.info(Json.obj(
+    "message" -> "Starting all monitors",
+    "type" -> "lifecycle"
+  ))
+  val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor], "monitor-dead-letter")
+  system.eventStream.subscribe(deadLetterMonitor, classOf[DeadLetter])
+
   // Loading configuration
   log.info(Json.obj(
     "message" -> "Loading configuration with fallback",
@@ -82,6 +91,12 @@ object Streamy extends App {
 
   // Graceful shutdown
   sys.addShutdownHook({
+    log.info(Json.obj(
+      "message" -> "Stopping all monitors",
+      "type" -> "lifecycle"
+    ))
+    system.stop(deadLetterMonitor)
+
     log.info(Json.obj(
       "message" -> "Stopping all plugins",
       "type" -> "lifecycle"
