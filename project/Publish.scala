@@ -22,7 +22,24 @@
  * THE SOFTWARE.
  */
 
-name := name.value + "-plugin-syslog"
+import sbt._
+import sbt.Keys._
 
-// Enable some plugins
-enablePlugins(JmhPlugin)
+object Publish {
+
+  // Publish settings
+  val settings = Seq(
+    organization := "io.techcode.streamy",
+    publishTo := {
+      val nexus = "https://nexus.techcode.io/"
+      if (isSnapshot.value) {
+        Some("snapshots" at nexus + "repository/maven-snapshots")
+      } else {
+        Some("releases" at nexus + "repository/maven-releases")
+      }
+    },
+    isSnapshot := true,
+    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+  )
+
+}

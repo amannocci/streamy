@@ -1,5 +1,28 @@
-import Dependencies._
-import sbt.Keys.{libraryDependencies, publishTo, scalacOptions}
+/*
+ * The MIT License (MIT)
+ * <p>
+ * Copyright (c) 2017
+ * <p>
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * <p>
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * <p>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+import sbt.Keys._
 
 lazy val commonSettings = Seq(
   name := "streamy",
@@ -12,48 +35,23 @@ lazy val commonSettings = Seq(
   )
 )
 
-lazy val dependencySettings = Seq(
-  libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % scalaTestVersion,
-    "org.mockito" % "mockito-core" % mockitoVersion
-  ).map(_ % Test),
-  libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
-    "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
-  ).map(_ % akkaVersion % Test)
-)
-
-lazy val publishSettings = Seq(
-  organization := "io.techcode.streamy",
-  publishTo := {
-    val nexus = "https://nexus.techcode.io/"
-    if (isSnapshot.value) {
-      Some("snapshots" at nexus + "repository/maven-snapshots")
-    } else {
-      Some("releases" at nexus + "repository/maven-releases")
-    }
-  },
-  isSnapshot := true,
-  credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
-)
-
 lazy val core = (project in file("core"))
-  .settings(commonSettings, dependencySettings, publishSettings)
+  .settings(commonSettings, Packages.settings, Dependencies.testSettings, Publish.settings, Benchs.settings)
 
 lazy val `plugin-fingerprint` = (project in file("plugin-fingerprint"))
-  .settings(commonSettings, dependencySettings, publishSettings)
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings, Benchs.settings)
   .dependsOn(core)
 
 lazy val `plugin-syslog` = (project in file("plugin-syslog"))
-  .settings(commonSettings, dependencySettings, publishSettings)
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings, Benchs.settings)
   .dependsOn(core)
 
 lazy val `plugin-json` = (project in file("plugin-json"))
-  .settings(commonSettings, dependencySettings, publishSettings)
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings, Benchs.settings)
   .dependsOn(core)
 
 lazy val test = (project in file("test"))
-  .settings(commonSettings, publishSettings)
+  .settings(commonSettings, Publish.settings)
 
 lazy val root = (project in file("."))
   .settings(Seq(publish := {}))

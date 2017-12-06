@@ -1,3 +1,7 @@
+import pl.project13.scala.sbt.JmhPlugin
+import sbt.File
+import sbt.Keys.{classDirectory, dependencyClasspath, sourceDirectory}
+
 /*
  * The MIT License (MIT)
  * <p>
@@ -22,7 +26,16 @@
  * THE SOFTWARE.
  */
 
-name := name.value + "-plugin-syslog"
+import pl.project13.scala.sbt.JmhPlugin.JmhKeys._
+import sbt._
 
-// Enable some plugins
-enablePlugins(JmhPlugin)
+object Benchs {
+
+  // Jmh settings
+  val settings = Seq(
+    sourceDirectory in Jmh := new File((sourceDirectory in Test).value.getParentFile, "bench"),
+    classDirectory in Jmh := (classDirectory in Test).value,
+    dependencyClasspath in Jmh := (dependencyClasspath in Test).value
+  )
+
+}

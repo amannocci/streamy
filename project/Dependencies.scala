@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+import sbt._
+import sbt.Keys._
+
 object Dependencies {
 
   // Dependencies version
@@ -35,5 +38,16 @@ object Dependencies {
   lazy val guavaVersion = "23.5-jre"
   lazy val scalaTestVersion = "3.0.4"
   lazy val mockitoVersion = "2.12.0"
+
+  val testSettings = Seq(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % scalaTestVersion,
+      "org.mockito" % "mockito-core" % mockitoVersion
+    ).map(_ % Test),
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
+      "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
+    ).map(_ % akkaVersion % Test)
+  )
 
 }

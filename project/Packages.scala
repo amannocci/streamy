@@ -22,7 +22,31 @@
  * THE SOFTWARE.
  */
 
-name := name.value + "-plugin-syslog"
+import com.typesafe.sbt.packager.NativePackagerKeys
+import com.typesafe.sbt.packager.debian.DebianKeys
+import com.typesafe.sbt.packager.docker.DockerKeys
+import com.typesafe.sbt.packager.universal.UniversalKeys
 
-// Enable some plugins
-enablePlugins(JmhPlugin)
+object Packages extends DockerKeys with DebianKeys with UniversalKeys with NativePackagerKeys {
+
+  // Common settings
+  val commonSettings = Seq(
+    maintainer := "Adrien Mannocci <adrien.mannocci@gmail.com>"
+  )
+
+  // Debian settings
+  val debianSettings = Seq(
+    packageSummary := "High Performance events processing",
+    packageDescription := "Transport and process your logs, events, or other data"
+
+  )
+
+  // Docker settings
+  val dockerSettings = Seq(
+    dockerBaseImage := "openjdk:8u151-jre-alpine"
+  )
+
+  // Package settings
+  val settings = commonSettings ++ debianSettings ++ dockerSettings
+
+}
