@@ -32,8 +32,8 @@ object Dependencies {
   lazy val jacksonVersion = "2.9.2"
   lazy val metricsScalaVersion = "3.5.9"
   lazy val metricsJvmVersion = "3.2.3"
-  lazy val guavaVersion = "23.3-jre"
-  lazy val scalaTestVersion = "3.0.1"
-  lazy val mockitoVersion = "2.10.0"
+  lazy val guavaVersion = "23.5-jre"
+  lazy val scalaTestVersion = "3.0.4"
+  lazy val mockitoVersion = "2.12.0"
 
 }
