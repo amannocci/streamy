@@ -67,9 +67,11 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     toLoads.foreach(pluginDescription => {
       try {
         // Merge application configuration and plugin configuration
-        val pluginConf = (PluginManager.ConfFolder / pluginDescription.name)
-          .ifFile(f => ConfigFactory.parseFile(f.jfile))
-          .getOrElse(PluginManager.EmptyPluginConfig)
+        val path = s"streamy.plugin.${pluginDescription.name}"
+        val pluginConf = (if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig).resolve()
+          .withFallback((PluginManager.ConfFolder / s"${pluginDescription.name}.conf")
+            .ifFile(f => ConfigFactory.parseFile(f.jfile))
+            .getOrElse(PluginManager.EmptyPluginConfig).resolve())
           .withFallback(ConfigFactory.parseURL(new URL(s"jar:${pluginDescription.file}!/config.conf")).resolve())
 
         // Load main plugin class
