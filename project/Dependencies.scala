@@ -28,7 +28,7 @@ import sbt.Keys._
 object Dependencies {
 
   // Dependencies version
-  lazy val akkaVersion = "2.5.7"
+  lazy val akkaVersion = "2.5.8"
   lazy val logbackVersion = "1.2.3"
   lazy val logbackContribVersion = "0.3.0"
   lazy val commonsLangVersion = "3.6"
