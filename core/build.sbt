@@ -72,7 +72,7 @@ bashScriptExtraDefines +=
     |# Based on the cgroup limits, figure out the max number of core we should utilize
     |core_limit() {
     |  # Manually defined
-    |  if [ "JVM_CPU_LIMIT" != x ]; then
+    |  if [ "x$JVM_CPU_LIMIT" != x ]; then
     |    echo "${JVM_CPU_LIMIT}"
     |    return
     |  fi
