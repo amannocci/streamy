@@ -77,7 +77,7 @@ object Streamy extends App {
 
   // Launch reporter
   Metrics.register(system, conf)
-  if (!conf.getBoolean(ConfigConstants.StreamyMetricExternal)) {
+  if (!conf.getBoolean(ConfigConstants.StreamyMetricExternal) && !conf.getDuration(ConfigConstants.StreamyMetricInitialDelay).isNegative) {
     Metrics.source().runForeach(log.info(_))
   }
 
