@@ -38,12 +38,11 @@ object Packages extends DockerKeys with DebianKeys with UniversalKeys with Nativ
   val debianSettings = Seq(
     packageSummary := "High Performance events processing",
     packageDescription := "Transport and process your logs, events, or other data"
-
   )
 
   // Docker settings
   val dockerSettings = Seq(
-    dockerBaseImage := "openjdk:8u151-jre-alpine"
+    dockerBaseImage := "openjdk:8u151-jre"
   )
 
   // Package settings
