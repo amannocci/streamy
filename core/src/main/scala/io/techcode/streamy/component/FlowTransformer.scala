@@ -35,7 +35,7 @@ import scala.language.postfixOps
   * Flow transformer abstract implementation that provide
   * a convenient way to process an update on [[Json]].
   */
-class FlowTransformer(config: Config) extends Transformer[Json, Json](config) {
+abstract class FlowTransformer(config: Config) extends Transformer[Json, Json](config) {
 
   // Choose right transform function
   private val function: (Json => Json) = {
@@ -85,7 +85,7 @@ class FlowTransformer(config: Config) extends Transformer[Json, Json](config) {
     * @param value value to transform.
     * @return json structure.
     */
-  def transform(value: Json): Option[Json] = Some(value)
+  def transform(value: Json): Option[Json]
 
   /**
     * Apply transform component on packet.

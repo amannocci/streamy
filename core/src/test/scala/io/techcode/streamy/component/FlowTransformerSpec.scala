@@ -55,7 +55,6 @@ class FlowTransformerSpec extends WordSpecLike with Matchers {
       component.apply(input) should equal(Json.obj("message" -> "foobar"))
     }
 
-
     "transform correctly a packet with a specific target" in {
       val input = Json.obj("message" -> "foo")
       val component = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
