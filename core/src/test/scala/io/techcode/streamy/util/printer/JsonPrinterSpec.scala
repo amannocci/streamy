@@ -33,9 +33,13 @@ import org.scalatest._
 class JsonPrinterSpec extends WordSpecLike with Matchers {
 
   "JsonPrinter" should {
-    "print correctly a json value" in {
+    "print correctly a json value when success" in {
       val printer = new Impl(Json.obj("foo" -> "bar"))
       printer.print() should equal(Some(ByteString("""{"foo":"bar"}""")))
+    }
+    "print correctly a json value when failed" in {
+      val printer = new Impl(Json.obj("foo" -> "bar"), false)
+      printer.print() should equal(None)
     }
 
     "implement an error message by default" in {
@@ -46,9 +50,9 @@ class JsonPrinterSpec extends WordSpecLike with Matchers {
 
 }
 
-class Impl(pkt: Json) extends JsonPrinter(pkt) {
+class Impl(pkt: Json, success: Boolean = true) extends JsonPrinter(pkt) {
   override def process(): Boolean = {
     builder.putBytes(pkt.toString.getBytes)
-    true
+    success
   }
 }
