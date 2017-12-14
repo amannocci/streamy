@@ -100,6 +100,7 @@ private class Rfc5424Parser(val bytes: ByteString, conf: Rfc5424.Config) extends
       optional(msg()) &&
       eoi()
 
+  // scalastyle:off
   def header(): Boolean =
     pri() && version() && timestamp() && hostname() && appName() && procId() && msgId()
 
@@ -219,5 +220,6 @@ private class Rfc5424Parser(val bytes: ByteString, conf: Rfc5424.Config) extends
     }
     state
   }
+  // scalastyle:on
 
 }
