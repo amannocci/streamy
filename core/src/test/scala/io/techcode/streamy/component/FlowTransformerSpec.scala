@@ -23,8 +23,8 @@
  */
 package io.techcode.streamy.component
 
-import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
-import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
+import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.stream.StreamException
@@ -32,11 +32,11 @@ import io.techcode.streamy.util.json._
 import org.scalatest._
 
 /**
-  * Transform spec.
+  * Flow transformer spec.
   */
-class SimpleTransformerSpec extends WordSpecLike with Matchers {
+class FlowTransformerSpec extends WordSpecLike with Matchers {
 
-  class Impl(config: ImplConfig) extends SimpleTransformer(config) {
+  class Impl(config: ImplConfig) extends FlowTransformer(config) {
     override def transform(value: Json): Option[Json] = value.asString.map(v => s"${v}bar")
   }
 
@@ -46,9 +46,9 @@ class SimpleTransformerSpec extends WordSpecLike with Matchers {
     override val target: Option[JsonPointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip
-  ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
+  ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
-  "Impl transform" should {
+  "Flow transformer" should {
     "transform correctly a packet inplace" in {
       val input = Json.obj("message" -> "foo")
       val component = new Impl(ImplConfig(Root / "message"))

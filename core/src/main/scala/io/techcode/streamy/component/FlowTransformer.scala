@@ -23,8 +23,8 @@
  */
 package io.techcode.streamy.component
 
-import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
-import io.techcode.streamy.component.SimpleTransformer.{Config, SuccessBehaviour}
+import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.FlowTransformer.{Config, SuccessBehaviour}
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.util.json._
@@ -32,10 +32,10 @@ import io.techcode.streamy.util.json._
 import scala.language.postfixOps
 
 /**
-  * Simple transformer abstract implementation that provide
-  * a convenient way to process an update on json object.
+  * Flow transformer abstract implementation that provide
+  * a convenient way to process an update on [[Json]].
   */
-abstract class SimpleTransformer(config: Config) extends Transformer[Json, Json](config) {
+class FlowTransformer(config: Config) extends Transformer[Json, Json](config) {
 
   // Choose right transform function
   private val function: (Json => Json) = {
@@ -79,14 +79,13 @@ abstract class SimpleTransformer(config: Config) extends Transformer[Json, Json]
     }
   }
 
-
   /**
     * Transform only value of given packet.
     *
     * @param value value to transform.
     * @return json structure.
     */
-  def transform(value: Json): Option[Json]
+  def transform(value: Json): Option[Json] = Some(value)
 
   /**
     * Apply transform component on packet.
@@ -101,7 +100,7 @@ abstract class SimpleTransformer(config: Config) extends Transformer[Json, Json]
 /**
   * Simple transformer companion.
   */
-object SimpleTransformer {
+object FlowTransformer {
 
   // Component configuration
   class Config(

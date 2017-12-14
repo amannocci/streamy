@@ -25,9 +25,9 @@ package io.techcode.streamy.component.transformer
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
-import io.techcode.streamy.component.SimpleTransformer
-import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
-import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.FlowTransformer
+import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
+import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.transformer.JsonTransformer.Mode.Mode
@@ -35,9 +35,40 @@ import io.techcode.streamy.component.transformer.JsonTransformer.{Config, Mode}
 import io.techcode.streamy.util.json._
 
 /**
+  * Json transformer companion.
+  */
+object JsonTransformer {
+
+  // Component configuration
+  case class Config(
+    override val source: JsonPointer,
+    override val target: Option[JsonPointer] = None,
+    override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
+    override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
+    mode: Mode = Mode.Deserialize
+  ) extends FlowTransformer.Config(source, target, onSuccess, onError)
+
+  // Mode implementation
+  object Mode extends Enumeration {
+    type Mode = Value
+    val Serialize, Deserialize = Value
+  }
+
+  /**
+    * Create a json transformer flow that transform incoming [[Json]] objects.
+    *
+    * @param conf flow configuration.
+    * @return new json flow.
+    */
+  def transformer(conf: Config): Flow[Json, Json, NotUsed] =
+    Flow.fromFunction(new JsonTransformer(conf))
+
+}
+
+/**
   * Json transformer implementation.
   */
-private[transformer] class JsonTransformer(config: Config) extends SimpleTransformer(config) {
+private class JsonTransformer(config: Config) extends FlowTransformer(config) {
 
   // Serialize function
   lazy val serialize: Json => Option[Json] = (value: Json) => Some(value.toString)
@@ -63,36 +94,5 @@ private[transformer] class JsonTransformer(config: Config) extends SimpleTransfo
   }
 
   @inline override def transform(value: Json): Option[Json] = function(value)
-
-}
-
-/**
-  * Json transform companion.
-  */
-object JsonTransformer {
-
-  // Component configuration
-  case class Config(
-    override val source: JsonPointer,
-    override val target: Option[JsonPointer] = None,
-    override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
-    override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
-    mode: Mode = Mode.Deserialize
-  ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
-
-  // Mode implementation
-  object Mode extends Enumeration {
-    type Mode = Value
-    val Serialize, Deserialize = Value
-  }
-
-  /**
-    * Create a json transformer flow that transform incoming [[Json]] objects.
-    *
-    * @param conf flow configuration.
-    * @return new json flow.
-    */
-  def transformer(conf: Config): Flow[Json, Json, NotUsed] =
-    Flow.fromFunction(new JsonTransformer(conf))
 
 }

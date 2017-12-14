@@ -28,9 +28,9 @@ import java.nio.charset.StandardCharsets
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.google.common.hash.{HashFunction, Hashing}
-import io.techcode.streamy.component.SimpleTransformer
-import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour
-import io.techcode.streamy.component.SimpleTransformer.SuccessBehaviour.SuccessBehaviour
+import io.techcode.streamy.component.FlowTransformer
+import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
+import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.transformer.FingerprintTransformer.Config
@@ -39,7 +39,7 @@ import io.techcode.streamy.util.json._
 /**
   * Fingerprint transformer implementation.
   */
-private[transformer] class FingerprintTransformer(config: Config) extends SimpleTransformer(config) {
+private[transformer] class FingerprintTransformer(config: Config) extends FlowTransformer(config) {
 
   // Choose right transform function
   private val hashFunc: (String => String) = FingerprintTransformer.Hashings(config.hashing)
@@ -78,7 +78,7 @@ object FingerprintTransformer {
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
     hashing: String
-  ) extends SimpleTransformer.Config(source, target, onSuccess, onError)
+  ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
   /**
     * Create a fingerprint transformer flow that transform incoming [[Json]] objects.
