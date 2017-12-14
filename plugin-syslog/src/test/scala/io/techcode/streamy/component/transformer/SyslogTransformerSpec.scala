@@ -97,6 +97,16 @@ class SyslogTransformerSpec extends TestKit(ActorSystem("SyslogTransformerSpec")
           result.evaluate(Root / SyslogTransformer.Rfc5424.Id.Timestamp) should equal(Some(stringToJson("2003-10-11T22:14:15.003Z")))
         }
 
+        "capture only alternative timestamp when set" in {
+          val result = Source.single(SyslogTransformerSpec.Rfc5424.InputAlternative)
+            .via(SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureTimestamp))
+            .runWith(TestSink.probe[Json])
+            .requestNext()
+
+          result.asObject.get.fields.size should equal(1)
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.Timestamp) should equal(Some(stringToJson("1985-04-12T19:20:50.52-04:00")))
+        }
+
         "capture only hostname when set" in {
           val result = Source.single(SyslogTransformerSpec.Rfc5424.InputSimple)
             .via(SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureHostname))
@@ -382,6 +392,7 @@ object SyslogTransformerSpec {
   object Rfc5424 {
 
     val InputSimple = ByteString("""<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
+    val InputAlternative = ByteString("""<34>1 1985-04-12T19:20:50.52-04:00 mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
     val InputMalformed = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
 
     val CaptureAll = SyslogTransformer.Rfc5424.Config(binding = Binding(
