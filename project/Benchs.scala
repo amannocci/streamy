@@ -1,7 +1,3 @@
-import pl.project13.scala.sbt.JmhPlugin
-import sbt.File
-import sbt.Keys.{classDirectory, dependencyClasspath, sourceDirectory}
-
 /*
  * The MIT License (MIT)
  * <p>
@@ -26,6 +22,8 @@ import sbt.Keys.{classDirectory, dependencyClasspath, sourceDirectory}
  * THE SOFTWARE.
  */
 
+import sbt.File
+import sbt.Keys.{classDirectory, dependencyClasspath, sourceDirectory}
 import pl.project13.scala.sbt.JmhPlugin.JmhKeys._
 import sbt._
 
