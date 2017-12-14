@@ -522,10 +522,19 @@ class JsonSpec extends WordSpecLike with Matchers {
       input should equal(Json.obj("test" -> "test"))
     }
 
+    "handle parsing failure from bytes" in {
+      val input = Json.parse("""test:"test"""".getBytes).getOrElse(JsNull)
+      input should equal(JsNull)
+    }
 
     "parse json object from input stream" in {
       val input = Json.parse(new ByteArrayInputStream("""{"test":"test"}""".getBytes)).getOrElse(JsNull)
       input should equal(Json.obj("test" -> "test"))
+    }
+
+    "handle parsing failure from input stream" in {
+      val input = Json.parse(new ByteArrayInputStream("""test:"test"""".getBytes)).getOrElse(JsNull)
+      input should equal(JsNull)
     }
 
     "asciiStringify should escape non-ascii characters" in {
