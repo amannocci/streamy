@@ -88,7 +88,7 @@ private trait ParserHelpers {
   * @param bytes data to parse.
   * @param conf  parser configuration.
   */
-private class Rfc5424Parser(val bytes: ByteString, conf: Rfc5424.Config) extends ByteStringParser(bytes) with ParserHelpers {
+private class Rfc5424Parser(bytes: ByteString, conf: Rfc5424.Config) extends ByteStringParser(bytes) with ParserHelpers {
 
   // Shortcut to binding
   val binding: Rfc5424.Binding = conf.binding
@@ -220,6 +220,7 @@ private class Rfc5424Parser(val bytes: ByteString, conf: Rfc5424.Config) extends
     }
     state
   }
+
   // scalastyle:on
 
 }

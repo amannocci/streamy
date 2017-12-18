@@ -338,7 +338,7 @@ class JsonSpec extends WordSpecLike with Matchers {
       builder.remove()
       builder.add("notModified")
       builder.addAll(Json.arrayBuilder().add("notModified"))
-      builder.result() should equal(Json.arr("foobar"))
+      builder.result() should equal(Json.arr("foobar", "foobar"))
     }
 
     "return head of json array if present" in {

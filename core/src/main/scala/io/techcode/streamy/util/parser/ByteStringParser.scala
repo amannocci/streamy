@@ -34,7 +34,7 @@ import scala.language.implicitConversions
   *
   * @param bytes input to parse.
   */
-abstract class ByteStringParser(bytes: ByteString) {
+abstract class ByteStringParser(val bytes: ByteString) {
 
   // Safe cursor position
   private var _mark: Int = 0
@@ -300,6 +300,24 @@ abstract class ByteStringParser(bytes: ByteString) {
     } else {
       _cursor = start
       y
+    }
+  }
+
+  /**
+    * Runs a sub parser and return
+    *
+    * @param parser sub parser to run.
+    * @param action action to run on sub parser.
+    * @tparam T sub type parser.
+    * @return true if sub parser succeeded, otherwise false.
+    */
+  final def subParser[T <: ByteStringParser](parser: T, action: T => Boolean): Boolean = {
+    if (action(parser)) {
+      _cursor = parser._cursor
+      builder.putAll(parser.builder)
+      true
+    } else {
+      false
     }
   }
 

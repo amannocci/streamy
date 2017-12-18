@@ -296,6 +296,31 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       }
       parser.parse().isDefined should equal(false)
     }
+    "process correctly when using sub parser when possible" in {
+      val parser = new ByteStringParser(ByteString("foobar")) {
+        val subParsing: ByteStringParser {
+          def process(): Boolean
+        } = new ByteStringParser(bytes) {
+          override def process(): Boolean = str("foo")
+        }
+
+        override def process(): Boolean = subParser[ByteStringParser](subParsing, _.process()) && str("bar")
+      }
+      parser.parse().isDefined should equal(true)
+    }
+
+    "process correctly when using sub parser when impossible" in {
+      val parser = new ByteStringParser(ByteString("foobar")) {
+        val subParsing: ByteStringParser {
+          def process(): Boolean
+        } = new ByteStringParser(bytes) {
+          override def process(): Boolean = str("bar")
+        }
+
+        override def process(): Boolean = subParser[ByteStringParser](subParsing, _.process()) && str("bar")
+      }
+      parser.parse().isDefined should equal(false)
+    }
   }
 
 }
