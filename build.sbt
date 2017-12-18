@@ -24,6 +24,9 @@
 
 import sbt.Keys._
 
+// Disable parallel execution
+parallelExecution in ThisBuild := false
+
 lazy val commonSettings = Seq(
   name := "streamy",
   version := "0.1.0-SNAPSHOT",
