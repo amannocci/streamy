@@ -43,14 +43,14 @@ abstract class FlowTransformer(config: Config) extends Transformer[Json, Json](c
       // Transform inplace and report error if needed
       (pkt: Json) =>
         pkt.evaluate(config.source)
-          .flatMap(transform)
+          .flatMap(transform(_, pkt))
           .flatMap(x => pkt.patch(Replace(config.source, x)))
           .getOrElse(onError(Transformer.GenericErrorMsg, pkt))
     } else {
       // Transform inplace and then copy to target
       (pkt: Json) =>
         pkt.evaluate(config.source)
-          .flatMap(transform)
+          .flatMap(transform(_, pkt))
           .flatMap { v =>
             val operated: Option[Json] = {
               if (config.target.get == Root) {
@@ -78,6 +78,16 @@ abstract class FlowTransformer(config: Config) extends Transformer[Json, Json](c
           }.getOrElse(onError(Transformer.GenericErrorMsg, pkt))
     }
   }
+
+  /**
+    * Transform only value of given packet.
+    *
+    * @param value value to transform.
+    * @param pkt   original packet.
+    * @return json structure.
+    */
+  @inline def transform(value: Json, pkt: Json): Option[Json] =
+    transform(value)
 
   /**
     * Transform only value of given packet.
