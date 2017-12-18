@@ -542,7 +542,7 @@ case class JsArrayBuilder private(
 ) {
 
   /**
-    * Removes the last element from this json array.
+    * Removes the last element from this [[JsArrayBuilder]].
     *
     * @return json array builder.
     */
@@ -554,7 +554,7 @@ case class JsArrayBuilder private(
   }
 
   /**
-    * Add the specified value in this json array.
+    * Add the specified value in this [[JsArrayBuilder]].
     *
     * @param el value to add.
     * @return json array builder.
@@ -567,7 +567,20 @@ case class JsArrayBuilder private(
   }
 
   /**
-    * Create a new json array.
+    * Add the specified value in this [[JsArrayBuilder]].
+    *
+    * @param other all values to add from other [[JsArrayBuilder]].
+    * @return json array builder.
+    */
+  def addAll(other: JsArrayBuilder): JsArrayBuilder = {
+    if (modifiable) {
+      underlying ++= other.underlying
+    }
+    this
+  }
+
+  /**
+    * Create a new [[JsArray]].
     *
     * @return new json array.
     */
@@ -707,7 +720,7 @@ case class JsObjectBuilder private(
   /**
     * Removes the specified key from this map if present.
     *
-    * @param key key whose mapping is to be removed from the json object.
+    * @param key key whose mapping is to be removed from the [[JsObjectBuilder]].
     * @return json object builder.
     */
   def remove(key: String): JsObjectBuilder = {
@@ -718,7 +731,7 @@ case class JsObjectBuilder private(
   }
 
   /**
-    * Put the specified value with the specified key in this JsObject.
+    * Put the specified value with the specified key in this [[JsObjectBuilder]].
     *
     * @param field key and value to be associated.
     * @return json object builder.
@@ -731,7 +744,20 @@ case class JsObjectBuilder private(
   }
 
   /**
-    * Create a new json object.
+    * Put all values in this [[JsObjectBuilder]].
+    *
+    * @param other other json object builder to merge with.
+    * @return json object builder.
+    */
+  def putAll(other: JsObjectBuilder): JsObjectBuilder = {
+    if (modifiable) {
+      underlying ++= other.underlying
+    }
+    this
+  }
+
+  /**
+    * Create a new [[JsObject]].
     *
     * @return new json object.
     */

@@ -77,8 +77,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       builder.put("test" -> "test")
       builder.remove("test")
       builder.put("foobar" -> "test")
+      builder.putAll(Json.objectBuilder().put("foobar" -> "test"))
       builder.result()
       builder.put("foobar" -> "notModified")
+      builder.putAll(Json.objectBuilder().put("foobar" -> "notModified"))
       builder.result() should equal(Json.obj("foobar" -> "test"))
       builder.contains("foobar") should equal(true)
       builder.contains("notPresent") should equal(false)
@@ -331,9 +333,11 @@ class JsonSpec extends WordSpecLike with Matchers {
       builder.add("test")
       builder.remove()
       builder.add("foobar")
+      builder.addAll(Json.arrayBuilder().add("foobar"))
       builder.result()
       builder.remove()
       builder.add("notModified")
+      builder.addAll(Json.arrayBuilder().add("notModified"))
       builder.result() should equal(Json.arr("foobar"))
     }
 
