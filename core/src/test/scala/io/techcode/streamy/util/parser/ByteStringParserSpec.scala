@@ -76,7 +76,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "capture properly a value if present" in {
       val parser = new ByteStringParser(ByteString("foobar")) {
         override def process(): Boolean = {
-          capture(Some("test")) {
+          capture(Some(StringBinder("test"))) {
             str("foo")
           }
         }

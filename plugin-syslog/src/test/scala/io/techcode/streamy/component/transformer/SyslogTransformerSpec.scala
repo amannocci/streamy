@@ -24,6 +24,7 @@
 package io.techcode.streamy.component.transformer
 
 import java.net.InetAddress
+import java.nio.charset.StandardCharsets
 
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
@@ -31,8 +32,8 @@ import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.ByteString
-import io.techcode.streamy.component.transformer.SyslogTransformer.Rfc5424.Binding
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.parser.{IntBinder, StringBinder}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
@@ -346,34 +347,34 @@ object SyslogTransformerSpec {
   object Rfc3164 {
 
     val FormatAll = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      facility = Some(SyslogTransformer.Rfc3164.Id.Facility),
-      severity = Some(SyslogTransformer.Rfc3164.Id.Severity),
-      timestamp = Some(SyslogTransformer.Rfc3164.Id.Timestamp),
-      hostname = Some(SyslogTransformer.Rfc3164.Id.Hostname),
-      appName = Some(SyslogTransformer.Rfc3164.Id.AppName),
-      procId = Some(SyslogTransformer.Rfc3164.Id.ProcId),
-      message = Some(SyslogTransformer.Rfc3164.Id.Message)
+      facility = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Facility)),
+      severity = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Severity)),
+      timestamp = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp, StandardCharsets.US_ASCII)),
+      hostname = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Hostname, StandardCharsets.US_ASCII)),
+      appName = Some(StringBinder(SyslogTransformer.Rfc3164.Id.AppName, StandardCharsets.US_ASCII)),
+      procId = Some(StringBinder(SyslogTransformer.Rfc3164.Id.ProcId, StandardCharsets.US_ASCII)),
+      message = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Message))
     ))
     val FormatFacility = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      facility = Some(SyslogTransformer.Rfc3164.Id.Facility)
+      facility = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Facility))
     ))
     val FormatSeverity = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      severity = Some(SyslogTransformer.Rfc3164.Id.Severity)
+      severity = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Severity))
     ))
     val FormatTimestamp = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      timestamp = Some(SyslogTransformer.Rfc3164.Id.Timestamp)
+      timestamp = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp, StandardCharsets.US_ASCII))
     ))
     val FormatHostname = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      hostname = Some(SyslogTransformer.Rfc3164.Id.Hostname)
+      hostname = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Hostname, StandardCharsets.US_ASCII))
     ))
     val FormatApp = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      appName = Some(SyslogTransformer.Rfc3164.Id.AppName)
+      appName = Some(StringBinder(SyslogTransformer.Rfc3164.Id.AppName, StandardCharsets.US_ASCII))
     ))
     val FormatProc = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      procId = Some(SyslogTransformer.Rfc3164.Id.ProcId)
+      procId = Some(StringBinder(SyslogTransformer.Rfc3164.Id.ProcId, StandardCharsets.US_ASCII))
     ))
     val FormatMessage = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      message = Some(SyslogTransformer.Rfc3164.Id.Message)
+      message = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Message))
     ))
 
     val OutputSimple: Json = Json.obj(
@@ -395,45 +396,79 @@ object SyslogTransformerSpec {
     val InputAlternative = ByteString("""<34>1 1985-04-12T19:20:50.52-04:00 mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
     val InputMalformed = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
 
-    val CaptureAll = SyslogTransformer.Rfc5424.Config(binding = Binding(
-      facility = Some(SyslogTransformer.Rfc5424.Id.Facility),
-      severity = Some(SyslogTransformer.Rfc5424.Id.Severity),
-      timestamp = Some(SyslogTransformer.Rfc5424.Id.Timestamp),
-      hostname = Some(SyslogTransformer.Rfc5424.Id.Hostname),
-      appName = Some(SyslogTransformer.Rfc5424.Id.AppName),
-      procId = Some(SyslogTransformer.Rfc5424.Id.ProcId),
-      msgId = Some(SyslogTransformer.Rfc5424.Id.MsgId),
-      structData = Some(SyslogTransformer.Rfc5424.Id.StructData),
-      message = Some(SyslogTransformer.Rfc5424.Id.Message)
+    val CaptureAll = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility)),
+      severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity)),
+      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII)),
+      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII)),
+      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII)),
+      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII)),
+      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII)),
+      structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII)),
+      message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
     ))
-    val CaptureFacility = SyslogTransformer.Rfc5424.Config(binding = Binding(facility = Some(SyslogTransformer.Rfc5424.Id.Facility)))
-    val CaptureSeverity = SyslogTransformer.Rfc5424.Config(binding = Binding(severity = Some(SyslogTransformer.Rfc5424.Id.Severity)))
-    val CaptureTimestamp = SyslogTransformer.Rfc5424.Config(binding = Binding(timestamp = Some(SyslogTransformer.Rfc5424.Id.Timestamp)))
-    val CaptureHostname = SyslogTransformer.Rfc5424.Config(binding = Binding(hostname = Some(SyslogTransformer.Rfc5424.Id.Hostname)))
-    val CaptureApp = SyslogTransformer.Rfc5424.Config(binding = Binding(appName = Some(SyslogTransformer.Rfc5424.Id.AppName)))
-    val CaptureProc = SyslogTransformer.Rfc5424.Config(binding = Binding(procId = Some(SyslogTransformer.Rfc5424.Id.ProcId)))
-    val CaptureMsg = SyslogTransformer.Rfc5424.Config(binding = Binding(msgId = Some(SyslogTransformer.Rfc5424.Id.MsgId)))
-    val CaptureStructData = SyslogTransformer.Rfc5424.Config(binding = Binding(structData = Some(SyslogTransformer.Rfc5424.Id.StructData)))
-    val CaptureMessage = SyslogTransformer.Rfc5424.Config(binding = Binding(message = Some(SyslogTransformer.Rfc5424.Id.Message)))
+    val CaptureFacility = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility))
+    ))
+    val CaptureSeverity = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity))
+    ))
+    val CaptureTimestamp = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII))
+    ))
+    val CaptureHostname = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII))
+    ))
+    val CaptureApp = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII))
+    ))
+    val CaptureProc = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII))
+    ))
+    val CaptureMsg = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII))
+    ))
+    val CaptureStructData = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII))
+    ))
+    val CaptureMessage = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
+    ))
 
-    val FormatAll = SyslogTransformer.Rfc5424.Config(binding = Binding(
-      facility = Some(SyslogTransformer.Rfc5424.Id.Facility),
-      severity = Some(SyslogTransformer.Rfc5424.Id.Severity),
-      timestamp = Some(SyslogTransformer.Rfc5424.Id.Timestamp),
-      hostname = Some(SyslogTransformer.Rfc5424.Id.Hostname),
-      appName = Some(SyslogTransformer.Rfc5424.Id.AppName),
-      procId = Some(SyslogTransformer.Rfc5424.Id.ProcId),
-      msgId = Some(SyslogTransformer.Rfc5424.Id.MsgId),
-      message = Some(SyslogTransformer.Rfc5424.Id.Message)
+    val FormatAll = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility)),
+      severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity)),
+      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII)),
+      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII)),
+      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII)),
+      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII)),
+      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII)),
+      message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
     ))
-    val FormatFacility = SyslogTransformer.Rfc5424.Config(binding = Binding(facility = Some(SyslogTransformer.Rfc5424.Id.Facility)))
-    val FormatSeverity = SyslogTransformer.Rfc5424.Config(binding = Binding(severity = Some(SyslogTransformer.Rfc5424.Id.Severity)))
-    val FormatTimestamp = SyslogTransformer.Rfc5424.Config(binding = Binding(timestamp = Some(SyslogTransformer.Rfc5424.Id.Timestamp)))
-    val FormatHostname = SyslogTransformer.Rfc5424.Config(binding = Binding(hostname = Some(SyslogTransformer.Rfc5424.Id.Hostname)))
-    val FormatApp = SyslogTransformer.Rfc5424.Config(binding = Binding(appName = Some(SyslogTransformer.Rfc5424.Id.AppName)))
-    val FormatProc = SyslogTransformer.Rfc5424.Config(binding = Binding(procId = Some(SyslogTransformer.Rfc5424.Id.ProcId)))
-    val FormatMsgId = SyslogTransformer.Rfc5424.Config(binding = Binding(msgId = Some(SyslogTransformer.Rfc5424.Id.MsgId)))
-    val FormatMessage = SyslogTransformer.Rfc5424.Config(binding = Binding(message = Some(SyslogTransformer.Rfc5424.Id.Message)))
+    val FormatFacility = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility))
+    ))
+    val FormatSeverity = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity))
+    ))
+    val FormatTimestamp = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII))
+    ))
+    val FormatHostname = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII))
+    ))
+    val FormatApp = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII))
+    ))
+    val FormatProc = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII))
+    ))
+    val FormatMsgId = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII))
+    ))
+    val FormatMessage = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
+    ))
 
     val OutputSimple: Json = Json.obj(
       SyslogTransformer.Rfc5424.Id.Facility -> 4,

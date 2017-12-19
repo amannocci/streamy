@@ -212,10 +212,10 @@ private class Rfc5424Parser(bytes: ByteString, conf: Rfc5424.Config) extends Byt
 
       // Read severity or facility
       if (binding.facility.isDefined) {
-        builder.put(binding.facility.get, prival >> 3)
+        builder.put(binding.facility.get.bind(prival >> 3))
       }
       if (binding.severity.isDefined) {
-        builder.put(binding.severity.get, prival & 7)
+        builder.put(binding.severity.get.bind(prival & 7))
       }
     }
     state

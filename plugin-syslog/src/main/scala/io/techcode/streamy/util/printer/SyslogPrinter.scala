@@ -28,6 +28,7 @@ import java.net.InetAddress
 import akka.util.ByteString
 import io.techcode.streamy.component.transformer.SyslogTransformer._
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.parser.Binder
 import org.apache.commons.lang3.StringUtils
 
 /**
@@ -88,11 +89,12 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     * @param conf         name of the field.
     * @param defaultValue default value.
     */
-  def printWithDefault(conf: Option[String], defaultValue: String): Unit = {
+  def printWithDefault(conf: Option[Binder], defaultValue: String): Unit = {
     if (conf.isDefined) {
-      builder.putBytes(pkt.evaluate(Root / conf.get).flatMap(_.asString).getOrElse(defaultValue).getBytes())
+      val binder = conf.get
+      builder.append(binder.bind(pkt.evaluate(Root / binder.key).getOrElse(defaultValue)))
     } else {
-      builder.putBytes(defaultValue.getBytes())
+      builder.putBytes(defaultValue.getBytes)
     }
   }
 
@@ -102,15 +104,17 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     * @param facilityConf configuration for facility.
     * @param severityConf configuration for severity.
     */
-  def printPrival(facilityConf: Option[String], severityConf: Option[String]): Unit = {
+  def printPrival(facilityConf: Option[Binder], severityConf: Option[Binder]): Unit = {
     var prival = 0
     if (severityConf.isDefined) {
-      prival = pkt.evaluate(Root / severityConf.get).flatMap(_.asInt).getOrElse(SyslogPrinter.Facility)
+      val binder = severityConf.get
+      prival = pkt.evaluate(Root / binder.key).flatMap(_.asInt).getOrElse(SyslogPrinter.Facility)
     } else {
       prival = SyslogPrinter.Severity
     }
     if (facilityConf.isDefined) {
-      prival += pkt.evaluate(Root / facilityConf.get).flatMap(_.asInt).getOrElse(SyslogPrinter.Facility) << 3
+      val binder = facilityConf.get
+      prival += pkt.evaluate(Root / binder.key).flatMap(_.asInt).getOrElse(SyslogPrinter.Facility) << 3
     } else {
       prival += SyslogPrinter.Facility << 3
     }
@@ -156,7 +160,8 @@ private class Rfc3164Printer(pkt: Json, conf: Rfc3164.Config) extends PrinterHel
     if (binding.message.isDefined) {
       builder.putByte(SyslogPrinter.SemiColon)
       builder.putByte(SyslogPrinter.Space)
-      builder.putBytes(pkt.evaluate(Root / binding.message.get).flatMap(_.asString).getOrElse(StringUtils.EMPTY).getBytes)
+      val binder = binding.message.get
+      builder.append(binder.bind(pkt.evaluate(Root / binder.key).getOrElse(JsString(StringUtils.EMPTY))))
     }
     builder.putByte(SyslogPrinter.NewLine)
     true
@@ -210,7 +215,8 @@ private class Rfc5424Printer(pkt: Json, conf: Rfc5424.Config) extends PrinterHel
     // Add message
     if (binding.message.isDefined) {
       builder.putByte(SyslogPrinter.Space)
-      builder.putBytes(pkt.evaluate(Root / binding.message.get).flatMap(_.asString).getOrElse(StringUtils.EMPTY).getBytes)
+      val binder = binding.message.get
+      builder.append(binder.bind(pkt.evaluate(Root / binder.key).getOrElse(JsString(StringUtils.EMPTY))))
     }
     true
   }

@@ -28,7 +28,7 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
 import io.techcode.streamy.util.json.Json
-import io.techcode.streamy.util.parser.{ByteStringParser, SyslogParser}
+import io.techcode.streamy.util.parser.{Binder, ByteStringParser, SyslogParser}
 import io.techcode.streamy.util.printer.{JsonPrinter, SyslogPrinter}
 
 /**
@@ -89,15 +89,15 @@ object SyslogTransformer {
     }
 
     case class Binding(
-      facility: Option[String] = None,
-      severity: Option[String] = None,
-      timestamp: Option[String] = None,
-      hostname: Option[String] = None,
-      appName: Option[String] = None,
-      procId: Option[String] = None,
-      msgId: Option[String] = None,
-      structData: Option[String] = None,
-      message: Option[String] = None
+      facility: Option[Binder] = None,
+      severity: Option[Binder] = None,
+      timestamp: Option[Binder] = None,
+      hostname: Option[Binder] = None,
+      appName: Option[Binder] = None,
+      procId: Option[Binder] = None,
+      msgId: Option[Binder] = None,
+      structData: Option[Binder] = None,
+      message: Option[Binder] = None
     )
 
     case class Config(binding: Binding = Binding())
@@ -119,13 +119,13 @@ object SyslogTransformer {
     }
 
     case class Binding(
-      facility: Option[String] = None,
-      severity: Option[String] = None,
-      timestamp: Option[String] = None,
-      hostname: Option[String] = None,
-      appName: Option[String] = None,
-      procId: Option[String] = None,
-      message: Option[String] = None
+      facility: Option[Binder] = None,
+      severity: Option[Binder] = None,
+      timestamp: Option[Binder] = None,
+      hostname: Option[Binder] = None,
+      appName: Option[Binder] = None,
+      procId: Option[Binder] = None,
+      message: Option[Binder] = None
     )
 
     case class Config(binding: Binding = Binding())
