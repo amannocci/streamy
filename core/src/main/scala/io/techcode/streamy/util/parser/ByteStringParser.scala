@@ -25,7 +25,7 @@ package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
 import com.google.common.base.CharMatcher
-import io.techcode.streamy.util.json.{JsObjectBuilder, Json}
+import io.techcode.streamy.util.json._
 
 import scala.language.implicitConversions
 
@@ -50,7 +50,7 @@ abstract class ByteStringParser(val bytes: ByteString) {
     *
     * @return [[Json]] object result of parsing or [[None]].
     */
-  final def parse(): Option[Json] = {
+  final def parse(): Option[JsObject] = {
     if (process()) {
       Some(builder.result())
     } else {
