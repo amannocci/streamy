@@ -24,7 +24,7 @@
 package io.techcode.streamy.component
 
 import akka.util.ByteString
-import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.printer.JsonPrinter
 import org.scalatest._

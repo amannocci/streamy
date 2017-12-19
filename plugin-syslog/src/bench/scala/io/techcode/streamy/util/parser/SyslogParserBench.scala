@@ -27,7 +27,7 @@ import akka.util.ByteString
 import io.techcode.streamy.component.SourceTransformer
 import io.techcode.streamy.component.transformer.SyslogTransformer
 import io.techcode.streamy.component.transformer.SyslogTransformer.Rfc5424.Binding
-import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations._
 

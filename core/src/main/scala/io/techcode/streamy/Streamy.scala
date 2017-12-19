@@ -27,10 +27,9 @@ import akka.actor.{ActorSystem, DeadLetter, PoisonPill, Props}
 import akka.event.slf4j.Logger
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import io.techcode.streamy.plugin.PluginManager
-import io.techcode.streamy.stream.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.monitor.DeadLetterMonitor
-import io.techcode.streamy.util.{ConfigConstants, Metrics}
+import io.techcode.streamy.util.{ConfigConstants, Metrics, StreamException}
 
 /**
   * Streamy is an high-performance event processor.

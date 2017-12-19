@@ -27,7 +27,7 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import org.scalatest._
 

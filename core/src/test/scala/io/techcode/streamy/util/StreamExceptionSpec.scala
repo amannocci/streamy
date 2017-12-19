@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.stream
+package io.techcode.streamy.util
 
 import io.techcode.streamy.util.json._
 import org.scalatest._
@@ -58,7 +58,7 @@ class StreamExceptionSpec extends WordSpecLike with Matchers {
 
     "be convert to json with exception" in {
       new StreamException("foobar", ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
-        "message" -> "foobar", "exception" -> s"io.techcode.streamy.stream.StreamException: test${scala.util.Properties.lineSeparator}"
+        "message" -> "foobar", "exception" -> s"io.techcode.streamy.util.StreamException: test${scala.util.Properties.lineSeparator}"
       ))
     }
 
@@ -66,7 +66,7 @@ class StreamExceptionSpec extends WordSpecLike with Matchers {
       new StreamException("foobar", state = Some(Json.obj("details" -> "test")), ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
         "message" -> "foobar",
         "state" -> Json.obj("details" -> "test"),
-        "exception" -> s"io.techcode.streamy.stream.StreamException: test${scala.util.Properties.lineSeparator}"
+        "exception" -> s"io.techcode.streamy.util.StreamException: test${scala.util.Properties.lineSeparator}"
       ))
     }
   }

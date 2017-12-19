@@ -25,7 +25,7 @@ package io.techcode.streamy.component
 
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.{Config, ErrorBehaviour}
-import io.techcode.streamy.stream.StreamException
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
 /**
