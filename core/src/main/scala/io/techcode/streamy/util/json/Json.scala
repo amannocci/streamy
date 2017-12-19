@@ -57,6 +57,13 @@ object Json {
   def arrayBuilder(): JsArrayBuilder = JsArrayBuilder()
 
   /**
+    * Parses a bytestring representing a Json input, and returns it as a [[Json]].
+    *
+    * @param data the bytestring to parse.
+    */
+  @inline def parse(data: ByteString): Either[Throwable, Json] = JsonJackson.parse(data)
+
+  /**
     * Parses a string representing a Json input, and returns it as a [[Json]].
     *
     * @param data the string to parse.

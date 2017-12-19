@@ -26,6 +26,7 @@ package io.techcode.streamy.util.json
 import java.io.{InputStream, StringWriter}
 import java.math.{BigInteger, BigDecimal => JBigDec}
 
+import akka.util.ByteString
 import com.fasterxml.jackson.core._
 import com.fasterxml.jackson.databind.Module.SetupContext
 import com.fasterxml.jackson.databind._
@@ -34,6 +35,7 @@ import com.fasterxml.jackson.databind.deser.Deserializers
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.{BigIntegerNode, DecimalNode}
 import com.fasterxml.jackson.databind.ser.Serializers
+import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream
 
 import scala.annotation.{switch, tailrec}
 import scala.collection.mutable
@@ -47,6 +49,17 @@ private[json] object JsonJackson {
 
   // Json factory
   private val factory = new JsonFactory(mapper)
+
+  /**
+    * Parses a bytestring representing a Json input, and returns it as a [[Json]].
+    *
+    * @param data the bytestring to parse.
+    */
+  def parse(data: ByteString): Either[Throwable, Json] = try {
+    Right(mapper.readValue(factory.createParser(new ByteBufferBackedInputStream(data.asByteBuffer)), classOf[Json]))
+  } catch {
+    case NonFatal(error) => Left(error)
+  }
 
   /**
     * Parses a string representing a Json input, and returns it as a [[Json]].
