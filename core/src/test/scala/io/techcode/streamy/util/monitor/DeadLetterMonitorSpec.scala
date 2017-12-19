@@ -31,7 +31,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 /**
   * Dead letter monitoring spec.
   */
-class DeadLetterMonitorSpec extends TestKit(ActorSystem("PluginSpec"))
+class DeadLetterMonitorSpec extends TestKit(ActorSystem("DeadLetterMonitorSpec"))
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfter {
 
   implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
@@ -49,14 +49,12 @@ class DeadLetterMonitorSpec extends TestKit(ActorSystem("PluginSpec"))
     "handle correctly dead letter" in {
       val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor])
       system.eventStream.subscribe(deadLetterMonitor, classOf[DeadLetter])
-      system.eventStream.publish(DeadLetter)
-      deadLetterMonitor ! Kill
+      system.eventStream.publish(DeadLetter("Test", deadLetterMonitor, deadLetterMonitor))
     }
 
     "not receive message by default" in {
       val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor])
       deadLetterMonitor ! "test"
-      deadLetterMonitor ! Kill
     }
   }
 
