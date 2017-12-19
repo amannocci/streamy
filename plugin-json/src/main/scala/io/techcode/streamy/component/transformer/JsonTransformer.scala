@@ -76,14 +76,21 @@ private class JsonTransformer(config: Config) extends FlowTransformer(config) {
   // Deserialize function
   lazy val deserialize: Json => Option[Json] = (value: Json) => value.asString.map { field =>
     // Try to avoid parsing of wrong json
-    if (field.startsWith("{") && field.endsWith("}")) {
+    if (field.nonEmpty && field.charAt(0) == '{') {
       // Try to parse
-      Json.parse(field) match {
-        case Right(succ) => succ
-        case Left(ex) => onError(state = value, ex = Some(ex))
-      }
+      handle(value, Json.parse(field))
     } else {
       onError(state = value)
+    }
+  }.orElse {
+    value.asBytes.map { field =>
+      // Try to avoid parsing of wrong json
+      if (field.nonEmpty && (field(0) & 0xFF).toChar == '{') {
+        // Try to parse
+        handle(value, Json.parse(field))
+      } else {
+        onError(state = value)
+      }
     }
   }
 
@@ -94,5 +101,10 @@ private class JsonTransformer(config: Config) extends FlowTransformer(config) {
   }
 
   @inline override def transform(value: Json): Option[Json] = function(value)
+
+  private def handle(data: Json, result: Either[Throwable, Json]): Json = result match {
+    case Right(succ) => succ
+    case Left(ex) => onError(state = data, ex = Some(ex))
+  }
 
 }

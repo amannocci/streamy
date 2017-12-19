@@ -28,6 +28,7 @@ import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.testkit.{ImplicitSender, TestKit}
+import akka.util.ByteString
 import io.techcode.streamy.component.transformer.JsonTransformer.{Config, Mode}
 import io.techcode.streamy.util.json._
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -52,13 +53,13 @@ class JsonTransformerSpec extends TestKit(ActorSystem("JsonTransformerSpec"))
         .requestNext() should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
     }
 
-    "deserialize correctly a packet inplace" in {
+    "deserialize correctly a packet inplace from string" in {
       val input = Json.obj("message" -> """{"message":"foobar"}""")
       val component = new JsonTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
     }
 
-    "deserialize correctly a packet with a root target" in {
+    "deserialize correctly a packet with a root target from string" in {
       val input = Json.obj("message" -> """{"test":"foobar"}""")
       val component = new JsonTransformer(Config(Root / "message", Some(Root)))
       component.apply(input) should equal(Json.obj(
@@ -67,22 +68,67 @@ class JsonTransformerSpec extends TestKit(ActorSystem("JsonTransformerSpec"))
       ))
     }
 
-    "deserialize correctly a packet with a root target equal to an existing field" in {
+    "deserialize correctly a packet with a root target equal to an existing field from string" in {
       val input = Json.obj("message" -> """{"message":"foobar"}""")
       val component = new JsonTransformer(Config(Root / "message", Some(Root)))
       component.apply(input) should equal(Json.obj("message" -> "foobar"))
     }
 
-    "fast skip correctly a packet with a wrong source field" in {
+    "fast skip correctly a packet with an empty source field from string" in {
+      val input = Json.obj("message" -> "")
+      val component = new JsonTransformer(Config(Root / "message"))
+      component.apply(input) should equal(Json.obj("message" -> ""))
+    }
+
+    "fast skip correctly a packet with a wrong source field from string" in {
       val input = Json.obj("message" -> "foobar")
       val component = new JsonTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> "foobar"))
     }
 
-    "skip correctly a packet with a wrong source field" in {
+    "skip correctly a packet with a wrong source field from string" in {
       val input = Json.obj("message" -> "{foobar}")
       val component = new JsonTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> "{foobar}"))
+    }
+
+    "deserialize correctly a packet inplace from bytestring" in {
+      val input = Json.obj("message" -> ByteString("""{"message":"foobar"}"""))
+      val component = new JsonTransformer(Config(Root / "message"))
+      component.apply(input) should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
+    }
+
+    "deserialize correctly a packet with a root target from bytestring" in {
+      val input = Json.obj("message" -> ByteString("""{"test":"foobar"}"""))
+      val component = new JsonTransformer(Config(Root / "message", Some(Root)))
+      component.apply(input) should equal(Json.obj(
+        "message" -> ByteString("""{"test":"foobar"}"""),
+        "test" -> "foobar"
+      ))
+    }
+
+    "deserialize correctly a packet with a root target equal to an existing field from bytestring" in {
+      val input = Json.obj("message" -> ByteString("""{"message":"foobar"}"""))
+      val component = new JsonTransformer(Config(Root / "message", Some(Root)))
+      component.apply(input) should equal(Json.obj("message" -> "foobar"))
+    }
+
+    "fast skip correctly a packet with an empty source field from bytestring" in {
+      val input = Json.obj("message" -> ByteString())
+      val component = new JsonTransformer(Config(Root / "message"))
+      component.apply(input) should equal(Json.obj("message" -> ByteString()))
+    }
+
+    "fast skip correctly a packet with a wrong source field from bytestring" in {
+      val input = Json.obj("message" -> ByteString("foobar"))
+      val component = new JsonTransformer(Config(Root / "message"))
+      component.apply(input) should equal(Json.obj("message" -> ByteString("foobar")))
+    }
+
+    "skip correctly a packet with a wrong source field from bytestring" in {
+      val input = Json.obj("message" -> ByteString("{foobar}"))
+      val component = new JsonTransformer(Config(Root / "message"))
+      component.apply(input) should equal(Json.obj("message" -> ByteString("{foobar}")))
     }
 
     "serialize correctly a packet inplace" in {
