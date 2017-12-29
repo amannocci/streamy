@@ -300,6 +300,13 @@ sealed trait Json {
     */
   def asFloat: Option[Float] = None
 
+  /**
+    * Returns a copy of current json value.
+    *
+    * @return current json value.
+    */
+  def copy(): Json
+
   override def toString: String = Json.stringify(this)
 
 }
@@ -313,6 +320,8 @@ case object JsNull extends Json {
 
   override val asNull: Option[Unit] = Some(())
 
+  override val copy: Json = this
+
 }
 
 /**
@@ -325,6 +334,8 @@ sealed abstract class JsBoolean(value: Boolean) extends Json {
   override val isBoolean: Boolean = true
 
   override val asBoolean: Option[Boolean] = Some(value)
+
+  override val copy: Json = this
 
 }
 
@@ -349,6 +360,8 @@ case class JsInt(value: Int) extends Json {
 
   override val asInt: Option[Int] = Some(value)
 
+  override val copy: Json = this
+
 }
 
 /**
@@ -361,6 +374,8 @@ case class JsLong(value: Long) extends Json {
   override val isLong: Boolean = true
 
   override val asLong: Option[Long] = Some(value)
+
+  override val copy: Json = this
 
 }
 
@@ -375,6 +390,8 @@ case class JsFloat(value: Float) extends Json {
 
   override val asFloat: Option[Float] = Some(value)
 
+  override val copy: Json = this
+
 }
 
 /**
@@ -388,6 +405,8 @@ case class JsDouble(value: Double) extends Json {
 
   override val asDouble: Option[Double] = Some(value)
 
+  override val copy: Json = this
+
 }
 
 /**
@@ -400,6 +419,8 @@ case class JsBigDecimal(value: BigDecimal) extends Json {
   override val isNumber: Boolean = true
 
   override val asNumber: Option[BigDecimal] = Some(value)
+
+  override val copy: Json = this
 
 }
 
@@ -415,6 +436,8 @@ case class JsString(value: String) extends Json {
 
   override val asString: Option[String] = Some(value)
 
+  override val copy: Json = this
+
 }
 
 /**
@@ -427,6 +450,8 @@ case class JsBytes(value: ByteString) extends Json {
   override val isBytes: Boolean = true
 
   override val asBytes: Option[ByteString] = Some(value)
+
+  override val copy: Json = this
 
 }
 
@@ -535,6 +560,8 @@ case class JsArray private[json](
 
   override val asArray: Option[JsArray] = Some(this)
 
+  def copy(): Json = JsArray(underlying.clone())
+
 }
 
 /**
@@ -615,7 +642,7 @@ case class JsObject private[json](
     *
     * @return set that contains all fields.
     */
-  def fieldSet: Set[(String, Json)] = fields.toSet
+  def fieldSet: Set[(String, Json)] = underlying.toSet
 
   /**
     * Return all values.
@@ -694,6 +721,8 @@ case class JsObject private[json](
   override val isObject: Boolean = true
 
   override val asObject: Option[JsObject] = Some(this)
+
+  def copy(): Json = JsObject(underlying.clone())
 
 }
 

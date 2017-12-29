@@ -23,8 +23,6 @@
  */
 package io.techcode.streamy.util.json
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
   * Represent a json pointer.
   * Construction of json pointer can be slow because we compute only one time path.
@@ -123,15 +121,19 @@ private[json] trait JsonAccessor {
   */
 private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
 
-  def evaluate(json: Json): Option[Json] = json.asObject.flatMap(_.apply(key))
+  def evaluate(json: Json): Option[Json] = json.asObject.flatMap(_ (key))
 
   @inline def set(json: Json, value: Json): Option[Json] = add(json, value)
 
-  def add(json: Json, value: Json): Option[Json] = json.asObject.map(_.put(key, value))
+  def add(json: Json, value: Json): Option[Json] = json.asObject.map { x =>
+    x.underlying.put(key, value)
+    x
+  }
 
   def replace(json: Json, value: Json): Option[Json] = json.asObject.flatMap { x =>
     if (x.underlying.contains(key)) {
-      Some(x.put(key, value))
+      x.underlying.put(key, value)
+      Some(x)
     } else {
       None
     }
@@ -140,12 +142,14 @@ private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
   def remove(json: Json, mustExist: Boolean = true): Option[Json] = json.asObject.flatMap { x =>
     if (mustExist) {
       if (x.underlying.contains(key)) {
-        Some(x.remove(key))
+        x.underlying.remove(key)
+        Some(x)
       } else {
         None
       }
     } else {
-      Some(x.remove(key))
+      x.underlying.remove(key)
+      Some(x)
     }
   }
 
@@ -156,22 +160,17 @@ private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
   */
 private[json] case class JsonArrayAccessor(idx: Int) extends JsonAccessor {
 
-  def evaluate(json: Json): Option[Json] = json.asArray.flatMap(x => x(idx))
+  def evaluate(json: Json): Option[Json] = json.asArray.flatMap(_ (idx))
 
   @inline def set(json: Json, value: Json): Option[Json] = replace(json, value)
 
   def add(json: Json, value: Json): Option[Json] = json.asArray.flatMap { x =>
     if (idx > -1 && idx < x.underlying.length) {
-      val builder = new ArrayBuffer[Json](x.underlying.length + 1)
-      builder ++= x.underlying.view(0, idx)
-      builder += value
-      builder ++= x.underlying.view(idx, x.underlying.length)
-      Some(JsArray(builder))
+      x.underlying.insert(idx, value)
+      Some(x)
     } else if (idx == -1) {
-      val builder = new ArrayBuffer[Json](x.underlying.length + 1)
-      builder ++= x.underlying
-      builder += value
-      Some(JsArray(builder))
+      x.underlying.append(value)
+      Some(x)
     } else {
       None
     }
@@ -179,11 +178,8 @@ private[json] case class JsonArrayAccessor(idx: Int) extends JsonAccessor {
 
   def replace(json: Json, value: Json): Option[Json] = json.asArray.flatMap { x =>
     if (idx > -1 && idx < x.underlying.length) {
-      val builder = new ArrayBuffer[Json](x.underlying.length)
-      builder ++= x.underlying.view(0, idx)
-      builder += value
-      builder ++= x.underlying.view(idx + 1, x.underlying.length)
-      Some(JsArray(builder))
+      x.underlying.update(idx, value)
+      Some(x)
     } else {
       None
     }
@@ -191,10 +187,8 @@ private[json] case class JsonArrayAccessor(idx: Int) extends JsonAccessor {
 
   def remove(json: Json, mustExist: Boolean = true): Option[Json] = json.asArray.flatMap { x =>
     if (idx > -1 && idx < x.underlying.length) {
-      val builder = new ArrayBuffer[Json](x.underlying.length)
-      builder ++= x.underlying.view(0, idx)
-      builder ++= x.underlying.view(idx + 1, x.underlying.length)
-      Some(JsArray(builder))
+      x.underlying.remove(idx)
+      Some(x)
     } else {
       if (mustExist) {
         None

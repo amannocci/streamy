@@ -40,11 +40,11 @@ sealed trait JsonOperation {
 }
 
 /**
-  * Simple operation implementation.
+  * Abstract operation implementation.
   *
   * @param path json path.
   */
-private[json] abstract class SimpleOperation(path: JsonPointer) extends JsonOperation {
+private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOperation {
 
   /**
     * Apply operation recursively.
@@ -55,17 +55,23 @@ private[json] abstract class SimpleOperation(path: JsonPointer) extends JsonOper
     * @return json value modified or [[None]].
     */
   private[json] def apply(path: JsonPointer, idx: Int, current: Option[Json]): Option[Json] = {
+    // Shortcut to underlying data structure
+    lazy val underlying = path.underlying
+
     if (current.isEmpty) {
       // We fail to evaluate path
       current
-    } else if (idx == path.underlying.length - 1) {
+    } else if (idx == underlying.length - 1) {
+      // Always exist
+      val ref = current.get
+
       // We are in final state
-      operate(path.underlying(idx), current)
+      operate(underlying(idx), ref.copy())
     } else {
       // Recursive call until final state
-      val result = apply(path, idx + 1, path.underlying(idx).evaluate(current.get))
+      val result = apply(path, idx + 1, underlying(idx).evaluate(current.get))
       if (result.isDefined) {
-        path.underlying(idx).set(current.get, result.get)
+        underlying(idx).set(current.get.copy(), result.get)
       } else {
         result
       }
@@ -79,7 +85,62 @@ private[json] abstract class SimpleOperation(path: JsonPointer) extends JsonOper
     * @param current  curren json value.
     * @return json value modified or [[None]].
     */
-  def operate(accessor: JsonAccessor, current: Option[Json]): Option[Json]
+  def operate(accessor: JsonAccessor, current: Json): Option[Json]
+
+}
+
+/**
+  * Bulk a sequence of operations at pointed location.
+  *
+  * @param path json path.
+  * @param ops  sequence of operations.
+  */
+case class Bulk(path: JsonPointer, ops: Seq[JsonOperation]) extends AbstractOperation(path) {
+
+  def apply(json: Json): Option[Json] = {
+    if (path.underlying.isEmpty) {
+      process(Some(json))
+    } else {
+      apply(path, 0, Some(json))
+    }
+  }
+
+  def operate(accessor: JsonAccessor, current: Json): Option[Json] = {
+    val result = process(accessor.evaluate(current))
+    if (result.isDefined) {
+      accessor.set(current, result.get)
+    } else {
+      result
+    }
+  }
+
+  /**
+    * Process all sub operations.
+    *
+    * @param current current value.
+    * @return result of all operations.
+    */
+  private def process(current: Option[Json]): Option[Json] = {
+    // Current computation
+    var idx = 0
+    var result: Option[Json] = current
+
+    // Iterate over operations
+    while (idx < ops.length) {
+      // Result of sub operation
+      val subResult = ops(idx)(result.get)
+      if (subResult.isDefined) {
+        idx += 1
+        result = subResult
+      } else {
+        idx = ops.length
+        result = None
+      }
+    }
+
+    // Result of computation
+    result
+  }
 
 }
 
@@ -89,7 +150,7 @@ private[json] abstract class SimpleOperation(path: JsonPointer) extends JsonOper
   * @param path  json path.
   * @param value json value to add with.
   */
-case class Add(path: JsonPointer, value: Json) extends SimpleOperation(path) {
+case class Add(path: JsonPointer, value: Json) extends AbstractOperation(path) {
 
   override def apply(json: Json): Option[Json] = {
     if (path.underlying.isEmpty) {
@@ -99,8 +160,8 @@ case class Add(path: JsonPointer, value: Json) extends SimpleOperation(path) {
     }
   }
 
-  def operate(accessor: JsonAccessor, current: Option[Json]): Option[Json] =
-    accessor.add(current.get, value)
+  def operate(accessor: JsonAccessor, current: Json): Option[Json] =
+    accessor.add(current, value)
 
 }
 
@@ -110,7 +171,7 @@ case class Add(path: JsonPointer, value: Json) extends SimpleOperation(path) {
   * @param path  json path.
   * @param value json value to replace with.
   */
-case class Replace(path: JsonPointer, value: Json) extends SimpleOperation(path) {
+case class Replace(path: JsonPointer, value: Json) extends AbstractOperation(path) {
 
   override def apply(json: Json): Option[Json] = {
     if (path.underlying.isEmpty) {
@@ -120,8 +181,8 @@ case class Replace(path: JsonPointer, value: Json) extends SimpleOperation(path)
     }
   }
 
-  def operate(accessor: JsonAccessor, current: Option[Json]): Option[Json] =
-    accessor.replace(current.get, value)
+  def operate(accessor: JsonAccessor, current: Json): Option[Json] =
+    accessor.replace(current, value)
 
 }
 
@@ -131,7 +192,7 @@ case class Replace(path: JsonPointer, value: Json) extends SimpleOperation(path)
   * @param path      json path.
   * @param mustExist whether the json value must exist to successed.
   */
-case class Remove(path: JsonPointer, mustExist: Boolean = true) extends SimpleOperation(path) {
+case class Remove(path: JsonPointer, mustExist: Boolean = true) extends AbstractOperation(path) {
 
   override def apply(json: Json): Option[Json] = {
     if (path.underlying.isEmpty) {
@@ -146,8 +207,8 @@ case class Remove(path: JsonPointer, mustExist: Boolean = true) extends SimpleOp
     }
   }
 
-  def operate(accessor: JsonAccessor, current: Option[Json]): Option[Json] =
-    accessor.remove(current.get, mustExist)
+  def operate(accessor: JsonAccessor, current: Json): Option[Json] =
+    accessor.remove(current, mustExist)
 
 }
 
@@ -191,7 +252,8 @@ case class Copy(from: JsonPointer, to: JsonPointer) extends JsonOperation {
 
 /**
   * Test if a json value at pointed location is equal to another one.
-  * @param path json path location.
+  *
+  * @param path  json path location.
   * @param value json value to compate with.
   */
 case class Test(path: JsonPointer, value: Json) extends JsonOperation {

@@ -30,6 +30,66 @@ import org.scalatest._
   */
 class JsonOperationSpec extends WordSpecLike with Matchers {
 
+  "Json bulk operation" should {
+    "bulk correctly a sequence of operations on json object" in {
+      val input = Json.obj("test" -> "test")
+      val result = input.patch(Bulk(Root, Seq(
+        Add(Root / "foobar", "test"),
+        Replace(Root / "foobar", "foobar"),
+        Copy(Root / "foobar", Root / "barfoo"),
+        Remove(Root / "test"),
+        Test(Root / "foobar", "foobar")
+      )))
+      result should equal(Some(Json.obj(
+        "foobar" -> "foobar",
+        "barfoo" -> "foobar"
+      )))
+      Some(input) should not equal result
+    }
+
+    "bulk correctly a sequence of operations on json array" in {
+      val input = Json.arr("test")
+      val result = input.patch(Bulk(Root, Seq(
+        Add(Root / -1, "test"),
+        Replace(Root / 1, "foobar"),
+        Copy(Root / 1, Root / 0),
+        Remove(Root / 0),
+        Test(Root / 0, "test")
+      )))
+      result should equal(Some(Json.arr("test", "foobar")))
+      Some(input) should not equal result
+    }
+
+    "bulk correctly a sequence of operations on deep json object" in {
+      val input = Json.obj("test" -> Json.obj("test" -> "test"))
+      val result = input.patch(Bulk(Root / "test", Seq(
+        Add(Root / "foobar", "test"),
+        Replace(Root / "foobar", "foobar"),
+        Copy(Root / "foobar", Root / "barfoo"),
+        Remove(Root / "test"),
+        Test(Root / "foobar", "foobar")
+      )))
+      result should equal(Some(Json.obj("test" -> Json.obj(
+        "foobar" -> "foobar",
+        "barfoo" -> "foobar"
+      ))))
+      Some(input) should not equal result
+    }
+
+    "bulk correctly a sequence of operations on deep json array" in {
+      val input = Json.arr(Json.arr("test"))
+      val result = input.patch(Bulk(Root / 0, Seq(
+        Add(Root / -1, "test"),
+        Replace(Root / 1, "foobar"),
+        Copy(Root / 1, Root / 0),
+        Remove(Root / 0),
+        Test(Root / 0, "test")
+      )))
+      result should equal(Some(Json.arr(Json.arr("test", "foobar"))))
+      Some(input) should not equal result
+    }
+  }
+
   "Json add operation" should {
     "add correctly a field in json object" in {
       val input = Json.obj("test" -> "test")
