@@ -88,6 +88,18 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
       result should equal(Some(Json.arr(Json.arr("test", "foobar"))))
       Some(input) should not equal result
     }
+
+    "fail to bulk operation if one operation fail" in {
+      val input = Json.obj("test" -> "test")
+      val result = input.patch(Bulk(Root / "test", Seq(Test(Root / "fail", "test"))))
+      result should equal(None)
+    }
+
+    "fail to bulk operation if we fail to evaluate path" in {
+      val input = Json.obj("test" -> "test")
+      val result = input.patch(Bulk(Root / "fail", Seq(Test(Root / "fail", "test"))))
+      result should equal(None)
+    }
   }
 
   "Json add operation" should {

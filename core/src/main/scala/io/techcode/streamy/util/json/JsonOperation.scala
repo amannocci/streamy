@@ -125,16 +125,18 @@ case class Bulk(path: JsonPointer, ops: Seq[JsonOperation]) extends AbstractOper
     var idx = 0
     var result: Option[Json] = current
 
-    // Iterate over operations
-    while (idx < ops.length) {
-      // Result of sub operation
-      val subResult = ops(idx)(result.get)
-      if (subResult.isDefined) {
-        idx += 1
-        result = subResult
-      } else {
-        idx = ops.length
-        result = None
+    if (result.isDefined) {
+      // Iterate over operations
+      while (idx < ops.length) {
+        // Result of sub operation
+        val subResult = ops(idx)(result.get)
+        if (subResult.isDefined) {
+          idx += 1
+          result = subResult
+        } else {
+          idx = ops.length
+          result = None
+        }
       }
     }
 
