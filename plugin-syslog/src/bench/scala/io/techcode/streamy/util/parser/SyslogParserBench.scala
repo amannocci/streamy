@@ -26,7 +26,6 @@ package io.techcode.streamy.util.parser
 import akka.util.ByteString
 import io.techcode.streamy.component.SourceTransformer
 import io.techcode.streamy.component.transformer.SyslogTransformer
-import io.techcode.streamy.component.transformer.SyslogTransformer.Rfc5424.Binding
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations._
@@ -34,10 +33,10 @@ import org.openjdk.jmh.annotations._
 /**
   * Syslog parser bench.
   *
-  * Benchmark                             Mode  Cnt        Score       Error  Units
-  * SyslogParserBench.rfc5424Complete    thrpt   20   585810,613 ±  1804,906  ops/s
-  * SyslogParserBench.rfc5424Failure     thrpt   20  2712129,544 ± 23556,784  ops/s
-  * SyslogParserBench.rfc5424Message     thrpt   20  1184841,080 ± 12033,380  ops/s
+  * Benchmark                            Mode  Cnt        Score      Error  Units
+  * SyslogParserBench.rfc5424Complete   thrpt   20   691463,139 ± 3000,918  ops/s
+  * SyslogParserBench.rfc5424Failure    thrpt   20  2977302,354 ± 4770,249  ops/s
+  * SyslogParserBench.rfc5424Message    thrpt   20  1732069,172 ± 9113,006  ops/s
   */
 class SyslogParserBench {
 
@@ -62,25 +61,25 @@ private object SyslogParserBench {
   val InputMalformed = ByteString("""4400672761""")
 
   val Rfc5424Complete: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = Binding(
-      facility = Some(SyslogTransformer.Rfc5424.Id.Facility),
-      severity = Some(SyslogTransformer.Rfc5424.Id.Severity),
-      timestamp = Some(SyslogTransformer.Rfc5424.Id.Timestamp),
-      hostname = Some(SyslogTransformer.Rfc5424.Id.Hostname),
-      appName = Some(SyslogTransformer.Rfc5424.Id.AppName),
-      procId = Some(SyslogTransformer.Rfc5424.Id.ProcId),
-      msgId = Some(SyslogTransformer.Rfc5424.Id.MsgId),
-      structData = Some(SyslogTransformer.Rfc5424.Id.StructData),
-      message = Some(SyslogTransformer.Rfc5424.Id.Message)
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      facility = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Facility)),
+      severity = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Severity)),
+      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp)),
+      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname)),
+      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName)),
+      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId)),
+      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId)),
+      structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData)),
+      message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
     )))
 
 
   val Rfc5424Message: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = Binding(
-      message = Some(SyslogTransformer.Rfc5424.Id.Message)
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+      message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
     )))
 
   val Rfc5424Failure: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = Binding()))
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config())
 
 }
