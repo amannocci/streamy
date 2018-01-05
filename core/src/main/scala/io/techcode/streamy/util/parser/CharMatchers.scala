@@ -31,42 +31,42 @@ import com.google.common.base.CharMatcher
 object CharMatchers {
 
   // false
-  val Empty: CharMatcher = CharMatcher.none()
+  val Empty: CharMatcher = CharMatcher.none().precomputed()
 
   // true
-  val All: CharMatcher = CharMatcher.any()
+  val All: CharMatcher = CharMatcher.any().precomputed()
 
   // [a-z]
-  val LowerAlpha: CharMatcher = CharMatcher.inRange('a', 'z')
+  val LowerAlpha: CharMatcher = CharMatcher.inRange('a', 'z').precomputed()
 
   // [A-Z]
-  val UpperAlpha: CharMatcher = CharMatcher.inRange('A', 'Z')
+  val UpperAlpha: CharMatcher = CharMatcher.inRange('A', 'Z').precomputed()
 
   // [a-zA-Z]
-  val Alpha: CharMatcher = LowerAlpha.or(UpperAlpha)
+  val Alpha: CharMatcher = LowerAlpha.or(UpperAlpha).precomputed()
 
   // [0-9]
-  val Digit: CharMatcher = CharMatcher.inRange('0', '9')
+  val Digit: CharMatcher = CharMatcher.inRange('0', '9').precomputed()
 
   // [1-9]
-  val Digit19: CharMatcher = CharMatcher.inRange('1', '9')
+  val Digit19: CharMatcher = CharMatcher.inRange('1', '9').precomputed()
 
   // [a-zA-Z0-9]
-  val AlphaNum: CharMatcher = Alpha.or(Digit)
+  val AlphaNum: CharMatcher = Alpha.or(Digit).precomputed()
 
   // [a-f]
-  val LowerHexLetter: CharMatcher = CharMatcher.inRange('a', 'f')
+  val LowerHexLetter: CharMatcher = CharMatcher.inRange('a', 'f').precomputed()
 
   // [A-F]
-  val UpperHexLetter: CharMatcher = CharMatcher.inRange('A', 'F')
+  val UpperHexLetter: CharMatcher = CharMatcher.inRange('A', 'F').precomputed()
 
   // [a-fA-F]
-  val HexLetter: CharMatcher = LowerHexLetter.or(UpperHexLetter)
+  val HexLetter: CharMatcher = LowerHexLetter.or(UpperHexLetter).precomputed()
 
   // [0-9a-fA-F]
-  val HexDigit: CharMatcher = Digit.or(HexLetter)
+  val HexDigit: CharMatcher = Digit.or(HexLetter).precomputed()
 
   // [!-~]
-  val PrintUsAscii: CharMatcher = CharMatcher.inRange('!', '~')
+  val PrintUsAscii: CharMatcher = CharMatcher.inRange('!', '~').precomputed()
 
 }
