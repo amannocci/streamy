@@ -34,10 +34,10 @@ import io.techcode.streamy.util.json._
 object SyslogParser {
 
   // Struct data param value predicate
-  private[parser] val ParamValuePredicate: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("\\\"]"))
+  private[parser] val ParamValuePredicate: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("\\\"]")).precomputed()
 
   // Struct data name predicate
-  private[parser] val SdNamePredicate: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("= \"]"))
+  private[parser] val SdNamePredicate: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("= \"]")).precomputed()
 
   /**
     * Create a syslog parser that transform incoming [[ByteString]] to [[Json]].
