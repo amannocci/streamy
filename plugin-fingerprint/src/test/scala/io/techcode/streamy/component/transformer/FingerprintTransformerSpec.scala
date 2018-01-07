@@ -33,7 +33,7 @@ import io.techcode.streamy.util.json._
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
-  * Fingerprint transform spec.
+  * Fingerprint transformer spec.
   */
 class FingerprintTransformerSpec extends TestKit(ActorSystem("FingerprintTransformerSpec"))
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {

@@ -33,10 +33,10 @@ import org.openjdk.jmh.annotations._
 /**
   * Syslog parser bench.
   *
-  * Benchmark                            Mode  Cnt        Score      Error  Units
-  * SyslogParserBench.rfc5424Complete   thrpt   20   691463,139 ± 3000,918  ops/s
-  * SyslogParserBench.rfc5424Failure    thrpt   20  2977302,354 ± 4770,249  ops/s
-  * SyslogParserBench.rfc5424Message    thrpt   20  1732069,172 ± 9113,006  ops/s
+  * Benchmark                           Mode  Cnt        Score      Error  Units
+  * SyslogParserBench.rfc5424Complete  thrpt   20   718791,113 ±  893,097  ops/s
+  * SyslogParserBench.rfc5424Failure   thrpt   20  3191101,818 ± 7383,595  ops/s
+  * SyslogParserBench.rfc5424Message   thrpt   20  2145051,518 ± 2914,324  ops/s
   */
 class SyslogParserBench {
 
@@ -61,7 +61,7 @@ private object SyslogParserBench {
   val InputMalformed = ByteString("""4400672761""")
 
   val Rfc5424Complete: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Binding(
       facility = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Facility)),
       severity = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Severity)),
       timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp)),
@@ -71,15 +71,15 @@ private object SyslogParserBench {
       msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId)),
       structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData)),
       message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
-    )))
+    ))
 
 
   val Rfc5424Message: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Binding(
       message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
-    )))
+    ))
 
   val Rfc5424Failure: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config())
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Binding())
 
 }

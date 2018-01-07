@@ -28,9 +28,14 @@ import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
 /**
-  * Json transform bench.
+  * Json transformer bench.
+  *
+  * Benchmark                                         Mode  Cnt        Score       Error  Units
+  * JsonTransformerBench.benchSimpleFailure          thrpt   20  3858517,923 ± 10333,010  ops/s
+  * JsonTransformerBench.benchSimpleSource           thrpt   20   620497,203 ±  1062,658  ops/s
+  * JsonTransformerBench.benchSimpleSourceAndTarget  thrpt   20   538585,604 ±   722,987  ops/s
   */
-class JsonTransformBench {
+class JsonTransformerBench {
 
   @Benchmark def benchSimpleSource(): Json = {
     new JsonTransformer(Config(source = Root / "message"))
