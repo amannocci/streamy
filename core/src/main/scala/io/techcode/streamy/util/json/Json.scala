@@ -35,7 +35,7 @@ object Json {
   /**
     * Construct a new JsObject, with the order of fields in the Seq.
     */
-  def obj(fields: (String, Json)*): JsObject = JsObject(mutable.LinkedHashMap(fields: _*))
+  def obj(fields: (String, Json)*): JsObject = JsObject(mutable.AnyRefMap(fields: _*))
 
   /**
     * Construct a new JsArray with given values.
@@ -665,7 +665,7 @@ case class JsObject private[json](
     * @return new json object merged.
     */
   def merge(other: JsObject): JsObject = {
-    val builder = mutable.LinkedHashMap.newBuilder[String, Json]
+    val builder = mutable.AnyRefMap[String, Json]()
     builder ++= underlying
     builder ++= other.underlying
     JsObject(builder.result())
@@ -679,7 +679,7 @@ case class JsObject private[json](
     */
   def remove(key: String): JsObject = {
     if (underlying.contains(key)) {
-      val builder = mutable.LinkedHashMap.newBuilder[String, Json]
+      val builder = mutable.AnyRefMap[String, Json]()
       builder ++= underlying
       JsObject(builder.result() -= key)
     } else {
@@ -694,7 +694,7 @@ case class JsObject private[json](
     * @return new json object.
     */
   def put(field: (String, Json)): JsObject = {
-    val builder = mutable.LinkedHashMap.newBuilder[String, Json]
+    val builder = mutable.AnyRefMap[String, Json]()
     builder ++= underlying
     builder += field
     JsObject(builder.result())
@@ -734,7 +734,7 @@ case class JsObject private[json](
   */
 case class JsObjectBuilder private(
   private var modifiable: Boolean = true,
-  private val underlying: mutable.Map[String, Json] = new mutable.LinkedHashMap[String, Json]
+  private val underlying: mutable.Map[String, Json] = new mutable.AnyRefMap[String, Json]
 ) {
 
   /**

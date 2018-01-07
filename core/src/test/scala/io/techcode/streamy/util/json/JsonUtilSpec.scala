@@ -90,7 +90,7 @@ class JsonUtilSpec extends WordSpecLike with Matchers {
     }
 
     "convert correctly a map to json object" in {
-      val map: mutable.Map[String, Any] = new mutable.LinkedHashMap()
+      val map: mutable.Map[String, Any] = mutable.AnyRefMap()
       map.put("string", "string")
       map.put("boolean", true)
       map.put("int", 10)
@@ -112,7 +112,7 @@ class JsonUtilSpec extends WordSpecLike with Matchers {
     }
 
     "convert correctly a raw map to json object" in {
-      val map: mutable.Map[String, Any] = new mutable.LinkedHashMap()
+      val map: mutable.Map[String, Any] = mutable.AnyRefMap()
       map.put("string", "string")
       map.put("boolean", true)
       map.put("int", 10)

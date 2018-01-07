@@ -561,8 +561,8 @@ class JsonSpec extends WordSpecLike with Matchers {
 
       Json.asciiStringify(jo) should equal(
         "{\"key1\":\"\\u2028\\u2029\\u2030\"," +
+          "\"key3\":\"\\u00A9\\u00A3\"," +
           "\"key2\":\"\\u00E1\\u00E9\\u00ED\\u00F3\\u00FA\"," +
-          "\"key3\":\"\\u00A9\\u00A3\"," + "" +
           "\"key4\":\"\\u6837\\u54C1\"}"
       )
     }

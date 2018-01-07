@@ -276,7 +276,7 @@ private[json] class JsonValueDeserializer(factory: TypeFactory, classType: Class
         case _ => throw new RuntimeException("We weren't reading a list, something went wrong")
       }
 
-      case JsonTokenId.ID_START_OBJECT => (None, ReadingMap(new mutable.LinkedHashMap[String, Json]) +: parserContext)
+      case JsonTokenId.ID_START_OBJECT => (None, ReadingMap(mutable.AnyRefMap[String, Json]()) +: parserContext)
 
       case JsonTokenId.ID_FIELD_NAME => parserContext match {
         case (ctx: ReadingMap) +: stack => (None, ctx.setField(parser.getCurrentName) +: stack)

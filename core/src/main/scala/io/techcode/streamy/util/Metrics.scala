@@ -67,7 +67,7 @@ object Metrics {
     metricSource = Source.tick(conf.getDuration(ConfigConstants.StreamyMetricInitialDelay), conf.getDuration(ConfigConstants.StreamyMetricInterval), ())
       .map { _ =>
         // Create a new entry
-        val entry: mutable.Map[String, Any] = new mutable.LinkedHashMap[String, Any]
+        val entry: mutable.Map[String, Any] = mutable.AnyRefMap[String, Any]()
 
         // Add all gauges (we have actually only gauges)
         Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
