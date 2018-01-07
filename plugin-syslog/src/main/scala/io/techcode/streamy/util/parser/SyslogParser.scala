@@ -33,21 +33,21 @@ import io.techcode.streamy.util.json._
   */
 object SyslogParser {
 
-  // Struct data param value predicate
-  private[parser] val ParamValuePredicate: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("\\\"]")).precomputed()
+  // Struct data param value matcher
+  private[parser] val ParamValueMatcher: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("\\\"]")).precomputed()
 
-  // Struct data name predicate
-  private[parser] val SdNamePredicate: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("= \"]")).precomputed()
+  // Struct data name matcher
+  private[parser] val SdNameMatcher: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("= \"]")).precomputed()
 
   /**
     * Create a syslog parser that transform incoming [[ByteString]] to [[Json]].
     * This parser is Rfc5424 compliant.
     *
-    * @param bytes data to parse.
-    * @param conf  parser configuration.
+    * @param bytes   data to parse.
+    * @param binding binding parser configuration.
     * @return new syslog parser Rfc5424 compliant.
     */
-  def rfc5424(bytes: ByteString, conf: Rfc5424.Config): ByteStringParser = new Rfc5424Parser(bytes, conf)
+  def rfc5424(bytes: ByteString, binding: Rfc5424.Binding): ByteStringParser = new Rfc5424Parser(bytes, binding)
 
 }
 
@@ -85,13 +85,10 @@ private trait ParserHelpers {
   * Syslog parser that transform incoming [[ByteString]] to [[Json]].
   * This parser is Rfc5424 compliant.
   *
-  * @param bytes data to parse.
-  * @param conf  parser configuration.
+  * @param bytes   data to parse.
+  * @param binding binding parser configuration.
   */
-private class Rfc5424Parser(bytes: ByteString, conf: Rfc5424.Config) extends ByteStringParser(bytes) with ParserHelpers {
-
-  // Shortcut to binding
-  val binding: Rfc5424.Binding = conf.binding
+private class Rfc5424Parser(bytes: ByteString, binding: Rfc5424.Binding) extends ByteStringParser(bytes) with ParserHelpers {
 
   override def process(): Boolean =
     header() &&
@@ -195,9 +192,9 @@ private class Rfc5424Parser(bytes: ByteString, conf: Rfc5424.Config) extends Byt
   def sdParam(): Boolean =
     sdName() && equal() && doubleQuote() && paramValue() && doubleQuote()
 
-  def paramValue(): Boolean = zeroOrMore(SyslogParser.ParamValuePredicate)
+  def paramValue(): Boolean = zeroOrMore(SyslogParser.ParamValueMatcher)
 
-  def sdName(): Boolean = times(1, 32, SyslogParser.SdNamePredicate)
+  def sdName(): Boolean = times(1, 32, SyslogParser.SdNameMatcher)
 
   def msg(): Boolean =
     sp() && capture(binding.message) {

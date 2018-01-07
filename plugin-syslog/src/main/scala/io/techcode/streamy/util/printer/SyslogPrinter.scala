@@ -60,21 +60,21 @@ object SyslogPrinter {
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
     * This printer is Rfc5424 compliant.
     *
-    * @param pkt  data to print.
-    * @param conf printer configuration.
+    * @param pkt     data to print.
+    * @param binding binding printer configuration.
     * @return new syslog printer Rfc5424 compliant.
     */
-  def rfc5424(pkt: Json, conf: Rfc5424.Config): JsonPrinter = new Rfc5424Printer(pkt, conf)
+  def rfc5424(pkt: Json, binding: Rfc5424.Binding): JsonPrinter = new Rfc5424Printer(pkt, binding)
 
   /**
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
     * This printer is Rfc3164 compliant.
     *
-    * @param pkt  data to print.
-    * @param conf printer configuration.
+    * @param pkt     data to print.
+    * @param binding binding printer configuration.
     * @return new syslog printer Rfc3164 compliant.
     */
-  def rfc3164(pkt: Json, conf: Rfc3164.Config): JsonPrinter = new Rfc3164Printer(pkt, conf)
+  def rfc3164(pkt: Json, binding: Rfc3164.Binding): JsonPrinter = new Rfc3164Printer(pkt, binding)
 
 }
 
@@ -127,12 +127,10 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
   * Syslog printer that transform incoming [[Json]] to [[ByteString]].
   * This printer is Rfc3164 compliant.
   *
-  * @param pkt  data to print.
-  * @param conf printer configuration.
+  * @param pkt     data to print.
+  * @param binding binding printer configuration.
   */
-private class Rfc3164Printer(pkt: Json, conf: Rfc3164.Config) extends PrinterHelpers(pkt) {
-
-  val binding: Rfc3164.Binding = conf.binding
+private class Rfc3164Printer(pkt: Json, binding: Rfc3164.Binding) extends PrinterHelpers(pkt) {
 
   override def process(): Boolean = {
     // Add PRIVAL
@@ -173,12 +171,10 @@ private class Rfc3164Printer(pkt: Json, conf: Rfc3164.Config) extends PrinterHel
   * Syslog printer that transform incoming [[Json]] to [[ByteString]].
   * This printer is Rfc5424 compliant.
   *
-  * @param pkt  data to print.
-  * @param conf printer configuration.
+  * @param pkt     data to print.
+  * @param binding binding printer configuration.
   */
-private class Rfc5424Printer(pkt: Json, conf: Rfc5424.Config) extends PrinterHelpers(pkt) {
-
-  val binding: Rfc5424.Binding = conf.binding
+private class Rfc5424Printer(pkt: Json, binding: Rfc5424.Binding) extends PrinterHelpers(pkt) {
 
   override def process(): Boolean = {
     // Add PRIVAL

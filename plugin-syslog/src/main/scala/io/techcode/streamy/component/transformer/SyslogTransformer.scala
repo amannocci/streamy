@@ -45,7 +45,7 @@ object SyslogTransformer {
     */
   def inRfc5424(conf: Rfc5424.Config): Flow[ByteString, Json, NotUsed] =
     Flow.fromFunction(new SourceTransformer {
-      override def newParser(pkt: ByteString): ByteStringParser = SyslogParser.rfc5424(pkt, conf)
+      override def newParser(pkt: ByteString): ByteStringParser = SyslogParser.rfc5424(pkt, conf.binding)
     })
 
   /**
@@ -57,7 +57,7 @@ object SyslogTransformer {
     */
   def outRfc5424(conf: Rfc5424.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromFunction(new SinkTransformer {
-      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc5424(pkt, conf)
+      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc5424(pkt, conf.binding)
     })
 
   /**
@@ -69,7 +69,7 @@ object SyslogTransformer {
     */
   def outRfc3164(conf: Rfc3164.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromFunction(new SinkTransformer {
-      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc3164(pkt, conf)
+      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc3164(pkt, conf.binding)
     })
 
 
