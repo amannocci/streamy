@@ -32,16 +32,11 @@ core_limit() {
       local cpu_quota="$(cat ${cpu_quota_file})"
       # cfs_quota_us == -1 --> no restrictions
       if [ "x$cpu_quota" != "x-1" ]; then
-        ceiling "$cpu_quota" "$cpu_period"
-      else
-        echo "$cpu_limit"
+        cpu_limit=$(ceiling "$cpu_quota" "$cpu_period")
       fi
-    else
-      echo "$cpu_limit"
     fi
-  else
-    echo "$cpu_limit"
   fi
+  echo "$cpu_limit"
 }
 
 memory_limit() {
@@ -54,34 +49,30 @@ memory_limit() {
   # Max memory of host
   local mem_limit="$(free -b | grep "Mem:" | awk '{print $2;}')"
 
-  # High number which is the max limit unti which memory is supposed to be
-  # unbounded.
+  # High number which is the max limit unti which memory is supposed to be  unbounded.
   local max_mem_unbounded="$(cat /sys/fs/cgroup/memory/memory.memsw.limit_in_bytes)"
   local mem_file="/sys/fs/cgroup/memory/memory.limit_in_bytes"
   if [ -r "${mem_file}" ]; then
     local max_mem="$(cat ${mem_file})"
     if [ ${max_mem} -lt ${max_mem_unbounded} ]; then
-      echo "${max_mem}"
-    else
-      echo "${mem_limit}"
+      max_mem=${mem_limit}
     fi
-  else
-    echo "${mem_limit}"
   fi
+  echo "${mem_limit}"
 }
 
 # Cpu Limit
 export JVM_CPU_LIMIT="$(core_limit)"
 export JVM_CPU_LIMIT_X2="$((2 * $JVM_CPU_LIMIT))"
-echo "Jvm Cpu Limit: ${JVM_CPU_LIMIT}"
-echo "Jvm Cpu Limit * 2: ${JVM_CPU_LIMIT_X2}"
+echo "{\"level\":\"info\",\"type\":\"entrypoint\",\"message\":\"Minimum jvm cpu limit: ${JVM_CPU_LIMIT}\"}"
+echo "{\"level\":\"info\",\"type\":\"entrypoint\",\"message\":\"Maximum jvm cpu limit: ${JVM_CPU_LIMIT_X2}\"}"
 addJava "-XX:ParallelGCThreads=${JVM_CPU_LIMIT}"
 addJava "-XX:ConcGCThreads=${JVM_CPU_LIMIT}"
 addJava "-Djava.util.concurrent.ForkJoinPool.common.parallelism=${JVM_CPU_LIMIT}"
 
 # Memory Limit
 export JVM_MEMORY_LIMIT="$(memory_limit)"
-echo "Jvm Memory Limit: ${JVM_MEMORY_LIMIT}"
+echo "{\"level\":\"info\",\"type\":\"entrypoint\",\"message\":\"Maximum jvm mem limit: ${JVM_MEMORY_LIMIT}\"}"
 max_mem="${JVM_MEMORY_LIMIT}"
 ratio=${JVM_MEMORY_RATIO:-50}
 mx=$(echo "${max_mem} ${ratio} 1048576" | awk '{printf "%d\n" , ($1*$2)/(100*$3) + 0.5}')
