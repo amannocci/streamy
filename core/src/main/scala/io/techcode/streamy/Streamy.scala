@@ -23,13 +23,13 @@
  */
 package io.techcode.streamy
 
-import akka.actor.{ActorSystem, DeadLetter, PoisonPill, Props}
+import akka.actor.{ActorSystem, DeadLetter, Props}
 import akka.event.slf4j.Logger
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import io.techcode.streamy.plugin.PluginManager
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.monitor.DeadLetterMonitor
-import io.techcode.streamy.util.{ConfigConstants, Metrics, StreamException}
 
 /**
   * Streamy is an high-performance event processor.
@@ -73,12 +73,6 @@ object Streamy extends App {
     "type" -> "lifecycle"
   ))
   val conf = system.settings.config.resolve()
-
-  // Launch reporter
-  Metrics.register(system, conf)
-  if (!conf.getBoolean(ConfigConstants.StreamyMetricExternal) && !conf.getDuration(ConfigConstants.StreamyMetricInitialDelay).isNegative) {
-    Metrics.source().runForeach(log.info(_))
-  }
 
   // Attempt to deploy plugins
   val pluginManager = new PluginManager(log, system, materializer, conf)

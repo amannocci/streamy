@@ -50,7 +50,6 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % logbackVersion, // EPL/LGPL License
   "io.techcode.logback.contrib" % "logback-json-layout" % logbackContribVersion, // MIT License
   "com.google.guava" % "guava" % guavaVersion, // Apache 2 License
-  "nl.grons" %% "metrics-scala" % metricsScalaVersion, // Apache 2 License
   "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion, // Apache 2 License
   "org.scala-lang" % "scala-reflect" % scalaVersion.value
 ).map(_ % Compile)
@@ -64,3 +63,4 @@ bashScriptExtraDefines +=
 
 // Enable some plugins
 enablePlugins(JavaAppPackaging, JmhPlugin)
+disablePlugins(AssemblyPlugin)

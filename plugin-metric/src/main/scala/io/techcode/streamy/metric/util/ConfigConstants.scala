@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package io.techcode.streamy.metric.util
 
-name := name.value + "-plugin-json"
-
-// Enable some plugins
-enablePlugins(JmhPlugin)
-disablePlugins(AssemblyPlugin)
+/**
+  * All configurations constants.
+  */
+object ConfigConstants {
+  val JvmInitialDelay = "jvm.initial-delay"
+  val JvmInterval = "jvm.interval"
+  val JvmEmbedded = "jvm.embedded"
+}

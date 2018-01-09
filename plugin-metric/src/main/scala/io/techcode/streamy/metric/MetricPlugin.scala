@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package io.techcode.streamy.metric
 
-name := name.value + "-plugin-json"
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+import com.typesafe.config.Config
+import io.techcode.streamy.metric.component.source.MetricSource
+import io.techcode.streamy.plugin.{Plugin, PluginDescription}
+import io.techcode.streamy.metric.util.ConfigConstants
 
-// Enable some plugins
-enablePlugins(JmhPlugin)
-disablePlugins(AssemblyPlugin)
+import scala.reflect.io.Directory
+
+/**
+  * Metric plugin implementation.
+  */
+class MetricPlugin(
+  system: ActorSystem,
+  materializer: Materializer,
+  description: PluginDescription,
+  conf: Config,
+  folder: Directory
+) extends Plugin(system, materializer, description, conf, folder) {
+
+  override def onStart(): Unit = {
+    MetricSource.register(system, conf)
+
+    if (conf.getBoolean(ConfigConstants.JvmEmbedded)) {
+      MetricSource.jvm().runForeach(log.info(_))
+    }
+  }
+
+  override def onStop(): Unit = ()
+
+}

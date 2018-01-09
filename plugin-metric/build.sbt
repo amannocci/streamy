@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,19 @@
  * THE SOFTWARE.
  */
 
-name := name.value + "-plugin-json"
+import Dependencies._
+import sbt.Keys._
+import sbt._
+
+name := name.value + "-plugin-metric"
+
+libraryDependencies ++= Seq(
+  "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion // Apache 2 License
+)
+
+assemblyOption in assembly ~= {
+  _.copy(includeScala = false)
+}
 
 // Enable some plugins
 enablePlugins(JmhPlugin)
-disablePlugins(AssemblyPlugin)

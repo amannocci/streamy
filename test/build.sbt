@@ -22,6 +22,8 @@
  * THE SOFTWARE.
  */
 
+import sbt._
+import sbt.Keys._
 import Dependencies._
 
 name := name.value + "-test"
@@ -41,3 +43,5 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
   "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
 ).map(_ % akkaVersion % Compile)
+
+disablePlugins(AssemblyPlugin)
