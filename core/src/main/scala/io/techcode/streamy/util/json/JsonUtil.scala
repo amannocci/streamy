@@ -34,41 +34,6 @@ import scala.collection.mutable
   */
 object JsonUtil {
 
-  // Various length
-  private val TrueLength: Int = 4
-  private val FalseLength: Int = 5
-  private val NullLength: Int = 4
-
-  /**
-    * Size of an element in Json.
-    *
-    * @param el element to evaluate.
-    * @return size of the element.
-    */
-  def size(el: Json): Long = {
-    if (el.isObject) {
-      el.asObject.map(x => 1 + x.underlying.keys.map(_.length + 2).sum + x.values.map(size).sum + (x.values.size * 2)).get // {"element": $el}
-    } else if (el.isArray) {
-      el.asArray.map(x => x.underlying.map(size).sum + 1 + x.underlying.size).get // ["element", 1, 1.0]
-    } else if (el.isBoolean) {
-      el.asBoolean.map(x => if (x) TrueLength else FalseLength).get
-    } else if (el.isNull) {
-      NullLength
-    } else if (el.isInt) {
-      el.asInt.get.toString.length
-    } else if (el.isLong) {
-      el.asLong.get.toString.length
-    } else if (el.isFloat) {
-      el.asFloat.get.toString.length
-    } else if (el.isDouble) {
-      el.asDouble.get.toString.length
-    } else if (el.isNumber) {
-      el.asNumber.map(_.toString.length).get // 2.0
-    } else {
-      el.asString.get.length + 2 // "element"
-    }
-  }
-
   /**
     * Convert a json value to dot notation.
     *

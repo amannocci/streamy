@@ -26,12 +26,34 @@ package io.techcode.streamy.util.json
 import org.openjdk.jmh.annotations.Benchmark
 
 /**
-  * JsonUtil bench.
+  * Json bench.
+  *
+  * Benchmark                 Mode  Cnt          Score         Error  Units
+  * JsonBench.sizeOfBoolean  thrpt   20  383786564,399 ± 5719602,963  ops/s
+  * JsonBench.sizeOfDouble   thrpt   20     405973,902 ±    5508,228  ops/s
+  * JsonBench.sizeOfFloat    thrpt   20     637717,711 ±    9582,861  ops/s
+  * JsonBench.sizeOfInt      thrpt   20   80227505,913 ±  544809,624  ops/s
+  * JsonBench.sizeOfLong     thrpt   20   80049668,639 ± 1418872,361  ops/s
+  * JsonBench.sizeOfNull     thrpt   20  397903186,125 ± 4661371,194  ops/s
+  * JsonBench.sizeOfNumber   thrpt   20     801240,215 ±   15385,757  ops/s
+  * JsonBench.sizeOfString   thrpt   20  405808076,145 ± 6456433,208  ops/s
   */
-class JsonUtilBench {
+class JsonBench {
 
-  @Benchmark def size(): Long = {
-    JsonUtil.size("20")
-  }
+  @Benchmark def sizeOfNull(): Int = JsNull.size
+
+  @Benchmark def sizeOfBoolean(): Int = JsTrue.size
+
+  @Benchmark def sizeOfInt(): Int = JsInt(Int.MaxValue).size
+
+  @Benchmark def sizeOfLong(): Int = JsLong(Long.MaxValue).size
+
+  @Benchmark def sizeOfFloat(): Int = JsFloat(Float.MaxValue).size()
+
+  @Benchmark def sizeOfDouble(): Int = JsDouble(Double.MaxValue).size()
+
+  @Benchmark def sizeOfNumber(): Int = JsBigDecimal(BigDecimal("1e20")).size()
+
+  @Benchmark def sizeOfString(): Int = JsString("1e20").size
 
 }

@@ -26,6 +26,7 @@ package io.techcode.streamy.util.json
 import java.io.InputStream
 
 import akka.util.ByteString
+import com.google.common.math.IntMath
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -307,6 +308,13 @@ sealed trait Json {
     */
   def copy(): Json
 
+  /**
+    * Size of the string representation of this element in Json.
+    *
+    * @return size of the element.
+    */
+  def size(): Int = toString.length
+
   override def toString: String = Json.stringify(this)
 
 }
@@ -321,6 +329,8 @@ case object JsNull extends Json {
   override val asNull: Option[Unit] = Some(())
 
   override val copy: Json = this
+
+  override val size: Int = 4
 
 }
 
@@ -342,12 +352,20 @@ sealed abstract class JsBoolean(value: Boolean) extends Json {
 /**
   * Represents Json Boolean True value.
   */
-case object JsTrue extends JsBoolean(true)
+case object JsTrue extends JsBoolean(true) {
+
+  override val size: Int = 4
+
+}
 
 /**
   * Represents Json Boolean False value.
   */
-case object JsFalse extends JsBoolean(false)
+case object JsFalse extends JsBoolean(false) {
+
+  override val size: Int = 5
+
+}
 
 /**
   * Represent a json int value.
@@ -356,11 +374,67 @@ case object JsFalse extends JsBoolean(false)
   */
 case class JsInt(value: Int) extends Json {
 
-  override val isInt: Boolean = true
+  override def isInt: Boolean = true
 
-  override val asInt: Option[Int] = Some(value)
+  override def asInt: Option[Int] = Some(value)
 
-  override val copy: Json = this
+  override def copy(): Json = this
+
+  // Divide and conquer implementation (only comparison)
+  override lazy val size: Int = {
+    // Initial offset in case of negative number
+    var size = 0
+
+    // In negative case we inverse sign
+    val tmp = {
+      if ((value >> 31) != 0) {
+        size += 1
+        value * -1
+      } else {
+        value
+      }
+    }
+
+    // Divide and conquer
+    if (tmp < 100000) {
+      if (tmp < 100) {
+        if (tmp < 10) {
+          size += 1
+        } else {
+          size += 2
+        }
+      } else {
+        if (tmp < 1000) {
+          size += 3
+        } else {
+          if (tmp < 10000) {
+            size += 4
+          } else {
+            size += 5
+          }
+        }
+      }
+    } else {
+      if (tmp < 10000000) {
+        if (tmp < 1000000) {
+          size += 6
+        } else {
+          size += 7
+        }
+      } else {
+        if (tmp < 100000000) {
+          size += 8
+        } else {
+          if (tmp < 1000000000) {
+            size += 9
+          } else {
+            size += 10
+          }
+        }
+      }
+    }
+    size
+  }
 
 }
 
@@ -371,11 +445,48 @@ case class JsInt(value: Int) extends Json {
   */
 case class JsLong(value: Long) extends Json {
 
-  override val isLong: Boolean = true
+  override def isLong: Boolean = true
 
-  override val asLong: Option[Long] = Some(value)
+  override def asLong: Option[Long] = Some(value)
 
-  override val copy: Json = this
+  override def copy(): Json = this
+
+  // Dividing with powers of two
+  override lazy val size: Int = {
+    // Initial offset in case of negative number
+    var size = 1
+
+    // In negative case we inverse sign
+    var tmp = {
+      if ((value >> 63) != 0) {
+        size += 1
+        value * -1
+      } else {
+        value
+      }
+    }
+
+    if (tmp >= 10000000000000000L) {
+      size += 16
+      tmp /= 10000000000000000L
+    }
+    if (tmp >= 100000000) {
+      size += 8
+      tmp /= 100000000
+    }
+    if (tmp >= 10000) {
+      size += 4
+      tmp /= 10000
+    }
+    if (tmp >= 100) {
+      size += 2
+      tmp /= 100
+    }
+    if (tmp >= 10) {
+      size += 1
+    }
+    size
+  }
 
 }
 
@@ -386,11 +497,11 @@ case class JsLong(value: Long) extends Json {
   */
 case class JsFloat(value: Float) extends Json {
 
-  override val isFloat: Boolean = true
+  override def isFloat: Boolean = true
 
-  override val asFloat: Option[Float] = Some(value)
+  override def asFloat: Option[Float] = Some(value)
 
-  override val copy: Json = this
+  override def copy(): Json = this
 
 }
 
@@ -401,11 +512,11 @@ case class JsFloat(value: Float) extends Json {
   */
 case class JsDouble(value: Double) extends Json {
 
-  override val isDouble: Boolean = true
+  override def isDouble: Boolean = true
 
-  override val asDouble: Option[Double] = Some(value)
+  override def asDouble: Option[Double] = Some(value)
 
-  override val copy: Json = this
+  override def copy(): Json = this
 
 }
 
@@ -416,11 +527,11 @@ case class JsDouble(value: Double) extends Json {
   */
 case class JsBigDecimal(value: BigDecimal) extends Json {
 
-  override val isNumber: Boolean = true
+  override def isNumber: Boolean = true
 
-  override val asNumber: Option[BigDecimal] = Some(value)
+  override def asNumber: Option[BigDecimal] = Some(value)
 
-  override val copy: Json = this
+  override def copy(): Json = this
 
 }
 
@@ -432,11 +543,13 @@ case class JsBigDecimal(value: BigDecimal) extends Json {
   */
 case class JsString(value: String) extends Json {
 
-  override val isString: Boolean = true
+  override def isString: Boolean = true
 
-  override val asString: Option[String] = Some(value)
+  override def asString: Option[String] = Some(value)
 
-  override val copy: Json = this
+  override def copy(): Json = this
+
+  override val size: Int = value.length + 2
 
 }
 
@@ -447,11 +560,11 @@ case class JsString(value: String) extends Json {
   */
 case class JsBytes(value: ByteString) extends Json {
 
-  override val isBytes: Boolean = true
+  override def isBytes: Boolean = true
 
-  override val asBytes: Option[ByteString] = Some(value)
+  override def asBytes: Option[ByteString] = Some(value)
 
-  override val copy: Json = this
+  override def copy(): Json = this
 
 }
 
@@ -556,11 +669,13 @@ case class JsArray private[json](
     JsArray(builder)
   }
 
-  override val isArray: Boolean = true
+  override def isArray: Boolean = true
 
-  override val asArray: Option[JsArray] = Some(this)
+  override def asArray: Option[JsArray] = Some(this)
 
   def copy(): Json = JsArray(underlying.clone())
+
+  override lazy val size: Int = underlying.map(_.size()).sum + 1 + underlying.size
 
 }
 
@@ -634,8 +749,12 @@ case class JsObject private[json](
   private[json] val underlying: mutable.Map[String, Json]
 ) extends Json {
 
-  // The fields of this JsObject in the order
-  lazy val fields: Seq[(String, Json)] = underlying.toSeq
+  /**
+    * Return all fields as a seq.
+    *
+    * @return seq that contains all fields.
+    */
+  def fields: Seq[(String, Json)] = underlying.toSeq
 
   /**
     * Return all fields as a set.
@@ -666,9 +785,10 @@ case class JsObject private[json](
     */
   def merge(other: JsObject): JsObject = {
     val builder = mutable.AnyRefMap[String, Json]()
+    builder.sizeHint(underlying.size + other.underlying.size)
     builder ++= underlying
     builder ++= other.underlying
-    JsObject(builder.result())
+    JsObject(builder)
   }
 
   /**
@@ -681,7 +801,7 @@ case class JsObject private[json](
     if (underlying.contains(key)) {
       val builder = mutable.AnyRefMap[String, Json]()
       builder ++= underlying
-      JsObject(builder.result() -= key)
+      JsObject(builder -= key)
     } else {
       this
     }
@@ -695,9 +815,10 @@ case class JsObject private[json](
     */
   def put(field: (String, Json)): JsObject = {
     val builder = mutable.AnyRefMap[String, Json]()
+    builder.sizeHint(underlying.size + 1)
     builder ++= underlying
     builder += field
-    JsObject(builder.result())
+    JsObject(builder)
   }
 
   override def deepMerge(other: Json): Option[JsObject] = other.asObject.map { x =>
@@ -718,11 +839,14 @@ case class JsObject private[json](
     merge(this, x)
   }
 
-  override val isObject: Boolean = true
+  override def isObject: Boolean = true
 
-  override val asObject: Option[JsObject] = Some(this)
+  override def asObject: Option[JsObject] = Some(this)
 
   def copy(): Json = JsObject(underlying.clone())
+
+  override lazy val size: Int =
+    1 + underlying.keys.map(_.length + 2).sum + underlying.values.map(_.size()).sum + (underlying.values.size * 2)
 
 }
 

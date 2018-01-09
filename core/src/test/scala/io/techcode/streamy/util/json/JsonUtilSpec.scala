@@ -34,47 +34,6 @@ import scala.collection.mutable
 class JsonUtilSpec extends WordSpecLike with Matchers {
 
   "JsonUtil" should {
-    "return correct size for an int" in {
-      JsonUtil.size(4) should equal(1)
-    }
-
-    "return correct size for a long" in {
-      JsonUtil.size(4L) should equal(1)
-    }
-
-    "return correct size for a float" in {
-      JsonUtil.size(2.0F) should equal(3)
-    }
-
-    "return correct size for a double" in {
-      JsonUtil.size(2.0D) should equal(3)
-    }
-
-    "return correct size for a number" in {
-      JsonUtil.size(BigDecimal("2e128")) should equal(6)
-    }
-
-    "return correct size for an object" in {
-      JsonUtil.size(Json.obj("test" -> "test")) should equal(15) // {"test":"test"}
-    }
-
-    "return correct size for a boolean" in {
-      JsonUtil.size(JsTrue) should equal(4)
-      JsonUtil.size(JsFalse) should equal(5)
-    }
-
-    "return correct size for an array" in {
-      JsonUtil.size(Json.arr("test", 2, Json.obj("test" -> "test"), 4.0)) should equal(30) // ["test",2,{"test":"test"},4.0]
-    }
-
-    "return correct size for a null" in {
-      JsonUtil.size(JsNull) should equal(4)
-    }
-
-    "return correct size for a string" in {
-      JsonUtil.size("test") should equal(6) // "test"
-    }
-
     "flatten correctly a json object" in {
       JsonUtil.flatten(Json.obj(
         "foobar" -> 0,

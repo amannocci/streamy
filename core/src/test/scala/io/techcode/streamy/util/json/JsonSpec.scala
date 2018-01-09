@@ -26,6 +26,7 @@ package io.techcode.streamy.util.json
 import java.io.ByteArrayInputStream
 
 import akka.util.ByteString
+import com.google.common.math.{IntMath, LongMath}
 import org.scalatest._
 
 /**
@@ -315,6 +316,10 @@ class JsonSpec extends WordSpecLike with Matchers {
     "deep merge only JsObject" in {
       Json.obj().deepMerge(JsNull) should equal(None)
     }
+
+    "return correct size" in {
+      Json.obj("test" -> "test").size should equal(15)
+    }
   }
 
   "Json array" should {
@@ -379,6 +384,10 @@ class JsonSpec extends WordSpecLike with Matchers {
     "prepend json value correctly" in {
       val input = Json.arr("test01", "test02")
       input.prepend("test03") should equal(Json.arr("test03", "test01", "test02"))
+    }
+
+    "return correct size" in {
+      Json.arr("test", 2, Json.obj("test" -> "test"), 4.0).size should equal(30) // ["test",2,{"test":"test"},4.0]
     }
   }
 
@@ -624,6 +633,11 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsString("10").isBoolean should equal(false)
     }
 
+    "return correct size for boolean" in {
+      JsTrue.size should equal(4)
+      JsFalse.size should equal(5)
+    }
+
     "be convert to string when possible" in {
       JsString("10").asString should equal(Some("10"))
     }
@@ -638,6 +652,10 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return false when it can be convert to string" in {
       JsTrue.isString should equal(false)
+    }
+
+    "return correct size for string" in {
+      JsString("test").size should equal(6) // "test"
     }
 
     "be convert to number when possible" in {
@@ -656,6 +674,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.isNumber should equal(false)
     }
 
+    "return correct size for number" in {
+      JsBigDecimal(BigDecimal("2e128")).size should equal(6)
+    }
+
     "be convert to null when possible" in {
       JsNull.asNull should equal(Some(()))
     }
@@ -670,6 +692,10 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return false when it can be convert to null" in {
       JsTrue.isNull should equal(false)
+    }
+
+    "return correct size for null" in {
+      JsNull.size should equal(4)
     }
 
     "be convert to int when possible" in {
@@ -688,6 +714,22 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.isInt should equal(false)
     }
 
+    "return correct size for int" in {
+      // Positive cases
+      var size = 1
+      for (i <- 0 until String.valueOf(Int.MaxValue).length) {
+        JsInt(1 * IntMath.pow(10, i)).size should equal(size)
+        size += 1
+      }
+
+      // Negative cases
+      size = 2
+      for (i <- 0 until String.valueOf(Int.MaxValue).length) {
+        JsInt(-1 * IntMath.pow(10, i)).size should equal(size)
+        size += 1
+      }
+    }
+
     "be convert to long when possible" in {
       JsLong(1).asLong should equal(Some(1))
     }
@@ -702,6 +744,22 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return false when it can be convert to long" in {
       JsTrue.isLong should equal(false)
+    }
+
+    "return correct size for long" in {
+      // Positive cases
+      var size = 1
+      for (i <- 0 until String.valueOf(Long.MaxValue).length) {
+        JsLong(1 * LongMath.pow(10, i)).size should equal(size)
+        size += 1
+      }
+
+      // Negative cases
+      size = 2
+      for (i <- 0 until String.valueOf(Long.MaxValue).length) {
+        JsLong(-1 * LongMath.pow(10, i)).size should equal(size)
+        size += 1
+      }
     }
 
     "be convert to float when possible" in {
@@ -720,6 +778,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.isFloat should equal(false)
     }
 
+    "return correct size for float" in {
+      JsDouble(2.0F).size should equal(3)
+    }
+
     "be convert to double when possible" in {
       JsDouble(1.0D).asDouble should equal(Some(1.0D))
     }
@@ -734,6 +796,10 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return false when it can be convert to double" in {
       JsTrue.isDouble should equal(false)
+    }
+
+    "return correct size for double" in {
+      JsDouble(2.0D).size should equal(3)
     }
 
     "be convert to bytes when possible" in {
