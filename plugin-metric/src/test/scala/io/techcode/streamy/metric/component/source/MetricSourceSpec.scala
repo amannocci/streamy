@@ -30,8 +30,10 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest._
+import org.scalatest.concurrent.PatienceConfiguration.Interval
 import org.scalatest.concurrent._
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.time.{Seconds, Span}
 import org.slf4j.Logger
 
 /**
@@ -53,9 +55,8 @@ class MetricSourceSpec extends TestKit(ActorSystem("MetricSourceSpec"))
     "logs some informations" in {
       MetricSource.register(system, MetricSourceSpec.Config)
       MetricSource.jvm().runForeach(loggerMock.info(_))
-      eventually {
-        Thread.sleep(10)
-        verify(loggerMock, times(1)).info(any())
+      eventually(Interval(Span(1, Seconds))) {
+        verify(loggerMock, atLeastOnce()).info(any())
       }
     }
   }
