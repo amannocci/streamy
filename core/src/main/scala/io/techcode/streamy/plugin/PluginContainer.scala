@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2017
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,29 +21,40 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.metric
+package io.techcode.streamy.plugin
 
-import akka.stream.Materializer
-import io.techcode.streamy.metric.component.source.MetricSource
-import io.techcode.streamy.metric.util.ConfigConstants
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import akka.actor.ActorRef
+import com.typesafe.config.Config
+import io.techcode.streamy.plugin.PluginState.PluginState
+
+import scala.reflect.io.Directory
 
 /**
-  * Metric plugin implementation.
+  * Plugin data informations for loose coupling.
+  *
+  * @param pluginManager plugin manager.
+  * @param description   plugin description.
+  * @param conf          plugin configuration.
+  * @param dataFolder    plugin data folder.
   */
-class MetricPlugin(
-  _materializer: Materializer,
-  data: PluginData
-) extends Plugin(_materializer, data) {
+case class PluginData(
+  pluginManager: PluginManager,
+  description: PluginDescription,
+  conf: Config,
+  dataFolder: Directory
+)
 
-  override def onStart(): Unit = {
-    MetricSource.register(system, data.conf)
+/**
+  * Plugin container for loose coupling.
+  *
+  * @param ref         plugin actor ref.
+  * @param description plugin description.
+  * @param conf        plugin configuration.
+  */
+case class PluginContainer(
+  ref: ActorRef = ActorRef.noSender,
+  description: PluginDescription,
+  conf: Config,
+  state: PluginState = PluginState.Unknown
+)
 
-    if (data.conf.getBoolean(ConfigConstants.JvmEmbedded)) {
-      MetricSource.jvm().runForeach(log.info(_))
-    }
-  }
-
-  override def onStop(): Unit = ()
-
-}

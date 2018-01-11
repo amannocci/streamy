@@ -30,7 +30,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
-import scala.reflect.io.{Directory, Path}
+import scala.reflect.io.Path
 
 /**
   * Plugin spec.
@@ -68,23 +68,22 @@ class PluginSpec extends TestKit(ActorSystem("PluginSpec"))
     val typed: Class[_] = classOf[Impl]
     system.actorOf(Props(
       typed,
-      system,
       materializer,
-      description,
-      conf,
-      Path(".").toDirectory
+      PluginData(
+        null,
+        description,
+        conf,
+        Path(".").toDirectory
+      )
     ))
   }
 
 }
 
 class Impl(
-  val system: ActorSystem,
-  val materializer: Materializer,
-  override val description: PluginDescription,
-  override val conf: Config,
-  val folder: Directory
-) extends Plugin(system, materializer, description, conf, folder) {
+  override val _materializer: Materializer,
+  override val data: PluginData
+) extends Plugin(_materializer, data) {
 
   override def onStart(): Unit = {
     log.info("start")

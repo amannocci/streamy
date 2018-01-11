@@ -25,7 +25,7 @@ package io.techcode.streamy.plugin
 
 import akka.actor.{Actor, ActorLogging, ActorSystem}
 import akka.stream.Materializer
-import com.typesafe.config.Config
+import io.techcode.streamy.event.{LoadingPluginEvent, RunningPluginEvent, StoppedPluginEvent, StoppingPluginEvent}
 
 import scala.reflect.io.Directory
 
@@ -33,23 +33,28 @@ import scala.reflect.io.Directory
   * Abstract plugin implementation based on Actor.
   */
 abstract class Plugin(
-  private val system: ActorSystem,
-  private val materializer: Materializer,
-  val description: PluginDescription,
-  val conf: Config,
-  private val _dataFolder: Directory
+  val _materializer: Materializer,
+  val data: PluginData
 ) extends Actor with ActorLogging {
 
-  implicit val systemImpl: ActorSystem = system
-  implicit val materializerImpl: Materializer = materializer
+  implicit final val materializer: Materializer = _materializer
+  implicit final val system: ActorSystem = context.system
 
-  override def receive: PartialFunction[Any, Unit] = {
+  def receive: Receive = {
     case _ => log.info("Plugin can't handle anything")
   }
 
-  override def preStart(): Unit = onStart()
+  override def preStart(): Unit = {
+    system.eventStream.publish(LoadingPluginEvent(data.description.name))
+    onStart()
+    system.eventStream.publish(RunningPluginEvent(data.description.name))
+  }
 
-  override def postStop(): Unit = onStop()
+  override def postStop(): Unit = {
+    system.eventStream.publish(StoppingPluginEvent(data.description.name))
+    onStop()
+    system.eventStream.publish(StoppedPluginEvent(data.description.name))
+  }
 
   /**
     * Fired when the plugin is starting.
@@ -66,6 +71,14 @@ abstract class Plugin(
     *
     * @return the folder lazily created if needed.
     */
-  def dataFolder: Directory = (_dataFolder / description.name).createDirectory()
+  def dataFolder: Directory = (data.dataFolder / data.description.name).createDirectory()
 
+}
+
+/**
+  * Various plugin state.
+  */
+object PluginState extends Enumeration {
+  type PluginState = Value
+  val Unknown, Loading, Running, Stopping, Stopped = Value
 }

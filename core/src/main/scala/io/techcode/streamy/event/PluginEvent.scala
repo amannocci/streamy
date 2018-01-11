@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2017
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,29 +21,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.metric
-
-import akka.stream.Materializer
-import io.techcode.streamy.metric.component.source.MetricSource
-import io.techcode.streamy.metric.util.ConfigConstants
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+package io.techcode.streamy.event
 
 /**
-  * Metric plugin implementation.
+  * Represent a app event.
   */
-class MetricPlugin(
-  _materializer: Materializer,
-  data: PluginData
-) extends Plugin(_materializer, data) {
+abstract class PluginEvent(val name: String)
 
-  override def onStart(): Unit = {
-    MetricSource.register(system, data.conf)
+/**
+  * Represent an plugin loading event.
+  * This event is fired when a plugin is loading.
+  */
+case class LoadingPluginEvent(override val name: String) extends PluginEvent(name)
 
-    if (data.conf.getBoolean(ConfigConstants.JvmEmbedded)) {
-      MetricSource.jvm().runForeach(log.info(_))
-    }
-  }
+/**
+  * Represent an plugin running event.
+  * This event is fired when a plugin is running.
+  */
+case class RunningPluginEvent(override val name: String) extends PluginEvent(name)
 
-  override def onStop(): Unit = ()
+/**
+  * Represent an plugin stopping event.
+  * This event is fired when a plugin is stopping.
+  */
+case class StoppingPluginEvent(override val name: String) extends PluginEvent(name)
 
-}
+/**
+  * Represent an plugin stopping event.
+  * This event is fired when a plugin is stopped.
+  */
+case class StoppedPluginEvent(override val name: String) extends PluginEvent(name)

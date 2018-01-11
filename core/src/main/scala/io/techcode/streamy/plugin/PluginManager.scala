@@ -25,10 +25,12 @@ package io.techcode.streamy.plugin
 
 import java.net.{URL, URLClassLoader}
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.pattern.gracefulStop
 import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import io.techcode.streamy.event._
+import io.techcode.streamy.plugin.PluginState.PluginState
 import io.techcode.streamy.util.ConfigConstants
 import io.techcode.streamy.util.DurationUtil._
 import io.techcode.streamy.util.json._
@@ -46,10 +48,14 @@ import scala.reflect.io.{Directory, File, Path}
 class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer, conf: Config) {
 
   // Actor refs
-  private var _plugins: Map[String, ActorRef] = Map.empty
+  private[plugin] var _plugins: Map[String, PluginContainer] = Map.empty
 
   // Plugin class loader
   private var _pluginClassLoader: ClassLoader = _
+
+  // Register plugin event listener
+  private val listener: ActorRef = system.actorOf(Props(classOf[PluginsListener], this))
+  system.eventStream.subscribe(listener, classOf[PluginEvent])
 
   /**
     * Start all plugins.
@@ -62,29 +68,37 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     val toLoads = checkDependencies(pluginDescriptions)
 
     // Load all valid jars
-    val plugins = mutable.HashMap.empty[String, ActorRef]
     _pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file).toArray, getClass.getClassLoader)
+
+    // Waiting response list
     toLoads.foreach(pluginDescription => {
       try {
         // Merge application configuration and plugin configuration
-        val path = s"streamy.plugin.${pluginDescription.name}"
-        val pluginConf = (if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig).resolve()
-          .withFallback((PluginManager.ConfFolder / s"${pluginDescription.name}.conf")
-            .ifFile(f => ConfigFactory.parseFile(f.jfile))
-            .getOrElse(PluginManager.EmptyPluginConfig).resolve())
-          .withFallback(ConfigFactory.parseURL(new URL(s"jar:${pluginDescription.file}!/config.conf")).resolve())
+        val pluginConf = mergeConfig(s"streamy.plugin.${pluginDescription.name}", pluginDescription)
 
         // Load main plugin class
         val typed = Class.forName(pluginDescription.main.get, true, _pluginClassLoader)
-        val actorRef = system.actorOf(Props(
-          typed,
-          system,
-          materializer,
+
+        // Plugin container
+        val pluginData = PluginData(
+          this,
           pluginDescription,
           pluginConf,
           PluginManager.DataFolder
+        )
+
+        // Add to map
+        _plugins += (pluginDescription.name -> PluginContainer(
+          description = pluginDescription,
+          conf = pluginConf
         ))
-        plugins += (pluginDescription.name -> actorRef)
+
+        // Start plugin
+        system.actorOf(Props(
+          typed,
+          materializer,
+          pluginData
+        ))
       } catch {
         case ex: Exception => log.error(Json.obj(
           "message" -> s"Can't load '${pluginDescription.name}' plugin",
@@ -92,7 +106,6 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
         ), ex)
       }
     })
-    _plugins = plugins.toMap
   }
 
   /**
@@ -100,7 +113,10 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     */
   def stop(): Unit = {
     try {
-      val signal = Future.sequence(_plugins.values.map(gracefulStop(_, conf.getDuration(ConfigConstants.StreamyLifecycleGracefulTimeout))))
+      val signal = Future.sequence(_plugins.values.map { data =>
+        // Launch graceful stop
+        gracefulStop(data.ref, conf.getDuration(ConfigConstants.StreamyLifecycleGracefulTimeout))
+      })
       Await.result(signal, conf.getDuration(ConfigConstants.StreamyLifecycleShutdownTimeout))
       // All plugins are stopped
     } catch {
@@ -117,7 +133,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
   /**
     * Returns collections of plugins backed by actor ref.
     */
-  def plugins: Map[String, ActorRef] = _plugins
+  def plugins: Map[String, PluginContainer] = _plugins
 
   /**
     * Returns the plugin class loader used to load all plugins.
@@ -127,16 +143,31 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
   def pluginClassLoader: ClassLoader = _pluginClassLoader
 
   /**
+    * Merge all configurations levels.
+    *
+    * @param path        internal path of plugin conf in streamy conf.
+    * @param description plugin description.
+    * @return configuration merged.
+    */
+  private def mergeConfig(path: String, description: PluginDescription): Config = {
+    (if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig).resolve()
+      .withFallback((PluginManager.ConfFolder / s"${description.name}.conf")
+        .ifFile(f => ConfigFactory.parseFile(f.jfile))
+        .getOrElse(PluginManager.EmptyPluginConfig).resolve())
+      .withFallback(ConfigFactory.parseURL(new URL(s"jar:${description.file}!/config.conf")).resolve())
+  }
+
+  /**
     * Retrieve all plugins descriptions from jar file.
     *
     * @return all plugins descriptions.
     */
-  private def getPluginDescriptions: mutable.HashMap[String, PluginDescription] = {
+  private def getPluginDescriptions: mutable.AnyRefMap[String, PluginDescription] = {
     // Retrieve all jar files
     val jarFiles = PluginManager.PluginFolder.files.filter((x: File) => Path.isExtensionJarOrZip(x.jfile))
 
     // Attempt to load all plugins
-    val pluginDescriptions = mutable.HashMap.empty[String, PluginDescription]
+    val pluginDescriptions = mutable.AnyRefMap.empty[String, PluginDescription]
     for (jar <- jarFiles) {
       // Retrieve configuration details
       val conf = ConfigFactory.parseURL(new URL(s"jar:file:${jar.toAbsolute.toString()}!/plugin.conf"))
@@ -187,6 +218,31 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     toLoads
   }
 
+}
+
+/**
+  * Plugin listener that help to maintain current state plugin.
+  */
+private class PluginsListener(manager: PluginManager) extends Actor with ActorLogging {
+
+  private def handle(evt: PluginEvent, state: PluginState): Unit = {
+    val container = manager._plugins.get(evt.name)
+    if (container.isDefined) {
+      manager._plugins += (evt.name -> container.get.copy(ref = sender(), state = state))
+      log.info(Json.obj(
+        "message" -> s"Plugin ${evt.name} ${state.toString.toLowerCase()}",
+        "type" -> "plugin",
+        "plugin" -> evt.name
+      ))
+    }
+  }
+
+  override def receive: Receive = {
+    case evt: LoadingPluginEvent => handle(evt, PluginState.Loading)
+    case evt: RunningPluginEvent => handle(evt, PluginState.Running)
+    case evt: StoppingPluginEvent => handle(evt, PluginState.Stopping)
+    case evt: StoppedPluginEvent => handle(evt, PluginState.Stopped)
+  }
 }
 
 /**
