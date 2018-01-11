@@ -9,7 +9,7 @@
     <check level="warning" class="org.scalastyle.file.HeaderMatchesChecker" enabled="true">
         <parameters>
             <parameter name="regex">true</parameter>
-            <parameter name="header"><![CDATA[\/*
+            <parameter name="header"><![CDATA[\/\*
  \* The MIT License \(MIT\)
  \* <p>
  \* Copyright \(c\) (?:\d{4}-)?\d{4}
