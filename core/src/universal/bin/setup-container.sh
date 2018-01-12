@@ -55,7 +55,7 @@ memory_limit() {
   if [ -r "${mem_file}" ]; then
     local max_mem="$(cat ${mem_file})"
     if [ ${max_mem} -lt ${max_mem_unbounded} ]; then
-      max_mem=${mem_limit}
+      mem_limit=${max_mem}
     fi
   fi
   echo "${mem_limit}"
