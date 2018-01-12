@@ -1,6 +1,6 @@
 # Language spec
 language: scala
-sudo: false
+sudo: true
 
 # Scala version
 scala:
@@ -12,10 +12,15 @@ jdk:
   - oraclejdk8
 
 # Use local
-before_install: unset SBT_OPTS JVM_OPTS
+before_install:
+  - unset SBT_OPTS JVM_OPTS
+  - sudo add-apt-repository ppa:duggan/bats --yes
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq bats
 
 # Run
 script:
+  - bats core/src/test/bash
   - chmod -R +x sbt sbt-dist/* scripts/*
   - ./sbt ";compile;scalastyle;coverage;test;coverageReport;coverageAggregate"
 

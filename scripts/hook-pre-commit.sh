@@ -9,8 +9,16 @@ if [[ $BASE_PROJECT == *".git"* ]]; then
 fi
 cd ${BASE_PROJECT}
 
-# Validate project
-./sbt ";compile;test;scalastyle"
+# Validate bash project
+bats core/src/test/bash
+if [ $? -ne 0 ]
+then
+  error "The project isn't valid"
+  exit 1
+fi
+
+# Validate scala project
+./sbt ";clean;compile;test;scalastyle"
 if [ $? -ne 0 ]
 then
   error "The project isn't valid"

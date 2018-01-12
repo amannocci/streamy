@@ -14,6 +14,7 @@ It is fully free and fully open source. The license is MIT, meaning you are pret
 ## Prerequisites
 * [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 * [Sbt](http://www.scala-sbt.org/)
+* [Bats](https://github.com/sstephenson/bats)
 
 ## Clone
 The following steps will ensure your project is cloned properly.

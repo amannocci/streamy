@@ -59,6 +59,8 @@ bashScriptExtraDefines +=
   """
     |source ./bin/setup-container.sh
     |source ./bin/make-template.sh
+    |
+    |setup_container
   """.stripMargin
 
 // Enable some plugins
