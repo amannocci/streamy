@@ -47,7 +47,7 @@ object SyslogTransformer {
     */
   def inRfc5424(conf: Rfc5424.Config): Flow[ByteString, Json, NotUsed] =
     Flow.fromFunction(new SourceTransformer {
-      override def newParser(pkt: ByteString): ByteStringParser = SyslogParser.rfc5424(pkt, conf.binding)
+      override def newParser(pkt: ByteString): ByteStringParser = SyslogParser.rfc5424(pkt, conf)
     })
 
   /**
@@ -102,7 +102,39 @@ object SyslogTransformer {
       message: Option[Binder] = None
     )
 
-    case class Config(binding: Binding = Binding())
+    case class Config(
+      mode: Mode = Rfc5424.Mode.Strict,
+      binding: Binding = Binding()
+    )
+
+    sealed abstract class Mode(
+      val hostname: Int,
+      val appName: Int,
+      val procId: Int,
+      val msgId: Int
+    )
+
+    object Mode {
+
+      // Strict mode
+      // scalastyle:off magic.number
+      case object Strict extends Mode(
+        hostname = 255,
+        appName = 48,
+        procId = 128,
+        msgId = 32
+      )
+
+      // Lenient mode
+      case object Lenient extends Mode(
+        hostname = 255,
+        appName = 96,
+        procId = 128,
+        msgId = 64
+      )
+      // scalastyle:on magic.number
+
+    }
 
   }
 

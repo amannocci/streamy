@@ -44,11 +44,11 @@ object SyslogParser {
     * Create a syslog parser that transform incoming [[ByteString]] to [[Json]].
     * This parser is Rfc5424 compliant.
     *
-    * @param bytes   data to parse.
-    * @param binding binding parser configuration.
+    * @param bytes  data to parse.
+    * @param config parser configuration.
     * @return new syslog parser Rfc5424 compliant.
     */
-  def rfc5424(bytes: ByteString, binding: Rfc5424.Binding): ByteStringParser = new Rfc5424Parser(bytes, binding)
+  def rfc5424(bytes: ByteString, config: Rfc5424.Config): ByteStringParser = new Rfc5424Parser(bytes, config)
 
 }
 
@@ -86,10 +86,14 @@ private trait ParserHelpers {
   * Syslog parser that transform incoming [[ByteString]] to [[Json]].
   * This parser is Rfc5424 compliant.
   *
-  * @param bytes   data to parse.
-  * @param binding binding parser configuration.
+  * @param bytes  data to parse.
+  * @param config parser configuration.
   */
-private class Rfc5424Parser(bytes: ByteString, binding: Rfc5424.Binding) extends ByteStringParser(bytes) with ParserHelpers {
+private class Rfc5424Parser(bytes: ByteString, config: Rfc5424.Config) extends ByteStringParser(bytes) with ParserHelpers {
+
+  private val binding = config.binding
+
+  private val mode = config.mode
 
   override def process(): Boolean =
     header() &&
@@ -114,7 +118,7 @@ private class Rfc5424Parser(bytes: ByteString, binding: Rfc5424.Binding) extends
     sp() && or(
       nilValue(),
       capture(binding.hostname) {
-        times(1, 255, CharMatchers.PrintUsAscii)
+        times(1, mode.hostname, CharMatchers.PrintUsAscii)
       }
     )
 
@@ -122,7 +126,7 @@ private class Rfc5424Parser(bytes: ByteString, binding: Rfc5424.Binding) extends
     sp() && or(
       nilValue(),
       capture(binding.appName) {
-        times(1, 48, CharMatchers.PrintUsAscii)
+        times(1, mode.appName, CharMatchers.PrintUsAscii)
       }
     )
 
@@ -130,7 +134,7 @@ private class Rfc5424Parser(bytes: ByteString, binding: Rfc5424.Binding) extends
     sp() && or(
       nilValue(),
       capture(binding.procId) {
-        times(1, 128, CharMatchers.PrintUsAscii)
+        times(1, mode.procId, CharMatchers.PrintUsAscii)
       }
     )
 
@@ -138,7 +142,7 @@ private class Rfc5424Parser(bytes: ByteString, binding: Rfc5424.Binding) extends
     sp() && or(
       nilValue(),
       capture(binding.msgId) {
-        times(1, 32, CharMatchers.PrintUsAscii)
+        times(1, mode.msgId, CharMatchers.PrintUsAscii)
       }
     )
 

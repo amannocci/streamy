@@ -32,6 +32,7 @@ import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.ByteString
+import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{IntBinder, StringBinder}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -51,9 +52,26 @@ class SyslogTransformerSpec extends TestKit(ActorSystem("SyslogTransformerSpec")
   "Syslog transformer" should {
     "in" should {
       "Rfc5424" should {
-        "handle correctly simple syslog message" in {
+        "handle correctly simple syslog message in strict mode" in {
           val result = Source.single(SyslogTransformerSpec.Rfc5424.InputSimple)
-            .via(SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureAll))
+            .via(SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureAllLenient))
+            .runWith(TestSink.probe[Json])
+            .requestNext()
+
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.Facility) should equal(Some(intToJson(4)))
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.Severity) should equal(Some(intToJson(2)))
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.Timestamp) should equal(Some(stringToJson("2003-10-11T22:14:15.003Z")))
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.Hostname) should equal(Some(stringToJson("mymachine.example.com")))
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.AppName) should equal(Some(stringToJson("su")))
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.ProcId) should equal(Some(stringToJson("77042")))
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.MsgId) should equal(Some(stringToJson("ID47")))
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.StructData) should equal(Some(stringToJson("""[sigSig ver="1"]""")))
+          result.evaluate(Root / SyslogTransformer.Rfc5424.Id.Message) should equal(Some(stringToJson("'su root' failed for lonvick on /dev/pts/8")))
+        }
+
+        "handle correctly simple syslog message in lenient mode" in {
+          val result = Source.single(SyslogTransformerSpec.Rfc5424.InputSimple)
+            .via(SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureAllLenient))
             .runWith(TestSink.probe[Json])
             .requestNext()
 
@@ -170,7 +188,7 @@ class SyslogTransformerSpec extends TestKit(ActorSystem("SyslogTransformerSpec")
 
         "throw an error when syslog message is malformed" in {
           Source.single(SyslogTransformerSpec.Rfc5424.InputMalformed)
-            .via(SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureAll))
+            .via(SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureAllLenient))
             .runWith(TestSink.probe[Json])
             .request(1)
             .expectError()
@@ -396,7 +414,7 @@ object SyslogTransformerSpec {
     val InputAlternative = ByteString("""<34>1 1985-04-12T19:20:50.52-04:00 mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
     val InputMalformed = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
 
-    val CaptureAll = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
+    val CaptureAllStrict = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
       facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility)),
       severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity)),
       timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII)),
@@ -407,6 +425,20 @@ object SyslogTransformerSpec {
       structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII)),
       message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
     ))
+
+    val CaptureAllLenient = SyslogTransformer.Rfc5424.Config(
+      mode = Mode.Lenient,
+      binding = SyslogTransformer.Rfc5424.Binding(
+        facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility)),
+        severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity)),
+        timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII)),
+        hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII)),
+        appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII)),
+        procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII)),
+        msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII)),
+        structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII)),
+        message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
+      ))
     val CaptureFacility = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
       facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility))
     ))
