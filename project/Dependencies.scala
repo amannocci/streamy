@@ -28,13 +28,12 @@ import sbt._
 object Dependencies {
 
   // Dependencies version
-  lazy val akkaVersion = "2.5.8"
+  lazy val akkaVersion = "2.5.9"
   lazy val logbackVersion = "1.2.3"
   lazy val logbackContribVersion = "0.3.0"
   lazy val commonsLangVersion = "3.7"
   lazy val jacksonVersion = "2.9.3"
-  lazy val metricsScalaVersion = "3.5.9"
-  lazy val metricsJvmVersion = "3.2.3"
+  lazy val metricsJvmVersion = "4.0.2"
   lazy val guavaVersion = "23.6-jre"
   lazy val scalaTestVersion = "3.0.4"
   lazy val mockitoVersion = "2.12.0"
