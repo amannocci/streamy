@@ -64,5 +64,5 @@ bashScriptExtraDefines +=
   """.stripMargin
 
 // Enable some plugins
-enablePlugins(JavaAppPackaging, JmhPlugin)
+enablePlugins(JavaServerAppPackaging, SystemVPlugin, JmhPlugin)
 disablePlugins(AssemblyPlugin)
