@@ -23,10 +23,12 @@
  */
 package io.techcode.streamy.event
 
+import akka.actor.DeadLetterSuppression
+
 /**
   * Represent a app event.
   */
-abstract class PluginEvent(val name: String)
+abstract class PluginEvent(val name: String) extends DeadLetterSuppression
 
 /**
   * Represent an plugin loading event.
