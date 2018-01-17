@@ -42,15 +42,17 @@ memory_limit() {
   fi
 
   # Max memory of host
-  local mem_limit="$(free -b | grep "Mem:" | awk '{print $2;}')"
+  local mem_limit="$(awk '/MemTotal/ {printf "%.0f", $2*1024}' /proc/meminfo)"
+
+  # Read cgroups limit
+  local max_mem_unbounded_file=/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes
+  local mem_file=/sys/fs/cgroup/memory/memory.limit_in_bytes
+  local max_mem max_mem_unbounded
 
   # High number which is the max limit unti which memory is supposed to be unbounded.
-  local max_mem_unbounded=$(cat /sys/fs/cgroup/memory/memory.memsw.limit_in_bytes)
-  local mem_file=/sys/fs/cgroup/memory/memory.limit_in_bytes
-  local max_mem
-  if max_mem=$(cat "$mem_file") && \
-    [[ $max_mem -lt $max_mem_unbounded ]]
-  then
+  if { max_mem=$(cat "$mem_file") && \
+    max_mem_unbounded=$(cat "$max_mem_unbounded_file") && \
+    [[ "$max_mem" -lt "$max_mem_unbounded" ]] ;} 2>/dev/null ; then
     echo "$max_mem"
   else
     echo "$mem_limit"
