@@ -118,11 +118,16 @@ abstract class ByteStringParser(val bytes: ByteString) {
     * @param inner inner rule.
     * @return true if parsing succeeded, otherwise false.
     */
-  final def capture(field: Option[Binder])(inner: => Boolean): Boolean = {
+  final def capture(field: Option[Binder], optional: Boolean = false)(inner: => Boolean): Boolean = {
     mark()
-    val state = inner
-    if (field.isDefined) {
-      builder.put(field.get.bind(bytes.slice(_mark, _cursor)))
+    var state = inner
+    if (state && field.isDefined) {
+      val binding = field.get.bind(bytes.slice(_mark, _cursor))
+      if (binding.isDefined) {
+        builder.put(field.get.key, binding.get)
+      } else {
+        state = optional
+      }
     }
     state
   }

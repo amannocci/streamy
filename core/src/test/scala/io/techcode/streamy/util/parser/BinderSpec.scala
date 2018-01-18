@@ -34,31 +34,31 @@ class BinderSpec extends WordSpecLike with Matchers {
 
   "String binder" should {
     "convert correctly a boolean in mapping" in {
-      StringBinder("foobar").bind(true) should equal(("foobar", JsString("true")))
+      StringBinder("foobar").bind(true) should equal(JsString("true"))
     }
 
     "convert correctly an int in mapping" in {
-      StringBinder("foobar").bind(1) should equal(("foobar", JsString("1")))
+      StringBinder("foobar").bind(1) should equal(JsString("1"))
     }
 
     "convert correctly a long in mapping" in {
-      StringBinder("foobar").bind(1L) should equal(("foobar", JsString("1")))
+      StringBinder("foobar").bind(1L) should equal(JsString("1"))
     }
 
     "convert correctly a float in mapping" in {
-      StringBinder("foobar").bind(1.0F) should equal(("foobar", JsString("1.0")))
+      StringBinder("foobar").bind(1.0F) should equal(JsString("1.0"))
     }
 
     "convert correctly a double in mapping" in {
-      StringBinder("foobar").bind(1.0D) should equal(("foobar", JsString("1.0")))
+      StringBinder("foobar").bind(1.0D) should equal(JsString("1.0"))
     }
 
     "convert correctly a string in mapping" in {
-      StringBinder("foobar").bind("test") should equal(("foobar", JsString("test")))
+      StringBinder("foobar").bind("test") should equal(Some(JsString("test")))
     }
 
     "convert correctly a bytestring in mapping" in {
-      StringBinder("foobar").bind(ByteString("test")) should equal(("foobar", JsString("test")))
+      StringBinder("foobar").bind(ByteString("test")) should equal(Some(JsString("test")))
     }
 
     "convert correctly a json value in bytestring" in {
@@ -68,31 +68,39 @@ class BinderSpec extends WordSpecLike with Matchers {
 
   "Int binder" should {
     "convert correctly a boolean in mapping" in {
-      IntBinder("foobar").bind(true) should equal(("foobar", JsInt(1)))
+      IntBinder("foobar").bind(true) should equal(JsInt(1))
     }
 
     "convert correctly an int in mapping" in {
-      IntBinder("foobar").bind(1) should equal(("foobar", JsInt(1)))
+      IntBinder("foobar").bind(1) should equal(JsInt(1))
     }
 
     "convert correctly a long in mapping" in {
-      IntBinder("foobar").bind(1L) should equal(("foobar", JsInt(1)))
+      IntBinder("foobar").bind(1L) should equal(JsInt(1))
     }
 
     "convert correctly a float in mapping" in {
-      IntBinder("foobar").bind(1.0F) should equal(("foobar", JsInt(1)))
+      IntBinder("foobar").bind(1.0F) should equal(JsInt(1))
     }
 
     "convert correctly a double in mapping" in {
-      IntBinder("foobar").bind(1.0D) should equal(("foobar", JsInt(1)))
+      IntBinder("foobar").bind(1.0D) should equal(JsInt(1))
     }
 
     "convert correctly a string in mapping" in {
-      IntBinder("foobar").bind("1") should equal(("foobar", JsInt(1)))
+      IntBinder("foobar").bind("1") should equal(Some(JsInt(1)))
+    }
+
+    "fail to convert a string in mapping" in {
+      IntBinder("foobar").bind("notInt") should equal(None)
     }
 
     "convert correctly a bytestring in mapping" in {
-      IntBinder("foobar").bind(ByteString("1")) should equal(("foobar", JsInt(1)))
+      IntBinder("foobar").bind(ByteString("1")) should equal(Some(JsInt(1)))
+    }
+
+    "fail to convert a bytestring in mapping" in {
+      IntBinder("foobar").bind(ByteString("notInt")) should equal(None)
     }
 
     "convert correctly a json value in bytestring" in {
@@ -102,31 +110,39 @@ class BinderSpec extends WordSpecLike with Matchers {
 
   "Long binder" should {
     "convert correctly a boolean in mapping" in {
-      LongBinder("foobar").bind(true) should equal(("foobar", JsLong(1)))
+      LongBinder("foobar").bind(true) should equal(JsLong(1))
     }
 
     "convert correctly an int in mapping" in {
-      LongBinder("foobar").bind(1) should equal(("foobar", JsLong(1)))
+      LongBinder("foobar").bind(1) should equal(JsLong(1))
     }
 
     "convert correctly a long in mapping" in {
-      LongBinder("foobar").bind(1L) should equal(("foobar", JsLong(1)))
+      LongBinder("foobar").bind(1L) should equal(JsLong(1))
     }
 
     "convert correctly a float in mapping" in {
-      LongBinder("foobar").bind(1.0F) should equal(("foobar", JsLong(1)))
+      LongBinder("foobar").bind(1.0F) should equal(JsLong(1))
     }
 
     "convert correctly a double in mapping" in {
-      LongBinder("foobar").bind(1.0D) should equal(("foobar", JsLong(1)))
+      LongBinder("foobar").bind(1.0D) should equal(JsLong(1))
     }
 
     "convert correctly a string in mapping" in {
-      LongBinder("foobar").bind("1") should equal(("foobar", JsLong(1)))
+      LongBinder("foobar").bind("1") should equal(Some(JsLong(1)))
+    }
+
+    "fail to convert a string in mapping" in {
+      LongBinder("foobar").bind("notLong") should equal(None)
     }
 
     "convert correctly a bytestring in mapping" in {
-      LongBinder("foobar").bind(ByteString("1")) should equal(("foobar", JsLong(1)))
+      LongBinder("foobar").bind(ByteString("1")) should equal(Some(JsLong(1)))
+    }
+
+    "fail to convert a bytestring in mapping" in {
+      LongBinder("foobar").bind(ByteString("notLong")) should equal(None)
     }
 
     "convert correctly a json value in bytestring" in {
@@ -136,31 +152,39 @@ class BinderSpec extends WordSpecLike with Matchers {
 
   "Float binder" should {
     "convert correctly a boolean in mapping" in {
-      FloatBinder("foobar").bind(true) should equal(("foobar", JsFloat(1)))
+      FloatBinder("foobar").bind(true) should equal(JsFloat(1))
     }
 
     "convert correctly an int in mapping" in {
-      FloatBinder("foobar").bind(1) should equal(("foobar", JsFloat(1)))
+      FloatBinder("foobar").bind(1) should equal(JsFloat(1))
     }
 
     "convert correctly a long in mapping" in {
-      FloatBinder("foobar").bind(1L) should equal(("foobar", JsFloat(1)))
+      FloatBinder("foobar").bind(1L) should equal(JsFloat(1))
     }
 
     "convert correctly a float in mapping" in {
-      FloatBinder("foobar").bind(1.0F) should equal(("foobar", JsFloat(1.0F)))
+      FloatBinder("foobar").bind(1.0F) should equal(JsFloat(1.0F))
     }
 
     "convert correctly a double in mapping" in {
-      FloatBinder("foobar").bind(1.0D) should equal(("foobar", JsFloat(1.0F)))
+      FloatBinder("foobar").bind(1.0D) should equal(JsFloat(1.0F))
     }
 
     "convert correctly a string in mapping" in {
-      FloatBinder("foobar").bind("1") should equal(("foobar", JsFloat(1)))
+      FloatBinder("foobar").bind("1") should equal(Some(JsFloat(1)))
+    }
+
+    "fail to convert a string in mapping" in {
+      FloatBinder("foobar").bind("notFloat") should equal(None)
     }
 
     "convert correctly a bytestring in mapping" in {
-      FloatBinder("foobar").bind(ByteString("1")) should equal(("foobar", JsFloat(1)))
+      FloatBinder("foobar").bind(ByteString("1.0")) should equal(Some(JsFloat(1)))
+    }
+
+    "fail to convert a bytestring in mapping" in {
+      FloatBinder("foobar").bind(ByteString("notFloat")) should equal(None)
     }
 
     "convert correctly a json value in bytestring" in {
@@ -170,31 +194,39 @@ class BinderSpec extends WordSpecLike with Matchers {
 
   "Double binder" should {
     "convert correctly a boolean in mapping" in {
-      DoubleBinder("foobar").bind(true) should equal(("foobar", JsDouble(1)))
+      DoubleBinder("foobar").bind(true) should equal(JsDouble(1))
     }
 
     "convert correctly an int in mapping" in {
-      DoubleBinder("foobar").bind(1) should equal(("foobar", JsDouble(1)))
+      DoubleBinder("foobar").bind(1) should equal(JsDouble(1))
     }
 
     "convert correctly a long in mapping" in {
-      DoubleBinder("foobar").bind(1L) should equal(("foobar", JsDouble(1)))
+      DoubleBinder("foobar").bind(1L) should equal(JsDouble(1))
     }
 
     "convert correctly a float in mapping" in {
-      DoubleBinder("foobar").bind(1.0F) should equal(("foobar", JsDouble(1.0F)))
+      DoubleBinder("foobar").bind(1.0F) should equal(JsDouble(1.0F))
     }
 
     "convert correctly a double in mapping" in {
-      DoubleBinder("foobar").bind(1.0D) should equal(("foobar", JsDouble(1.0F)))
+      DoubleBinder("foobar").bind(1.0D) should equal(JsDouble(1.0F))
     }
 
     "convert correctly a string in mapping" in {
-      DoubleBinder("foobar").bind("1") should equal(("foobar", JsDouble(1)))
+      DoubleBinder("foobar").bind("1.0") should equal(Some(JsDouble(1)))
+    }
+
+    "fail to convert a string in mapping" in {
+      DoubleBinder("foobar").bind("notDouble") should equal(None)
     }
 
     "convert correctly a bytestring in mapping" in {
-      DoubleBinder("foobar").bind(ByteString("1")) should equal(("foobar", JsDouble(1)))
+      DoubleBinder("foobar").bind(ByteString("1")) should equal(Some(JsDouble(1)))
+    }
+
+    "fail to convert a bytestring in mapping" in {
+      DoubleBinder("foobar").bind("notDouble") should equal(None)
     }
 
     "convert correctly a json value in bytestring" in {
@@ -204,31 +236,31 @@ class BinderSpec extends WordSpecLike with Matchers {
 
   "Bytes binder" should {
     "convert correctly a boolean in mapping" in {
-      BytesBinder("foobar").bind(true) should equal(("foobar", JsBytes(ByteString("true"))))
+      BytesBinder("foobar").bind(true) should equal(JsBytes(ByteString("true")))
     }
 
     "convert correctly an int in mapping" in {
-      BytesBinder("foobar").bind(1) should equal(("foobar", JsBytes(ByteString("1"))))
+      BytesBinder("foobar").bind(1) should equal(JsBytes(ByteString("1")))
     }
 
     "convert correctly a long in mapping" in {
-      BytesBinder("foobar").bind(1L) should equal(("foobar", JsBytes(ByteString("1"))))
+      BytesBinder("foobar").bind(1L) should equal(JsBytes(ByteString("1")))
     }
 
     "convert correctly a float in mapping" in {
-      BytesBinder("foobar").bind(1.0F) should equal(("foobar", JsBytes(ByteString("1.0"))))
+      BytesBinder("foobar").bind(1.0F) should equal(JsBytes(ByteString("1.0")))
     }
 
     "convert correctly a double in mapping" in {
-      BytesBinder("foobar").bind(1.0D) should equal(("foobar", JsBytes(ByteString("1.0"))))
+      BytesBinder("foobar").bind(1.0D) should equal(JsBytes(ByteString("1.0")))
     }
 
     "convert correctly a string in mapping" in {
-      BytesBinder("foobar").bind("test") should equal(("foobar", JsBytes(ByteString("test"))))
+      BytesBinder("foobar").bind("test") should equal(Some(JsBytes(ByteString("test"))))
     }
 
     "convert correctly a bytestring in mapping" in {
-      BytesBinder("foobar").bind(ByteString("test")) should equal(("foobar", JsBytes(ByteString("test"))))
+      BytesBinder("foobar").bind(ByteString("test")) should equal(Some(JsBytes(ByteString("test"))))
     }
 
     "convert correctly a json value in bytestring" in {

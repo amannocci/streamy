@@ -26,6 +26,7 @@ package io.techcode.streamy.util.parser
 import java.nio.charset.{Charset, StandardCharsets}
 
 import akka.util.ByteString
+import com.google.common.primitives.{Doubles, Floats, Ints, Longs}
 import io.techcode.streamy.util.json.{JsBytes, JsDouble, JsFloat, JsInt, JsLong, JsString, Json}
 
 /**
@@ -39,7 +40,7 @@ sealed abstract class Binder(val key: String) {
     * @param value value to bind.
     * @return value mapping.
     */
-  def bind(value: Boolean): (String, Json)
+  def bind(value: Boolean): Json
 
   /**
     * Bind an [[Int]] value to [[Json]]
@@ -47,7 +48,7 @@ sealed abstract class Binder(val key: String) {
     * @param value value to bind.
     * @return value mapping.
     */
-  def bind(value: Int): (String, Json)
+  def bind(value: Int): Json
 
   /**
     * Bind an [[Long]] value to [[Json]]
@@ -55,7 +56,7 @@ sealed abstract class Binder(val key: String) {
     * @param value value to bind.
     * @return value mapping.
     */
-  def bind(value: Long): (String, Json)
+  def bind(value: Long): Json
 
   /**
     * Bind an [[Float]] value to [[Json]]
@@ -63,7 +64,7 @@ sealed abstract class Binder(val key: String) {
     * @param value value to bind.
     * @return value mapping.
     */
-  def bind(value: Float): (String, Json)
+  def bind(value: Float): Json
 
   /**
     * Bind an [[Double]] value to [[Json]]
@@ -71,7 +72,7 @@ sealed abstract class Binder(val key: String) {
     * @param value value to bind.
     * @return value mapping.
     */
-  def bind(value: Double): (String, Json)
+  def bind(value: Double): Json
 
   /**
     * Bind an [[String]] value to [[Json]]
@@ -79,7 +80,7 @@ sealed abstract class Binder(val key: String) {
     * @param value value to bind.
     * @return value mapping.
     */
-  def bind(value: String): (String, Json)
+  def bind(value: String): Option[Json]
 
   /**
     * Bind an [[ByteString]] value to [[Json]]
@@ -87,7 +88,7 @@ sealed abstract class Binder(val key: String) {
     * @param value value to bind.
     * @return value mapping.
     */
-  def bind(value: ByteString): (String, Json)
+  def bind(value: ByteString): Option[Json]
 
   /**
     * Bind an [[Json]] value to [[ByteString]]
@@ -107,19 +108,19 @@ sealed abstract class Binder(val key: String) {
   */
 case class StringBinder(override val key: String, charset: Charset = StandardCharsets.UTF_8) extends Binder(key) {
 
-  def bind(value: Boolean): (String, Json) = (key, JsString(value.toString))
+  def bind(value: Boolean): Json = JsString(value.toString)
 
-  def bind(value: Int): (String, Json) = (key, JsString(value.toString))
+  def bind(value: Int): Json = JsString(value.toString)
 
-  def bind(value: Long): (String, Json) = (key, JsString(value.toString))
+  def bind(value: Long): Json = JsString(value.toString)
 
-  def bind(value: Float): (String, Json) = (key, JsString(value.toString))
+  def bind(value: Float): Json = JsString(value.toString)
 
-  def bind(value: Double): (String, Json) = (key, JsString(value.toString))
+  def bind(value: Double): Json = JsString(value.toString)
 
-  def bind(value: String): (String, Json) = (key, JsString(value))
+  def bind(value: String): Option[Json] = Some(JsString(value))
 
-  def bind(value: ByteString): (String, Json) = (key, JsString(value.decodeString(charset)))
+  def bind(value: ByteString): Option[Json] = Some(JsString(value.decodeString(charset)))
 
   def bind(value: Json): ByteString = value.asString.map(ByteString(_)).getOrElse(ByteString.empty)
 
@@ -132,19 +133,19 @@ case class StringBinder(override val key: String, charset: Charset = StandardCha
   */
 case class BytesBinder(override val key: String) extends Binder(key) {
 
-  def bind(value: Boolean): (String, Json) = (key, JsBytes(ByteString(value.toString)))
+  def bind(value: Boolean): Json = JsBytes(ByteString(value.toString))
 
-  def bind(value: Int): (String, Json) = (key, JsBytes(ByteString(value.toString)))
+  def bind(value: Int): Json = JsBytes(ByteString(value.toString))
 
-  def bind(value: Long): (String, Json) = (key, JsBytes(ByteString(value.toString)))
+  def bind(value: Long): Json = JsBytes(ByteString(value.toString))
 
-  def bind(value: Float): (String, Json) = (key, JsBytes(ByteString(value.toString)))
+  def bind(value: Float): Json = JsBytes(ByteString(value.toString))
 
-  def bind(value: Double): (String, Json) = (key, JsBytes(ByteString(value.toString)))
+  def bind(value: Double): Json = JsBytes(ByteString(value.toString))
 
-  def bind(value: String): (String, Json) = (key, JsBytes(ByteString(value)))
+  def bind(value: String): Option[Json] = Some(JsBytes(ByteString(value)))
 
-  def bind(value: ByteString): (String, Json) = (key, JsBytes(value))
+  def bind(value: ByteString): Option[Json] = Some(JsBytes(value))
 
   def bind(value: Json): ByteString = value.asBytes.getOrElse(ByteString.empty)
 
@@ -157,19 +158,20 @@ case class BytesBinder(override val key: String) extends Binder(key) {
   */
 case class IntBinder(override val key: String) extends Binder(key) {
 
-  def bind(value: Boolean): (String, Json) = (key, JsInt(if (value) 1 else 0))
+  def bind(value: Boolean): Json = JsInt(if (value) 1 else 0)
 
-  def bind(value: Int): (String, Json) = (key, JsInt(value))
+  def bind(value: Int): Json = JsInt(value)
 
-  def bind(value: Long): (String, Json) = (key, JsInt(value.toInt))
+  def bind(value: Long): Json = JsInt(value.toInt)
 
-  def bind(value: Float): (String, Json) = (key, JsInt(value.toInt))
+  def bind(value: Float): Json = JsInt(value.toInt)
 
-  def bind(value: Double): (String, Json) = (key, JsInt(value.toInt))
+  def bind(value: Double): Json = JsInt(value.toInt)
 
-  def bind(value: String): (String, Json) = (key, JsInt(value.toInt))
+  def bind(value: String): Option[Json] = Option(Ints.tryParse(value)).map(JsInt(_))
 
-  def bind(value: ByteString): (String, Json) = (key, JsInt(value.decodeString(StandardCharsets.US_ASCII).toInt))
+  def bind(value: ByteString): Option[Json] = Option(Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII)))
+    .map(JsInt(_))
 
   def bind(value: Json): ByteString = value.asInt.map(x => ByteString(x.toString)).getOrElse(ByteString.empty)
 
@@ -182,19 +184,20 @@ case class IntBinder(override val key: String) extends Binder(key) {
   */
 case class LongBinder(override val key: String) extends Binder(key) {
 
-  def bind(value: Boolean): (String, Json) = (key, JsLong(if (value) 1 else 0))
+  def bind(value: Boolean): Json = JsLong(if (value) 1 else 0)
 
-  def bind(value: Int): (String, Json) = (key, JsLong(value))
+  def bind(value: Int): Json = JsLong(value)
 
-  def bind(value: Long): (String, Json) = (key, JsLong(value))
+  def bind(value: Long): Json = JsLong(value)
 
-  def bind(value: Float): (String, Json) = (key, JsLong(value.toLong))
+  def bind(value: Float): Json = JsLong(value.toLong)
 
-  def bind(value: Double): (String, Json) = (key, JsLong(value.toLong))
+  def bind(value: Double): Json = JsLong(value.toLong)
 
-  def bind(value: String): (String, Json) = (key, JsLong(value.toLong))
+  def bind(value: String): Option[Json] = Option(Longs.tryParse(value)).map(JsLong(_))
 
-  def bind(value: ByteString): (String, Json) = (key, JsLong(value.decodeString(StandardCharsets.US_ASCII).toLong))
+  def bind(value: ByteString): Option[Json] = Option(Longs.tryParse(value.decodeString(StandardCharsets.US_ASCII)))
+    .map(JsLong(_))
 
   def bind(value: Json): ByteString = value.asLong.map(x => ByteString(x.toString)).getOrElse(ByteString.empty)
 
@@ -207,19 +210,20 @@ case class LongBinder(override val key: String) extends Binder(key) {
   */
 case class FloatBinder(override val key: String) extends Binder(key) {
 
-  def bind(value: Boolean): (String, Json) = (key, JsFloat(if (value) 1 else 0))
+  def bind(value: Boolean): Json = JsFloat(if (value) 1 else 0)
 
-  def bind(value: Int): (String, Json) = (key, JsFloat(value.toFloat))
+  def bind(value: Int): Json = JsFloat(value.toFloat)
 
-  def bind(value: Long): (String, Json) = (key, JsFloat(value.toFloat))
+  def bind(value: Long): Json = JsFloat(value.toFloat)
 
-  def bind(value: Float): (String, Json) = (key, JsFloat(value))
+  def bind(value: Float): Json = JsFloat(value)
 
-  def bind(value: Double): (String, Json) = (key, JsFloat(value.toFloat))
+  def bind(value: Double): Json = JsFloat(value.toFloat)
 
-  def bind(value: String): (String, Json) = (key, JsFloat(value.toFloat))
+  def bind(value: String): Option[Json] = Option(Floats.tryParse(value)).map(JsFloat(_))
 
-  def bind(value: ByteString): (String, Json) = (key, JsFloat(value.decodeString(StandardCharsets.US_ASCII).toFloat))
+  def bind(value: ByteString): Option[Json] = Option(Floats.tryParse(value.decodeString(StandardCharsets.US_ASCII)))
+    .map(JsFloat(_))
 
   def bind(value: Json): ByteString = value.asFloat.map(x => ByteString(x.toString)).getOrElse(ByteString.empty)
 
@@ -232,19 +236,20 @@ case class FloatBinder(override val key: String) extends Binder(key) {
   */
 case class DoubleBinder(override val key: String) extends Binder(key) {
 
-  def bind(value: Boolean): (String, Json) = (key, JsDouble(if (value) 1 else 0))
+  def bind(value: Boolean): Json = JsDouble(if (value) 1 else 0)
 
-  def bind(value: Int): (String, Json) = (key, JsDouble(value.toDouble))
+  def bind(value: Int): Json = JsDouble(value.toDouble)
 
-  def bind(value: Long): (String, Json) = (key, JsDouble(value.toDouble))
+  def bind(value: Long): Json = JsDouble(value.toDouble)
 
-  def bind(value: Float): (String, Json) = (key, JsDouble(value))
+  def bind(value: Float): Json = JsDouble(value)
 
-  def bind(value: Double): (String, Json) = (key, JsDouble(value.toDouble))
+  def bind(value: Double): Json = JsDouble(value.toDouble)
 
-  def bind(value: String): (String, Json) = (key, JsDouble(value.toDouble))
+  def bind(value: String): Option[Json] = Option(Doubles.tryParse(value)).map(JsDouble(_))
 
-  def bind(value: ByteString): (String, Json) = (key, JsDouble(value.decodeString(StandardCharsets.US_ASCII).toDouble))
+  def bind(value: ByteString): Option[Json] = Option(Doubles.tryParse(value.decodeString(StandardCharsets.US_ASCII)))
+    .map(JsDouble(_))
 
   def bind(value: Json): ByteString = value.asDouble.map(x => ByteString(x.toString)).getOrElse(ByteString.empty)
 
