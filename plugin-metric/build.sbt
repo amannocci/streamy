@@ -35,6 +35,3 @@ libraryDependencies ++= Seq(
 assemblyOption in assembly ~= {
   _.copy(includeScala = false)
 }
-
-// Enable some plugins
-enablePlugins(JmhPlugin)

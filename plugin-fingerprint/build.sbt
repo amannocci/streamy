@@ -24,6 +24,5 @@
 
 name := name.value + "-plugin-fingerprint"
 
-// Enable some plugins
-enablePlugins(JmhPlugin)
+// Disable some plugins
 disablePlugins(AssemblyPlugin)

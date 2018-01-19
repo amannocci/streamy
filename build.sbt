@@ -79,5 +79,6 @@ lazy val test = project
   .settings(commonSettings, Publish.settings)
 
 lazy val root = project
+  .in(file("."))
   .settings(Seq(publish := {}))
   .aggregate(core, `plugin-fingerprint`, `plugin-syslog`, `plugin-json`, `plugin-metric`, test)

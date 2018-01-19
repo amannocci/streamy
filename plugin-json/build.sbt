@@ -24,6 +24,5 @@
 
 name := name.value + "-plugin-json"
 
-// Enable some plugins
-enablePlugins(JmhPlugin)
+// Disable some plugins
 disablePlugins(AssemblyPlugin)
