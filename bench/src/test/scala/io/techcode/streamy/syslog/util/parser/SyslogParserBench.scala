@@ -62,7 +62,7 @@ private object SyslogParserBench {
   val InputMalformed = ByteString("""4400672761""")
 
   val Rfc5424Complete: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Binding(
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
       facility = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Facility)),
       severity = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Severity)),
       timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp)),
@@ -72,15 +72,15 @@ private object SyslogParserBench {
       msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId)),
       structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData)),
       message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
-    ))
+    )))
 
 
   val Rfc5424Message: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Binding(
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
       message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
-    ))
+    )))
 
   val Rfc5424Failure: SourceTransformer = (pkt: ByteString) =>
-    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Binding())
+    SyslogParser.rfc5424(pkt, SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding()))
 
 }

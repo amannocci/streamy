@@ -38,28 +38,46 @@ lazy val commonSettings = Seq(
   )
 )
 
-lazy val core = (project in file("core"))
-  .settings(commonSettings, Packages.settings, Dependencies.testSettings, Publish.settings, Benchs.settings)
+lazy val core = project
+  .in(file("core"))
+  .settings(commonSettings, Packages.settings, Dependencies.testSettings, Publish.settings)
 
-lazy val `plugin-fingerprint` = (project in file("plugin-fingerprint"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings, Benchs.settings)
+lazy val bench = project
+  .in(file("bench"))
+  .dependsOn(
+    core % "test->test",
+    `plugin-fingerprint` % "test->test",
+    `plugin-syslog` % "test->test",
+    `plugin-json` % "test->test",
+    `plugin-metric` % "test->test",
+  )
+  .settings(Benchs.settings)
+  .enablePlugins(JmhPlugin)
+
+lazy val `plugin-fingerprint` = project
+  .in(file("plugin-fingerprint"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
 
-lazy val `plugin-syslog` = (project in file("plugin-syslog"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings, Benchs.settings)
+lazy val `plugin-syslog` = project
+  .in(file("plugin-syslog"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
 
-lazy val `plugin-json` = (project in file("plugin-json"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings, Benchs.settings)
+lazy val `plugin-json` = project
+  .in(file("plugin-json"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
 
-lazy val `plugin-metric` = (project in file("plugin-metric"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings, Benchs.settings)
+lazy val `plugin-metric` = project
+  .in(file("plugin-metric"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
 
-lazy val test = (project in file("test"))
+lazy val test = project
+  .in(file("test"))
   .settings(commonSettings, Publish.settings)
 
-lazy val root = (project in file("."))
+lazy val root = project
   .settings(Seq(publish := {}))
   .aggregate(core, `plugin-fingerprint`, `plugin-syslog`, `plugin-json`, `plugin-metric`, test)

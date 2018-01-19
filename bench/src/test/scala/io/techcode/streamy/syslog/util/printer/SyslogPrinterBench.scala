@@ -25,8 +25,8 @@ package io.techcode.streamy.syslog.util.printer
 
 import akka.util.ByteString
 import io.techcode.streamy.component.SinkTransformer
-import io.techcode.streamy.component.transformer.SyslogTransformer
-import io.techcode.streamy.component.transformer.SyslogTransformer.{Rfc3164, Rfc5424}
+import io.techcode.streamy.syslog.component.transformer.SyslogTransformer
+import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.{Rfc3164, Rfc5424}
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{BytesBinder, StringBinder}
 import org.openjdk.jmh.annotations.Benchmark

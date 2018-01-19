@@ -30,7 +30,7 @@ object Benchs {
 
   // Jmh settings
   val settings = Seq(
-    sourceDirectory in Jmh := new File((sourceDirectory in Test).value.getParentFile, "bench"),
+    sourceDirectory in Jmh := (sourceDirectory in Test).value,
     classDirectory in Jmh := (classDirectory in Test).value,
     dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
     compile in Jmh := (compile in Jmh).dependsOn(compile in Test).value,
