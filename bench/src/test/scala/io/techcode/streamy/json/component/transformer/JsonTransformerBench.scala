@@ -30,26 +30,33 @@ import org.openjdk.jmh.annotations.Benchmark
 /**
   * Json transformer bench.
   *
-  * Benchmark                                         Mode  Cnt        Score       Error  Units
-  * JsonTransformerBench.benchSimpleFailure          thrpt   20  3858517,923 ± 10333,010  ops/s
-  * JsonTransformerBench.benchSimpleSource           thrpt   20   620497,203 ±  1062,658  ops/s
-  * JsonTransformerBench.benchSimpleSourceAndTarget  thrpt   20   538585,604 ±   722,987  ops/s
+  * Benchmark                                         Mode  Cnt        Score      Error  Units
+  * JsonTransformerBench.benchSimpleFailure          thrpt   20  4892720,580 ± 6160,451  ops/s
+  * JsonTransformerBench.benchSimpleSource           thrpt   20   642601,605 ± 1092,502  ops/s
+  * JsonTransformerBench.benchSimpleSourceAndTarget  thrpt   20   559402,909 ± 1008,676  ops/s
   */
 class JsonTransformerBench {
 
-  @Benchmark def benchSimpleSource(): Json = {
-    new JsonTransformer(Config(source = Root / "message"))
-      .apply(Json.obj("message" -> """{"test":"test"}"""))
-  }
+  @Benchmark def benchSimpleSource(): Json =
+    JsonTransformerBench.Source(Json.obj("message" -> """{"test":"test"}"""))
 
-  @Benchmark def benchSimpleSourceAndTarget(): Json = {
-    new JsonTransformer(Config(source = Root / "message", target = Some(Root / "target")))
-      .apply(Json.obj("message" -> """{"test":"test"}"""))
-  }
+  @Benchmark def benchSimpleSourceAndTarget(): Json =
+    JsonTransformerBench.SourceAndTarget(Json.obj("message" -> """{"test":"test"}"""))
 
-  @Benchmark def benchSimpleFailure(): Json = {
-    new JsonTransformer(Config(source = Root / "message"))
-      .apply(Json.obj("message" -> "test"))
-  }
+  @Benchmark def benchSimpleFailure(): Json =
+    JsonTransformerBench.Failure(Json.obj("message" -> "test"))
+
+}
+
+/**
+  * Json transformer bench companion.
+  */
+private object JsonTransformerBench {
+
+  val Source = new JsonTransformer(Config(source = Root / "message"))
+
+  val SourceAndTarget = new JsonTransformer(Config(source = Root / "message", target = Some(Root / "target")))
+
+  val Failure = new JsonTransformer(Config(source = Root / "message"))
 
 }
