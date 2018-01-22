@@ -46,23 +46,23 @@ class PluginSpec extends TestKit(ActorSystem("PluginSpec"))
 
   "Plugin" can {
     "be started" in {
-      newPlugin()
+      create()
     }
 
     "be stopped" in {
-      newPlugin() ! Kill
+      create() ! Kill
     }
 
     "not receive message by default" in {
-      newPlugin() ! "test"
+      create() ! "test"
     }
 
     "can use it's data folder" in {
-      newPlugin()
+      create()
     }
   }
 
-  private def newPlugin(): ActorRef = {
+  private def create(): ActorRef = {
     val conf: Config = ConfigFactory.empty()
     val description: PluginDescription = PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
     val typed: Class[_] = classOf[Impl]

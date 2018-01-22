@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,30 +21,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package io.techcode.streamy.plugin
 
-import sbt._
-import sbt.Keys._
-import Dependencies._
+import akka.actor.{ActorRef, Props}
+import com.typesafe.config.{Config, ConfigFactory}
+import io.techcode.streamy.TestSystem
 
-name := name.value + "-test"
+import scala.reflect.io.Path
 
-// Custom resolvers
-resolvers ++= Seq(
-  "Techcode" at "https://nexus.techcode.io/repository/maven-public"
-)
+/**
+  * Helper for plugin test.
+  */
+class TestPlugin extends TestSystem {
 
-// Disable coverage for this module
-coverageEnabled := false
+  protected def create(typed: Class[_], conf: Config): ActorRef = {
+    val description: PluginDescription = PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
+    system.actorOf(Props(
+      typed,
+      materializer,
+      PluginData(
+        null,
+        description,
+        conf,
+        Path(".").toDirectory
+      )
+    ))
+  }
 
-// Building
-libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % scalaTestVersion,
-  "org.mockito" % "mockito-core" % mockitoVersion
-).map(_ % Compile)
-
-libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
-  "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
-).map(_ % akkaVersion % Compile)
-
-disablePlugins(AssemblyPlugin)
+}

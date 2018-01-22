@@ -58,25 +58,30 @@ lazy val `plugin-fingerprint` = project
   .in(file("plugin-fingerprint"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
+  .dependsOn(test % "test->test")
 
 lazy val `plugin-syslog` = project
   .in(file("plugin-syslog"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
+  .dependsOn(test % "test->test")
 
 lazy val `plugin-json` = project
   .in(file("plugin-json"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
+  .dependsOn(test % "test->test")
 
 lazy val `plugin-metric` = project
   .in(file("plugin-metric"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
+  .dependsOn(test % "test->test")
 
 lazy val test = project
   .in(file("test"))
   .settings(commonSettings, Publish.settings)
+  .dependsOn(core % "provided->compile")
 
 lazy val root = project
   .in(file("."))

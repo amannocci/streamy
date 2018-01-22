@@ -23,27 +23,17 @@
  */
 package io.techcode.streamy.json.component.transformer
 
-import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.ByteString
+import io.techcode.streamy.TestSystem
 import io.techcode.streamy.json.component.transformer.JsonTransformer.{Config, Mode}
 import io.techcode.streamy.util.json._
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
   * Json transformer spec.
   */
-class JsonTransformerSpec extends TestKit(ActorSystem("JsonTransformerSpec"))
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
+class JsonTransformerSpec extends TestSystem {
 
   "Json transformer" should {
     "be used in a flow" in {

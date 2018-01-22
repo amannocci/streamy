@@ -23,26 +23,16 @@
  */
 package io.techcode.streamy.fingerprint.component.transformer
 
-import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
-import akka.testkit.{ImplicitSender, TestKit}
+import io.techcode.streamy.TestSystem
 import io.techcode.streamy.fingerprint.component.transformer.FingerprintTransformer.Config
 import io.techcode.streamy.util.json._
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
   * Fingerprint transformer spec.
   */
-class FingerprintTransformerSpec extends TestKit(ActorSystem("FingerprintTransformerSpec"))
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
+class FingerprintTransformerSpec extends TestSystem {
 
   "Fingerprint transformer" should {
     "be used in a flow" in {

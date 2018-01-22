@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,30 +21,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package io.techcode.streamy.metric
 
-import sbt._
-import sbt.Keys._
-import Dependencies._
+import akka.actor.Kill
+import com.typesafe.config.{Config, ConfigFactory}
+import io.techcode.streamy.plugin.TestPlugin
 
-name := name.value + "-test"
+class MetricPluginSpec extends TestPlugin {
 
-// Custom resolvers
-resolvers ++= Seq(
-  "Techcode" at "https://nexus.techcode.io/repository/maven-public"
-)
+  "Plugin" can {
+    "be started" in {
+      create(classOf[MetricPlugin], MetricPluginSpec.Conf)
+    }
 
-// Disable coverage for this module
-coverageEnabled := false
+    "be stopped" in {
+      create(classOf[MetricPlugin], MetricPluginSpec.Conf) ! Kill
+    }
+  }
 
-// Building
-libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % scalaTestVersion,
-  "org.mockito" % "mockito-core" % mockitoVersion
-).map(_ % Compile)
+}
 
-libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
-  "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
-).map(_ % akkaVersion % Compile)
+private object MetricPluginSpec {
 
-disablePlugins(AssemblyPlugin)
+  val Conf: Config = ConfigFactory.parseString(
+    """
+      |jvm {
+      |  initial-delay = 1ms
+      |  interval = 10ms
+      |  embedded = true
+      |}
+    """.stripMargin)
+
+}

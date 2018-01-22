@@ -23,10 +23,8 @@
  */
 package io.techcode.streamy.metric.component.source
 
-import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{Config, ConfigFactory}
+import io.techcode.streamy.TestSystem
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest._
@@ -39,14 +37,7 @@ import org.slf4j.Logger
 /**
   * Metric source spec.
   */
-class MetricSourceSpec extends TestKit(ActorSystem("MetricSourceSpec"))
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar with OneInstancePerTest with Eventually {
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
+class MetricSourceSpec extends TestSystem with MockitoSugar with OneInstancePerTest with Eventually {
 
   // Logger
   val loggerMock: Logger = mock[Logger]

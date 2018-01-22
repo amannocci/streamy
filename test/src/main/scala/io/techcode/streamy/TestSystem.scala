@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,30 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package io.techcode.streamy
 
-import sbt._
-import sbt.Keys._
-import Dependencies._
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+import akka.testkit.{ImplicitSender, TestKit}
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-name := name.value + "-test"
+/**
+  * Helper for system test.
+  */
+class TestSystem extends TestKit(ActorSystem())
+  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
-// Custom resolvers
-resolvers ++= Seq(
-  "Techcode" at "https://nexus.techcode.io/repository/maven-public"
-)
+  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
 
-// Disable coverage for this module
-coverageEnabled := false
+  override def afterAll {
+    TestKit.shutdownActorSystem(system, verifySystemShutdown = true)
+  }
 
-// Building
-libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % scalaTestVersion,
-  "org.mockito" % "mockito-core" % mockitoVersion
-).map(_ % Compile)
-
-libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
-  "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
-).map(_ % akkaVersion % Compile)
-
-disablePlugins(AssemblyPlugin)
+}

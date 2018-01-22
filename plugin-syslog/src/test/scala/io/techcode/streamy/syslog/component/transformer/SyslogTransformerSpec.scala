@@ -26,28 +26,18 @@ package io.techcode.streamy.syslog.component.transformer
 import java.net.InetAddress
 import java.nio.charset.StandardCharsets
 
-import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.ByteString
+import io.techcode.streamy.TestSystem
 import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{IntBinder, StringBinder}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
   * Syslog transformer spec.
   */
-class SyslogTransformerSpec extends TestKit(ActorSystem("SyslogTransformerSpec"))
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
+class SyslogTransformerSpec extends TestSystem {
 
   "Syslog transformer" should {
     "in" should {
