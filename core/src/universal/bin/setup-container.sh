@@ -20,8 +20,8 @@ core_limit() {
   fi
 
   # Read cgroups limit
-  local cpu_period_file=/sys/fs/cgroup/cpu/cpu.cfs_period_us
-  local cpu_quota_file=/sys/fs/cgroup/cpu/cpu.cfs_quota_us
+  local cpu_period_file=${SYS_CPU_PERIOD_FILE:-/sys/fs/cgroup/cpu/cpu.cfs_period_us}
+  local cpu_quota_file=${SYS_CPU_QUOTA_FILE:-/sys/fs/cgroup/cpu/cpu.cfs_quota_us}
   local cpu_period cpu_quota
 
   # cfs_quota_us == -1 --> no restrictions
@@ -45,8 +45,8 @@ memory_limit() {
   local mem_limit="$(awk '/MemTotal/ {printf "%.0f", $2*1024}' /proc/meminfo)"
 
   # Read cgroups limit
-  local max_mem_unbounded_file=/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes
-  local mem_file=/sys/fs/cgroup/memory/memory.limit_in_bytes
+  local max_mem_unbounded_file=${SYS_MAX_MEM_UNBOUNDED_FILE:-/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes}
+  local mem_file=${SYS_MEM_FILE:-/sys/fs/cgroup/memory/memory.limit_in_bytes}
   local max_mem max_mem_unbounded
 
   # High number which is the max limit unti which memory is supposed to be unbounded.
