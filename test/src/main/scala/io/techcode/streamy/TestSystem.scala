@@ -31,7 +31,7 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 /**
   * Helper for system test.
   */
-class TestSystem extends TestKit(ActorSystem())
+abstract class TestSystem extends TestKit(ActorSystem())
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
   implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))

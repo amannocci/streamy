@@ -23,23 +23,22 @@
  */
 package io.techcode.streamy.fingerprint.component.transformer
 
-import akka.stream.scaladsl.Source
-import akka.stream.testkit.scaladsl.TestSink
-import io.techcode.streamy.TestSystem
+import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.fingerprint.component.transformer.FingerprintTransformer.Config
 import io.techcode.streamy.util.json._
 
 /**
   * Fingerprint transformer spec.
   */
-class FingerprintTransformerSpec extends TestSystem {
+class FingerprintTransformerSpec extends TestTransformer {
 
   "Fingerprint transformer" should {
     "be used in a flow" in {
-      Source.single(Json.parse("""{"message":"test"}""").getOrElse(JsNull))
-        .via(FingerprintTransformer.transformer(Config(source = Root / "message", hashing = "md5")))
-        .runWith(TestSink.probe[Json])
-        .requestNext() should equal(Json.parse("""{"message":"098f6bcd4621d373cade4e832627b4f6"}""").getOrElse(JsNull))
+      except(
+        FingerprintTransformer.transformer(Config(source = Root / "message", hashing = "md5")),
+        Json.parse("""{"message":"test"}""").getOrElse(JsNull),
+        Json.parse("""{"message":"098f6bcd4621d373cade4e832627b4f6"}""").getOrElse(JsNull)
+      )
     }
 
     "transform correctly a packet inplace with md5 hashing" in {

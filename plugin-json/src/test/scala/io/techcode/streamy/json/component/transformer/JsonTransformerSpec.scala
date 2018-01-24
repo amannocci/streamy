@@ -23,24 +23,23 @@
  */
 package io.techcode.streamy.json.component.transformer
 
-import akka.stream.scaladsl.Source
-import akka.stream.testkit.scaladsl.TestSink
 import akka.util.ByteString
-import io.techcode.streamy.TestSystem
+import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.json.component.transformer.JsonTransformer.{Config, Mode}
 import io.techcode.streamy.util.json._
 
 /**
   * Json transformer spec.
   */
-class JsonTransformerSpec extends TestSystem {
+class JsonTransformerSpec extends TestTransformer {
 
   "Json transformer" should {
     "be used in a flow" in {
-      Source.single(Json.obj("message" -> """{"message":"foobar"}"""))
-        .via(JsonTransformer.transformer(Config(Root / "message")))
-        .runWith(TestSink.probe[Json])
-        .requestNext() should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
+      except(
+        JsonTransformer.transformer(Config(Root / "message")),
+        Json.obj("message" -> """{"message":"foobar"}"""),
+        Json.obj("message" -> Json.obj("message" -> "foobar"))
+      )
     }
 
     "deserialize correctly a packet inplace from string" in {

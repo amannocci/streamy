@@ -32,7 +32,7 @@ import scala.reflect.io.Path
 /**
   * Helper for plugin test.
   */
-class TestPlugin extends TestSystem {
+abstract class TestPlugin extends TestSystem {
 
   protected def create(typed: Class[_], conf: Config): ActorRef = {
     val description: PluginDescription = PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
