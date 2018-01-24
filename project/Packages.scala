@@ -23,11 +23,12 @@
  */
 
 import com.typesafe.sbt.packager.NativePackagerKeys
+import com.typesafe.sbt.packager.archetypes.JavaServerAppKeys
 import com.typesafe.sbt.packager.debian.DebianKeys
 import com.typesafe.sbt.packager.docker.DockerKeys
 import com.typesafe.sbt.packager.universal.UniversalKeys
 
-object Packages extends DockerKeys with DebianKeys with UniversalKeys with NativePackagerKeys {
+object Packages extends DockerKeys with JavaServerAppKeys with DebianKeys with UniversalKeys with NativePackagerKeys {
 
   // Common settings
   val commonSettings = Seq(
@@ -37,7 +38,8 @@ object Packages extends DockerKeys with DebianKeys with UniversalKeys with Nativ
   // Debian settings
   val debianSettings = Seq(
     packageSummary := "High Performance events processing",
-    packageDescription := "Transport and process your logs, events, or other data"
+    packageDescription := "Transport and process your logs, events, or other data",
+    daemonStdoutLogFile := Some("streamy.log")
   )
 
   // Docker settings
