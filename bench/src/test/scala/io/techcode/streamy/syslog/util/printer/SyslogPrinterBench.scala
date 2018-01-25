@@ -35,10 +35,10 @@ import org.openjdk.jmh.annotations.Benchmark
   * Syslog printer bench.
   *
   * Benchmark                            Mode  Cnt        Score      Error  Units
-  * SyslogPrinterBench.rfc3164Complete  thrpt   20  1039837,588 ± 1659,463  ops/s
-  * SyslogPrinterBench.rfc3164Message   thrpt   20  1703064,583 ± 1944,598  ops/s
-  * SyslogPrinterBench.rfc5424Complete  thrpt   20   869605,047 ±  745,519  ops/s
-  * SyslogPrinterBench.rfc5424Message   thrpt   20  1575703,087 ± 2507,885  ops/s
+  * SyslogPrinterBench.rfc3164Complete  thrpt   20  1246891,510 ± 1138,822  ops/s
+  * SyslogPrinterBench.rfc3164Message   thrpt   20  3441691,378 ± 3219,656  ops/s
+  * SyslogPrinterBench.rfc5424Complete  thrpt   20   976529,815 ± 1165,220  ops/s
+  * SyslogPrinterBench.rfc5424Message   thrpt   20  2746615,795 ± 4743,767  ops/s
   */
 class SyslogPrinterBench {
 
@@ -81,37 +81,41 @@ private object SyslogPrinterBench {
   )
 
   val Rfc5424Complete: SinkTransformer = (pkt: Json) =>
-    SyslogPrinter.rfc5424(pkt, Rfc5424.Binding(
-      facility = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Facility)),
-      severity = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Severity)),
-      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp)),
-      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname)),
-      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName)),
-      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId)),
-      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId)),
-      structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData)),
-      message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
-    ))
+    SyslogPrinter.rfc5424(pkt, Rfc5424.Config(
+      binding = Rfc5424.Binding(
+        facility = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Facility)),
+        severity = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Severity)),
+        timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp)),
+        hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname)),
+        appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName)),
+        procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId)),
+        msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId)),
+        structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData)),
+        message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
+      )))
 
   val Rfc5424Message: SinkTransformer = (pkt: Json) =>
-    SyslogPrinter.rfc5424(pkt, Rfc5424.Binding(
-      message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
-    ))
+    SyslogPrinter.rfc5424(pkt, Rfc5424.Config(
+      binding = Rfc5424.Binding(
+        message = Some(BytesBinder(SyslogTransformer.Rfc5424.Id.Message))
+      )))
 
   val Rfc3164Complete: SinkTransformer = (pkt: Json) =>
-    SyslogPrinter.rfc3164(pkt, Rfc3164.Binding(
-      facility = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Facility)),
-      severity = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Severity)),
-      timestamp = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp)),
-      hostname = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Hostname)),
-      appName = Some(StringBinder(SyslogTransformer.Rfc3164.Id.AppName)),
-      procId = Some(StringBinder(SyslogTransformer.Rfc3164.Id.ProcId)),
-      message = Some(BytesBinder(SyslogTransformer.Rfc3164.Id.Message))
-    ))
+    SyslogPrinter.rfc3164(pkt, Rfc3164.Config(
+      binding = Rfc3164.Binding(
+        facility = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Facility)),
+        severity = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Severity)),
+        timestamp = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp)),
+        hostname = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Hostname)),
+        appName = Some(StringBinder(SyslogTransformer.Rfc3164.Id.AppName)),
+        procId = Some(StringBinder(SyslogTransformer.Rfc3164.Id.ProcId)),
+        message = Some(BytesBinder(SyslogTransformer.Rfc3164.Id.Message))
+      )))
 
   val Rfc3164Message: SinkTransformer = (pkt: Json) =>
-    SyslogPrinter.rfc3164(pkt, Rfc3164.Binding(
-      message = Some(BytesBinder(SyslogTransformer.Rfc3164.Id.Message))
-    ))
+    SyslogPrinter.rfc3164(pkt, Rfc3164.Config(
+      binding = Rfc3164.Binding(
+        message = Some(BytesBinder(SyslogTransformer.Rfc3164.Id.Message))
+      )))
 
 }
