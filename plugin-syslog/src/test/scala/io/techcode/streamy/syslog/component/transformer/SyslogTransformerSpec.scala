@@ -26,8 +26,11 @@ package io.techcode.streamy.syslog.component.transformer
 import java.net.InetAddress
 import java.nio.charset.StandardCharsets
 
+import akka.NotUsed
+import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
+import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Framing
 import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{IntBinder, StringBinder}
@@ -40,268 +43,107 @@ class SyslogTransformerSpec extends TestTransformer {
   "Syslog transformer" should {
     "in" should {
       "Rfc5424" should {
-        "handle correctly simple syslog message in strict mode" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureAllStrict),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(
-              SyslogTransformer.Rfc5424.Id.Facility -> 4,
-              SyslogTransformer.Rfc5424.Id.Severity -> 2,
-              SyslogTransformer.Rfc5424.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
-              SyslogTransformer.Rfc5424.Id.Hostname -> "mymachine.example.com",
-              SyslogTransformer.Rfc5424.Id.AppName -> "su",
-              SyslogTransformer.Rfc5424.Id.ProcId -> "77042",
-              SyslogTransformer.Rfc5424.Id.MsgId -> "ID47",
-              SyslogTransformer.Rfc5424.Id.StructData -> """[sigSig ver="1"]""",
-              SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
+        "with delimiter" should {
+          "handle correctly simple syslog message in strict mode" in {
+            except(
+              SyslogTransformerSpec.Rfc5424.Transformer.InStrictDelimiter,
+              SyslogTransformerSpec.Rfc5424.Input.InSimpleDelimiter,
+              SyslogTransformerSpec.Rfc5424.Output.InSimple
             )
-          )
-        }
+          }
 
-        "handle correctly simple syslog message in lenient mode" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureAllLenient),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(
-              SyslogTransformer.Rfc5424.Id.Facility -> 4,
-              SyslogTransformer.Rfc5424.Id.Severity -> 2,
-              SyslogTransformer.Rfc5424.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
-              SyslogTransformer.Rfc5424.Id.Hostname -> "mymachine.example.com",
-              SyslogTransformer.Rfc5424.Id.AppName -> "su",
-              SyslogTransformer.Rfc5424.Id.ProcId -> "77042",
-              SyslogTransformer.Rfc5424.Id.MsgId -> "ID47",
-              SyslogTransformer.Rfc5424.Id.StructData -> """[sigSig ver="1"]""",
-              SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
+          "handle correctly simple syslog message in lenient mode" in {
+            except(
+              SyslogTransformerSpec.Rfc5424.Transformer.InLenientDelimiter,
+              SyslogTransformerSpec.Rfc5424.Input.InSimpleDelimiter,
+              SyslogTransformerSpec.Rfc5424.Output.InSimple
             )
-          )
+          }
+
+          "handle correctly alternative syslog message" in {
+            except(
+              SyslogTransformerSpec.Rfc5424.Transformer.InLenientDelimiter,
+              SyslogTransformerSpec.Rfc5424.Input.InAlternativeDelimiter,
+              SyslogTransformerSpec.Rfc5424.Output.InAlternative
+            )
+          }
+
+          "throw an error when syslog message is malformed" in {
+            exceptError(
+              SyslogTransformerSpec.Rfc5424.Transformer.InLenientDelimiter,
+              SyslogTransformerSpec.Rfc5424.Input.InMalformedDelimiter
+            )
+          }
         }
 
-        "capture only facility when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureFacility),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.Facility -> 4)
-          )
-        }
+        "with count" should {
+          "handle correctly simple syslog message in strict mode" in {
+            except(
+              SyslogTransformerSpec.Rfc5424.Transformer.InStrictCount,
+              SyslogTransformerSpec.Rfc5424.Input.InSimpleCount,
+              SyslogTransformerSpec.Rfc5424.Output.InSimple
+            )
+          }
 
-        "capture only severity when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureSeverity),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.Severity -> 2)
-          )
-        }
+          "handle correctly simple syslog message in lenient mode" in {
+            except(
+              SyslogTransformerSpec.Rfc5424.Transformer.InLenientCount,
+              SyslogTransformerSpec.Rfc5424.Input.InSimpleCount,
+              SyslogTransformerSpec.Rfc5424.Output.InSimple
+            )
+          }
 
-        "capture only timestamp when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureTimestamp),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.Timestamp -> "2003-10-11T22:14:15.003Z")
-          )
-        }
+          "handle correctly alternative syslog message" in {
+            except(
+              SyslogTransformerSpec.Rfc5424.Transformer.InLenientCount,
+              SyslogTransformerSpec.Rfc5424.Input.InAlternativeCount,
+              SyslogTransformerSpec.Rfc5424.Output.InAlternative
+            )
+          }
 
-        "capture only alternative timestamp when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureTimestamp),
-            SyslogTransformerSpec.Rfc5424.InputAlternative,
-            Json.obj(SyslogTransformer.Rfc5424.Id.Timestamp -> "1985-04-12T19:20:50.52-04:00")
-          )
-        }
-
-        "capture only hostname when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureHostname),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.Hostname -> "mymachine.example.com")
-          )
-        }
-
-        "capture only app when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureApp),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.AppName -> "su")
-          )
-        }
-
-        "capture only proc when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureProc),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.ProcId -> "77042")
-          )
-        }
-
-        "capture only msg when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureMsg),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.MsgId -> "ID47")
-          )
-        }
-
-        "capture only struct data when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureStructData),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.StructData -> """[sigSig ver="1"]""")
-          )
-        }
-
-        "capture only message when set" in {
-          except(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureMessage),
-            SyslogTransformerSpec.Rfc5424.InputSimple,
-            Json.obj(SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8")
-          )
-        }
-
-        "throw an error when syslog message is malformed" in {
-          exceptError(
-            SyslogTransformer.inRfc5424(SyslogTransformerSpec.Rfc5424.CaptureAllLenient),
-            SyslogTransformerSpec.Rfc5424.InputMalformed
-          )
+          "throw an error when syslog message is malformed" in {
+            exceptError(
+              SyslogTransformerSpec.Rfc5424.Transformer.InLenientCount,
+              SyslogTransformerSpec.Rfc5424.Input.InMalformedCount
+            )
+          }
         }
       }
     }
 
     "out" should {
       "Rfc3164" should {
-        "format correctly simple syslog message" in {
+        "with frame delimiter" in {
           except(
-            SyslogTransformer.outRfc3164(SyslogTransformerSpec.Rfc3164.FormatAll),
-            SyslogTransformerSpec.Rfc3164.OutputSimple,
-            ByteString("<34>Aug 24 05:34:00 mymachine.example.com su[77042]: 'su root' failed for lonvick on /dev/pts/8\n")
+            SyslogTransformerSpec.Rfc3164.Transformer.OutDelimiter,
+            SyslogTransformerSpec.Rfc3164.Input.OutSimple,
+            SyslogTransformerSpec.Rfc3164.Output.OutSimpleDelimiter
           )
         }
 
-        "format correctly when only facility is set" in {
+        "with frame count" in {
           except(
-            SyslogTransformer.outRfc3164(SyslogTransformerSpec.Rfc3164.FormatFacility),
-            SyslogTransformerSpec.Rfc3164.OutputSimple,
-            ByteString(s"<38>Jan 1 00:00:00.000 ${SyslogTransformerSpec.Hostname} streamy[1]\n")
-          )
-        }
-
-        "format correctly when only severity is set" in {
-          except(
-            SyslogTransformer.outRfc3164(SyslogTransformerSpec.Rfc3164.FormatSeverity),
-            SyslogTransformerSpec.Rfc3164.OutputSimple,
-            ByteString(s"<26>Jan 1 00:00:00.000 ${SyslogTransformerSpec.Hostname} streamy[1]\n")
-          )
-        }
-
-        "format correctly when only timestamp is set" in {
-          except(
-            SyslogTransformer.outRfc3164(SyslogTransformerSpec.Rfc3164.FormatTimestamp),
-            SyslogTransformerSpec.Rfc3164.OutputSimple,
-            ByteString(s"<30>Aug 24 05:34:00 ${SyslogTransformerSpec.Hostname} streamy[1]\n")
-          )
-        }
-
-        "format correctly when only hostname is set" in {
-          except(
-            SyslogTransformer.outRfc3164(SyslogTransformerSpec.Rfc3164.FormatHostname),
-            SyslogTransformerSpec.Rfc3164.OutputSimple,
-            ByteString("<30>Jan 1 00:00:00.000 mymachine.example.com streamy[1]\n")
-          )
-        }
-
-        "format correctly when only app is set" in {
-          except(
-            SyslogTransformer.outRfc3164(SyslogTransformerSpec.Rfc3164.FormatApp),
-            SyslogTransformerSpec.Rfc3164.OutputSimple,
-            ByteString(s"<30>Jan 1 00:00:00.000 ${SyslogTransformerSpec.Hostname} su[1]\n")
-          )
-        }
-
-        "format correctly when only proc is set" in {
-          except(
-            SyslogTransformer.outRfc3164(SyslogTransformerSpec.Rfc3164.FormatProc),
-            SyslogTransformerSpec.Rfc3164.OutputSimple,
-            ByteString(s"<30>Jan 1 00:00:00.000 ${SyslogTransformerSpec.Hostname} streamy[77042]\n")
-          )
-        }
-
-        "format correctly when only message is set" in {
-          except(
-            SyslogTransformer.outRfc3164(SyslogTransformerSpec.Rfc3164.FormatMessage),
-            SyslogTransformerSpec.Rfc3164.OutputSimple,
-            ByteString(s"<30>Jan 1 00:00:00.000 ${SyslogTransformerSpec.Hostname} streamy[1]: 'su root' failed for lonvick on /dev/pts/8\n")
+            SyslogTransformerSpec.Rfc3164.Transformer.OutCount,
+            SyslogTransformerSpec.Rfc3164.Input.OutSimple,
+            SyslogTransformerSpec.Rfc3164.Output.OutSimpleCount
           )
         }
       }
 
       "Rfc5424" should {
-        "format correctly simple syslog message" in {
+        "with frame delimiter" in {
           except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatAll),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 - 'su root' failed for lonvick on /dev/pts/8")
+            SyslogTransformerSpec.Rfc5424.Transformer.OutDelimiter,
+            SyslogTransformerSpec.Rfc5424.Input.OutSimple,
+            SyslogTransformerSpec.Rfc5424.Output.OutSimpleDelimiter
           )
         }
 
-        "format correctly when only facility is set" in {
+        "with frame count" in {
           except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatFacility),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<38>1 1970-01-01T00:00:00.000Z - - - - -")
-          )
-        }
-
-        "format correctly when only severity is set" in {
-          except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatSeverity),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<26>1 1970-01-01T00:00:00.000Z - - - - -")
-          )
-        }
-
-        "format correctly when only timestamp is set" in {
-          except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatTimestamp),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<30>1 2003-10-11T22:14:15.003Z - - - - -")
-          )
-        }
-
-        "format correctly when only hostname is set" in {
-          except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatHostname),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<30>1 1970-01-01T00:00:00.000Z mymachine.example.com - - - -")
-          )
-        }
-
-        "format correctly when only app is set" in {
-          except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatApp),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<30>1 1970-01-01T00:00:00.000Z - su - - -")
-          )
-        }
-
-        "format correctly when only proc is set" in {
-          except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatProc),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<30>1 1970-01-01T00:00:00.000Z - - 77042 - -")
-          )
-        }
-
-        "format correctly when only msgId is set" in {
-          except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatMsgId),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<30>1 1970-01-01T00:00:00.000Z - - - ID47 -")
-          )
-        }
-
-        "format correctly when only message is set" in {
-          except(
-            SyslogTransformer.outRfc5424(SyslogTransformerSpec.Rfc5424.FormatMessage),
-            SyslogTransformerSpec.Rfc5424.OutputSimple,
-            ByteString("<30>1 1970-01-01T00:00:00.000Z - - - - - 'su root' failed for lonvick on /dev/pts/8")
+            SyslogTransformerSpec.Rfc5424.Transformer.OutCount,
+            SyslogTransformerSpec.Rfc5424.Input.OutSimple,
+            SyslogTransformerSpec.Rfc5424.Output.OutSimpleCount
           )
         }
       }
@@ -314,73 +156,98 @@ object SyslogTransformerSpec {
 
   val Hostname: String = InetAddress.getLocalHost.getHostName
 
+  def framingDelimiter(data: ByteString): ByteString = {
+    data ++ ByteString('\n')
+  }
+
+  def framingCount(data: ByteString): ByteString = {
+    val count = ByteString(data.length.toString)
+    count ++ ByteString(' ') ++ data
+  }
+
   object Rfc3164 {
 
-    val FormatAll = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      facility = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Facility)),
-      severity = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Severity)),
-      timestamp = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp, StandardCharsets.US_ASCII)),
-      hostname = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Hostname, StandardCharsets.US_ASCII)),
-      appName = Some(StringBinder(SyslogTransformer.Rfc3164.Id.AppName, StandardCharsets.US_ASCII)),
-      procId = Some(StringBinder(SyslogTransformer.Rfc3164.Id.ProcId, StandardCharsets.US_ASCII)),
-      message = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Message))
-    ))
-    val FormatFacility = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      facility = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Facility))
-    ))
-    val FormatSeverity = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      severity = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Severity))
-    ))
-    val FormatTimestamp = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      timestamp = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp, StandardCharsets.US_ASCII))
-    ))
-    val FormatHostname = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      hostname = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Hostname, StandardCharsets.US_ASCII))
-    ))
-    val FormatApp = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      appName = Some(StringBinder(SyslogTransformer.Rfc3164.Id.AppName, StandardCharsets.US_ASCII))
-    ))
-    val FormatProc = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      procId = Some(StringBinder(SyslogTransformer.Rfc3164.Id.ProcId, StandardCharsets.US_ASCII))
-    ))
-    val FormatMessage = SyslogTransformer.Rfc3164.Config(binding = SyslogTransformer.Rfc3164.Binding(
-      message = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Message))
-    ))
+    object Input {
 
-    val OutputSimple: Json = Json.obj(
-      SyslogTransformer.Rfc3164.Id.Facility -> 4,
-      SyslogTransformer.Rfc3164.Id.Severity -> 2,
-      SyslogTransformer.Rfc3164.Id.Timestamp -> "Aug 24 05:34:00",
-      SyslogTransformer.Rfc3164.Id.Hostname -> "mymachine.example.com",
-      SyslogTransformer.Rfc3164.Id.AppName -> "su",
-      SyslogTransformer.Rfc3164.Id.ProcId -> "77042",
-      SyslogTransformer.Rfc3164.Id.MsgId -> "ID47",
-      SyslogTransformer.Rfc3164.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
-    )
+      val OutSimple: Json = Json.obj(
+        SyslogTransformer.Rfc3164.Id.Facility -> 4,
+        SyslogTransformer.Rfc3164.Id.Severity -> 2,
+        SyslogTransformer.Rfc3164.Id.Timestamp -> "Aug 24 05:34:00",
+        SyslogTransformer.Rfc3164.Id.Hostname -> "mymachine.example.com",
+        SyslogTransformer.Rfc3164.Id.AppName -> "su",
+        SyslogTransformer.Rfc3164.Id.ProcId -> "77042",
+        SyslogTransformer.Rfc3164.Id.MsgId -> "ID47",
+        SyslogTransformer.Rfc3164.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
+      )
+
+    }
+
+    object Transformer {
+      val Binding = SyslogTransformer.Rfc3164.Binding(
+        facility = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Facility)),
+        severity = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Severity)),
+        timestamp = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp, StandardCharsets.US_ASCII)),
+        hostname = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Hostname, StandardCharsets.US_ASCII)),
+        appName = Some(StringBinder(SyslogTransformer.Rfc3164.Id.AppName, StandardCharsets.US_ASCII)),
+        procId = Some(StringBinder(SyslogTransformer.Rfc3164.Id.ProcId, StandardCharsets.US_ASCII)),
+        message = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Message))
+      )
+
+      val OutDelimiter: Flow[Json, ByteString, NotUsed] = SyslogTransformer.outRfc3164(SyslogTransformer.Rfc3164.Config(
+        binding = Binding
+      ))
+
+      val OutCount: Flow[Json, ByteString, NotUsed] = SyslogTransformer.outRfc3164(SyslogTransformer.Rfc3164.Config(
+        framing = Framing.Count,
+        binding = Binding
+      ))
+
+    }
+
+    object Output {
+
+      val OutSimple: ByteString = ByteString("<34>Aug 24 05:34:00 mymachine.example.com su[77042]: 'su root' failed for lonvick on /dev/pts/8")
+
+      val OutSimpleDelimiter: ByteString = framingDelimiter(OutSimple)
+
+      val OutSimpleCount: ByteString = framingCount(OutSimple)
+
+    }
 
   }
 
   object Rfc5424 {
 
-    val InputSimple = ByteString("""<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
-    val InputAlternative = ByteString("""<34>1 1985-04-12T19:20:50.52-04:00 mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
-    val InputMalformed = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
+    object Input {
 
-    val CaptureAllStrict = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility)),
-      severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity)),
-      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII)),
-      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII)),
-      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII)),
-      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII)),
-      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII)),
-      structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII)),
-      message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
-    ))
+      val InSimple: ByteString = ByteString("""<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
+      val InSimpleDelimiter: ByteString = framingDelimiter(InSimple)
+      val InSimpleCount: ByteString = framingCount(InSimple)
 
-    val CaptureAllLenient = SyslogTransformer.Rfc5424.Config(
-      mode = Mode.Lenient,
-      binding = SyslogTransformer.Rfc5424.Binding(
+      val InAlternative: ByteString = ByteString("""<34>1 1985-04-12T19:20:50.52-04:00 mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
+      val InAlternativeDelimiter: ByteString = framingDelimiter(InAlternative)
+      val InAlternativeCount: ByteString = framingCount(InAlternative)
+
+      val InMalformed: ByteString = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
+      val InMalformedDelimiter: ByteString = framingDelimiter(InMalformed)
+      val InMalformedCount: ByteString = framingCount(InMalformed)
+
+      val OutSimple: Json = Json.obj(
+        SyslogTransformer.Rfc5424.Id.Facility -> 4,
+        SyslogTransformer.Rfc5424.Id.Severity -> 2,
+        SyslogTransformer.Rfc5424.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
+        SyslogTransformer.Rfc5424.Id.Hostname -> "mymachine.example.com",
+        SyslogTransformer.Rfc5424.Id.AppName -> "su",
+        SyslogTransformer.Rfc5424.Id.ProcId -> "77042",
+        SyslogTransformer.Rfc5424.Id.MsgId -> "ID47",
+        SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
+      )
+
+    }
+
+    object Transformer {
+
+      private val Binding = SyslogTransformer.Rfc5424.Binding(
         facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility)),
         severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity)),
         timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII)),
@@ -390,80 +257,62 @@ object SyslogTransformerSpec {
         msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII)),
         structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII)),
         message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
+      )
+
+      val InStrictDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.inRfc5424(SyslogTransformer.Rfc5424.Config(
+        binding = Binding
       ))
-    val CaptureFacility = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility))
-    ))
-    val CaptureSeverity = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity))
-    ))
-    val CaptureTimestamp = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII))
-    ))
-    val CaptureHostname = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII))
-    ))
-    val CaptureApp = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII))
-    ))
-    val CaptureProc = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII))
-    ))
-    val CaptureMsg = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII))
-    ))
-    val CaptureStructData = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII))
-    ))
-    val CaptureMessage = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
-    ))
 
-    val FormatAll = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility)),
-      severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity)),
-      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII)),
-      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII)),
-      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII)),
-      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII)),
-      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII)),
-      message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
-    ))
-    val FormatFacility = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility))
-    ))
-    val FormatSeverity = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity))
-    ))
-    val FormatTimestamp = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII))
-    ))
-    val FormatHostname = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII))
-    ))
-    val FormatApp = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII))
-    ))
-    val FormatProc = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII))
-    ))
-    val FormatMsgId = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII))
-    ))
-    val FormatMessage = SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
-    ))
+      val InLenientDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.inRfc5424(SyslogTransformer.Rfc5424.Config(
+        mode = Mode.Lenient,
+        binding = Binding
+      ))
 
-    val OutputSimple: Json = Json.obj(
-      SyslogTransformer.Rfc5424.Id.Facility -> 4,
-      SyslogTransformer.Rfc5424.Id.Severity -> 2,
-      SyslogTransformer.Rfc5424.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
-      SyslogTransformer.Rfc5424.Id.Hostname -> "mymachine.example.com",
-      SyslogTransformer.Rfc5424.Id.AppName -> "su",
-      SyslogTransformer.Rfc5424.Id.ProcId -> "77042",
-      SyslogTransformer.Rfc5424.Id.MsgId -> "ID47",
-      SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
-    )
+      val InStrictCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.inRfc5424(SyslogTransformer.Rfc5424.Config(
+        framing = Framing.Count,
+        binding = Binding
+      ))
+
+      val InLenientCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.inRfc5424(SyslogTransformer.Rfc5424.Config(
+        mode = Mode.Lenient,
+        framing = Framing.Count,
+        binding = Binding
+      ))
+
+      val OutDelimiter: Flow[Json, ByteString, NotUsed] = SyslogTransformer.outRfc5424(SyslogTransformer.Rfc5424.Config(
+        binding = Binding
+      ))
+
+      val OutCount: Flow[Json, ByteString, NotUsed] = SyslogTransformer.outRfc5424(SyslogTransformer.Rfc5424.Config(
+        framing = Framing.Count,
+        binding = Binding
+      ))
+
+    }
+
+    object Output {
+
+      val InSimple: Json = Json.obj(
+        SyslogTransformer.Rfc5424.Id.Facility -> 4,
+        SyslogTransformer.Rfc5424.Id.Severity -> 2,
+        SyslogTransformer.Rfc5424.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
+        SyslogTransformer.Rfc5424.Id.Hostname -> "mymachine.example.com",
+        SyslogTransformer.Rfc5424.Id.AppName -> "su",
+        SyslogTransformer.Rfc5424.Id.ProcId -> "77042",
+        SyslogTransformer.Rfc5424.Id.MsgId -> "ID47",
+        SyslogTransformer.Rfc5424.Id.StructData -> """[sigSig ver="1"]""",
+        SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
+      )
+
+      val InAlternative: Json = InSimple.patch(Replace(Root / SyslogTransformer.Rfc5424.Id.Timestamp, "1985-04-12T19:20:50.52-04:00")).get
+
+      val OutSimple: ByteString = ByteString("<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 - 'su root' failed for lonvick on /dev/pts/8")
+
+      val OutSimpleDelimiter: ByteString = framingDelimiter(OutSimple)
+
+      val OutSimpleCount: ByteString = framingCount(OutSimple)
+
+    }
 
   }
 

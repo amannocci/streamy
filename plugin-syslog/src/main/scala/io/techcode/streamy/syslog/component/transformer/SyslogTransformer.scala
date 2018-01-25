@@ -24,10 +24,11 @@
 package io.techcode.streamy.syslog.component.transformer
 
 import akka.NotUsed
-import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.{Flow, Framing => StreamFraming}
 import akka.util.ByteString
 import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
-import io.techcode.streamy.syslog.util.parser.SyslogParser
+import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Framing.Framing
+import io.techcode.streamy.syslog.util.parser.{SyslogFraming, SyslogParser}
 import io.techcode.streamy.syslog.util.printer.SyslogPrinter
 import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.parser.{Binder, ByteStringParser}
@@ -45,10 +46,19 @@ object SyslogTransformer {
     * @param conf flow configuration.
     * @return new syslog flow Rfc5424 compliant.
     */
-  def inRfc5424(conf: Rfc5424.Config): Flow[ByteString, Json, NotUsed] =
-    Flow.fromFunction(new SourceTransformer {
+  def inRfc5424(conf: Rfc5424.Config): Flow[ByteString, Json, NotUsed] = {
+    val framing: Flow[ByteString, ByteString, NotUsed] = {
+      if (conf.framing == Framing.Delimiter) {
+        StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
+      } else {
+        SyslogFraming.scanner(conf.maxSize)
+      }
+    }
+
+    framing.via(Flow.fromFunction(new SourceTransformer {
       override def newParser(pkt: ByteString): ByteStringParser = SyslogParser.rfc5424(pkt, conf)
-    })
+    }))
+  }
 
   /**
     * Create a syslog flow that transform incoming [[Json]] to [[ByteString]].
@@ -59,7 +69,7 @@ object SyslogTransformer {
     */
   def outRfc5424(conf: Rfc5424.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromFunction(new SinkTransformer {
-      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc5424(pkt, conf.binding)
+      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc5424(pkt, conf)
     })
 
   /**
@@ -71,8 +81,16 @@ object SyslogTransformer {
     */
   def outRfc3164(conf: Rfc3164.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromFunction(new SinkTransformer {
-      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc3164(pkt, conf.binding)
+      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc3164(pkt, conf)
     })
+
+  // Common related stuff
+  object Framing extends Enumeration {
+
+    type Framing = Value
+    val Delimiter, Count = Value
+
+  }
 
 
   // Rfc 5424 related stuff
@@ -104,6 +122,8 @@ object SyslogTransformer {
 
     case class Config(
       mode: Mode = Rfc5424.Mode.Strict,
+      maxSize: Int = Int.MaxValue,
+      framing: Framing = Framing.Delimiter,
       binding: Binding = Binding()
     )
 
@@ -116,8 +136,8 @@ object SyslogTransformer {
 
     object Mode {
 
-      // Strict mode
       // scalastyle:off magic.number
+      // Strict mode
       case object Strict extends Mode(
         hostname = 255,
         appName = 48,
@@ -132,6 +152,7 @@ object SyslogTransformer {
         procId = 128,
         msgId = 64
       )
+
       // scalastyle:on magic.number
 
     }
@@ -162,7 +183,11 @@ object SyslogTransformer {
       message: Option[Binder] = None
     )
 
-    case class Config(binding: Binding = Binding())
+    case class Config(
+      maxSize: Int = Int.MaxValue,
+      framing: Framing = Framing.Delimiter,
+      binding: Binding = Binding()
+    )
 
   }
 

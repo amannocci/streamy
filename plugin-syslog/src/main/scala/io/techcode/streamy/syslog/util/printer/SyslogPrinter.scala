@@ -26,6 +26,7 @@ package io.techcode.streamy.syslog.util.printer
 import java.net.InetAddress
 
 import akka.util.ByteString
+import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.component.transformer.SyslogTransformer._
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.Binder
@@ -52,7 +53,7 @@ object SyslogPrinter {
   val Sup: Byte = '>'
   val OpenBracket: Byte = '['
   val CloseBracket: Byte = ']'
-  val Version: String = "1 "
+  val Version: Byte = '1'
 
   // Default hostname
   val HostName: String = InetAddress.getLocalHost.getHostName
@@ -61,21 +62,21 @@ object SyslogPrinter {
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
     * This printer is Rfc5424 compliant.
     *
-    * @param pkt     data to print.
-    * @param binding binding printer configuration.
+    * @param pkt  data to print.
+    * @param conf printer configuration.
     * @return new syslog printer Rfc5424 compliant.
     */
-  def rfc5424(pkt: Json, binding: Rfc5424.Binding): JsonPrinter = new Rfc5424Printer(pkt, binding)
+  def rfc5424(pkt: Json, conf: Rfc5424.Config): JsonPrinter = new Rfc5424Printer(pkt, conf)
 
   /**
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
     * This printer is Rfc3164 compliant.
     *
-    * @param pkt     data to print.
-    * @param binding binding printer configuration.
+    * @param pkt  data to print.
+    * @param conf printer configuration.
     * @return new syslog printer Rfc3164 compliant.
     */
-  def rfc3164(pkt: Json, binding: Rfc3164.Binding): JsonPrinter = new Rfc3164Printer(pkt, binding)
+  def rfc3164(pkt: Json, conf: Rfc3164.Config): JsonPrinter = new Rfc3164Printer(pkt, conf)
 
 }
 
@@ -90,12 +91,12 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     * @param conf         name of the field.
     * @param defaultValue default value.
     */
-  def printWithDefault(conf: Option[Binder], defaultValue: String): Unit = {
+  def computeVal(conf: Option[Binder], defaultValue: String): ByteString = {
     if (conf.isDefined) {
       val binder = conf.get
-      builder.append(binder.bind(pkt.evaluate(Root / binder.key).getOrElse(defaultValue)))
+      binder.bind(pkt.evaluate(Root / binder.key).getOrElse(defaultValue))
     } else {
-      builder.putBytes(defaultValue.getBytes)
+      ByteString.fromArrayUnsafe(defaultValue.getBytes)
     }
   }
 
@@ -105,7 +106,7 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     * @param facilityConf configuration for facility.
     * @param severityConf configuration for severity.
     */
-  def printPrival(facilityConf: Option[Binder], severityConf: Option[Binder]): Unit = {
+  def computePrival(facilityConf: Option[Binder], severityConf: Option[Binder]): ByteString = {
     var prival = 0
     if (severityConf.isDefined) {
       val binder = severityConf.get
@@ -119,7 +120,34 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     } else {
       prival += SyslogPrinter.Facility << 3
     }
-    builder.putBytes(prival.toString.getBytes)
+    ByteString.fromArrayUnsafe(prival.toString.getBytes)
+  }
+
+  /**
+    * Prepare framing record.
+    *
+    * @param framing framing configuration.
+    * @param size    size of the record.
+    */
+  def framing(framing: Framing, size: Int)(record: => Unit): Boolean = {
+    // Compute optimal size
+    if (framing == Framing.Delimiter) {
+      builder.sizeHint(size + 1)
+    } else {
+      val count = ByteString.fromArrayUnsafe(size.toString.getBytes)
+      builder.sizeHint(size + count.length + 1)
+      builder ++= count
+      builder.putByte(SyslogPrinter.Space)
+    }
+
+    // Print record
+    record
+
+    // Handle end of framing
+    if (framing == Framing.Delimiter) {
+      builder.putByte(SyslogPrinter.NewLine)
+    }
+    true
   }
 
 }
@@ -128,43 +156,74 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
   * Syslog printer that transform incoming [[Json]] to [[ByteString]].
   * This printer is Rfc3164 compliant.
   *
-  * @param pkt     data to print.
-  * @param binding binding printer configuration.
+  * @param pkt  data to print.
+  * @param conf printer configuration.
   */
-private class Rfc3164Printer(pkt: Json, binding: Rfc3164.Binding) extends PrinterHelpers(pkt) {
+private class Rfc3164Printer(pkt: Json, conf: Rfc3164.Config) extends PrinterHelpers(pkt) {
 
-  override def process(): Boolean = {
-    // Add PRIVAL
-    builder.putByte(SyslogPrinter.Inf)
-    printPrival(binding.facility, binding.severity)
-    builder.putByte(SyslogPrinter.Sup)
+  // Fast binding access
+  private val binding: Rfc3164.Binding = conf.binding
 
-    // Add timestamp
-    printWithDefault(binding.timestamp, SyslogPrinter.DateStamp)
-    builder.putByte(SyslogPrinter.Space)
+  // Compute prival
+  private val prival: ByteString = computePrival(binding.facility, binding.severity)
 
-    // Add hostname
-    printWithDefault(binding.hostname, SyslogPrinter.HostName)
-    builder.putByte(SyslogPrinter.Space)
+  // Compute timestamp
+  private val timestamp: ByteString = computeVal(binding.timestamp, SyslogPrinter.DateStamp)
 
-    // Add app name
-    printWithDefault(binding.appName, SyslogPrinter.AppName)
+  // Compute hostname
+  private val hostname: ByteString = computeVal(binding.hostname, SyslogPrinter.HostName)
 
-    // Add proc id
-    builder.putByte(SyslogPrinter.OpenBracket)
-    printWithDefault(binding.procId, SyslogPrinter.ProcId)
-    builder.putByte(SyslogPrinter.CloseBracket)
+  // Compute appName
+  private val appName: ByteString = computeVal(binding.appName, SyslogPrinter.AppName)
 
-    // Add message
-    if (binding.message.isDefined) {
-      builder.putByte(SyslogPrinter.SemiColon)
-      builder.putByte(SyslogPrinter.Space)
-      val binder = binding.message.get
-      builder.append(binder.bind(pkt.evaluate(Root / binder.key).getOrElse(JsString(StringUtils.EMPTY))))
-    }
-    builder.putByte(SyslogPrinter.NewLine)
-    true
+  // Compute proc id
+  private val procId: ByteString = computeVal(binding.procId, SyslogPrinter.ProcId)
+
+  // Compute message
+  private val message: Option[ByteString] = binding.message.map { binder =>
+    binder.bind(pkt.evaluate(Root / binder.key).getOrElse(JsString(StringUtils.EMPTY)))
   }
+
+  // Size of the record
+  private val size: Int = {
+    6 + prival.length +
+      timestamp.length +
+      hostname.length +
+      appName.length +
+      procId.length +
+      message.map(_.length + 2).getOrElse(0)
+  }
+
+  override def process(): Boolean =
+    framing(conf.framing, size) {
+      // Add prival
+      builder.putByte(SyslogPrinter.Inf)
+      builder ++= prival
+      builder.putByte(SyslogPrinter.Sup)
+
+      // Add timestamp
+      builder ++= timestamp
+      builder.putByte(SyslogPrinter.Space)
+
+      // Add hostname
+      builder ++= hostname
+      builder.putByte(SyslogPrinter.Space)
+
+      // Add app name
+      builder ++= appName
+
+      // Add proc id
+      builder.putByte(SyslogPrinter.OpenBracket)
+      builder ++= procId
+      builder.putByte(SyslogPrinter.CloseBracket)
+
+      // Add message
+      if (message.isDefined) {
+        builder.putByte(SyslogPrinter.SemiColon)
+        builder.putByte(SyslogPrinter.Space)
+        builder ++= message.get
+      }
+    }
 
 }
 
@@ -172,50 +231,87 @@ private class Rfc3164Printer(pkt: Json, binding: Rfc3164.Binding) extends Printe
   * Syslog printer that transform incoming [[Json]] to [[ByteString]].
   * This printer is Rfc5424 compliant.
   *
-  * @param pkt     data to print.
-  * @param binding binding printer configuration.
+  * @param pkt  data to print.
+  * @param conf printer configuration.
   */
-private class Rfc5424Printer(pkt: Json, binding: Rfc5424.Binding) extends PrinterHelpers(pkt) {
+private class Rfc5424Printer(pkt: Json, conf: Rfc5424.Config) extends PrinterHelpers(pkt) {
 
-  override def process(): Boolean = {
-    // Add PRIVAL
-    builder.putByte(SyslogPrinter.Inf)
-    printPrival(binding.facility, binding.severity)
-    builder.putByte(SyslogPrinter.Sup)
+  // Fast binding access
+  private val binding: Rfc5424.Binding = conf.binding
 
-    // Add version
-    builder.putBytes(SyslogPrinter.Version.getBytes())
+  // Compute prival
+  private val prival: ByteString = computePrival(binding.facility, binding.severity)
 
-    // Add timestamp
-    printWithDefault(binding.timestamp, SyslogPrinter.Date)
-    builder.putByte(SyslogPrinter.Space)
+  // Compute timestamp
+  private val timestamp: ByteString = computeVal(binding.timestamp, SyslogPrinter.Date)
 
-    // Add hostname
-    printWithDefault(binding.hostname, SyslogPrinter.Nil)
-    builder.putByte(SyslogPrinter.Space)
+  // Compute hostname
+  private val hostname: ByteString = computeVal(binding.hostname, SyslogPrinter.Nil)
 
-    // Add app name
-    printWithDefault(binding.appName, SyslogPrinter.Nil)
-    builder.putByte(SyslogPrinter.Space)
+  // Compute appName
+  private val appName: ByteString = computeVal(binding.appName, SyslogPrinter.Nil)
 
-    // Add proc id
-    printWithDefault(binding.procId, SyslogPrinter.Nil)
-    builder.putByte(SyslogPrinter.Space)
+  // Compute proc id
+  private val procId: ByteString = computeVal(binding.procId, SyslogPrinter.Nil)
 
-    // Add message id
-    printWithDefault(binding.msgId, SyslogPrinter.Nil)
-    builder.putByte(SyslogPrinter.Space)
+  // Compute msg id
+  private val msgId: ByteString = computeVal(binding.msgId, SyslogPrinter.Nil)
 
-    // Skip structured data
-    builder.putByte(SyslogPrinter.NilByte)
-
-    // Add message
-    if (binding.message.isDefined) {
-      builder.putByte(SyslogPrinter.Space)
-      val binder = binding.message.get
-      builder.append(binder.bind(pkt.evaluate(Root / binder.key).getOrElse(JsString(StringUtils.EMPTY))))
-    }
-    true
+  // Compute message
+  private val message: Option[ByteString] = binding.message.map { binder =>
+    binder.bind(pkt.evaluate(Root / binder.key).getOrElse(JsString(StringUtils.EMPTY)))
   }
+
+  // Size of the record
+  private val size: Int = {
+    10 + prival.length +
+      timestamp.length +
+      hostname.length +
+      appName.length +
+      procId.length +
+      msgId.length +
+      message.map(_.length + 1).getOrElse(0)
+  }
+
+  override def process(): Boolean =
+    framing(conf.framing, size) {
+      // Add prival
+      builder.putByte(SyslogPrinter.Inf)
+      builder ++= prival
+      builder.putByte(SyslogPrinter.Sup)
+
+      // Add version
+      builder.putByte(SyslogPrinter.Version)
+      builder.putByte(SyslogPrinter.Space)
+
+      // Add timestamp
+      builder ++= timestamp
+      builder.putByte(SyslogPrinter.Space)
+
+      // Add hostname
+      builder ++= hostname
+      builder.putByte(SyslogPrinter.Space)
+
+      // Add app name
+      builder ++= appName
+      builder.putByte(SyslogPrinter.Space)
+
+      // Add proc id
+      builder ++= procId
+      builder.putByte(SyslogPrinter.Space)
+
+      // Add message id
+      builder ++= msgId
+      builder.putByte(SyslogPrinter.Space)
+
+      // Skip structured data
+      builder.putByte(SyslogPrinter.NilByte)
+
+      // Add message
+      if (message.isDefined) {
+        builder.putByte(SyslogPrinter.Space)
+        builder ++= message.get
+      }
+    }
 
 }
