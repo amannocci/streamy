@@ -601,6 +601,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsString("10").isObject should equal(false)
     }
 
+    "can be convert to iterator" in {
+      Json.arr("foobar").toIterator.next() should equal(JsString("foobar"))
+    }
+
     "be convert to json array when possible" in {
       Json.arr().asArray should equal(Some(Json.arr()))
     }

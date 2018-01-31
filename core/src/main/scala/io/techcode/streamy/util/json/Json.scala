@@ -26,7 +26,6 @@ package io.techcode.streamy.util.json
 import java.io.InputStream
 
 import akka.util.ByteString
-import com.google.common.math.IntMath
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -668,6 +667,13 @@ case class JsArray private[json](
     builder ++= underlying
     JsArray(builder)
   }
+
+  /**
+    * Returns an Iterator over the elements in this JsArray.
+    *
+    * @return an Iterator containing all elements of this JsArray.
+    */
+  def toIterator: Iterator[Json] = underlying.toIterator
 
   override def isArray: Boolean = true
 
