@@ -26,6 +26,7 @@ package io.techcode.streamy.plugin
 import akka.actor.{ActorRef, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.TestSystem
+import pureconfig._
 
 import scala.reflect.io.Path
 
@@ -35,7 +36,7 @@ import scala.reflect.io.Path
 abstract class TestPlugin extends TestSystem {
 
   protected def create(typed: Class[_], conf: Config): ActorRef = {
-    val description: PluginDescription = PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
+    val description: PluginDescription = loadConfigOrThrow[PluginDescription](ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
     system.actorOf(Props(
       typed,
       materializer,

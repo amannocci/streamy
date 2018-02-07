@@ -25,6 +25,7 @@ package io.techcode.streamy.plugin
 
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
+import pureconfig._
 
 import scala.reflect.io.Path
 
@@ -35,7 +36,7 @@ class PluginDescriptionSpec extends WordSpecLike with Matchers with Inside with 
 
   "PluginDescription" should {
     "contains all informations" in {
-      val description = PluginDescription(name = "test", version = "1.0.0", file = Path(".").toURL)
+      val description = PluginDescription(name = "test", version = "1.0.0", file = Some(Path(".").toURL))
       inside(description) { case PluginDescription(name, version, _, _, _, _, _) =>
         name should be("test")
         version should be("1.0.0")
@@ -43,31 +44,7 @@ class PluginDescriptionSpec extends WordSpecLike with Matchers with Inside with 
     }
 
     "be create from Config" in {
-      PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
-    }
-
-    "retrieve correctly string field" in {
-      val getString = PrivateMethod[Option[String]]('getString)
-      val result = PluginDescription invokePrivate getString(ConfigFactory.parseString("""{"test":"test"}"""), "test")
-      result should be(Some("test"))
-    }
-
-    "retrieve wrap properly a missing string field" in {
-      val getString = PrivateMethod[Option[String]]('getString)
-      val result = PluginDescription invokePrivate getString(ConfigFactory.empty(), "test")
-      result should be(None)
-    }
-
-    "retrieve correctly seq string field" in {
-      val getStringList = PrivateMethod[Seq[String]]('getStringList)
-      val result = PluginDescription invokePrivate getStringList(ConfigFactory.parseString("""{"test":["test"]}"""), "test")
-      result should be(Seq("test"))
-    }
-
-    "retrieve wrap properly a missing seq string field" in {
-      val getStringList = PrivateMethod[Seq[String]]('getStringList)
-      val result = PluginDescription invokePrivate getStringList(ConfigFactory.empty(), "test")
-      result should be(Seq.empty)
+      loadConfigOrThrow[PluginDescription](ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
     }
   }
 

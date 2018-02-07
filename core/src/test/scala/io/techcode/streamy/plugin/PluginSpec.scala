@@ -28,6 +28,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
+import pureconfig._
 import org.scalatest.mockito.MockitoSugar
 
 import scala.reflect.io.Path
@@ -64,7 +65,7 @@ class PluginSpec extends TestKit(ActorSystem("PluginSpec"))
 
   private def create(): ActorRef = {
     val conf: Config = ConfigFactory.empty()
-    val description: PluginDescription = PluginDescription.create(Path(".").toURL, ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
+    val description: PluginDescription = loadConfigOrThrow[PluginDescription](ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
     val typed: Class[_] = classOf[Impl]
     system.actorOf(Props(
       typed,
