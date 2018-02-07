@@ -37,6 +37,7 @@ object Dependencies {
   lazy val guavaVersion = "23.6-jre"
   lazy val scalaTestVersion = "3.0.4"
   lazy val mockitoVersion = "2.12.0"
+  lazy val pureConfigVersion = "0.9.0"
 
   val testSettings = Seq(
     libraryDependencies ++= Seq(

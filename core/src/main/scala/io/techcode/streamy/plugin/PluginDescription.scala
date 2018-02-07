@@ -25,10 +25,6 @@ package io.techcode.streamy.plugin
 
 import java.net.URL
 
-import com.typesafe.config.Config
-
-import scala.collection.JavaConverters._
-
 /**
   * Represents some plugin informations.
   */
@@ -39,60 +35,5 @@ case class PluginDescription(
   authors: Seq[String] = Seq.empty,
   website: Option[String] = None,
   depends: Seq[String] = Seq.empty,
-  file: URL
+  file: Option[URL] = None
 )
-
-/**
-  * Plugin description factory.
-  */
-object PluginDescription {
-
-  /**
-    * Create a new plugin description from config.
-    * We use this method instead of `ConfigBeanFactory` for compatibility reason.
-    *
-    * @param file   location of plugin file.
-    * @param config config involved.
-    * @return plugin description.
-    */
-  def create(file: URL, config: Config): PluginDescription = PluginDescription(
-    name = config.getString("name"),
-    version = config.getString("version"),
-    main = getString(config, "main"),
-    authors = getStringList(config, "authors"),
-    website = getString(config, "website"),
-    depends = getStringList(config, "depends"),
-    file
-  )
-
-  /**
-    * Retrieve a string if available.
-    *
-    * @param config configuration.
-    * @param key    key to access field.
-    * @return optional string.
-    */
-  private def getString(config: Config, key: String): Option[String] = {
-    if (config.hasPath(key)) {
-      Some(config.getString(key))
-    } else {
-      None
-    }
-  }
-
-  /**
-    * Retrieve a list of string if available.
-    *
-    * @param config configuration.
-    * @param key    key to access field.
-    * @return optional seq string.
-    */
-  private def getStringList(config: Config, key: String): Seq[String] = {
-    if (config.hasPath(key)) {
-      config.getStringList(key).asScala
-    } else {
-      Seq.empty
-    }
-  }
-
-}

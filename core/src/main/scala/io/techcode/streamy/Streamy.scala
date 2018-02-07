@@ -75,7 +75,7 @@ object Streamy extends App {
   val conf = system.settings.config.resolve()
 
   // Attempt to deploy plugins
-  val pluginManager = new PluginManager(log, system, materializer, conf)
+  val pluginManager = new PluginManager(log, system, materializer, conf.getConfig("streamy"))
   log.info(Json.obj(
     "message" -> "Starting all plugins",
     "type" -> "lifecycle"
@@ -83,7 +83,7 @@ object Streamy extends App {
   pluginManager.start()
 
   // Graceful shutdown
-  sys.addShutdownHook({
+  sys.addShutdownHook {
     log.info(Json.obj(
       "message" -> "Stopping all monitors",
       "type" -> "lifecycle"
@@ -96,5 +96,5 @@ object Streamy extends App {
     ))
     pluginManager.stop()
     system.terminate()
-  })
+  }
 }

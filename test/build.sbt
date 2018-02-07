@@ -22,9 +22,9 @@
  * THE SOFTWARE.
  */
 
-import sbt._
-import sbt.Keys._
 import Dependencies._
+import sbt.Keys._
+import sbt._
 
 name := name.value + "-test"
 

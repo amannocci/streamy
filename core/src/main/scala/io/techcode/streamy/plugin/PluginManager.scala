@@ -29,12 +29,12 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.pattern.gracefulStop
 import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import io.techcode.streamy.config.LifecycleConfig
 import io.techcode.streamy.event._
 import io.techcode.streamy.plugin.PluginState.PluginState
-import io.techcode.streamy.util.ConfigConstants
-import io.techcode.streamy.util.DurationUtil._
 import io.techcode.streamy.util.json._
 import org.slf4j.Logger
+import pureconfig._
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -57,6 +57,9 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
   private val listener: ActorRef = system.actorOf(Props(classOf[PluginsListener], this))
   system.eventStream.subscribe(listener, classOf[PluginEvent])
 
+  // Configuration
+  private val lifecycleConfig = loadConfigOrThrow[LifecycleConfig](conf, "lifecycle")
+
   /**
     * Start all plugins.
     */
@@ -68,13 +71,13 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     val toLoads = checkDependencies(pluginDescriptions)
 
     // Load all valid jars
-    _pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file).toArray, getClass.getClassLoader)
+    _pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file.get).toArray, getClass.getClassLoader)
 
     // Waiting response list
     toLoads.foreach(pluginDescription => {
       try {
         // Merge application configuration and plugin configuration
-        val pluginConf = mergeConfig(s"streamy.plugin.${pluginDescription.name}", pluginDescription)
+        val pluginConf = mergeConfig(s"plugin.${pluginDescription.name}", pluginDescription)
 
         // Load main plugin class
         val typed = Class.forName(pluginDescription.main.get, true, _pluginClassLoader)
@@ -115,9 +118,9 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     try {
       val signal = Future.sequence(_plugins.values.map { data =>
         // Launch graceful stop
-        gracefulStop(data.ref, conf.getDuration(ConfigConstants.StreamyLifecycleGracefulTimeout))
+        gracefulStop(data.ref, lifecycleConfig.gracefulTimeout)
       })
-      Await.result(signal, conf.getDuration(ConfigConstants.StreamyLifecycleShutdownTimeout))
+      Await.result(signal, lifecycleConfig.shutdownTimeout)
       // All plugins are stopped
     } catch {
       // the actor wasn't stopped within 5 seconds
@@ -154,7 +157,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
       .withFallback((PluginManager.ConfFolder / s"${description.name}.conf")
         .ifFile(f => ConfigFactory.parseFile(f.jfile))
         .getOrElse(PluginManager.EmptyPluginConfig).resolve())
-      .withFallback(ConfigFactory.parseURL(new URL(s"jar:${description.file}!/config.conf")).resolve())
+      .withFallback(ConfigFactory.parseURL(new URL(s"jar:${description.file.get}!/config.conf")).resolve())
   }
 
   /**
@@ -174,7 +177,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
 
       // Attempt to convert configuration to plugin description
       try {
-        val description = PluginDescription.create(jar.toURL, conf)
+        val description = loadConfigOrThrow[PluginDescription](conf).copy(file = Some(jar.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
         case _: ConfigException.Missing => log.error(Json.obj(

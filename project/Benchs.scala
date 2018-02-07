@@ -24,7 +24,7 @@
 
 import pl.project13.scala.sbt.JmhPlugin.JmhKeys._
 import sbt.Keys._
-import sbt.{File, _}
+import sbt._
 
 object Benchs {
 

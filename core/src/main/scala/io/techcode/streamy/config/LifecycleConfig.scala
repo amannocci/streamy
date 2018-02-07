@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.util
+package io.techcode.streamy.config
 
-/**
-  * All configurations constants.
-  */
-object ConfigConstants {
-  val StreamyLifecycleShutdownTimeout = "streamy.lifecycle.shutdown-timeout"
-  val StreamyLifecycleGracefulTimeout = "streamy.lifecycle.graceful-timeout"
-}
+import scala.concurrent.duration.FiniteDuration
+
+// Streamy lifecycle config
+case class LifecycleConfig(
+  gracefulTimeout: FiniteDuration,
+  shutdownTimeout: FiniteDuration
+)

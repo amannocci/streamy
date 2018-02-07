@@ -80,6 +80,7 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
     newPath.update(underlying.length, JsonObjectAccessor(key))
     copy(newPath)
   }
+
   // scalastyle:on method.name
 
   // scalastyle:off method.name
@@ -95,6 +96,7 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
     newPath.update(underlying.length, JsonArrayAccessor(idx))
     copy(newPath)
   }
+
   // scalastyle:on method.name
 
 }

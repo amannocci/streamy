@@ -51,6 +51,7 @@ libraryDependencies ++= Seq(
   "io.techcode.logback.contrib" % "logback-json-layout" % logbackContribVersion, // MIT License
   "com.google.guava" % "guava" % guavaVersion, // Apache 2 License
   "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion, // Apache 2 License
+  "com.github.pureconfig" %% "pureconfig" % pureConfigVersion, // Mozilla Public License 2.0
   "org.scala-lang" % "scala-reflect" % scalaVersion.value
 ).map(_ % Compile)
 
