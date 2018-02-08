@@ -48,6 +48,7 @@ lazy val bench = project
     core % "test->test",
     `plugin-fingerprint` % "test->test",
     `plugin-syslog` % "test->test",
+    `plugin-graphite` % "test->test",
     `plugin-json` % "test->test",
     `plugin-metric` % "test->test",
   )
@@ -78,6 +79,12 @@ lazy val `plugin-metric` = project
   .dependsOn(core % "provided->compile")
   .dependsOn(test % "test->test")
 
+lazy val `plugin-graphite` = project
+  .in(file("plugin-graphite"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(test % "test->test")
+
 lazy val test = project
   .in(file("test"))
   .settings(commonSettings, Publish.settings)
@@ -86,4 +93,12 @@ lazy val test = project
 lazy val root = project
   .in(file("."))
   .settings(Seq(publish := {}))
-  .aggregate(core, `plugin-fingerprint`, `plugin-syslog`, `plugin-json`, `plugin-metric`, test)
+  .aggregate(
+    core,
+    `plugin-fingerprint`,
+    `plugin-graphite`,
+    `plugin-syslog`,
+    `plugin-json`,
+    `plugin-metric`,
+    test
+  )
