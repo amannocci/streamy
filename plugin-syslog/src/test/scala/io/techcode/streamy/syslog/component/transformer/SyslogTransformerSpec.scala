@@ -193,11 +193,11 @@ object SyslogTransformerSpec {
         message = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Message))
       )
 
-      val OutDelimiter: Flow[Json, ByteString, NotUsed] = SyslogTransformer.outRfc3164(SyslogTransformer.Rfc3164.Config(
+      val OutDelimiter: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc3164.Config(
         binding = Binding
       ))
 
-      val OutCount: Flow[Json, ByteString, NotUsed] = SyslogTransformer.outRfc3164(SyslogTransformer.Rfc3164.Config(
+      val OutCount: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc3164.Config(
         framing = Framing.Count,
         binding = Binding
       ))
@@ -259,31 +259,31 @@ object SyslogTransformerSpec {
         message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
       )
 
-      val InStrictDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.inRfc5424(SyslogTransformer.Rfc5424.Config(
+      val InStrictDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
         binding = Binding
       ))
 
-      val InLenientDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.inRfc5424(SyslogTransformer.Rfc5424.Config(
+      val InLenientDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
         mode = Mode.Lenient,
         binding = Binding
       ))
 
-      val InStrictCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.inRfc5424(SyslogTransformer.Rfc5424.Config(
+      val InStrictCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val InLenientCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.inRfc5424(SyslogTransformer.Rfc5424.Config(
+      val InLenientCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
         mode = Mode.Lenient,
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val OutDelimiter: Flow[Json, ByteString, NotUsed] = SyslogTransformer.outRfc5424(SyslogTransformer.Rfc5424.Config(
+      val OutDelimiter: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         binding = Binding
       ))
 
-      val OutCount: Flow[Json, ByteString, NotUsed] = SyslogTransformer.outRfc5424(SyslogTransformer.Rfc5424.Config(
+      val OutCount: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         framing = Framing.Count,
         binding = Binding
       ))
