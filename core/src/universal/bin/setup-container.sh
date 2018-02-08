@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Current script location
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Load common
+source ${DIR}/load-common.sh
+
 ceiling() {
   awk -vnumber="$1" -vdiv="$2" '
     function ceiling(x){
@@ -63,8 +69,8 @@ memory_limit() {
 setup_cpu() {
   export JVM_CPU_LIMIT="$(core_limit)"
   export JVM_CPU_LIMIT_X2="$((2 * $JVM_CPU_LIMIT))"
-  echo "{\"level\":\"info\",\"type\":\"entrypoint\",\"message\":\"Minimum jvm cpu limit: ${JVM_CPU_LIMIT}\"}"
-  echo "{\"level\":\"info\",\"type\":\"entrypoint\",\"message\":\"Maximum jvm cpu limit: ${JVM_CPU_LIMIT_X2}\"}"
+  log "info" "Minimum jvm cpu limit: ${JVM_CPU_LIMIT}"
+  log "info" "Maximum jvm cpu limit: ${JVM_CPU_LIMIT_X2}"
   addJava "-XX:ParallelGCThreads=${JVM_CPU_LIMIT}"
   addJava "-XX:ConcGCThreads=${JVM_CPU_LIMIT}"
   addJava "-Djava.util.concurrent.ForkJoinPool.common.parallelism=${JVM_CPU_LIMIT}"
@@ -73,7 +79,7 @@ setup_cpu() {
 # Memory Limit
 setup_mem() {
   export JVM_MEMORY_LIMIT="$(memory_limit)"
-  echo "{\"level\":\"info\",\"type\":\"entrypoint\",\"message\":\"Maximum jvm mem limit: ${JVM_MEMORY_LIMIT}\"}"
+  log "info" "Maximum jvm mem limit: ${JVM_MEMORY_LIMIT}"
   local max_mem="${JVM_MEMORY_LIMIT}"
   local ratio=${JVM_MEMORY_RATIO:-50}
   local mx=$(echo "${max_mem} ${ratio} 1048576" | awk '{printf "%d\n" , ($1*$2)/(100*$3) + 0.5}')

@@ -58,10 +58,13 @@ libraryDependencies ++= Seq(
 // Add container contraints detection
 bashScriptExtraDefines +=
   """
+    |source ./bin/make-default.sh
     |source ./bin/setup-container.sh
     |source ./bin/make-template.sh
     |
+    |make_default
     |setup_container
+    |make_template
   """.stripMargin
 
 // Enable some plugins
