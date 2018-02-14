@@ -51,6 +51,22 @@ abstract class TestTransformer extends TestSystem {
   }
 
   /**
+    * Except an element using given transformer.
+    *
+    * @param transformer transformer to use.
+    * @param input       multiple input to process with transformer.
+    * @param output      output expected after transformation.
+    * @tparam In  input type.
+    * @tparam Out output type.
+    */
+  def except[In, Out](transformer: Flow[In, Out, NotUsed], input: Iterator[In], output: Out): Assertion = {
+    Source.fromIterator[In](() => input)
+      .via(transformer)
+      .runWith(TestSink.probe[Out])
+      .requestNext() should equal(output)
+  }
+
+  /**
     * Except an error using given transformer with given input.
     *
     * @param transformer transformer to use.

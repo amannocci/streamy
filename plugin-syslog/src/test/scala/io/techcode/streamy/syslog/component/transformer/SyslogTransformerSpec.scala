@@ -27,8 +27,7 @@ import java.net.InetAddress
 import java.nio.charset.StandardCharsets
 
 import akka.NotUsed
-import akka.stream.scaladsl.{Flow, Source}
-import akka.stream.testkit.scaladsl.TestSink
+import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Framing
@@ -94,6 +93,14 @@ class SyslogTransformerSpec extends TestTransformer {
             )
           }
 
+          "handle correctly syslog message in multiple parsing" in {
+            except(
+              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+              SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeCount.grouped(2),
+              SyslogTransformerSpec.Rfc5424.Output.ParserAlternative
+            )
+          }
+
           "handle correctly alternative syslog message" in {
             except(
               SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
@@ -106,6 +113,13 @@ class SyslogTransformerSpec extends TestTransformer {
             exceptError(
               SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
               SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCount
+            )
+          }
+
+          "throw an error when framing is malformed" in {
+            exceptError(
+              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
             )
           }
         }
@@ -149,10 +163,6 @@ class SyslogTransformerSpec extends TestTransformer {
         }
 
         "with default values" in {
-          println(Source.single(SyslogTransformerSpec.Rfc5424.Input.PrinterSimple)
-            .via(SyslogTransformerSpec.Rfc5424.Transformer.PrinterDefault)
-            .runWith(TestSink.probe[ByteString])
-            .requestNext().utf8String)
           except(
             SyslogTransformerSpec.Rfc5424.Transformer.PrinterDefault,
             SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
