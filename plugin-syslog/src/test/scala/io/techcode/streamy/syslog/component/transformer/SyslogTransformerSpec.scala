@@ -74,6 +74,10 @@ class SyslogTransformerSpec extends TestTransformer {
               SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
             )
           }
+
+          "throw an error when a syslog message isn't prefix with count" in {
+
+          }
         }
 
         "with count" should {
@@ -120,6 +124,20 @@ class SyslogTransformerSpec extends TestTransformer {
             exceptError(
               SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
               SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
+            )
+          }
+
+          "throw an error when a syslog message is prefix by negative count" in {
+            exceptError(
+              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCountNegative
+            )
+          }
+
+          "throw an error when a syslog message count is greater than max allowed" in {
+            exceptError(
+              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCountMax
             )
           }
         }
@@ -254,6 +272,8 @@ object SyslogTransformerSpec {
       val ParserMalformed: ByteString = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
       val ParserMalformedDelimiter: ByteString = framingDelimiter(ParserMalformed)
       val ParserMalformedCount: ByteString = framingCount(ParserMalformed)
+      val ParserMalformedCountMax: ByteString = ByteString("1000000") ++ framingCount(ParserSimple)
+      val ParserMalformedCountNegative: ByteString = ByteString("-") ++ framingCount(ParserSimple)
 
       val PrinterSimple: Json = Json.obj(
         SyslogTransformer.Rfc5424.Id.Facility -> 4,
