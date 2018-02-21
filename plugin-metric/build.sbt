@@ -32,6 +32,14 @@ libraryDependencies ++= Seq(
   "io.dropwizard.metrics" % "metrics-jvm" % metricsJvmVersion // Apache 2 License
 )
 
+// Don't include scala in assembly
 assemblyOption in assembly ~= {
   _.copy(includeScala = false)
 }
+
+// Publish fat jars
+artifact in(Compile, assembly) := {
+  val art = (artifact in(Compile, assembly)).value
+  art.withClassifier(Some("assembly"))
+}
+addArtifact(artifact in(Compile, assembly), assembly)
