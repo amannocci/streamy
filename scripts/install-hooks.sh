@@ -6,6 +6,9 @@ source ${PWD}/scripts/common.sh
 # Constants
 HOOK_DIR=${BASE_PROJECT}/.git/hooks
 
+# Create directory
+mkdir -p ${HOOK_DIR}
+
 # Remove all old hooks before anything
 info "Removing old hooks"
 rm -f ${HOOK_DIR}/commit-msg
