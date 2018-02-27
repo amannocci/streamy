@@ -108,13 +108,13 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     var prival: Int = 0
     if (severityConf.isDefined) {
       val binder = severityConf.get
-      prival = pkt.evaluate(Root / binder.key).flatMap(_.asInt).getOrElse(SyslogPrinter.Severity)
+      prival = pkt.evaluate(Root / binder.key).asInt.getOrElse(SyslogPrinter.Severity)
     } else {
       prival = SyslogPrinter.Severity
     }
     if (facilityConf.isDefined) {
       val binder = facilityConf.get
-      prival += pkt.evaluate(Root / binder.key).flatMap(_.asInt).getOrElse(SyslogPrinter.Facility) << 3
+      prival += pkt.evaluate(Root / binder.key).asInt.getOrElse(SyslogPrinter.Facility) << 3
     } else {
       prival += SyslogPrinter.Facility << 3
     }
