@@ -92,6 +92,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       Json.obj("test" -> "test").fieldSet should equal(Set("test" -> JsString("test")))
     }
 
+    "return values as iterable" in {
+      Json.obj("test" -> "test").values.head should equal(Seq(JsString("test")).head)
+    }
+
     "not be equals when there is a difference" in {
       Json.obj(
         "field1" -> 123,
