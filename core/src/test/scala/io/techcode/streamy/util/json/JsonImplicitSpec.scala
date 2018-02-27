@@ -77,4 +77,50 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
     }
   }
 
+  "JsonBridge" should {
+    "provide a shortcut to convert optional json string in optional string" in {
+      JsonBridge(Some(JsString("foobar"))).asString should equal(Some("foobar"))
+    }
+
+    "provide a shortcut to convert optional json float in optional float" in {
+      JsonBridge(Some(JsFloat(2.0F))).asFloat should equal(Some(2.0F))
+    }
+
+    "provide a shortcut to convert optional json double in optional double" in {
+      JsonBridge(Some(JsDouble(2.0D))).asDouble should equal(Some(2.0D))
+    }
+
+    "provide a shortcut to convert optional json byte in optional byte" in {
+      JsonBridge(Some(JsInt(2))).asInt should equal(Some(2))
+    }
+
+    "provide a shortcut to convert optional json short in optional short" in {
+      JsonBridge(Some(JsInt(2))).asInt should equal(Some(2))
+    }
+
+    "provide a shortcut to convert optional json int in optional int" in {
+      JsonBridge(Some(JsInt(2))).asInt should equal(Some(2))
+    }
+
+    "provide a shortcut to convert optional json long in optional long" in {
+      JsonBridge(Some(JsLong(2L))).asLong should equal(Some(2L))
+    }
+
+    "provide a shortcut to convert optional json boolean in optional boolean" in {
+      JsonBridge(Some(JsTrue)).asBoolean should equal(Some(true))
+    }
+
+    "provide a shortcut to convert optional json byte string in optional byte string" in {
+      JsonBridge(Some(JsBytes(ByteString.empty))).asBytes should equal(Some(ByteString.empty))
+    }
+
+    "provide a shortcut to convert optional json big decimal in optional big decimal" in {
+      JsonBridge(Some(JsBigDecimal(BigDecimal.valueOf(0)))).asNumber should equal(Some(BigDecimal.valueOf(0)))
+    }
+
+    "provide a shortcut to convert optional json null in optional none" in {
+      JsonBridge(Some(JsNull)).asNull should equal(Some(()))
+    }
+  }
+
 }

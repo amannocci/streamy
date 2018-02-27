@@ -23,9 +23,97 @@
  */
 package io.techcode.streamy.util
 
+import akka.util.ByteString
+
 package object json extends JsonImplicit {
 
   // Root json pointer
   val Root: JsonPointer = JsonPointer()
+
+  /**
+    * Bridge from optional json to optional value.
+    *
+    * @param self optional json value.
+    */
+  implicit class JsonBridge(val self: Option[Json]) extends AnyVal {
+
+    /**
+      * Returns current optional json value as json object.
+      *
+      * @return current optional json value as json object if possible, otherwise [[None]].
+      */
+    def asObject: Option[JsObject] = self.flatMap(_.asObject)
+
+    /**
+      * Returns current optional json value as json array.
+      *
+      * @return current optional json value as json array if possible, otherwise [[None]].
+      */
+    def asArray: Option[JsArray] = self.flatMap(_.asArray)
+
+    /**
+      * Returns current optional json value as byte string.
+      *
+      * @return current optional json value as byte string if possible, otherwise [[None]].
+      */
+    def asBytes: Option[ByteString] = self.flatMap(_.asBytes)
+
+    /**
+      * Returns current optional json value as json boolean.
+      *
+      * @return current optional json value as json boolean if possible, otherwise [[None]].
+      */
+    def asBoolean: Option[Boolean] = self.flatMap(_.asBoolean)
+
+    /**
+      * Returns current optional json value as json string.
+      *
+      * @return current optional json value as json string if possible, otherwise [[None]].
+      */
+    def asString: Option[String] = self.flatMap(_.asString)
+
+    /**
+      * Returns current optional json value as json number.
+      *
+      * @return current optional json value as json number if possible, otherwise [[None]].
+      */
+    def asNumber: Option[BigDecimal] = self.flatMap(_.asNumber)
+
+    /**
+      * Returns current optional json value as json null.
+      *
+      * @return current optional json value as json null if possible, otherwise [[None]].
+      */
+    def asNull: Option[Unit] = self.flatMap(_.asNull)
+
+    /**
+      * Returns current optional json value as json int.
+      *
+      * @return current optional json value as json int if possible, otherwise [[None]].
+      */
+    def asInt: Option[Int] = self.flatMap(_.asInt)
+
+    /**
+      * Returns current optional json value as json long.
+      *
+      * @return current optional json value as json long if possible, otherwise [[None]].
+      */
+    def asLong: Option[Long] = self.flatMap(_.asLong)
+
+    /**
+      * Returns current optional json value as json double.
+      *
+      * @return current optional json value as json double if possible, otherwise [[None]].
+      */
+    def asDouble: Option[Double] = self.flatMap(_.asDouble)
+
+    /**
+      * Returns current optional json value as json float.
+      *
+      * @return current optional json value as json float if possible, otherwise [[None]].
+      */
+    def asFloat: Option[Float] = self.flatMap(_.asFloat)
+
+  }
 
 }
