@@ -16,3 +16,11 @@ function is_install {
 function log {
   echo "{\"level\":\"$1\",\"type\":\"entrypoint\",\"message\":\"$2\"}"
 }
+
+# Run a command and check for failure
+function try {
+  $@
+  if [ $? -ne 0 ]; then
+    exit 1
+  fi
+}

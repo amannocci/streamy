@@ -15,7 +15,7 @@ function make_template {
       dirname="$(dirname "$file")"
       filename="$(basename "$file")"
       filename="${filename%.*}"
-      envtpl < $file > "$dirname/$filename"
+      try envtpl < $file > "$dirname/$filename"
     done
   else
     log "info" "envtpl isn't installed"

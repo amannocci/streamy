@@ -17,6 +17,15 @@ is_install() {
   echo "$return_"
 }
 
+# Run a command and check for fail
+function try {
+  $@
+  if [ $? -ne 0 ]; then
+    error "The project isn't valid"
+    exit 1
+  fi
+}
+
 info "Loading common"
 
 # Correct path

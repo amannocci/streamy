@@ -10,19 +10,8 @@ fi
 cd ${BASE_PROJECT}
 
 # Validate bash project
-bats core/src/test/bash
-if [ $? -ne 0 ]
-then
-  error "The project isn't valid"
-  exit 1
-fi
+try bats core/src/test/bash
 
 # Validate scala project
-./sbt ";clean;compile;test;scalastyle"
-if [ $? -ne 0 ]
-then
-  error "The project isn't valid"
-  exit 1
-else
-  info "The project is valid"
-fi
+try ./sbt ";clean;compile;test;scalastyle"
+info "The project is valid"
