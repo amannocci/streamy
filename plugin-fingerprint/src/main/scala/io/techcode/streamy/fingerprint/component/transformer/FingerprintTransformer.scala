@@ -86,7 +86,7 @@ object FingerprintTransformer {
     * @param conf flow configuration.
     * @return new fingerprint flow.
     */
-  def transformer(conf: Config): Flow[Json, Json, NotUsed] =
+  def apply(conf: Config): Flow[Json, Json, NotUsed] =
     Flow.fromFunction(new FingerprintTransformer(conf))
 
 }

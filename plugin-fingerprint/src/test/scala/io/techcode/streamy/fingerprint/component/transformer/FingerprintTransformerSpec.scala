@@ -35,7 +35,7 @@ class FingerprintTransformerSpec extends TestTransformer {
   "Fingerprint transformer" should {
     "be used in a flow" in {
       except(
-        FingerprintTransformer.transformer(Config(source = Root / "message", hashing = "md5")),
+        FingerprintTransformer(Config(source = Root / "message", hashing = "md5")),
         Json.parse("""{"message":"test"}""").getOrElse(JsNull),
         Json.parse("""{"message":"098f6bcd4621d373cade4e832627b4f6"}""").getOrElse(JsNull)
       )

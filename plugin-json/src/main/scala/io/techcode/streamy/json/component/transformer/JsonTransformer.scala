@@ -60,7 +60,7 @@ object JsonTransformer {
     * @param conf flow configuration.
     * @return new json flow.
     */
-  def transformer(conf: Config): Flow[Json, Json, NotUsed] =
+  def apply(conf: Config): Flow[Json, Json, NotUsed] =
     Flow.fromFunction(new JsonTransformer(conf))
 
 }

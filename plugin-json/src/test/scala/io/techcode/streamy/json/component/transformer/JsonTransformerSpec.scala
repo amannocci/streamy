@@ -36,7 +36,7 @@ class JsonTransformerSpec extends TestTransformer {
   "Json transformer" should {
     "be used in a flow" in {
       except(
-        JsonTransformer.transformer(Config(Root / "message")),
+        JsonTransformer(Config(Root / "message")),
         Json.obj("message" -> """{"message":"foobar"}"""),
         Json.obj("message" -> Json.obj("message" -> "foobar"))
       )
