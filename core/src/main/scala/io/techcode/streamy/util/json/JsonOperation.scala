@@ -241,14 +241,7 @@ case class Move(from: JsonPointer, to: JsonPointer) extends JsonOperation {
   */
 case class Copy(from: JsonPointer, to: JsonPointer) extends JsonOperation {
 
-  def apply(json: Json): Option[Json] = {
-    val result = json.evaluate(from)
-    if (result.isDefined) {
-      Add(to, result.get)(json)
-    } else {
-      result
-    }
-  }
+  def apply(json: Json): Option[Json] = json.evaluate(from).flatMap(Add(to, _)(json))
 
 }
 
