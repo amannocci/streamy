@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,35 +21,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package io.techcode.streamy.elasticsearch.component.sink
 
-import sbt.Keys._
-import sbt._
+import akka.Done
+import akka.stream.scaladsl.Source
+import io.techcode.streamy.elasticsearch.component.flow.ElasticsearchFlow
+import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
+import io.techcode.streamy.util.json._
 
-object Dependencies {
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-  // Dependencies version
-  val akkaVersion = "2.5.11"
-  val logbackVersion = "1.2.3"
-  val logbackContribVersion = "0.3.0"
-  val commonsLangVersion = "3.7"
-  val jacksonVersion = "2.9.4"
-  val metricsJvmVersion = "4.0.2"
-  val guavaVersion = "24.0-jre"
-  val pureConfigVersion = "0.9.0"
-  val sttpVersion = "1.1.8"
-  val scalaTestVersion = "3.0.5"
-  val mockitoVersion = "2.15.0"
-  val embeddedElasticsearchVersion = "2.5.0"
+/**
+  * Elasticsearch source spec.
+  */
+class ElasticsearchSinkSpec extends ElasticsearchSpec {
 
-  val testSettings = Seq(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalaTestVersion,
-      "org.mockito" % "mockito-core" % mockitoVersion
-    ).map(_ % Test),
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
-      "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
-    ).map(_ % akkaVersion % Test)
-  )
+  "Elasticsearch sink" should {
+    "send data" in {
+      val result = Source.single(Json.obj("foo" -> "bar"))
+        .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
+          Seq("http://127.0.0.1:8080"),
+          "testing",
+          "test",
+          "index",
+          bulk = 1
+        )))
+      Await.result(result, 30 seconds) should equal(Done)
+    }
+  }
 
 }

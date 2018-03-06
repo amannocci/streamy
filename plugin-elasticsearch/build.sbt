@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,34 +22,29 @@
  * THE SOFTWARE.
  */
 
+import Dependencies._
 import sbt.Keys._
 import sbt._
 
-object Dependencies {
+name := name.value + "-plugin-elasticsearch"
 
-  // Dependencies version
-  val akkaVersion = "2.5.11"
-  val logbackVersion = "1.2.3"
-  val logbackContribVersion = "0.3.0"
-  val commonsLangVersion = "3.7"
-  val jacksonVersion = "2.9.4"
-  val metricsJvmVersion = "4.0.2"
-  val guavaVersion = "24.0-jre"
-  val pureConfigVersion = "0.9.0"
-  val sttpVersion = "1.1.8"
-  val scalaTestVersion = "3.0.5"
-  val mockitoVersion = "2.15.0"
-  val embeddedElasticsearchVersion = "2.5.0"
+libraryDependencies ++= Seq(
+  "com.softwaremill.sttp" %% "core",
+  "com.softwaremill.sttp" %% "akka-http-backend",
+).map(_ % sttpVersion % Compile)
 
-  val testSettings = Seq(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalaTestVersion,
-      "org.mockito" % "mockito-core" % mockitoVersion
-    ).map(_ % Test),
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-testkit", // Apache 2 License
-      "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
-    ).map(_ % akkaVersion % Test)
-  )
+libraryDependencies ++= Seq(
+  "pl.allegro.tech" % "embedded-elasticsearch"
+).map(_ % embeddedElasticsearchVersion % Test)
 
+// Don't include scala in assembly
+assemblyOption in assembly ~= {
+  _.copy(includeScala = false)
 }
+
+// Publish fat jars
+artifact in(Compile, assembly) := {
+  val art = (artifact in(Compile, assembly)).value
+  art.withClassifier(Some("assembly"))
+}
+addArtifact(artifact in(Compile, assembly), assembly)

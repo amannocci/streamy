@@ -13,5 +13,8 @@ cd ${BASE_PROJECT}
 try bats core/src/test/bash
 
 # Validate scala project
-try ./sbt ";clean;compile;test;scalastyle"
+try ./sbt -batch -mem 2048 clean
+try ./sbt -batch -mem 2048 scalastyle
+try ./sbt -batch -mem 2048 compile
+try ./sbt -batch -mem 2048 test
 info "The project is valid"

@@ -26,6 +26,7 @@ import sbt.Keys._
 
 // Disable parallel execution
 parallelExecution in ThisBuild := false
+fork in ThisBuild in Test:= false
 
 lazy val commonSettings = Seq(
   name := "streamy",
@@ -51,6 +52,7 @@ lazy val bench = project
     `plugin-graphite` % "test->test",
     `plugin-json` % "test->test",
     `plugin-metric` % "test->test",
+    `plugin-elasticsearch` % "test->test",
   )
   .settings(Benchs.settings)
   .enablePlugins(JmhPlugin)
@@ -85,6 +87,12 @@ lazy val `plugin-graphite` = project
   .dependsOn(core % "provided->compile")
   .dependsOn(test % "test->test")
 
+lazy val `plugin-elasticsearch` = project
+  .in(file("plugin-elasticsearch"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(test % "test->test")
+
 lazy val test = project
   .in(file("test"))
   .settings(commonSettings, Publish.settings)
@@ -95,6 +103,7 @@ lazy val root = project
   .settings(Seq(publish := {}))
   .aggregate(
     core,
+    `plugin-elasticsearch`,
     `plugin-fingerprint`,
     `plugin-graphite`,
     `plugin-syslog`,

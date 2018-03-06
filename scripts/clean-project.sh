@@ -13,6 +13,7 @@ clean ${BASE_PROJECT}/plugin-json/target
 clean ${BASE_PROJECT}/plugin-metric/target
 clean ${BASE_PROJECT}/plugin-syslog/target
 clean ${BASE_PROJECT}/plugin-graphite/target
+clean ${BASE_PROJECT}/plugin-elasticsearch/target
 clean ${BASE_PROJECT}/project/target
 clean ${BASE_PROJECT}/project/project
 

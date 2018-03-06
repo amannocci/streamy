@@ -21,23 +21,42 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy
+package io.techcode.streamy.elasticsearch.util
 
-import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-import akka.testkit.{ImplicitSender, TestKit}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import com.softwaremill.sttp.SttpBackend
+import com.softwaremill.sttp.akkahttp.AkkaHttpBackend
+import io.techcode.streamy.TestSystem
+import pl.allegro.tech.embeddedelasticsearch.{EmbeddedElastic, PopularProperties}
+
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 /**
-  * Helper for system test.
+  * Helper for elasticsearch spec.
   */
-abstract class TestSystem extends TestKit(ActorSystem())
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
+class ElasticsearchSpec extends TestSystem {
 
-  implicit lazy val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
+  implicit lazy val httpClient: SttpBackend[Future, Source[ByteString, Any]] = AkkaHttpBackend.usingActorSystem(system)
+  implicit lazy val executionContext: ExecutionContextExecutor = system.dispatcher
 
-  override def afterAll {
-    TestKit.shutdownActorSystem(system, verifySystemShutdown = true)
+  lazy val elastic5_0: EmbeddedElastic = {
+    EmbeddedElastic.builder()
+      .withElasticVersion("5.0.0")
+      .withEsJavaOpts("-Xms128m -Xmx256m")
+      .withSetting(PopularProperties.HTTP_PORT, 8080)
+      .withSetting(PopularProperties.CLUSTER_NAME, "embedded")
+      .build()
+      .start()
+  }
+
+  override def beforeAll(): Unit = {
+    elastic5_0.getHttpPort
+  }
+
+  override def afterAll: Unit = {
+    super.afterAll
+    elastic5_0.stop()
   }
 
 }
