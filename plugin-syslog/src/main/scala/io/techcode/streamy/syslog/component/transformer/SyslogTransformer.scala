@@ -39,6 +39,9 @@ import io.techcode.streamy.util.printer.JsonPrinter
   */
 object SyslogTransformer {
 
+  // Constants
+  private val NewLineDelimiter = ByteString("\n")
+
   /**
     * Create a syslog flow that transform incoming [[ByteString]] to [[Json]].
     * This flow is Rfc5424 compliant.
@@ -49,7 +52,7 @@ object SyslogTransformer {
   def parser(conf: Rfc5424.Config): Flow[ByteString, Json, NotUsed] = {
     val framing: Flow[ByteString, ByteString, NotUsed] = {
       if (conf.framing == Framing.Delimiter) {
-        StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
+        StreamFraming.delimiter(NewLineDelimiter, conf.maxSize, allowTruncation = true)
       } else {
         SyslogFraming.scanner(conf.maxSize)
       }
@@ -86,10 +89,8 @@ object SyslogTransformer {
 
   // Common related stuff
   object Framing extends Enumeration {
-
     type Framing = Value
     val Delimiter, Count = Value
-
   }
 
 
