@@ -34,8 +34,8 @@ libraryDependencies ++= Seq(
 ).map(_ % sttpVersion % Compile)
 
 libraryDependencies ++= Seq(
-  "pl.allegro.tech" % "embedded-elasticsearch"
-).map(_ % embeddedElasticsearchVersion % Test)
+  "org.elasticsearch.client" % "elasticsearch-rest-high-level-client"
+).map(_ % elasticsearchVersion % Test)
 
 // Don't include scala in assembly
 assemblyOption in assembly ~= {

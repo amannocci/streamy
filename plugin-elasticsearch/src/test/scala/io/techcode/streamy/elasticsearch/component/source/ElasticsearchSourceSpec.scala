@@ -28,6 +28,8 @@ import akka.stream.testkit.scaladsl.TestSink
 import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.util.json._
+import org.elasticsearch.action.index.IndexRequest
+import org.elasticsearch.common.xcontent.XContentType
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -38,13 +40,16 @@ import scala.language.postfixOps
   */
 class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
-  elastic5_0.index("testing", "test", """{"foo": "bar"}""")
-  elastic5_0.index("testing", "test", """{"foo": "bar"}""")
+
+  override def beforeAll(): Unit = {
+    restClient.index(new IndexRequest("testing", "test").source("""{"foo": "bar"}""", XContentType.JSON))
+    restClient.index(new IndexRequest("testing", "test").source("""{"foo": "bar"}""", XContentType.JSON))
+  }
 
   "Elasticsearch source" should {
     "retrieve data from paginate source" in {
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
-        Seq("http://127.0.0.1:8080"),
+        Seq("http://127.0.0.1:9200"),
         "testing",
         "test",
         Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull),
@@ -58,7 +63,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
     "retrieve data from single source" in {
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq("http://127.0.0.1:8080"),
+        Seq("http://127.0.0.1:9200"),
         "testing",
         "test",
         Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull)

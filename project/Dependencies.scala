@@ -39,7 +39,7 @@ object Dependencies {
   val sttpVersion = "1.1.8"
   val scalaTestVersion = "3.0.5"
   val mockitoVersion = "2.15.0"
-  val embeddedElasticsearchVersion = "2.5.0"
+  val elasticsearchVersion = "6.2.2"
 
   val testSettings = Seq(
     libraryDependencies ++= Seq(

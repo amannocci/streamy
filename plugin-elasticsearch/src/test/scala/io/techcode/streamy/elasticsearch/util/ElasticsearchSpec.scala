@@ -28,7 +28,8 @@ import akka.util.ByteString
 import com.softwaremill.sttp.SttpBackend
 import com.softwaremill.sttp.akkahttp.AkkaHttpBackend
 import io.techcode.streamy.TestSystem
-import pl.allegro.tech.embeddedelasticsearch.{EmbeddedElastic, PopularProperties}
+import org.apache.http.HttpHost
+import org.elasticsearch.client.{RestClient, RestHighLevelClient}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -40,23 +41,11 @@ class ElasticsearchSpec extends TestSystem {
   implicit lazy val httpClient: SttpBackend[Future, Source[ByteString, Any]] = AkkaHttpBackend.usingActorSystem(system)
   implicit lazy val executionContext: ExecutionContextExecutor = system.dispatcher
 
-  lazy val elastic5_0: EmbeddedElastic = {
-    EmbeddedElastic.builder()
-      .withElasticVersion("5.0.0")
-      .withEsJavaOpts("-Xms128m -Xmx256m")
-      .withSetting(PopularProperties.HTTP_PORT, 8080)
-      .withSetting(PopularProperties.CLUSTER_NAME, "embedded")
-      .build()
-      .start()
-  }
-
-  override def beforeAll(): Unit = {
-    elastic5_0.getHttpPort
-  }
+  lazy val restClient = new RestHighLevelClient(RestClient.builder(new HttpHost("127.0.0.1", 9200, "http")))
 
   override def afterAll: Unit = {
+    restClient.close()
     super.afterAll
-    elastic5_0.stop()
   }
 
 }

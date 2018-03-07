@@ -42,7 +42,7 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
     "send data" in {
       val result = Source.single(Json.obj("foo" -> "bar"))
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
-          Seq("http://127.0.0.1:8080"),
+          Seq("http://127.0.0.1:9200"),
           "testing",
           "test",
           "index",

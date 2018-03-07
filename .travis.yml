@@ -11,8 +11,13 @@ jdk:
   - openjdk8
   - oraclejdk8
 
+# Mount docker service
+services:
+  - docker
+
 # Use local
 before_install:
+  - docker-compose up -d
   - unset SBT_OPTS JVM_OPTS
   - sudo add-apt-repository ppa:duggan/bats --yes
   - sudo apt-get update -qq
