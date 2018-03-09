@@ -50,6 +50,18 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
         )))
       Await.result(result, 30 seconds) should equal(Done)
     }
+
+    "send data using multiple workers" in {
+      val result = Source.single(Json.obj("foo" -> "bar"))
+        .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
+          Seq("http://127.0.0.1:9200"),
+          "testing",
+          "test",
+          "index",
+          bulk = 2
+        )))
+      Await.result(result, 30 seconds) should equal(Done)
+    }
   }
 
 }
