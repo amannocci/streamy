@@ -58,7 +58,8 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
           "testing",
           "test",
           "index",
-          bulk = 2
+          bulk = 1,
+          worker = 2
         )))
       Await.result(result, 30 seconds) should equal(Done)
     }
