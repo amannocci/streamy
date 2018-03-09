@@ -7,6 +7,7 @@
 streamy-core/.idea/
 .idea/**/tasks.xml
 .idea/dictionaries
+docs/_book
 
 # Sensitive or high-churn files:
 .idea/**/dataSources/
