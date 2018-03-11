@@ -37,41 +37,83 @@ class PluginListener(
   onState: PluginState => Unit
 ) extends Actor with ActorLogging {
 
-  // Last state of the plugin
-  private var lastState: PluginState = PluginState.Unknown
+  import context._
 
-  // Detect initial state
-  {
+  override def preStart(): Unit = {
     // Retrieve plugins
     val plugins = data.pluginManager.plugins
 
-    // Check if plugin metric reference
+    // Check if plugin reference
     val container = plugins.get(name)
     if (container.isDefined) {
-      lastState = container.get.state
-      onState(lastState)
-      context.system.eventStream.subscribe(self, classOf[PluginEvent])
+      val state = container.get.state
+      onState(state)
+
+      // Determine next state
+      state match {
+        case PluginState.Loading => become(handleRunning, discardOld = true)
+        case PluginState.Running => become(handleStopping, discardOld = true)
+        case PluginState.Stopping => become(handleStopped, discardOld = true)
+        case PluginState.Stopped => become(receive, discardOld = true)
+      }
     }
+
+    // Now listen for next state
+    context.system.eventStream.subscribe(self, classOf[PluginEvent])
   }
 
   /**
-    * Handle plugin state update.
-    *
-    * @param evt   plugin event involved.
-    * @param state plugin state update.
+    * Handle plugin loading event.
     */
-  private def handle(evt: PluginEvent, state: PluginState): Unit = {
-    if (data.pluginManager.plugins.contains(name) && lastState != state) {
-      lastState = state
-      onState(state)
-    }
+  def handleLoading: Receive = {
+    case evt: LoadingPluginEvent =>
+      if (evt.name.equals(name)) {
+        become(handleRunning, discardOld = true)
+        onState(evt.toState)
+      }
   }
 
+  /**
+    * Handle plugin running event.
+    */
+  def handleRunning: Receive = {
+    case evt: RunningPluginEvent =>
+      if (evt.name.equals(name)) {
+        become(handleStopping, discardOld = true)
+        onState(evt.toState)
+      }
+  }
+
+  /**
+    * Handle plugin stopping event.
+    */
+  def handleStopping: Receive = {
+    case evt: StoppingPluginEvent =>
+      if (evt.name.equals(name)) {
+        become(handleStopped, discardOld = true)
+        onState(evt.toState)
+      }
+  }
+
+  /**
+    * Handle plugin stopped event.
+    */
+  def handleStopped: Receive = {
+    case evt: StoppedPluginEvent =>
+      if (evt.name.equals(name)) {
+        become(receive, discardOld = true)
+        onState(evt.toState)
+      }
+  }
+
+  /**
+    * Handle plugin event.
+    */
   def receive: Receive = {
-    case evt: LoadingPluginEvent => handle(evt, PluginState.Loading)
-    case evt: RunningPluginEvent => handle(evt, PluginState.Running)
-    case evt: StoppingPluginEvent => handle(evt, PluginState.Stopping)
-    case evt: StoppedPluginEvent => handle(evt, PluginState.Stopped)
+    case evt: LoadingPluginEvent => if (evt.name.equals(name)) handleLoading(evt)
+    case evt: RunningPluginEvent => if (evt.name.equals(name)) handleRunning(evt)
+    case evt: StoppingPluginEvent => if (evt.name.equals(name)) handleStopping(evt)
+    case evt: StoppedPluginEvent => if (evt.name.equals(name)) handleStopped(evt)
   }
 
 }

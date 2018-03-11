@@ -75,7 +75,7 @@ object Streamy extends App {
   val conf = system.settings.config.resolve()
 
   // Attempt to deploy plugins
-  val pluginManager = new PluginManager(log, system, materializer, conf.getConfig("streamy"))
+  val pluginManager = new PluginManager(system, materializer, conf.getConfig("streamy"))
   log.info(Json.obj(
     "message" -> "Starting all plugins",
     "type" -> "lifecycle"

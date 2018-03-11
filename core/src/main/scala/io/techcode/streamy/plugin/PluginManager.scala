@@ -29,11 +29,9 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.pattern.gracefulStop
 import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
-import io.techcode.streamy.config.LifecycleConfig
+import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
 import io.techcode.streamy.event._
-import io.techcode.streamy.plugin.PluginState.PluginState
 import io.techcode.streamy.util.json._
-import org.slf4j.Logger
 import pureconfig._
 
 import scala.collection.mutable
@@ -45,10 +43,10 @@ import scala.reflect.io.{Directory, File, Path}
 /**
   * The plugin manager that handle all plugins stuff.
   */
-class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer, conf: Config) {
+class PluginManager(system: ActorSystem, materializer: Materializer, conf: Config) {
 
   // Actor refs
-  private[plugin] var _plugins: Map[String, PluginContainer] = Map.empty
+  private[streamy] var _plugins: Map[String, PluginContainer] = Map.empty
 
   // Plugin class loader
   private var _pluginClassLoader: ClassLoader = _
@@ -59,6 +57,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
 
   // Configuration
   private val lifecycleConfig = loadConfigOrThrow[LifecycleConfig](conf, "lifecycle")
+  private val folderConfig = loadConfigOrThrow[FolderConfig](conf, "folder")
 
   /**
     * Start all plugins.
@@ -87,7 +86,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
           this,
           pluginDescription,
           pluginConf,
-          PluginManager.DataFolder
+          Directory(folderConfig.data.toFile)
         )
 
         // Add to map
@@ -103,7 +102,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
           pluginData
         ))
       } catch {
-        case ex: Exception => log.error(Json.obj(
+        case ex: Exception => system.log.error(Json.obj(
           "message" -> s"Can't load '${pluginDescription.name}' plugin",
           "type" -> "lifecycle"
         ), ex)
@@ -125,7 +124,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     } catch {
       // the actor wasn't stopped within 5 seconds
       case ex: akka.pattern.AskTimeoutException =>
-        log.error(Json.obj(
+        system.log.error(Json.obj(
           "message" -> "Failed to graceful shutdown",
           "type" -> "lifecycle"
         ), ex)
@@ -154,7 +153,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     */
   private def mergeConfig(path: String, description: PluginDescription): Config = {
     (if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig).resolve()
-      .withFallback((PluginManager.ConfFolder / s"${description.name}.conf")
+      .withFallback((Directory(folderConfig.conf.toFile) / s"${description.name}.conf")
         .ifFile(f => ConfigFactory.parseFile(f.jfile))
         .getOrElse(PluginManager.EmptyPluginConfig).resolve())
       .withFallback(ConfigFactory.parseURL(new URL(s"jar:${description.file.get}!/config.conf")).resolve())
@@ -167,7 +166,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
     */
   private def getPluginDescriptions: mutable.AnyRefMap[String, PluginDescription] = {
     // Retrieve all jar files
-    val jarFiles = PluginManager.PluginFolder.files.filter((x: File) => Path.isExtensionJarOrZip(x.jfile))
+    val jarFiles = Directory(folderConfig.plugin.toFile).files.filter((x: File) => Path.isExtensionJarOrZip(x.jfile))
 
     // Attempt to load all plugins
     val pluginDescriptions = mutable.AnyRefMap.empty[String, PluginDescription]
@@ -180,7 +179,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
         val description = loadConfigOrThrow[PluginDescription](conf).copy(file = Some(jar.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
-        case _: ConfigException.Missing => log.error(Json.obj(
+        case _: ConfigException.Missing => system.log.error(Json.obj(
           "message" -> s"Can't load '${jar.name}' plugin",
           "type" -> "lifecycle"
         ))
@@ -204,7 +203,7 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
           if (pluginDescriptions.contains(dependency)) {
             true
           } else {
-            log.error(Json.obj(
+            system.log.error(Json.obj(
               "message" -> s"Can't load '${pluginDescription.name}' plugin because of unknown dependency '$dependency'",
               "type" -> "lifecycle"
             ))
@@ -228,36 +227,25 @@ class PluginManager(log: Logger, system: ActorSystem, materializer: Materializer
   */
 private class PluginsListener(manager: PluginManager) extends Actor with ActorLogging {
 
-  private def handle(evt: PluginEvent, state: PluginState): Unit = {
-    val container = manager._plugins.get(evt.name)
-    if (container.isDefined) {
-      manager._plugins += (evt.name -> container.get.copy(ref = sender(), state = state))
-      log.info(Json.obj(
-        "message" -> s"Plugin ${evt.name} ${state.toString.toLowerCase()}",
-        "type" -> "plugin",
-        "plugin" -> evt.name
-      ))
-    }
+  override def receive: Receive = {
+    case evt: PluginEvent =>
+      val container = manager._plugins.get(evt.name)
+      if (container.isDefined) {
+        manager._plugins += (evt.name -> container.get.copy(ref = sender(), state = evt.toState))
+        log.info(Json.obj(
+          "message" -> s"Plugin ${evt.name} is ${evt.toString.toLowerCase()}",
+          "type" -> "plugin",
+          "plugin" -> evt.name
+        ))
+      }
   }
 
-  override def receive: Receive = {
-    case evt: LoadingPluginEvent => handle(evt, PluginState.Loading)
-    case evt: RunningPluginEvent => handle(evt, PluginState.Running)
-    case evt: StoppingPluginEvent => handle(evt, PluginState.Stopping)
-    case evt: StoppedPluginEvent => handle(evt, PluginState.Stopped)
-  }
 }
 
 /**
   * Plugin manager companion.
   */
 object PluginManager {
-
-  val PluginFolder: Directory = Path("plugin") toDirectory
-
-  val ConfFolder: Directory = Path("conf") toDirectory
-
-  val DataFolder: Directory = Path("data") toDirectory
 
   val EmptyPluginConfig: Config = ConfigFactory.empty()
 

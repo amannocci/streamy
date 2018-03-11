@@ -24,32 +24,53 @@
 package io.techcode.streamy.event
 
 import akka.actor.DeadLetterSuppression
+import io.techcode.streamy.plugin.PluginState
+import io.techcode.streamy.plugin.PluginState.PluginState
 
 /**
   * Represent an app event.
   */
-abstract class PluginEvent(val name: String) extends DeadLetterSuppression
+abstract class PluginEvent(val name: String) extends DeadLetterSuppression {
+
+  /**
+    * Convert a plugin event to a plugin lifecycle state.
+    *
+    * @return plugin lifecycle state.
+    */
+  def toState: PluginState
+
+  override def toString: String = toState.toString
+
+}
 
 /**
   * Represent an plugin loading event.
   * This event is fired when a plugin is loading.
   */
-case class LoadingPluginEvent(override val name: String) extends PluginEvent(name)
+case class LoadingPluginEvent(override val name: String) extends PluginEvent(name) {
+  def toState: PluginState = PluginState.Loading
+}
 
 /**
   * Represent an plugin running event.
   * This event is fired when a plugin is running.
   */
-case class RunningPluginEvent(override val name: String) extends PluginEvent(name)
+case class RunningPluginEvent(override val name: String) extends PluginEvent(name) {
+  def toState: PluginState = PluginState.Running
+}
 
 /**
   * Represent an plugin stopping event.
   * This event is fired when a plugin is stopping.
   */
-case class StoppingPluginEvent(override val name: String) extends PluginEvent(name)
+case class StoppingPluginEvent(override val name: String) extends PluginEvent(name) {
+  def toState: PluginState = PluginState.Stopping
+}
 
 /**
   * Represent an plugin stopping event.
   * This event is fired when a plugin is stopped.
   */
-case class StoppedPluginEvent(override val name: String) extends PluginEvent(name)
+case class StoppedPluginEvent(override val name: String) extends PluginEvent(name) {
+  def toState: PluginState = PluginState.Stopped
+}
