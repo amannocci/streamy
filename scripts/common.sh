@@ -33,3 +33,5 @@ info "Correcting working directory"
 cd "$(dirname "$0")"
 BASE_DIR=$PWD
 BASE_PROJECT=$(dirname "$BASE_DIR")
+export BASE_DIR
+export BASE_PROJECT

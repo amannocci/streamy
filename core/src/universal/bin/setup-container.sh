@@ -86,7 +86,8 @@ setup_mem() {
   log "info" "Maximum jvm mem limit: ${JVM_MEMORY_LIMIT}"
   local max_mem="${JVM_MEMORY_LIMIT}"
   local ratio=${JVM_MEMORY_RATIO:-50}
-  local mx=$(echo "${max_mem} ${ratio} 1048576" | awk '{printf "%d\n" , ($1*$2)/(100*$3) + 0.5}')
+  local mx
+  mx=$(echo "${max_mem} ${ratio} 1048576" | awk '{printf "%d\n" , ($1*$2)/(100*$3) + 0.5}')
   addJava "-Xmx${mx}M"
 }
 
