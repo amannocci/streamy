@@ -23,6 +23,7 @@
  */
 
 import sbt.Keys._
+import sbt._
 
 // Disable parallel execution
 parallelExecution in ThisBuild := false
@@ -33,13 +34,13 @@ lazy val commonSettings = Seq(
   version := "0.1.0-SNAPSHOT",
   scalaVersion := "2.12.4",
 
+  // Disable test in assembly
+  test in assembly := {},
+
   // Scala compiler options
   scalacOptions in(Compile, doc) ++= Seq(
     "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
-  ),
-
-  // Disable test in assembly
-  test in assembly := {}
+  )
 )
 
 lazy val core = project
@@ -64,39 +65,39 @@ lazy val `plugin-fingerprint` = project
   .in(file("plugin-fingerprint"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
-  .dependsOn(test % "test->test")
+  .dependsOn(testkit % "test->test")
 
 lazy val `plugin-syslog` = project
   .in(file("plugin-syslog"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
-  .dependsOn(test % "test->test")
+  .dependsOn(testkit % "test->test")
 
 lazy val `plugin-json` = project
   .in(file("plugin-json"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
-  .dependsOn(test % "test->test")
+  .dependsOn(testkit % "test->test")
 
 lazy val `plugin-metric` = project
   .in(file("plugin-metric"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
-  .dependsOn(test % "test->test")
+  .dependsOn(testkit % "test->test")
 
 lazy val `plugin-graphite` = project
   .in(file("plugin-graphite"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
-  .dependsOn(test % "test->test")
+  .dependsOn(testkit % "test->test")
 
 lazy val `plugin-elasticsearch` = project
   .in(file("plugin-elasticsearch"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
-  .dependsOn(test % "test->test")
+  .dependsOn(testkit % "test->test")
 
-lazy val test = project
+lazy val testkit = project
   .in(file("test"))
   .settings(commonSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
@@ -112,5 +113,5 @@ lazy val root = project
     `plugin-syslog`,
     `plugin-json`,
     `plugin-metric`,
-    test
+    testkit
   )
