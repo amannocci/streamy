@@ -26,7 +26,7 @@ import sbt.Keys._
 
 // Disable parallel execution
 parallelExecution in ThisBuild := false
-fork in ThisBuild in Test:= false
+fork in ThisBuild in Test := false
 
 lazy val commonSettings = Seq(
   name := "streamy",
@@ -36,7 +36,10 @@ lazy val commonSettings = Seq(
   // Scala compiler options
   scalacOptions in(Compile, doc) ++= Seq(
     "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
-  )
+  ),
+
+  // Disable test in assembly
+  test in assembly := {}
 )
 
 lazy val core = project
