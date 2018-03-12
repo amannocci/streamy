@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Load common
-source ${PWD}/scripts/common.sh
+source "${PWD}/scripts/common.sh"
 
 # Constants
 FILENAME=${BASE_PROJECT}/${1##*/}

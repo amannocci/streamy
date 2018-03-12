@@ -4,7 +4,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Load common
-source ${DIR}/load-common.sh
+source "${DIR}/load-common.sh"
 
 ceiling() {
   awk -vnumber="$1" -vdiv="$2" '
@@ -48,7 +48,8 @@ memory_limit() {
   fi
 
   # Max memory of host
-  local mem_limit="$(awk '/MemTotal/ {printf "%.0f", $2*1024}' /proc/meminfo)"
+  local mem_limit
+  mem_limit="$(awk '/MemTotal/ {printf "%.0f", $2*1024}' /proc/meminfo)"
 
   # Read cgroups limit
   local max_mem_unbounded_file=${SYS_MAX_MEM_UNBOUNDED_FILE:-/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes}
@@ -67,8 +68,10 @@ memory_limit() {
 
 # Cpu Limit
 setup_cpu() {
-  export JVM_CPU_LIMIT="$(core_limit)"
-  export JVM_CPU_LIMIT_X2="$((2 * $JVM_CPU_LIMIT))"
+  JVM_CPU_LIMIT="$(core_limit)"
+  JVM_CPU_LIMIT_X2="$((2 * JVM_CPU_LIMIT))"
+  export JVM_CPU_LIMIT
+  export JVM_CPU_LIMIT_X2
   log "info" "Minimum jvm cpu limit: ${JVM_CPU_LIMIT}"
   log "info" "Maximum jvm cpu limit: ${JVM_CPU_LIMIT_X2}"
   addJava "-XX:ParallelGCThreads=${JVM_CPU_LIMIT}"
@@ -78,7 +81,8 @@ setup_cpu() {
 
 # Memory Limit
 setup_mem() {
-  export JVM_MEMORY_LIMIT="$(memory_limit)"
+  JVM_MEMORY_LIMIT="$(memory_limit)"
+  export JVM_MEMORY_LIMIT
   log "info" "Maximum jvm mem limit: ${JVM_MEMORY_LIMIT}"
   local max_mem="${JVM_MEMORY_LIMIT}"
   local ratio=${JVM_MEMORY_RATIO:-50}

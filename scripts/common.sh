@@ -12,14 +12,14 @@ is_install() {
   # set to 1 initially
   local return_=1
   # set to 0 if not found
-  type $1 >/dev/null 2>&1 || { local return_=0; }
+  type "$1" >/dev/null 2>&1 || { local return_=0; }
   # return value
   echo "$return_"
 }
 
 # Run a command and check for fail
 function try {
-  $@
+  "$@"
   if [ $? -ne 0 ]; then
     error "The project isn't valid"
     exit 1

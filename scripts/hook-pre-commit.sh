@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
 # Load common
-source ${PWD}/scripts/common.sh
+source "${PWD}/scripts/common.sh"
 
 # Constants
 if [[ $BASE_PROJECT == *".git"* ]]; then
   BASE_PROJECT=$(dirname "$BASE_PROJECT")
 fi
-cd ${BASE_PROJECT}
+cd "${BASE_PROJECT}"
 
 # Validate new version
 HOOK_DIR=${BASE_PROJECT}/.git/hooks
-if [ `diff ${BASE_PROJECT}/scripts/hook-pre-commit.sh ${HOOK_DIR}/pre-commit | wc -l` -ne 0 ]; then
+if [ $(diff "${BASE_PROJECT}/scripts/hook-pre-commit.sh" "${HOOK_DIR}/pre-commit" | wc -l) -ne 0 ]; then
   error "There is a new version of scripts\nPlease run ./scripts/setup-project.sh again !"
   exit 1
 fi

@@ -4,11 +4,11 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Load common
-source ${DIR}/load-common.sh
+source "${DIR}/load-common.sh"
 
 # Make template if supported
 function make_template {
-  if [ $(is_install envtpl) == 1 ]; then
+  if [ "$(is_install envtpl)" == 1 ]; then
     log "info" "envtpl is installed"
     for file in $PWD/conf/*.tpl; do
       log "info" "Make template $file"
