@@ -37,6 +37,7 @@ abstract class TestSystem extends TestKit(ActorSystem())
   implicit lazy val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
 
   override def afterAll {
+    materializer.shutdown()
     TestKit.shutdownActorSystem(system, verifySystemShutdown = true)
   }
 
