@@ -21,33 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.elasticsearch.component.sink
+package io.techcode.streamy.elasticsearch.event
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Keep, Sink, Source}
-import akka.util.ByteString
-import akka.{Done, NotUsed}
-import com.softwaremill.sttp.SttpBackend
-import io.techcode.streamy.elasticsearch.component.flow.ElasticsearchFlow
 import io.techcode.streamy.util.json.Json
 
-import scala.concurrent.{ExecutionContext, Future}
+sealed trait ElasticsearchEvent
 
-/**
-  * Elasticsearch sink companion.
-  */
-object ElasticsearchSink {
+case class ElasticsearchSuccessEvent(responseTime: Long) extends ElasticsearchEvent
 
-  /**
-    * Create a new elasticsearch sink.
-    *
-    * @param config sink configuration.
-    */
-  def apply(config: ElasticsearchFlow.Config)(
-    implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
-    system: ActorSystem,
-    executionContext: ExecutionContext
-  ): Sink[Json, Future[Done]] =
-    ElasticsearchFlow(config).toMat(Sink.ignore)(Keep.right)
+case class ElasticsearchPartialEvent(responseTime: Long) extends ElasticsearchEvent
 
-}
+case class ElasticsearchFailureEvent(responseTime: Long) extends ElasticsearchEvent
+
+case class ElasticsearchDropEvent(elem: Json) extends ElasticsearchEvent

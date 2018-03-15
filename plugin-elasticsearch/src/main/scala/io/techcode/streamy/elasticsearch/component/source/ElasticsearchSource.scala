@@ -24,6 +24,7 @@
 package io.techcode.streamy.elasticsearch.component.source
 
 import akka.NotUsed
+import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.stream.stage.{GraphStage, GraphStageLogic, OutHandler, StageLogging}
 import akka.stream.{Attributes, Outlet, OverflowStrategy, SourceShape}
@@ -61,6 +62,7 @@ object ElasticsearchSource {
     */
   def single(config: Config)(
     implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
+    system: ActorSystem,
     executionContext: ExecutionContext
   ): Source[ByteString, Future[NotUsed]] = {
     val hosts = Stream.continually(config.hosts.toStream).flatten.toIterator
@@ -100,6 +102,7 @@ object ElasticsearchSource {
     */
   def paginate(config: Config)(
     implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
+    system: ActorSystem,
     executionContext: ExecutionContext
   ): Source[Json, NotUsed] =
     Source.fromGraph(new ElasticsearchPaginateSourceStage(config))

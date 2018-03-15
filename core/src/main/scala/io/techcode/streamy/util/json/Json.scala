@@ -673,7 +673,14 @@ case class JsArray private[json](
     *
     * @return an Iterator containing all elements of this JsArray.
     */
-  def toIterator: Iterator[Json] = underlying.toIterator
+  def toIterator: Iterator[Json] = underlying.view.toIterator
+
+  /**
+    * Returns a Seq containing all elements in this JsArray.
+    *
+    * @return a Seq containing all elements of this JsArray.
+    */
+  def toSeq: Seq[Json] = underlying.view
 
   override def isArray: Boolean = true
 
