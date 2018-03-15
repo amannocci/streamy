@@ -33,4 +33,4 @@ case class ElasticsearchPartialEvent(responseTime: Long) extends ElasticsearchEv
 
 case class ElasticsearchFailureEvent(responseTime: Long) extends ElasticsearchEvent
 
-case class ElasticsearchDropEvent(elem: Json) extends ElasticsearchEvent
+case class ElasticsearchDropEvent(elem: Json, response: Json) extends ElasticsearchEvent

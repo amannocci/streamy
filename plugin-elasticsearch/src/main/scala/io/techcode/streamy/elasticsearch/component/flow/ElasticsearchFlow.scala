@@ -276,7 +276,7 @@ object ElasticsearchFlow {
 
             // We can't do anything in case of conflict or bad request or not found
             if (status == 409 || status == 400 || status == 404) {
-              system.eventStream.publish(ElasticsearchDropEvent(item))
+              system.eventStream.publish(ElasticsearchDropEvent(item, result))
               false
             } else {
               if (status == 429) backPressure = true
