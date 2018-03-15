@@ -182,7 +182,6 @@ object ElasticsearchFlow {
         Remove(Root / "_version", mustExist = false),
         Remove(Root / "_version_type", mustExist = false)
       ))).get
-      println(header.toString)
       ByteString(header.toString()) ++ ByteString("\n") ++ ByteString(doc.toString()) ++ ByteString("\n")
     }
 
