@@ -31,6 +31,10 @@ import io.techcode.streamy.util.json.Json
   */
 class DeadLetterMonitor extends Actor with ActorLogging {
 
+  override def preStart(): Unit = {
+    context.system.eventStream.subscribe(self, classOf[DeadLetter])
+  }
+
   override def receive: Receive = {
     case dead: DeadLetter => log.error(Json.obj(
       "type" -> "monitor",
