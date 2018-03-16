@@ -341,17 +341,30 @@ object ElasticsearchFlow {
           if (messages.nonEmpty) {
             state = State.Busy
             started = System.currentTimeMillis()
-            sttp
-              .post(uri"${hosts.next()}/_bulk")
+
+            // Retrieve uri based on scroll id
+            val uri = uri"${hosts.next()}/_bulk"
+
+            // Prepare request
+            var request = sttp.post(uri)
               .header("Content-Type", "application/x-ndjson")
+              .readTimeout(5 seconds)
               .body(marshalMessages(messages))
               .response(asJson)
-              .readTimeout(5 seconds)
-              .send()
-              .onComplete {
-                case Success(response) => successHandler.invoke(response)
-                case Failure(ex) => failureHandler.invoke(ex)
-              }
+
+            // Add basic auth
+            request = if (uri.userInfo.isDefined) {
+              val userInfo = uri.userInfo.get
+              request.auth.basic(userInfo.username, userInfo.password.get)
+            } else {
+              request
+            }
+
+            // Send request
+            request.send().onComplete {
+              case Success(response) => successHandler.invoke(response)
+              case Failure(ex) => failureHandler.invoke(ex)
+            }
           }
         }
       }
