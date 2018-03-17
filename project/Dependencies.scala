@@ -36,7 +36,7 @@ object Dependencies {
   val metricsJvmVersion = "4.0.2"
   val guavaVersion = "24.0-jre"
   val pureConfigVersion = "0.9.0"
-  val sttpVersion = "1.1.8"
+  val sttpVersion = "1.1.10"
   val scalaTestVersion = "3.0.5"
   val mockitoVersion = "2.15.0"
   val elasticsearchVersion = "6.2.2"
