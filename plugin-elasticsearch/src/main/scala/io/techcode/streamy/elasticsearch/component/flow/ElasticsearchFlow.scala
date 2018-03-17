@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.elasticsearch.component.flow
 
+import java.util
+
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream._
@@ -33,7 +35,6 @@ import com.softwaremill.sttp._
 import io.techcode.streamy.elasticsearch.event.{ElasticsearchDropEvent, ElasticsearchFailureEvent, ElasticsearchPartialEvent, ElasticsearchSuccessEvent}
 import io.techcode.streamy.util.json._
 
-import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
@@ -198,7 +199,7 @@ object ElasticsearchFlow {
       setHandlers(in, out, this)
 
       // Pending message
-      private val buffer = new mutable.Queue[Json]
+      private val buffer = new util.ArrayDeque[Json]
 
       // Async success handler
       private val successHandler = getAsyncCallback[Response[Json]](handleResponse)
@@ -289,7 +290,7 @@ object ElasticsearchFlow {
           }
 
         messages = Nil
-        results.getOrElse(1, Nil).map(_._1).foreach(buffer.enqueue(_))
+        results.getOrElse(1, Nil).map(_._1).foreach(buffer.push(_))
 
         if (backPressure) {
           scheduleOnce(NotUsed, config.retry)
@@ -305,7 +306,7 @@ object ElasticsearchFlow {
         */
       def processFailure(): Unit = {
         system.eventStream.publish(ElasticsearchFailureEvent(elapsed()))
-        messages.foreach(buffer.enqueue(_))
+        messages.foreach(buffer.push(_))
         messages = Nil
         scheduleOnce(NotUsed, config.retry)
       }
@@ -314,7 +315,7 @@ object ElasticsearchFlow {
         * Try to pull an element in the buffer.
         */
       private def tryPull(): Unit = {
-        if (buffer.lengthCompare(config.bulk) < 0 && !isClosed(in) && !hasBeenPulled(in)) {
+        if (buffer.size() < config.bulk && !isClosed(in) && !hasBeenPulled(in)) {
           pull(in)
         }
       }
@@ -323,8 +324,8 @@ object ElasticsearchFlow {
         * Prepare message to send in request.
         */
       def prepareElems(): Unit = {
-        messages = (1 to config.bulk).flatMap { _ =>
-          buffer.dequeueFirst(_ => true)
+        messages = (1 to Math.min(config.bulk, buffer.size())).map { _ =>
+          buffer.pop()
         }
       }
 
@@ -391,7 +392,7 @@ object ElasticsearchFlow {
         setKeepGoing(true)
 
         // Get element
-        buffer.enqueue(grab(in))
+        buffer.push(grab(in))
 
         // Perform request if idle
         performRequest()
