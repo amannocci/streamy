@@ -40,7 +40,6 @@ import scala.language.postfixOps
   */
 class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
-
   override def beforeAll(): Unit = {
     restClient.index(new IndexRequest("testing", "test").source("""{"foo": "bar"}""", XContentType.JSON))
     restClient.index(new IndexRequest("testing", "test").source("""{"foo": "bar"}""", XContentType.JSON))
@@ -49,7 +48,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
   "Elasticsearch source" should {
     "retrieve data from paginate source" in {
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
-        Seq("http://127.0.0.1:9200"),
+        Seq(s"http://$elasticHost:9200"),
         "testing",
         "test",
         Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull),
@@ -63,7 +62,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
     "retrieve data from single source" in {
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq("http://127.0.0.1:9200"),
+        Seq(s"http://$elasticHost:9200"),
         "testing",
         "test",
         Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull)

@@ -41,7 +41,9 @@ class ElasticsearchSpec extends TestSystem {
   implicit lazy val httpClient: SttpBackend[Future, Source[ByteString, Any]] = AkkaHttpBackend.usingActorSystem(system)
   implicit lazy val executionContext: ExecutionContextExecutor = system.dispatcher
 
-  lazy val restClient = new RestHighLevelClient(RestClient.builder(new HttpHost("127.0.0.1", 9200, "http")))
+  val elasticHost: String = sys.props.getOrElse("elasticsearch.host", "127.0.0.1")
+
+  lazy val restClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, 9200, "http")))
 
   override def afterAll: Unit = {
     restClient.close()
