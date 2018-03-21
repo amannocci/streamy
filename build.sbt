@@ -27,7 +27,6 @@ import sbt._
 
 // Disable parallel execution
 parallelExecution in ThisBuild := false
-fork in ThisBuild in Test := false
 
 lazy val commonSettings = Seq(
   name := "streamy",

@@ -23,7 +23,11 @@
  */
 package io.techcode.streamy
 
-import org.scalatest.{Matchers, WordSpecLike}
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import akka.testkit.TestKit
+import com.typesafe.config.{Config, ConfigFactory}
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec, WordSpecLike}
 
 /**
   * Streamy spec.
@@ -35,5 +39,29 @@ class StreamySpec extends WordSpecLike with Matchers {
       Streamy.main(new Array[String](0))
     }
   }
+
+}
+
+/**
+  * Helper for system test.
+  */
+trait TestSystem extends WordSpec with Matchers with BeforeAndAfterAll {
+
+  protected implicit val system: ActorSystem = {
+    def systemConfig = ConfigFactory.parseString(s"akka.stream.materializer.auto-fusing=true")
+      .withFallback(config)
+      .withFallback(ConfigFactory.load())
+
+    ActorSystem(getClass.getSimpleName, systemConfig)
+  }
+
+  protected implicit val materializer: ActorMaterializer = ActorMaterializer()
+
+  override protected def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
+    super.afterAll()
+  }
+
+  protected def config: Config = ConfigFactory.empty()
 
 }

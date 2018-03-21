@@ -32,7 +32,7 @@ import org.scalatest._
 /**
   * Sink transformer spec.
   */
-class SinkTransformerSpec extends WordSpecLike with Matchers {
+class SinkTransformerSpec extends WordSpec with Matchers {
 
   class Impl(succeeded: Boolean) extends SinkTransformer {
     def newPrinter(pkt: Json): JsonPrinter = new JsonPrinter(pkt) {

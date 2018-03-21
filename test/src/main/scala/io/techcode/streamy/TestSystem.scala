@@ -24,21 +24,31 @@
 package io.techcode.streamy
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-import akka.testkit.{ImplicitSender, TestKit}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import akka.stream.ActorMaterializer
+import akka.testkit.TestKit
+import com.typesafe.config.{Config, ConfigFactory}
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 
 /**
   * Helper for system test.
   */
-abstract class TestSystem extends TestKit(ActorSystem())
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
+trait TestSystem extends WordSpec with Matchers with BeforeAndAfterAll {
 
-  implicit lazy val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
+  protected implicit val system: ActorSystem = {
+    def systemConfig = ConfigFactory.parseString(s"akka.stream.materializer.auto-fusing=true")
+      .withFallback(config)
+      .withFallback(ConfigFactory.load())
 
-  override def afterAll {
-    materializer.shutdown()
-    TestKit.shutdownActorSystem(system, verifySystemShutdown = true)
+    ActorSystem(getClass.getSimpleName, systemConfig)
   }
+
+  protected implicit val materializer: ActorMaterializer = ActorMaterializer()
+
+  override protected def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
+    super.afterAll()
+  }
+
+  protected def config: Config = ConfigFactory.empty()
 
 }

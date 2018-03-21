@@ -32,7 +32,7 @@ import scala.reflect.io.Path
 /**
   * Plugin description spec.
   */
-class PluginDescriptionSpec extends WordSpecLike with Matchers with Inside with PrivateMethodTester {
+class PluginDescriptionSpec extends WordSpec with Matchers with Inside with PrivateMethodTester {
 
   "PluginDescription" should {
     "contains all informations" in {

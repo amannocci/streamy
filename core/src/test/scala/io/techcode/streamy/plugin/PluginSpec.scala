@@ -23,27 +23,19 @@
  */
 package io.techcode.streamy.plugin
 
-import akka.actor.{ActorRef, ActorSystem, Kill, Props}
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer}
-import akka.testkit.{ImplicitSender, TestKit}
+import akka.actor.{ActorRef, Kill, Props}
+import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest._
-import pureconfig._
+import io.techcode.streamy.TestSystem
 import org.scalatest.mockito.MockitoSugar
+import pureconfig._
 
 import scala.reflect.io.Path
 
 /**
   * Plugin spec.
   */
-class PluginSpec extends TestKit(ActorSystem("PluginSpec"))
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar {
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
+class PluginSpec extends TestSystem with MockitoSugar {
 
   "Plugin" can {
     "be started" in {

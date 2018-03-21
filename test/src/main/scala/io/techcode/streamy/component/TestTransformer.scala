@@ -32,7 +32,7 @@ import org.scalatest.Assertion
 /**
   * Helper for source transformer test.
   */
-abstract class TestTransformer extends TestSystem {
+trait TestTransformer extends TestSystem {
 
   /**
     * Except an element using given transformer.

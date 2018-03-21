@@ -23,22 +23,13 @@
  */
 package io.techcode.streamy.util.monitor
 
-import akka.actor.{ActorSystem, DeadLetter, Kill, Props}
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-import akka.testkit.{ImplicitSender, TestKit}
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
+import akka.actor.{DeadLetter, Kill, Props}
+import io.techcode.streamy.TestSystem
 
 /**
   * Dead letter monitoring spec.
   */
-class DeadLetterMonitorSpec extends TestKit(ActorSystem("DeadLetterMonitorSpec"))
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfter {
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
+class DeadLetterMonitorSpec extends TestSystem {
 
   "Dead letter monitoring" can {
     "be started and stopped" in {

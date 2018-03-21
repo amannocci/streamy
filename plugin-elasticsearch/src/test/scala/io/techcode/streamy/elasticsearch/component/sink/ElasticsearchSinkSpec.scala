@@ -32,6 +32,7 @@ import io.techcode.streamy.util.json._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits._
 
 /**
   * Elasticsearch source spec.

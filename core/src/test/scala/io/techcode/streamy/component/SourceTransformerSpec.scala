@@ -32,7 +32,7 @@ import org.scalatest._
 /**
   * Source transformer spec.
   */
-class SourceTransformerSpec extends WordSpecLike with Matchers {
+class SourceTransformerSpec extends WordSpec with Matchers {
 
   class Impl(succeeded: Boolean) extends SourceTransformer {
     override def newParser(pkt: ByteString): ByteStringParser = new ByteStringParser(pkt) {

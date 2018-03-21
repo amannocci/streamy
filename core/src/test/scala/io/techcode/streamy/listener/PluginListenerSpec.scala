@@ -23,14 +23,12 @@
  */
 package io.techcode.streamy.listener
 
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-import akka.testkit.{ImplicitSender, TestKit}
+import akka.actor.{ActorRef, Props}
 import com.typesafe.config.ConfigFactory
+import io.techcode.streamy.TestSystem
 import io.techcode.streamy.event._
 import io.techcode.streamy.plugin.PluginState.PluginState
 import io.techcode.streamy.plugin.{PluginData, PluginDescription, PluginManager, PluginState}
-import org.scalatest._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.{Interval, Timeout}
 import org.scalatest.time.{Seconds, Span}
@@ -40,10 +38,7 @@ import scala.reflect.io.Path
 /**
   * PluginListener spec.
   */
-class PluginListenerSpec extends TestKit(ActorSystem("PluginListenerSpec"))
-  with ImplicitSender with WordSpecLike with Matchers with Eventually {
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
+class PluginListenerSpec extends TestSystem with Eventually {
 
   val manager = new PluginManager(system, materializer, ConfigFactory.defaultReference().getConfig("streamy"))
   val container = PluginData(

@@ -31,23 +31,25 @@ import io.techcode.streamy.TestSystem
 import org.apache.http.HttpHost
 import org.elasticsearch.client.{RestClient, RestHighLevelClient}
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.Future
 
 /**
   * Helper for elasticsearch spec.
   */
-class ElasticsearchSpec extends TestSystem {
-
-  implicit lazy val httpClient: SttpBackend[Future, Source[ByteString, Any]] = AkkaHttpBackend.usingActorSystem(system)
-  implicit lazy val executionContext: ExecutionContextExecutor = system.dispatcher
+trait ElasticsearchSpec extends TestSystem {
 
   val elasticHost: String = sys.props.getOrElse("elasticsearch.host", "127.0.0.1")
 
-  lazy val restClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, 9200, "http")))
+  protected implicit val httpClient: SttpBackend[Future, Source[ByteString, Any]] = {
+    AkkaHttpBackend.usingActorSystem(system)
+  }
 
-  override def afterAll: Unit = {
+  val restClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, 9200, "http")))
+
+  override def afterAll(): Unit = {
     restClient.close()
-    super.afterAll
+    super.afterAll()
   }
 
 }

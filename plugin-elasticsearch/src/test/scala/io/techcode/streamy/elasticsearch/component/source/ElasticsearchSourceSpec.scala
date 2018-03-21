@@ -29,9 +29,11 @@ import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.util.json._
 import org.elasticsearch.action.index.IndexRequest
+import org.elasticsearch.action.support.WriteRequest
 import org.elasticsearch.common.xcontent.XContentType
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -41,8 +43,12 @@ import scala.language.postfixOps
 class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
   override def beforeAll(): Unit = {
-    restClient.index(new IndexRequest("testing", "test").source("""{"foo": "bar"}""", XContentType.JSON))
-    restClient.index(new IndexRequest("testing", "test").source("""{"foo": "bar"}""", XContentType.JSON))
+    restClient.index(new IndexRequest("testing", "test")
+      .source("""{"foo": "bar"}""", XContentType.JSON)
+      .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
+    restClient.index(new IndexRequest("testing", "test")
+      .source("""{"foo": "bar"}""", XContentType.JSON)
+      .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
   }
 
   "Elasticsearch source" should {

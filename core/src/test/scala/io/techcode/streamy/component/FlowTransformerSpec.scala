@@ -34,7 +34,7 @@ import org.scalatest._
 /**
   * Flow transformer spec.
   */
-class FlowTransformerSpec extends WordSpecLike with Matchers {
+class FlowTransformerSpec extends WordSpec with Matchers {
 
   class Impl(config: ImplConfig) extends FlowTransformer(config) {
     override def transform(value: Json): Option[Json] = value.asString.map(v => s"${v}bar")

@@ -33,7 +33,7 @@ import scala.reflect.io.Path
 /**
   * Helper for plugin test.
   */
-abstract class TestPlugin extends TestSystem {
+trait TestPlugin extends TestSystem {
 
   protected def create(typed: Class[_], conf: Config): ActorRef = {
     val description: PluginDescription = loadConfigOrThrow[PluginDescription](ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
