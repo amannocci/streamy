@@ -30,6 +30,7 @@ import akka.stream.stage.{GraphStage, GraphStageLogic, OutHandler, StageLogging}
 import akka.stream.{Attributes, Outlet, OverflowStrategy, SourceShape}
 import akka.util.ByteString
 import com.softwaremill.sttp._
+import io.techcode.streamy.elasticsearch.event.{ElasticsearchFailureEvent, ElasticsearchSuccessEvent}
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
@@ -115,6 +116,7 @@ object ElasticsearchSource {
     */
   private class ElasticsearchPaginateSourceStage(config: Config)(
     implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
+    system: ActorSystem,
     executionContext: ExecutionContext
   ) extends GraphStage[SourceShape[Json]] {
 
@@ -156,13 +158,14 @@ object ElasticsearchSource {
         * @param response http response.
         */
       def handleSuccess(response: Response[Json]): Unit = {
-        metric()
         response.body match {
-          case Left(ex) => new IllegalStateException(ex)
+          case Left(ex) => handleFailure(new StreamException(ex))
           case Right(data) =>
             // Retrieve hits
             val result = data.evaluate(Root / "hits" / "hits").asArray
             if (result.isDefined) {
+              system.eventStream.publish(ElasticsearchSuccessEvent(elapsed()))
+
               // Check if we have at least one hit
               val it = result.get.toIterator
               if (it.hasNext) {
@@ -172,7 +175,7 @@ object ElasticsearchSource {
                 completeStage()
               }
             } else {
-              failStage(new IllegalStateException(response.statusText))
+              handleFailure(new StreamException(response.statusText))
             }
         }
       }
@@ -183,24 +186,14 @@ object ElasticsearchSource {
         * @param ex request exception.
         */
       def handleFailure(ex: Throwable): Unit = {
-        metric(isSuccess = false)
+        system.eventStream.publish(ElasticsearchFailureEvent(elapsed()))
         failStage(ex)
       }
 
       /**
-        * Emit a log to trace response.
-        *
-        * @param isSuccess is success.
+        * Gets time elapsed between begin of request and now.
         */
-      def metric(isSuccess: Boolean = true): Unit = {
-        // Log end of request
-        val time = System.currentTimeMillis() - started
-        log.debug(Json.obj(
-          "component" -> "elasticsearch-source",
-          "response_time" -> time,
-          "is_success" -> isSuccess
-        ))
-      }
+      def elapsed(): Long = System.currentTimeMillis() - started
 
       val asJson: ResponseAs[Json, Nothing] = asByteArray.map(Json.parse(_).getOrElse(JsNull))
 
