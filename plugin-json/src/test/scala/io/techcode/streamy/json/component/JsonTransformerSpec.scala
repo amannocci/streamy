@@ -44,13 +44,13 @@ class JsonTransformerSpec extends TestTransformer {
 
     "deserialize correctly a packet inplace from string" in {
       val input = Json.obj("message" -> """{"message":"foobar"}""")
-      val component = new JsonTransformer(Config(Root / "message"))
+      val component = new DeserializerTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
     }
 
     "deserialize correctly a packet with a root target from string" in {
       val input = Json.obj("message" -> """{"test":"foobar"}""")
-      val component = new JsonTransformer(Config(Root / "message", Some(Root)))
+      val component = new DeserializerTransformer(Config(Root / "message", Some(Root)))
       component.apply(input) should equal(Json.obj(
         "message" -> """{"test":"foobar"}""",
         "test" -> "foobar"
@@ -59,37 +59,37 @@ class JsonTransformerSpec extends TestTransformer {
 
     "deserialize correctly a packet with a root target equal to an existing field from string" in {
       val input = Json.obj("message" -> """{"message":"foobar"}""")
-      val component = new JsonTransformer(Config(Root / "message", Some(Root)))
+      val component = new DeserializerTransformer(Config(Root / "message", Some(Root)))
       component.apply(input) should equal(Json.obj("message" -> "foobar"))
     }
 
     "fast skip correctly a packet with an empty source field from string" in {
       val input = Json.obj("message" -> "")
-      val component = new JsonTransformer(Config(Root / "message"))
+      val component = new DeserializerTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> ""))
     }
 
     "fast skip correctly a packet with a wrong source field from string" in {
       val input = Json.obj("message" -> "foobar")
-      val component = new JsonTransformer(Config(Root / "message"))
+      val component = new DeserializerTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> "foobar"))
     }
 
     "skip correctly a packet with a wrong source field from string" in {
       val input = Json.obj("message" -> "{foobar}")
-      val component = new JsonTransformer(Config(Root / "message"))
+      val component = new DeserializerTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> "{foobar}"))
     }
 
     "deserialize correctly a packet inplace from bytestring" in {
       val input = Json.obj("message" -> ByteString("""{"message":"foobar"}"""))
-      val component = new JsonTransformer(Config(Root / "message"))
+      val component = new DeserializerTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> Json.obj("message" -> "foobar")))
     }
 
     "deserialize correctly a packet with a root target from bytestring" in {
       val input = Json.obj("message" -> ByteString("""{"test":"foobar"}"""))
-      val component = new JsonTransformer(Config(Root / "message", Some(Root)))
+      val component = new DeserializerTransformer(Config(Root / "message", Some(Root)))
       component.apply(input) should equal(Json.obj(
         "message" -> ByteString("""{"test":"foobar"}"""),
         "test" -> "foobar"
@@ -98,37 +98,37 @@ class JsonTransformerSpec extends TestTransformer {
 
     "deserialize correctly a packet with a root target equal to an existing field from bytestring" in {
       val input = Json.obj("message" -> ByteString("""{"message":"foobar"}"""))
-      val component = new JsonTransformer(Config(Root / "message", Some(Root)))
+      val component = new DeserializerTransformer(Config(Root / "message", Some(Root)))
       component.apply(input) should equal(Json.obj("message" -> "foobar"))
     }
 
     "fast skip correctly a packet with an empty source field from bytestring" in {
       val input = Json.obj("message" -> ByteString())
-      val component = new JsonTransformer(Config(Root / "message"))
+      val component = new DeserializerTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> ByteString()))
     }
 
     "fast skip correctly a packet with a wrong source field from bytestring" in {
       val input = Json.obj("message" -> ByteString("foobar"))
-      val component = new JsonTransformer(Config(Root / "message"))
+      val component = new DeserializerTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> ByteString("foobar")))
     }
 
     "skip correctly a packet with a wrong source field from bytestring" in {
       val input = Json.obj("message" -> ByteString("{foobar}"))
-      val component = new JsonTransformer(Config(Root / "message"))
+      val component = new DeserializerTransformer(Config(Root / "message"))
       component.apply(input) should equal(Json.obj("message" -> ByteString("{foobar}")))
     }
 
     "serialize correctly a packet inplace" in {
       val input = Json.obj("message" -> Json.obj("message" -> "foobar"))
-      val component = new JsonTransformer(Config(Root / "message", mode = Mode.Serialize))
+      val component = new SerializerTransformer(Config(Root / "message", mode = Mode.Serialize))
       component.apply(input) should equal(Json.obj("message" -> """{"message":"foobar"}"""))
     }
 
     "serialize correctly a packet with a root source" in {
       val input = Json.obj("test" -> "foobar")
-      val component = new JsonTransformer(Config(Root, Some(Root / "message"), mode = Mode.Serialize))
+      val component = new SerializerTransformer(Config(Root, Some(Root / "message"), mode = Mode.Serialize))
       component.apply(input) should equal(Json.obj(
         "message" -> """{"test":"foobar"}""",
         "test" -> "foobar"
@@ -137,7 +137,7 @@ class JsonTransformerSpec extends TestTransformer {
 
     "serialize correctly a packet with a root target equal to an existing field" in {
       val input = Json.obj("test" -> "foobar")
-      val component = new JsonTransformer(Config(Root, Some(Root / "test"), mode = Mode.Serialize))
+      val component = new SerializerTransformer(Config(Root, Some(Root / "test"), mode = Mode.Serialize))
       component.apply(input) should equal(Json.obj(
         "test" -> """{"test":"foobar"}"""
       ))

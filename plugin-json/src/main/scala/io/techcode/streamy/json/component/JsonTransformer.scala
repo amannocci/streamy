@@ -30,7 +30,6 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.json.component.JsonTransformer.Mode
 import io.techcode.streamy.json.component.JsonTransformer.Mode.Mode
 import io.techcode.streamy.util.json._
 
@@ -60,21 +59,34 @@ object JsonTransformer {
     * @param conf flow configuration.
     * @return new json flow.
     */
-  def apply(conf: Config): Flow[Json, Json, NotUsed] =
-    Flow.fromFunction(new JsonTransformer(conf))
+  def apply(conf: Config): Flow[Json, Json, NotUsed] = {
+    conf.mode match {
+      case Mode.Serialize => Flow.fromFunction(new SerializerTransformer(conf))
+      case Mode.Deserialize => Flow.fromFunction(new DeserializerTransformer(conf))
+    }
+  }
 
 }
 
 /**
-  * Json transformer implementation.
+  * Json serializer transformer implementation.
+  *
+  * @param config json transformer configuration.
   */
-private class JsonTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
+private class SerializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
 
-  // Serialize function
-  lazy val serialize: Json => Option[Json] = (value: Json) => Some(value.toString)
+  @inline override def transform(value: Json): Option[Json] = Some(value.toString)
 
-  // Deserialize function
-  lazy val deserialize: Json => Option[Json] = (value: Json) => value.asString.map { field =>
+}
+
+/**
+  * Json deserializer transformer implementation.
+  *
+  * @param config json transformer configuration.
+  */
+private class DeserializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
+
+  @inline override def transform(value: Json): Option[Json] = value.asString.map { field =>
     // Try to avoid parsing of wrong json
     if (field.nonEmpty && field.charAt(0) == '{') {
       // Try to parse
@@ -93,14 +105,6 @@ private class JsonTransformer(config: JsonTransformer.Config) extends FlowTransf
       }
     }
   }
-
-  // Determine at runtime witch function to use and allow inline
-  val function: Json => Option[Json] = config.mode match {
-    case Mode.Serialize => serialize
-    case Mode.Deserialize => deserialize
-  }
-
-  @inline override def transform(value: Json): Option[Json] = function(value)
 
   private def handle(data: Json, result: Either[Throwable, Json]): Json = result match {
     case Right(succ) => succ
