@@ -64,8 +64,7 @@ object ElasticsearchFlow {
   /**
     * Create a new elasticsearch flow.
     *
-    * @param config sink configuration.
-    * @return sink.
+    * @param config flow configuration.
     */
   def apply(config: Config)(
     implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
