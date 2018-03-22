@@ -21,13 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.syslog.component.transformer
+package io.techcode.streamy.syslog.component
 
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing => StreamFraming}
 import akka.util.ByteString
 import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
-import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Framing.Framing
+import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.util.parser.{SyslogFraming, SyslogParser}
 import io.techcode.streamy.syslog.util.printer.SyslogPrinter
 import io.techcode.streamy.util.json.Json

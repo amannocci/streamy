@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.elasticsearch.component.source
+package io.techcode.streamy.elasticsearch.component
 
 import akka.stream.scaladsl.Sink
 import akka.stream.testkit.scaladsl.TestSink

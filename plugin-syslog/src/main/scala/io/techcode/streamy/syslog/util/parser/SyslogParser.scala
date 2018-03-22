@@ -25,7 +25,7 @@ package io.techcode.streamy.syslog.util.parser
 
 import akka.util.ByteString
 import com.google.common.base.CharMatcher
-import io.techcode.streamy.syslog.component.transformer.SyslogTransformer._
+import io.techcode.streamy.syslog.component.SyslogTransformer._
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{ByteStringParser, CharMatchers}
 

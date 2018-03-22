@@ -21,10 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.fingerprint.component.transformer
+package io.techcode.streamy.fingerprint.component
 
-import io.techcode.streamy.fingerprint.component.transformer.FingerprintTransformer.Config
-import io.techcode.streamy.fingerprint.component.transformer.FingerprintTransformerBench._
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 

@@ -26,8 +26,8 @@ package io.techcode.streamy.syslog.util.printer
 import java.net.InetAddress
 
 import akka.util.ByteString
-import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Framing.Framing
-import io.techcode.streamy.syslog.component.transformer.SyslogTransformer._
+import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
+import io.techcode.streamy.syslog.component.SyslogTransformer._
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.Binder
 import io.techcode.streamy.util.printer.JsonPrinter

@@ -21,33 +21,46 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.elasticsearch.component.sink
+package io.techcode.streamy.graphite.component
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.NotUsed
+import akka.stream.scaladsl.{Flow, Framing => StreamFraming}
 import akka.util.ByteString
-import akka.{Done, NotUsed}
-import com.softwaremill.sttp.SttpBackend
-import io.techcode.streamy.elasticsearch.component.flow.ElasticsearchFlow
+import io.techcode.streamy.component.SourceTransformer
+import io.techcode.streamy.graphite.util.parser.GraphiteParser
 import io.techcode.streamy.util.json.Json
-
-import scala.concurrent.{ExecutionContext, Future}
+import io.techcode.streamy.util.parser.{Binder, ByteStringParser}
 
 /**
-  * Elasticsearch sink companion.
+  * Graphite transformer companion.
   */
-object ElasticsearchSink {
+object GraphiteTransformer {
 
   /**
-    * Create a new elasticsearch sink.
+    * Create a graphite flow that transform incoming [[ByteString]] to [[Json]].
+    * This parser is compliant with Graphite protocol.
     *
-    * @param config sink configuration.
+    * @param conf flow configuration.
+    * @return new graphite flow compliant with Graphite protocol.
     */
-  def apply(config: ElasticsearchFlow.Config)(
-    implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
-    system: ActorSystem,
-    executionContext: ExecutionContext
-  ): Sink[Json, Future[Done]] =
-    ElasticsearchFlow(config).toMat(Sink.ignore)(Keep.right)
+  def parser(conf: Config): Flow[ByteString, Json, NotUsed] = {
+    StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
+      .via(Flow.fromFunction(new SourceTransformer {
+        override def newParser(pkt: ByteString): ByteStringParser = GraphiteParser.parser(pkt, conf)
+      }))
+  }
+
+  // Fields binding
+  case class Binding(
+    path: Option[Binder] = None,
+    value: Option[Binder] = None,
+    timestamp: Option[Binder] = None
+  )
+
+  // Configuration
+  case class Config(
+    maxSize: Int = Int.MaxValue,
+    binding: Binding = Binding()
+  )
 
 }

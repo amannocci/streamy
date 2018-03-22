@@ -25,12 +25,36 @@ package io.techcode.streamy.elasticsearch.event
 
 import io.techcode.streamy.util.json.Json
 
+/**
+  * Elasticsearch event.
+  */
 sealed trait ElasticsearchEvent
 
+/**
+  * This event is fire when elasticsearch response is a success.
+  *
+  * @param responseTime time elapsed between request and response.
+  */
 case class ElasticsearchSuccessEvent(responseTime: Long) extends ElasticsearchEvent
 
+/**
+  * This event is fire when elasticsearch response is a partial success.
+  *
+  * @param responseTime time elapsed between request and response.
+  */
 case class ElasticsearchPartialEvent(responseTime: Long) extends ElasticsearchEvent
 
+/**
+  * This event is fire when elasticsearch response is a failure.
+  *
+  * @param responseTime time elapsed between request and response.
+  */
 case class ElasticsearchFailureEvent(responseTime: Long) extends ElasticsearchEvent
 
-case class ElasticsearchDropEvent(elem: Json, response: Json) extends ElasticsearchEvent
+/**
+  * This event is fire when an element is drop due to policy.
+  *
+  * @param droppedElement droppeed element.
+  * @param cause          cause of drop from elasticsearch response.
+  */
+case class ElasticsearchDropEvent(droppedElement: Json, cause: Json) extends ElasticsearchEvent

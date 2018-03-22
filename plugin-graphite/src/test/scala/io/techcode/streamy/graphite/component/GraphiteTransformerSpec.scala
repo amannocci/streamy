@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.graphite.component.transformer
+package io.techcode.streamy.graphite.component
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow

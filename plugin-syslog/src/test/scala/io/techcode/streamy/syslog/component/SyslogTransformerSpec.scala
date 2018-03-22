@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.syslog.component.transformer
+package io.techcode.streamy.syslog.component
 
 import java.net.InetAddress
 import java.nio.charset.StandardCharsets
@@ -30,8 +30,8 @@ import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
-import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Framing
-import io.techcode.streamy.syslog.component.transformer.SyslogTransformer.Rfc5424.Mode
+import io.techcode.streamy.syslog.component.SyslogTransformer.Framing
+import io.techcode.streamy.syslog.component.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{IntBinder, StringBinder}
 

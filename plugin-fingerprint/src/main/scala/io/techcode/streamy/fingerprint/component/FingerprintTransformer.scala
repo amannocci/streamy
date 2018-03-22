@@ -21,23 +21,53 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.json.component.transformer
+package io.techcode.streamy.fingerprint.component
+
+import java.nio.charset.StandardCharsets
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
+import com.google.common.hash.{HashFunction, Hashing}
 import io.techcode.streamy.component.FlowTransformer
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.json.component.transformer.JsonTransformer.Mode.Mode
-import io.techcode.streamy.json.component.transformer.JsonTransformer.{Config, Mode}
 import io.techcode.streamy.util.json._
 
 /**
-  * Json transformer companion.
+  * Fingerprint transformer implementation.
   */
-object JsonTransformer {
+private class FingerprintTransformer(config: FingerprintTransformer.Config) extends FlowTransformer(config) {
+
+  // Choose right transform function
+  private val hashFunc: HashFunction = FingerprintTransformer.Hashings(config.hashing)
+
+  override def transform(value: Json): Option[Json] =
+    value.asString.map(hashFunc.hashString(_, StandardCharsets.UTF_8).toString)
+
+}
+
+/**
+  * Fingerprint transformer companion.
+  */
+object FingerprintTransformer {
+
+  // All supported hashing
+  val Hashings: Map[String, HashFunction] = Map.newBuilder
+    .+=("md5" -> Hashing.md5())
+    .+=("sha1" -> Hashing.sha1())
+    .+=("sha256" -> Hashing.sha256())
+    .+=("sha384" -> Hashing.sha384())
+    .+=("sha512" -> Hashing.sha512())
+    .+=("alder32" -> Hashing.adler32())
+    .+=("crc32" -> Hashing.crc32())
+    .+=("crc32c" -> Hashing.crc32c())
+    .+=("murmur3_32" -> Hashing.murmur3_32())
+    .+=("murmur3_128" -> Hashing.murmur3_128())
+    .+=("sipHash24" -> Hashing.sipHash24())
+    .+=("farmHashFingerprint64" -> Hashing.farmHashFingerprint64())
+    .result()
 
   // Component configuration
   case class Config(
@@ -45,66 +75,16 @@ object JsonTransformer {
     override val target: Option[JsonPointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
-    mode: Mode = Mode.Deserialize
+    hashing: String
   ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
-  // Mode implementation
-  object Mode extends Enumeration {
-    type Mode = Value
-    val Serialize, Deserialize = Value
-  }
-
   /**
-    * Create a json transformer flow that transform incoming [[Json]] objects.
+    * Create a fingerprint transformer flow that transform incoming [[Json]] objects.
     *
     * @param conf flow configuration.
-    * @return new json flow.
+    * @return new fingerprint flow.
     */
   def apply(conf: Config): Flow[Json, Json, NotUsed] =
-    Flow.fromFunction(new JsonTransformer(conf))
-
-}
-
-/**
-  * Json transformer implementation.
-  */
-private class JsonTransformer(config: Config) extends FlowTransformer(config) {
-
-  // Serialize function
-  lazy val serialize: Json => Option[Json] = (value: Json) => Some(value.toString)
-
-  // Deserialize function
-  lazy val deserialize: Json => Option[Json] = (value: Json) => value.asString.map { field =>
-    // Try to avoid parsing of wrong json
-    if (field.nonEmpty && field.charAt(0) == '{') {
-      // Try to parse
-      handle(value, Json.parse(field))
-    } else {
-      onError(state = value)
-    }
-  }.orElse {
-    value.asBytes.map { field =>
-      // Try to avoid parsing of wrong json
-      if (field.nonEmpty && (field(0) & 0xFF).toChar == '{') {
-        // Try to parse
-        handle(value, Json.parse(field))
-      } else {
-        onError(state = value)
-      }
-    }
-  }
-
-  // Determine at runtime witch function to use and allow inline
-  val function: Json => Option[Json] = config.mode match {
-    case Mode.Serialize => serialize
-    case Mode.Deserialize => deserialize
-  }
-
-  @inline override def transform(value: Json): Option[Json] = function(value)
-
-  private def handle(data: Json, result: Either[Throwable, Json]): Json = result match {
-    case Right(succ) => succ
-    case Left(ex) => onError(state = data, ex = Some(ex))
-  }
+    Flow.fromFunction(new FingerprintTransformer(conf))
 
 }

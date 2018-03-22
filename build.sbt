@@ -42,23 +42,29 @@ lazy val commonSettings = Seq(
   )
 )
 
-lazy val core = project
-  .in(file("core"))
-  .settings(commonSettings, Packages.settings, Dependencies.testSettings, Publish.settings)
-
 lazy val bench = project
   .in(file("bench"))
   .dependsOn(
     core % "test->test",
+    `plugin-elasticsearch` % "test->test",
     `plugin-fingerprint` % "test->test",
-    `plugin-syslog` % "test->test",
     `plugin-graphite` % "test->test",
     `plugin-json` % "test->test",
     `plugin-metric` % "test->test",
-    `plugin-elasticsearch` % "test->test",
+    `plugin-syslog` % "test->test",
   )
   .settings(Benchs.settings)
   .enablePlugins(JmhPlugin)
+
+lazy val core = project
+  .in(file("core"))
+  .settings(commonSettings, Packages.settings, Dependencies.testSettings, Publish.settings)
+
+lazy val `plugin-elasticsearch` = project
+  .in(file("plugin-elasticsearch"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(testkit % "test->test")
 
 lazy val `plugin-fingerprint` = project
   .in(file("plugin-fingerprint"))
@@ -66,8 +72,8 @@ lazy val `plugin-fingerprint` = project
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
-lazy val `plugin-syslog` = project
-  .in(file("plugin-syslog"))
+lazy val `plugin-graphite` = project
+  .in(file("plugin-graphite"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
@@ -84,14 +90,8 @@ lazy val `plugin-metric` = project
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
-lazy val `plugin-graphite` = project
-  .in(file("plugin-graphite"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
-  .dependsOn(core % "provided->compile")
-  .dependsOn(testkit % "test->test")
-
-lazy val `plugin-elasticsearch` = project
-  .in(file("plugin-elasticsearch"))
+lazy val `plugin-syslog` = project
+  .in(file("plugin-syslog"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
@@ -109,8 +109,8 @@ lazy val root = project
     `plugin-elasticsearch`,
     `plugin-fingerprint`,
     `plugin-graphite`,
-    `plugin-syslog`,
     `plugin-json`,
     `plugin-metric`,
+    `plugin-syslog`,
     testkit
   )

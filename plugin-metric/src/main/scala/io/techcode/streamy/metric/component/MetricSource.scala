@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.metric.component.source
+package io.techcode.streamy.metric.component
 
 import java.lang.management.ManagementFactory
 

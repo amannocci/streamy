@@ -24,7 +24,7 @@
 package io.techcode.streamy.metric
 
 import akka.stream.Materializer
-import io.techcode.streamy.metric.component.source.MetricSource
+import io.techcode.streamy.metric.component.MetricSource
 import io.techcode.streamy.metric.util.ConfigConstants
 import io.techcode.streamy.plugin.{Plugin, PluginData}
 

@@ -21,18 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.elasticsearch.component.sink
+package io.techcode.streamy.elasticsearch.component
 
 import akka.Done
 import akka.stream.scaladsl.Source
-import io.techcode.streamy.elasticsearch.component.flow.ElasticsearchFlow
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.util.json._
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.concurrent.ExecutionContext.Implicits._
 
 /**
   * Elasticsearch source spec.

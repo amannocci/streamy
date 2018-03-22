@@ -21,46 +21,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.graphite.component.transformer
+package io.techcode.streamy.elasticsearch.component
 
-import akka.NotUsed
-import akka.stream.scaladsl.{Flow, Framing => StreamFraming}
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
-import io.techcode.streamy.component.SourceTransformer
-import io.techcode.streamy.graphite.util.parser.GraphiteParser
+import akka.{Done, NotUsed}
+import com.softwaremill.sttp.SttpBackend
 import io.techcode.streamy.util.json.Json
-import io.techcode.streamy.util.parser.{Binder, ByteStringParser}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
-  * Graphite transformer companion.
+  * Elasticsearch sink companion.
   */
-object GraphiteTransformer {
+object ElasticsearchSink {
 
   /**
-    * Create a graphite flow that transform incoming [[ByteString]] to [[Json]].
-    * This parser is compliant with Graphite protocol.
+    * Create a new elasticsearch sink.
     *
-    * @param conf flow configuration.
-    * @return new graphite flow compliant with Graphite protocol.
+    * @param config sink configuration.
     */
-  def parser(conf: Config): Flow[ByteString, Json, NotUsed] = {
-    StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
-      .via(Flow.fromFunction(new SourceTransformer {
-        override def newParser(pkt: ByteString): ByteStringParser = GraphiteParser.parser(pkt, conf)
-      }))
-  }
-
-  // Fields binding
-  case class Binding(
-    path: Option[Binder] = None,
-    value: Option[Binder] = None,
-    timestamp: Option[Binder] = None
-  )
-
-  // Configuration
-  case class Config(
-    maxSize: Int = Int.MaxValue,
-    binding: Binding = Binding()
-  )
+  def apply(config: ElasticsearchFlow.Config)(
+    implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
+    system: ActorSystem,
+    executionContext: ExecutionContext
+  ): Sink[Json, Future[Done]] =
+    ElasticsearchFlow(config).toMat(Sink.ignore)(Keep.right)
 
 }

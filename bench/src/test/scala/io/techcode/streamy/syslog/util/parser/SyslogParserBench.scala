@@ -25,7 +25,7 @@ package io.techcode.streamy.syslog.util.parser
 
 import akka.util.ByteString
 import io.techcode.streamy.component.SourceTransformer
-import io.techcode.streamy.syslog.component.transformer.SyslogTransformer
+import io.techcode.streamy.syslog.component.SyslogTransformer
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{BytesBinder, StringBinder}

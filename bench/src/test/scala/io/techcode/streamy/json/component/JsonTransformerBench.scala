@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.json.component.transformer
+package io.techcode.streamy.json.component
 
 import io.techcode.streamy.json.component.transformer.JsonTransformer.Config
 import io.techcode.streamy.util.json._

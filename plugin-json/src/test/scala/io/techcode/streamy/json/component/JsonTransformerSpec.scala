@@ -21,11 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.json.component.transformer
+package io.techcode.streamy.json.component
 
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
-import io.techcode.streamy.json.component.transformer.JsonTransformer.{Config, Mode}
+import io.techcode.streamy.json.component.JsonTransformer.{Config, Mode}
 import io.techcode.streamy.util.json._
 
 /**
