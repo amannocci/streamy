@@ -38,7 +38,7 @@ import io.techcode.streamy.util.json._
 /**
   * Fingerprint transformer implementation.
   */
-private class FingerprintTransformer(config: FingerprintTransformer.Config) extends FlowTransformer(config) {
+private[component] class FingerprintTransformer(config: FingerprintTransformer.Config) extends FlowTransformer(config) {
 
   // Choose right transform function
   private val hashFunc: HashFunction = FingerprintTransformer.Hashings(config.hashing)

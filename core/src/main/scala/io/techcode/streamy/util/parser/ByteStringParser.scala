@@ -224,6 +224,16 @@ abstract class ByteStringParser(val bytes: ByteString) {
   }
 
   /**
+    * Set current cursor position to the end of [[ByteString]]
+    *
+    * @return always true.
+    */
+  final def any(): Boolean = {
+    _cursor = bytes.length
+    true
+  }
+
+  /**
     * Runs the matcher until it fails, always succeeds.
     *
     * @param matcher character matcher.

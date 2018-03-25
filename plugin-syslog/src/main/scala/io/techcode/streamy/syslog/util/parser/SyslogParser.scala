@@ -203,7 +203,7 @@ private class Rfc5424Parser(bytes: ByteString, config: Rfc5424.Config) extends B
 
   def msg(): Boolean =
     sp() && capture(binding.message) {
-      zeroOrMore(CharMatchers.All)
+      any()
     }
 
   private def capturePrival(rule: => Boolean): Boolean = {

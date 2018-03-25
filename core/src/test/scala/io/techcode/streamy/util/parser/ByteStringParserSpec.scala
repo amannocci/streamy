@@ -217,6 +217,15 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       parser.parse().isDefined should equal(false)
     }
 
+    "process any character" in {
+      val parser = new ByteStringParser(ByteString("foobar")) {
+        override def process(): Boolean = {
+          any()
+        }
+      }
+      parser.parse().isDefined should equal(true)
+    }
+
     "process zero or more character using a char matcher if possible" in {
       val parser = new ByteStringParser(ByteString("foobar")) {
         override def process(): Boolean = {

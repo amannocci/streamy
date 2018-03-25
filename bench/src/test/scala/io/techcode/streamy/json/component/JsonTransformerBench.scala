@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.json.component
 
-import io.techcode.streamy.json.component.transformer.JsonTransformer.Config
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -53,10 +52,10 @@ class JsonTransformerBench {
   */
 private object JsonTransformerBench {
 
-  val Source = new JsonTransformer(Config(source = Root / "message"))
+  val Source = new DeserializerTransformer(JsonTransformer.Config(source = Root / "message"))
 
-  val SourceAndTarget = new JsonTransformer(Config(source = Root / "message", target = Some(Root / "target")))
+  val SourceAndTarget = new DeserializerTransformer(JsonTransformer.Config(source = Root / "message", target = Some(Root / "target")))
 
-  val Failure = new JsonTransformer(Config(source = Root / "message"))
+  val Failure = new DeserializerTransformer(JsonTransformer.Config(source = Root / "message"))
 
 }
