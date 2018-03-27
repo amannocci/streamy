@@ -27,12 +27,13 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers, WordSpec}
 
 /**
   * Helper for system test.
   */
-trait TestSystem extends WordSpec with Matchers with BeforeAndAfterAll {
+trait TestSystem extends WordSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with ScalaFutures {
 
   protected implicit val system: ActorSystem = {
     def systemConfig = ConfigFactory.parseString(s"akka.stream.materializer.auto-fusing=true")
