@@ -26,7 +26,7 @@ package io.techcode.streamy.plugin
 import akka.actor.{ActorRef, Kill, Props}
 import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigFactory}
-import io.techcode.streamy.TestSystem
+import io.techcode.streamy.StreamyTestSystem
 import org.scalatest.mockito.MockitoSugar
 import pureconfig._
 
@@ -35,7 +35,7 @@ import scala.reflect.io.Path
 /**
   * Plugin spec.
   */
-class PluginSpec extends TestSystem with MockitoSugar {
+class PluginSpec extends StreamyTestSystem with MockitoSugar {
 
   "Plugin" can {
     "be started" in {
@@ -74,9 +74,9 @@ class PluginSpec extends TestSystem with MockitoSugar {
 }
 
 class Impl(
-  override val _materializer: Materializer,
-  override val data: PluginData
-) extends Plugin(_materializer, data) {
+            override val _materializer: Materializer,
+            override val data: PluginData
+          ) extends Plugin(_materializer, data) {
 
   override def onStart(): Unit = {
     log.info("start")

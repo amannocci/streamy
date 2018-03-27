@@ -27,10 +27,12 @@ import akka.stream.scaladsl.Sink
 import akka.stream.testkit.scaladsl.TestSink
 import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.support.WriteRequest
 import org.elasticsearch.common.xcontent.XContentType
+import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
@@ -73,8 +75,34 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
         "test",
         Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull)
       )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
-      Await.result(result, 30 seconds) should not equal ByteString.empty
+
+      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
+        x should not equal ByteString.empty
+      }
     }
+
+    "fail on wrong request from single source" in {
+      val result = ElasticsearchSource.single(ElasticsearchSource.Config(
+        Seq(s"http://$elasticHost:9200"),
+        "testing",
+        "test",
+        Json.parse("""{"query":{"match_all"}""").getOrElse(JsNull)
+      )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
+
+      assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
+    }
+
+    "fail on index not found from single source" in {
+      val result = ElasticsearchSource.single(ElasticsearchSource.Config(
+        Seq(s"http://$elasticHost:9200"),
+        "notFound",
+        "test",
+        Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull)
+      )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
+
+      assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
+    }
+
   }
 
 }

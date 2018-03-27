@@ -45,7 +45,7 @@ class StreamySpec extends WordSpecLike with Matchers {
 /**
   * Helper for system test.
   */
-trait TestSystem extends WordSpec with Matchers with BeforeAndAfterAll {
+trait StreamyTestSystem extends WordSpec with Matchers with BeforeAndAfterAll {
 
   protected implicit val system: ActorSystem = {
     def systemConfig = ConfigFactory.parseString(s"akka.stream.materializer.auto-fusing=true")

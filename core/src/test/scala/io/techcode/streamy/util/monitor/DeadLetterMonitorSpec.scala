@@ -24,12 +24,12 @@
 package io.techcode.streamy.util.monitor
 
 import akka.actor.{DeadLetter, Kill, Props}
-import io.techcode.streamy.TestSystem
+import io.techcode.streamy.StreamyTestSystem
 
 /**
   * Dead letter monitoring spec.
   */
-class DeadLetterMonitorSpec extends TestSystem {
+class DeadLetterMonitorSpec extends StreamyTestSystem {
 
   "Dead letter monitoring" can {
     "be started and stopped" in {

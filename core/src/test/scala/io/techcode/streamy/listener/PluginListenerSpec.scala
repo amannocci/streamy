@@ -25,7 +25,7 @@ package io.techcode.streamy.listener
 
 import akka.actor.{ActorRef, Props}
 import com.typesafe.config.ConfigFactory
-import io.techcode.streamy.TestSystem
+import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.event._
 import io.techcode.streamy.plugin.PluginState.PluginState
 import io.techcode.streamy.plugin.{PluginData, PluginDescription, PluginManager, PluginState}
@@ -38,7 +38,7 @@ import scala.reflect.io.Path
 /**
   * PluginListener spec.
   */
-class PluginListenerSpec extends TestSystem with Eventually {
+class PluginListenerSpec extends StreamyTestSystem with Eventually {
 
   val manager = new PluginManager(system, materializer, ConfigFactory.defaultReference().getConfig("streamy"))
   val container = PluginData(
