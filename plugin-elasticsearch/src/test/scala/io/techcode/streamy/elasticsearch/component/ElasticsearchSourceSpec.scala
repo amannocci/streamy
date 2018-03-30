@@ -44,48 +44,62 @@ import scala.language.postfixOps
   */
 class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
-  override def beforeAll(): Unit = {
-    restClient.index(new IndexRequest("testing", "test")
-      .source("""{"foo": "bar"}""", XContentType.JSON)
-      .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
-    restClient.index(new IndexRequest("testing", "test")
-      .source("""{"foo": "bar"}""", XContentType.JSON)
-      .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
-  }
-
   "Elasticsearch source" should {
     "retrieve data from paginate source" in {
+      // Prepare for test
+      val index = randomIndex()
+      restClient.index(new IndexRequest(index, docType)
+        .source("""{"foo": "bar"}""", XContentType.JSON)
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
+      restClient.index(new IndexRequest(index, docType)
+        .source("""{"foo": "bar"}""", XContentType.JSON)
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
+
+      // Stream to test
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
-        Seq(s"http://$elasticHost:9200"),
-        "testing",
-        "test",
+        Seq(s"http://$elasticHost:$elasticPort"),
+        index,
+        docType,
         Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull),
         bulk = 1
       )).runWith(TestSink.probe[Json])
 
+      // Check
       stream.requestNext().evaluate(Root / "_source").get should equal(Json.obj("foo" -> "bar"))
       stream.requestNext().evaluate(Root / "_source").get should equal(Json.obj("foo" -> "bar"))
       stream.expectComplete()
     }
 
     "retrieve data from single source" in {
+      // Prepare for test
+      val index = randomIndex()
+      restClient.index(new IndexRequest(index, docType)
+        .source("""{"foo": "bar"}""", XContentType.JSON)
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
+
+      // Result of query
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq(s"http://$elasticHost:9200"),
-        "testing",
-        "test",
+        Seq(s"http://$elasticHost:$elasticPort"),
+        index,
+        docType,
         Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull)
       )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
 
+      // Check
       whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
         x should not equal ByteString.empty
       }
     }
 
     "fail on wrong request from single source" in {
+      // Prepare for test
+      val index = randomIndex()
+
+      // Result of query
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq(s"http://$elasticHost:9200"),
-        "testing",
-        "test",
+        Seq(s"http://$elasticHost:$elasticPort"),
+        index,
+        docType,
         Json.parse("""{"query":{"match_all"}""").getOrElse(JsNull)
       )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
 
@@ -93,10 +107,14 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
     }
 
     "fail on index not found from single source" in {
+      // Prepare for test
+      val index = randomIndex()
+
+      // Result of query
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq(s"http://$elasticHost:9200"),
-        "notFound",
-        "test",
+        Seq(s"http://$elasticHost:$elasticPort"),
+        index,
+        docType,
         Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull)
       )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
 

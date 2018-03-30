@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.elasticsearch.util
 
+import java.util.UUID
+
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.softwaremill.sttp.SttpBackend
@@ -40,12 +42,19 @@ import scala.concurrent.Future
 trait ElasticsearchSpec extends TestSystem {
 
   val elasticHost: String = sys.props.getOrElse("elasticsearch.host", "127.0.0.1")
+  val elasticPort: Int = sys.props.getOrElse("elasticsearch.port", "9200").toInt
+
+  val docType = "doc"
 
   protected implicit val httpClient: SttpBackend[Future, Source[ByteString, Any]] = {
     AkkaHttpBackend.usingActorSystem(system)
   }
 
-  val restClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, 9200, "http")))
+  val restClient: RestHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, elasticPort, "http")))
+
+  def randomIndex(): String = {
+    UUID.randomUUID().toString
+  }
 
   override def afterAll(): Unit = {
     restClient.close()
