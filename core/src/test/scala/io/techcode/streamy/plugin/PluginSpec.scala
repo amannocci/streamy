@@ -74,9 +74,9 @@ class PluginSpec extends StreamyTestSystem with MockitoSugar {
 }
 
 class Impl(
-            override val _materializer: Materializer,
-            override val data: PluginData
-          ) extends Plugin(_materializer, data) {
+  override val _materializer: Materializer,
+  override val data: PluginData
+) extends Plugin(_materializer, data) {
 
   override def onStart(): Unit = {
     log.info("start")

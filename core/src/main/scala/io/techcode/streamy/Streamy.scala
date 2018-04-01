@@ -81,8 +81,19 @@ object Streamy extends App {
   ))
   pluginManager.start()
 
-  // Graceful shutdown
-  sys.addShutdownHook {
+  // Handle dry run
+  if (args.length > 0 && args(0).equals("--dry-run")) {
+    // Shutdown system
+    shutdown()
+  } else {
+    // Graceful shutdown
+    sys.addShutdownHook(shutdown())
+  }
+
+  /**
+    * Shutdown streamy system.
+    */
+  def shutdown(): Unit = {
     // Stop all monitors
     log.info(Json.obj(
       "message" -> "Stopping all monitors",
@@ -101,4 +112,5 @@ object Streamy extends App {
     materializer.shutdown()
     system.terminate()
   }
+
 }

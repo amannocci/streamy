@@ -36,7 +36,7 @@ class StreamySpec extends WordSpecLike with Matchers {
 
   "Streamy" should {
     "start even if there is no plugin" in {
-      Streamy.main(new Array[String](0))
+      Streamy.main(Array("--dry-run"))
     }
   }
 
