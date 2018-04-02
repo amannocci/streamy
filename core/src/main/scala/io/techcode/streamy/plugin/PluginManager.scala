@@ -89,17 +89,18 @@ class PluginManager(system: ActorSystem, materializer: Materializer, conf: Confi
           Directory(folderConfig.data.toFile)
         )
 
-        // Add to map
-        _plugins += (pluginDescription.name -> PluginContainer(
-          description = pluginDescription,
-          conf = pluginConf
-        ))
-
         // Start plugin
-        system.actorOf(Props(
+        val pluginRef = system.actorOf(Props(
           typed,
           materializer,
           pluginData
+        ))
+
+        // Add to map
+        _plugins += (pluginDescription.name -> PluginContainer(
+          description = pluginDescription,
+          conf = pluginConf,
+          ref = pluginRef
         ))
       } catch {
         case ex: Exception => system.log.error(Json.obj(
