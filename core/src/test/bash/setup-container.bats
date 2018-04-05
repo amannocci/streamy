@@ -40,7 +40,7 @@ source core/src/universal/bin/setup-container.sh
   rm ${SYS_MEM_FILE}
 }
 
-@test "detect mem limit when undefined based on cgroups and swap is disable" {
+@test "detect mem limit when undefined based on cgroups and when swap is disabled" {
   export SYS_MAX_MEM_UNBOUNDED_FILE=$(mktemp)
   export SYS_MEM_FILE=$(mktemp)
   echo '67108864' > ${SYS_MAX_MEM_UNBOUNDED_FILE}
