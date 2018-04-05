@@ -59,7 +59,7 @@ memory_limit() {
   # High number which is the max limit unti which memory is supposed to be unbounded.
   if { max_mem=$(cat "$mem_file") && \
     max_mem_unbounded=$(cat "$max_mem_unbounded_file") && \
-    [[ "$max_mem" -lt "$max_mem_unbounded" ]] ;} 2>/dev/null ; then
+    [[ "$max_mem" -le "$max_mem_unbounded" ]] ;} 2>/dev/null ; then
     echo "$max_mem"
   else
     echo "$mem_limit"

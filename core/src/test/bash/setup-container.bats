@@ -40,6 +40,17 @@ source core/src/universal/bin/setup-container.sh
   rm ${SYS_MEM_FILE}
 }
 
+@test "detect mem limit when undefined based on cgroups and swap is disable" {
+  export SYS_MAX_MEM_UNBOUNDED_FILE=$(mktemp)
+  export SYS_MEM_FILE=$(mktemp)
+  echo '67108864' > ${SYS_MAX_MEM_UNBOUNDED_FILE}
+  echo '67108864' > ${SYS_MEM_FILE}
+  export JVM_MEMORY_LIMIT=$(memory_limit)
+  [ "$JVM_MEMORY_LIMIT" == "67108864" ]
+  rm ${SYS_MAX_MEM_UNBOUNDED_FILE}
+  rm ${SYS_MEM_FILE}
+}
+
 @test "detect mem limit when defined" {
   export JVM_MEMORY_LIMIT=2
   export JVM_MEMORY_LIMIT=$(memory_limit)
