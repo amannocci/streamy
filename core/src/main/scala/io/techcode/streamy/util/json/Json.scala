@@ -308,11 +308,11 @@ sealed trait Json {
   def copy(): Json
 
   /**
-    * Size of the string representation of this element in Json.
+    * Size hint of the string representation of this element in Json.
     *
     * @return size of the element.
     */
-  def size(): Int = toString.length
+  def sizeHint(): Int = toString.length
 
   override def toString: String = Json.stringify(this)
 
@@ -329,7 +329,7 @@ case object JsNull extends Json {
 
   override val copy: Json = this
 
-  override val size: Int = 4
+  override val sizeHint: Int = 4
 
 }
 
@@ -353,7 +353,7 @@ sealed abstract class JsBoolean(value: Boolean) extends Json {
   */
 case object JsTrue extends JsBoolean(true) {
 
-  override val size: Int = 4
+  override val sizeHint: Int = 4
 
 }
 
@@ -362,7 +362,7 @@ case object JsTrue extends JsBoolean(true) {
   */
 case object JsFalse extends JsBoolean(false) {
 
-  override val size: Int = 5
+  override val sizeHint: Int = 5
 
 }
 
@@ -380,7 +380,7 @@ case class JsInt(value: Int) extends Json {
   override def copy(): Json = this
 
   // Divide and conquer implementation (only comparison)
-  override lazy val size: Int = {
+  override lazy val sizeHint: Int = {
     // Initial offset in case of negative number
     var size = 0
 
@@ -451,7 +451,7 @@ case class JsLong(value: Long) extends Json {
   override def copy(): Json = this
 
   // Dividing with powers of two
-  override lazy val size: Int = {
+  override lazy val sizeHint: Int = {
     // Initial offset in case of negative number
     var size = 1
 
@@ -548,7 +548,7 @@ case class JsString(value: String) extends Json {
 
   override def copy(): Json = this
 
-  override val size: Int = value.length + 2
+  override val sizeHint: Int = value.length + 2
 
 }
 
@@ -688,7 +688,7 @@ case class JsArray private[json](
 
   def copy(): Json = JsArray(underlying.clone())
 
-  override lazy val size: Int = underlying.map(_.size()).sum + 1 + underlying.size
+  override lazy val sizeHint: Int = underlying.map(_.sizeHint()).sum + 1 + underlying.size
 
 }
 
@@ -858,8 +858,8 @@ case class JsObject private[json](
 
   def copy(): Json = JsObject(underlying.clone())
 
-  override lazy val size: Int =
-    1 + underlying.keys.map(_.length + 2).sum + underlying.values.map(_.size()).sum + (underlying.values.size * 2)
+  override lazy val sizeHint: Int =
+    1 + underlying.keys.map(_.length + 2).sum + underlying.values.map(_.sizeHint()).sum + (underlying.values.size * 2)
 
 }
 

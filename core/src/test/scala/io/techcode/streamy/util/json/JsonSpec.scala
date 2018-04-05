@@ -322,7 +322,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size" in {
-      Json.obj("test" -> "test").size should equal(15)
+      Json.obj("test" -> "test").sizeHint should equal(15)
     }
   }
 
@@ -391,7 +391,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size" in {
-      Json.arr("test", 2, Json.obj("test" -> "test"), 4.0).size should equal(30) // ["test",2,{"test":"test"},4.0]
+      Json.arr("test", 2, Json.obj("test" -> "test"), 4.0).sizeHint should equal(30) // ["test",2,{"test":"test"},4.0]
     }
   }
 
@@ -646,8 +646,8 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size for boolean" in {
-      JsTrue.size should equal(4)
-      JsFalse.size should equal(5)
+      JsTrue.sizeHint should equal(4)
+      JsFalse.sizeHint should equal(5)
     }
 
     "be convert to string when possible" in {
@@ -667,7 +667,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size for string" in {
-      JsString("test").size should equal(6) // "test"
+      JsString("test").sizeHint should equal(6) // "test"
     }
 
     "be convert to number when possible" in {
@@ -687,7 +687,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size for number" in {
-      JsBigDecimal(BigDecimal("2e128")).size should equal(6)
+      JsBigDecimal(BigDecimal("2e128")).sizeHint should equal(6)
     }
 
     "be convert to null when possible" in {
@@ -707,7 +707,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size for null" in {
-      JsNull.size should equal(4)
+      JsNull.sizeHint should equal(4)
     }
 
     "be convert to int when possible" in {
@@ -730,14 +730,14 @@ class JsonSpec extends WordSpecLike with Matchers {
       // Positive cases
       var size = 1
       for (i <- 0 until String.valueOf(Int.MaxValue).length) {
-        JsInt(1 * IntMath.pow(10, i)).size should equal(size)
+        JsInt(1 * IntMath.pow(10, i)).sizeHint should equal(size)
         size += 1
       }
 
       // Negative cases
       size = 2
       for (i <- 0 until String.valueOf(Int.MaxValue).length) {
-        JsInt(-1 * IntMath.pow(10, i)).size should equal(size)
+        JsInt(-1 * IntMath.pow(10, i)).sizeHint should equal(size)
         size += 1
       }
     }
@@ -762,14 +762,14 @@ class JsonSpec extends WordSpecLike with Matchers {
       // Positive cases
       var size = 1
       for (i <- 0 until String.valueOf(Long.MaxValue).length) {
-        JsLong(1 * LongMath.pow(10, i)).size should equal(size)
+        JsLong(1 * LongMath.pow(10, i)).sizeHint should equal(size)
         size += 1
       }
 
       // Negative cases
       size = 2
       for (i <- 0 until String.valueOf(Long.MaxValue).length) {
-        JsLong(-1 * LongMath.pow(10, i)).size should equal(size)
+        JsLong(-1 * LongMath.pow(10, i)).sizeHint should equal(size)
         size += 1
       }
     }
@@ -791,7 +791,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size for float" in {
-      JsDouble(2.0F).size should equal(3)
+      JsDouble(2.0F).sizeHint should equal(3)
     }
 
     "be convert to double when possible" in {
@@ -811,7 +811,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size for double" in {
-      JsDouble(2.0D).size should equal(3)
+      JsDouble(2.0D).sizeHint should equal(3)
     }
 
     "be convert to bytes when possible" in {

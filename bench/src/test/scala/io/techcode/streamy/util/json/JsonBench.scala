@@ -40,20 +40,20 @@ import org.openjdk.jmh.annotations.Benchmark
   */
 class JsonBench {
 
-  @Benchmark def sizeOfNull(): Int = JsNull.size
+  @Benchmark def sizeOfNull(): Int = JsNull.sizeHint
 
-  @Benchmark def sizeOfBoolean(): Int = JsTrue.size
+  @Benchmark def sizeOfBoolean(): Int = JsTrue.sizeHint
 
-  @Benchmark def sizeOfInt(): Int = JsInt(Int.MaxValue).size
+  @Benchmark def sizeOfInt(): Int = JsInt(Int.MaxValue).sizeHint
 
-  @Benchmark def sizeOfLong(): Int = JsLong(Long.MaxValue).size
+  @Benchmark def sizeOfLong(): Int = JsLong(Long.MaxValue).sizeHint
 
-  @Benchmark def sizeOfFloat(): Int = JsFloat(Float.MaxValue).size()
+  @Benchmark def sizeOfFloat(): Int = JsFloat(Float.MaxValue).sizeHint()
 
-  @Benchmark def sizeOfDouble(): Int = JsDouble(Double.MaxValue).size()
+  @Benchmark def sizeOfDouble(): Int = JsDouble(Double.MaxValue).sizeHint()
 
-  @Benchmark def sizeOfNumber(): Int = JsBigDecimal(BigDecimal("1e20")).size()
+  @Benchmark def sizeOfNumber(): Int = JsBigDecimal(BigDecimal("1e20")).sizeHint()
 
-  @Benchmark def sizeOfString(): Int = JsString("1e20").size
+  @Benchmark def sizeOfString(): Int = JsString("1e20").sizeHint
 
 }
