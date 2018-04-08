@@ -26,7 +26,7 @@ source core/src/universal/bin/setup-container.sh
 
 @test "detect mem limit when undefined based on sys" {
   export JVM_MEMORY_LIMIT=$(memory_limit)
-  [ "$JVM_MEMORY_LIMIT" == "$(free -b | grep "Mem:" | awk '{print $2;}')" ]
+  [ "$JVM_MEMORY_LIMIT" == "$(awk '/MemTotal/ {printf "%.0f", $2*1024}' /proc/meminfo)" ]
 }
 
 @test "detect mem limit when undefined based on cgroups" {
