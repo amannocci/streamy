@@ -21,7 +21,7 @@ before_install:
   - unset SBT_OPTS JVM_OPTS
   - sudo add-apt-repository ppa:duggan/bats --yes
   - sudo apt-get update -qq
-  - sudo apt-get install -qq bats awk
+  - sudo apt-get install -qq bats gawk
 
 # Run
 script:
