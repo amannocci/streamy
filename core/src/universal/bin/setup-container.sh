@@ -56,7 +56,7 @@ memory_limit() {
   local mem_file=${SYS_MEM_FILE:-/sys/fs/cgroup/memory/memory.limit_in_bytes}
   local max_mem max_mem_unbounded
 
-  # High number which is the max limit unti which memory is supposed to be unbounded.
+  # High number which is the max limit until which memory is supposed to be unbounded.
   if { max_mem=$(cat "$mem_file") && \
     max_mem_unbounded=$(cat "$max_mem_unbounded_file") && \
     [[ "$max_mem" -le "$max_mem_unbounded" ]] ;} 2>/dev/null ; then
