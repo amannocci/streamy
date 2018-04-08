@@ -50,6 +50,19 @@ object ElasticsearchFlow {
   val DefaultWorker: Int = 1
   val DefaultRetry: FiniteDuration = 1 second
 
+  // New line delimiter
+  private val NewLineDelimiter: ByteString = ByteString("\n")
+
+  // Precomputed path
+  private object ElasticPath {
+    val Id: JsonPointer = Root / "_id"
+    val Type: JsonPointer = Root / "_type"
+    val Version: JsonPointer = Root / "_version"
+    val VersionType: JsonPointer = Root / "_version_type"
+    val Errors: JsonPointer = Root / "errors"
+    val Items: JsonPointer = Root / "items"
+  }
+
   // Component configuration
   case class Config(
     hosts: Seq[String],
@@ -147,10 +160,10 @@ object ElasticsearchFlow {
       */
     private def marshalMessage(pkt: Json): ByteString = {
       // Retrive header information
-      val id = pkt.evaluate(Root / "_id").asString
-      val `type` = pkt.evaluate(Root / "_type").asString.getOrElse(config.typeName)
-      val version = pkt.evaluate(Root / "_version").asLong
-      val versionType = pkt.evaluate(Root / "_version_type").asString
+      val id = pkt.evaluate(ElasticPath.Id).asString
+      val `type` = pkt.evaluate(ElasticPath.Type).asString.getOrElse(config.typeName)
+      val version = pkt.evaluate(ElasticPath.Version).asLong
+      val versionType = pkt.evaluate(ElasticPath.VersionType).asString
 
       // Build header
       val header = Json.obj(config.action -> {
@@ -177,12 +190,12 @@ object ElasticsearchFlow {
 
       // Remove extra fields
       val doc = pkt.patch(Bulk(Root, Seq(
-        Remove(Root / "_id", mustExist = false),
-        Remove(Root / "_type", mustExist = false),
-        Remove(Root / "_version", mustExist = false),
-        Remove(Root / "_version_type", mustExist = false)
+        Remove(ElasticPath.Id, mustExist = false),
+        Remove(ElasticPath.Type, mustExist = false),
+        Remove(ElasticPath.Version, mustExist = false),
+        Remove(ElasticPath.VersionType, mustExist = false)
       ))).get
-      ByteString(header.toString()) ++ ByteString("\n") ++ ByteString(doc.toString()) ++ ByteString("\n")
+      ByteString(header.toString()) ++ NewLineDelimiter ++ ByteString(doc.toString()) ++ NewLineDelimiter
     }
 
     // Handle response as json
@@ -212,6 +225,9 @@ object ElasticsearchFlow {
       // Start request time
       private var started: Long = System.currentTimeMillis()
 
+      // Json pointer to status based on configuration
+      private val statusPath: JsonPointer = Root / config.action / "status"
+
       // State
       object State extends Enumeration {
         val Idle, Busy = Value
@@ -234,7 +250,7 @@ object ElasticsearchFlow {
             log.error(ex)
             handleFailure(NotUsed)
           case Right(data) =>
-            val errors = data.evaluate(Root / "errors").asBoolean
+            val errors = data.evaluate(ElasticPath.Errors).asBoolean
             if (errors.getOrElse(true)) {
               processPartial(data)
             } else {
@@ -266,13 +282,13 @@ object ElasticsearchFlow {
         */
       def processPartial(data: Json): Unit = {
         // Handle failed items
-        val items = data.evaluate(Root / "items").asArray.get
+        val items = data.evaluate(ElasticPath.Items).asArray.get
 
         var backPressure = false
         val results = messages.zip(items.toSeq)
           .map(x => (x._1.asObject.get, x._2.asObject.get))
           .filter { case (item, result) =>
-            val status = result.evaluate(Root / config.action / "status").asInt.get
+            val status = result.evaluate(statusPath).asInt.get
 
             // We can't do anything in case of conflict or bad request or not found
             if (status == 409 || status == 400 || status == 404) {
@@ -284,12 +300,12 @@ object ElasticsearchFlow {
             }
           }
           .groupBy { case (_, result) =>
-            val status = result.evaluate(Root / config.action / "status").asInt.get
+            val status = result.evaluate(statusPath).asInt.get
             if (status < 300) 0 else 1
           }
 
         messages = Nil
-        results.getOrElse(1, Nil).map(_._1).foreach(buffer.push(_))
+        results.getOrElse(1, Nil).map(_._1).foreach(buffer.push)
 
         if (backPressure) {
           scheduleOnce(NotUsed, config.retry)
@@ -305,7 +321,7 @@ object ElasticsearchFlow {
         */
       def processFailure(): Unit = {
         system.eventStream.publish(ElasticsearchFailureEvent(elapsed()))
-        messages.foreach(buffer.push(_))
+        messages.foreach(buffer.push)
         messages = Nil
         scheduleOnce(NotUsed, config.retry)
       }
