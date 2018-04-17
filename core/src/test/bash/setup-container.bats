@@ -29,8 +29,8 @@ source core/src/universal/bin/setup-container.sh
 @test "detect mem limit when undefined based on sys" {
   unset JVM_MEMORY_LIMIT
   export JVM_MEMORY_LIMIT=$(memory_limit)
-  echo "$JVM_MEMORY_LIMIT"
-  echo "$(awk '/MemTotal/ {printf "%.0f", $2*1024}' /proc/meminfo)"
+  export SYS_MAX_MEM_UNBOUNDED_FILE="/tmp/$RANDOM"
+  export SYS_MEM_FILE="/tmp/$RANDOM"
   [ "$JVM_MEMORY_LIMIT" == "$(awk '/MemTotal/ {printf "%.0f", $2*1024}' /proc/meminfo)" ]
 }
 
