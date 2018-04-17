@@ -17,7 +17,7 @@ if [ "$(diff "${BASE_PROJECT}/scripts/hook-pre-commit.sh" "${HOOK_DIR}/pre-commi
 fi
 
 # Validate bash project
-try bats core/src/test/bash
+try bats -t core/src/test/bash
 
 # Validate scala project
 try ./sbt -batch -mem 2048 clean
