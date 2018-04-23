@@ -62,7 +62,7 @@ class MetricPlugin(
 
       // Scheduling
       val jvmConf = conf.jvm.get
-      system.scheduler.schedule(jvmConf.initialDelay, jvmConf.interval) { () =>
+      system.scheduler.schedule(jvmConf.initialDelay, jvmConf.interval) {
         // Create a new entry
         val entry: mutable.Map[String, Any] = mutable.AnyRefMap[String, Any]()
 

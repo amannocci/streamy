@@ -25,23 +25,15 @@ package io.techcode.streamy
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.testkit.TestKit
-import com.typesafe.config.{Config, ConfigFactory}
+import akka.testkit.{ImplicitSender, TestKit}
+import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers, WordSpec}
 
 /**
   * Helper for system test.
   */
-trait TestSystem extends WordSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with ScalaFutures {
-
-  protected implicit val system: ActorSystem = {
-    def systemConfig = ConfigFactory.parseString(s"akka.stream.materializer.auto-fusing=true")
-      .withFallback(config)
-      .withFallback(ConfigFactory.load())
-
-    ActorSystem(getClass.getSimpleName, systemConfig)
-  }
+abstract class TestSystem extends TestKit(ActorSystem())
+  with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with ScalaFutures with ImplicitSender {
 
   protected implicit val materializer: ActorMaterializer = ActorMaterializer()
 
@@ -49,7 +41,5 @@ trait TestSystem extends WordSpec with Matchers with BeforeAndAfterAll with Befo
     TestKit.shutdownActorSystem(system)
     super.afterAll()
   }
-
-  protected def config: Config = ConfigFactory.empty()
 
 }
