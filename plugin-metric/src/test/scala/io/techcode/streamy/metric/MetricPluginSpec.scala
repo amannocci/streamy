@@ -30,12 +30,20 @@ import io.techcode.streamy.plugin.TestPlugin
 class MetricPluginSpec extends TestPlugin {
 
   "Plugin" can {
-    "be started" in {
-      create(classOf[MetricPlugin], MetricPluginSpec.Conf)
+    "be started with jvm enable" in {
+      create(classOf[MetricPlugin], MetricPluginSpec.JvmEnableConf)
+    }
+
+    "be started with jvm enable and embedded" in {
+      create(classOf[MetricPlugin], MetricPluginSpec.JvmEnableEmbeddedConf)
+    }
+
+    "be started with jvm disable" in {
+      create(classOf[MetricPlugin], MetricPluginSpec.JvmDisableConf)
     }
 
     "be stopped" in {
-      create(classOf[MetricPlugin], MetricPluginSpec.Conf) ! Kill
+      create(classOf[MetricPlugin], MetricPluginSpec.JvmEnableConf) ! Kill
     }
   }
 
@@ -43,13 +51,27 @@ class MetricPluginSpec extends TestPlugin {
 
 private object MetricPluginSpec {
 
-  val Conf: Config = ConfigFactory.parseString(
+  val JvmEnableEmbeddedConf: Config = ConfigFactory.parseString(
     """
       |jvm {
       |  initial-delay = 1ms
       |  interval = 10ms
       |  embedded = true
       |}
+    """.stripMargin)
+
+  val JvmEnableConf: Config = ConfigFactory.parseString(
+    """
+      |jvm {
+      |  initial-delay = 1ms
+      |  interval = 10ms
+      |  embedded = false
+      |}
+    """.stripMargin)
+
+  val JvmDisableConf: Config = ConfigFactory.parseString(
+    """
+      |jvm {}
     """.stripMargin)
 
 }

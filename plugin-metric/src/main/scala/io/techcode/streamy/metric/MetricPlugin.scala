@@ -23,10 +23,18 @@
  */
 package io.techcode.streamy.metric
 
+import java.lang.management.ManagementFactory
+
 import akka.stream.Materializer
-import io.techcode.streamy.metric.component.MetricSource
-import io.techcode.streamy.metric.util.ConfigConstants
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.jvm.{BufferPoolMetricSet, GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
+import io.techcode.streamy.metric.event.MetricJvmEvent
 import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.util.json.JsonUtil
+import pureconfig._
+
+import scala.collection.mutable
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Metric plugin implementation.
@@ -36,14 +44,55 @@ class MetricPlugin(
   data: PluginData
 ) extends Plugin(_materializer, data) {
 
-  override def onStart(): Unit = {
-    MetricSource.register(system, data.conf)
+  // Retrieve configuration
+  private val conf: Config = loadConfigOrThrow[Config](data.conf)
 
-    if (data.conf.getBoolean(ConfigConstants.JvmEmbedded)) {
-      MetricSource.jvm().runForeach(log.info(_))
+  // Metrics registry
+  private val Registry = new MetricRegistry()
+
+  override def onStart(): Unit = {
+    import system.dispatcher
+
+    if (conf.jvm.isDefined) {
+      // Metrics to collect
+      Registry.register("jvm.buffers", new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer))
+      Registry.register("jvm.gc", new GarbageCollectorMetricSet())
+      Registry.register("jvm.memory", new MemoryUsageGaugeSet())
+      Registry.register("jvm.threads", new ThreadStatesGaugeSet())
+
+      // Scheduling
+      val jvmConf = conf.jvm.get
+      system.scheduler.schedule(jvmConf.initialDelay, jvmConf.interval) { () =>
+        // Create a new entry
+        val entry: mutable.Map[String, Any] = mutable.AnyRefMap[String, Any]()
+
+        // Add all gauges (we have actually only gauges)
+        Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
+
+        // Emit event
+        val evt = JsonUtil.fromRawMap(entry)
+        system.eventStream.publish(MetricJvmEvent(evt))
+
+        // If embedded log
+        if (jvmConf.embedded) {
+          log.info(evt)
+        }
+      }
     }
   }
 
   override def onStop(): Unit = ()
+
+  // Plugin configuration
+  private case class Config(
+    jvm: Option[JvmConfig]
+  )
+
+  // Jvm plugin configuration
+  private case class JvmConfig(
+    initialDelay: FiniteDuration,
+    interval: FiniteDuration,
+    embedded: Boolean = true
+  )
 
 }

@@ -21,13 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.metric.util
+package io.techcode.streamy.metric.event
+
+import io.techcode.streamy.util.json.Json
 
 /**
-  * All configurations constants.
+  * Metric event.
   */
-object ConfigConstants {
-  val JvmInitialDelay = "jvm.initial-delay"
-  val JvmInterval = "jvm.interval"
-  val JvmEmbedded = "jvm.embedded"
-}
+sealed trait MetricEvent
+
+/**
+  * This event is fire when jvm metrics are emitted.
+  *
+  * @param data jvm metrics data.
+  */
+case class MetricJvmEvent(data: Json) extends MetricEvent
