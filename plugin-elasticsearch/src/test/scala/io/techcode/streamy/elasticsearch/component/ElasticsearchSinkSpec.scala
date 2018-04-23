@@ -28,7 +28,6 @@ import akka.stream.scaladsl.Source
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.util.json._
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -43,25 +42,46 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
       val result = Source.single(Json.obj("foo" -> "bar"))
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(s"http://$elasticHost:9200"),
-          "testing",
-          "test",
+          randomIndex(),
+          docType,
           "index",
           bulk = 1
         )))
-      Await.result(result, 30 seconds) should equal(Done)
+
+      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
+        x should equal(Done)
+      }
     }
 
     "send data using multiple workers" in {
       val result = Source.single(Json.obj("foo" -> "bar"))
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(s"http://$elasticHost:9200"),
-          "testing",
-          "test",
+          randomIndex(),
+          docType,
           "index",
           bulk = 1,
           worker = 2
         )))
-      Await.result(result, 30 seconds) should equal(Done)
+
+      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
+        x should equal(Done)
+      }
+    }
+
+    "send data in bulk" in {
+      val result = Source.fromIterator(() => Seq(Json.obj("foo" -> "bar"), Json.obj("foo" -> "bar")).toIterator)
+        .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
+          Seq(s"http://$elasticHost:9200"),
+          randomIndex(),
+          docType,
+          "index",
+          bulk = 1
+        )))
+
+      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
+        x should equal(Done)
+      }
     }
   }
 

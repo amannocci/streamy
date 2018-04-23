@@ -32,9 +32,7 @@ import io.techcode.streamy.util.json._
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.support.WriteRequest
 import org.elasticsearch.common.xcontent.XContentType
-import org.scalatest.time.{Seconds, Span}
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.language.postfixOps
