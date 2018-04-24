@@ -28,15 +28,14 @@ import sbt._
 object Dependencies {
 
   // Dependencies version
-  val akkaVersion = "2.5.11"
+  val akkaVersion = "2.5.12"
   val logbackVersion = "1.2.3"
   val logbackContribVersion = "0.3.0"
-  val commonsLangVersion = "3.7"
-  val jacksonVersion = "2.9.4"
+  val jacksonVersion = "2.9.5"
   val metricsJvmVersion = "4.0.2"
-  val guavaVersion = "24.0-jre"
-  val pureConfigVersion = "0.9.0"
-  val sttpVersion = "1.1.10"
+  val guavaVersion = "24.1-jre"
+  val pureConfigVersion = "0.9.1"
+  val sttpVersion = "1.1.13"
   val scalaTestVersion = "3.0.5"
   val mockitoVersion = "2.15.0"
   val elasticsearchVersion = "6.2.2"

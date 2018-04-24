@@ -24,7 +24,6 @@
 package io.techcode.streamy.util.json
 
 import akka.util.ByteString
-import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable
 
@@ -33,6 +32,9 @@ import scala.collection.mutable
   * Some helpers to work with Json values.
   */
 object JsonUtil {
+
+  // Empty prefix
+  private val EmptyPrefix: String = ""
 
   /**
     * Convert a json value to dot notation.
@@ -49,7 +51,7 @@ object JsonUtil {
     * @param prefix accumultator.
     * @return json object with dot notation.
     */
-  def flatten(js: JsObject, prefix: String = StringUtils.EMPTY): JsObject = js.fields.foldLeft(Json.obj()) {
+  def flatten(js: JsObject, prefix: String = EmptyPrefix): JsObject = js.fields.foldLeft(Json.obj()) {
     case (acc, (k, v: Json)) =>
       if (v.isObject) {
         // Deep merge will always successed

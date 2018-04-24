@@ -46,7 +46,6 @@ libraryDependencies ++= Seq(
 
 // All other libraries
 libraryDependencies ++= Seq(
-  "org.apache.commons" % "commons-lang3" % commonsLangVersion, // Apache 2 License
   "ch.qos.logback" % "logback-classic" % logbackVersion, // EPL/LGPL License
   "io.techcode.logback.contrib" % "logback-json-layout" % logbackContribVersion, // MIT License
   "com.google.guava" % "guava" % guavaVersion, // Apache 2 License

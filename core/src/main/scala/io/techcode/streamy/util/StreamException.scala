@@ -23,8 +23,8 @@
  */
 package io.techcode.streamy.util
 
+import com.google.common.base.Throwables
 import io.techcode.streamy.util.json._
-import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.util.control.NoStackTrace
 
@@ -48,7 +48,7 @@ class StreamException(msg: String, state: Option[Json] = None, ex: Option[Throwa
       result = result.put("state", state.get)
     }
     if (ex.isDefined) {
-      result = result.put("exception", ExceptionUtils.getStackTrace(ex.get))
+      result = result.put("exception", Throwables.getStackTraceAsString(ex.get))
     }
     result
   }
