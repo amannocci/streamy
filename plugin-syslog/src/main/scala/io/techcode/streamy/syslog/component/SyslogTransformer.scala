@@ -64,6 +64,27 @@ object SyslogTransformer {
   }
 
   /**
+    * Create a syslog flow that transform incoming [[ByteString]] to [[Json]].
+    * This flow is Rfc3164 compliant.
+    *
+    * @param conf flow configuration.
+    * @return new syslog flow Rfc3164 compliant.
+    */
+  def parser(conf: Rfc3164.Config): Flow[ByteString, Json, NotUsed] = {
+    val framing: Flow[ByteString, ByteString, NotUsed] = {
+      if (conf.framing == Framing.Delimiter) {
+        StreamFraming.delimiter(NewLineDelimiter, conf.maxSize, allowTruncation = true)
+      } else {
+        SyslogFraming.scanner(conf.maxSize)
+      }
+    }
+
+    framing.via(Flow.fromFunction(new SourceTransformer {
+      override def newParser(pkt: ByteString): ByteStringParser = SyslogParser.rfc3164(pkt, conf)
+    }))
+  }
+
+  /**
     * Create a syslog flow that transform incoming [[Json]] to [[ByteString]].
     * This flow is Rfc5424 compliant.
     *
@@ -184,7 +205,35 @@ object SyslogTransformer {
       message: Option[Binder] = None
     )
 
+    sealed abstract class Mode(
+      val hostname: Int,
+      val appName: Int,
+      val procId: Int
+    )
+
+    object Mode {
+
+      // scalastyle:off magic.number
+      // Strict mode
+      case object Strict extends Mode(
+        hostname = 255,
+        appName = 48,
+        procId = 128
+      )
+
+      // Lenient mode
+      case object Lenient extends Mode(
+        hostname = 255,
+        appName = 96,
+        procId = 128
+      )
+
+      // scalastyle:on magic.number
+
+    }
+
     case class Config(
+      mode: Mode = Rfc3164.Mode.Strict,
       maxSize: Int = Int.MaxValue,
       framing: Framing = Framing.Delimiter,
       binding: Binding = Binding()

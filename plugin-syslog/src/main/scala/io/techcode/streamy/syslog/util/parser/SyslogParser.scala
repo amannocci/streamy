@@ -34,11 +34,17 @@ import io.techcode.streamy.util.parser.{ByteStringParser, CharMatchers}
   */
 object SyslogParser {
 
-  // Struct data param value matcher
+  // Struct data param value matcher for Rfc5424
   private[parser] val ParamValueMatcher: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("\\\"]")).precomputed()
 
-  // Struct data name matcher
+  // Struct data name matcher for Rfc5424
   private[parser] val SdNameMatcher: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("= \"]")).precomputed()
+
+  // App name matcher for Rfc3164
+  private[parser] val AppNameMatcher: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("[")).precomputed()
+
+  // Proc id matcher for Rfc3164
+  private[parser] val ProcIdMatcher: CharMatcher = CharMatchers.PrintUsAscii.and(CharMatcher.noneOf("]")).precomputed()
 
   /**
     * Create a syslog parser that transform incoming [[ByteString]] to [[Json]].
@@ -49,6 +55,16 @@ object SyslogParser {
     * @return new syslog parser Rfc5424 compliant.
     */
   def rfc5424(bytes: ByteString, config: Rfc5424.Config): ByteStringParser = new Rfc5424Parser(bytes, config)
+
+  /**
+    * Create a syslog parser that transform incoming [[ByteString]] to [[Json]].
+    * This parser is Rfc3164 compliant.
+    *
+    * @param bytes  data to parse.
+    * @param config parser configuration.
+    * @return new syslog parser Rfc3164 compliant.
+    */
+  def rfc3164(bytes: ByteString, config: Rfc3164.Config): ByteStringParser = new Rfc3164Parser(bytes, config)
 
 }
 
@@ -200,6 +216,99 @@ private class Rfc5424Parser(bytes: ByteString, config: Rfc5424.Config) extends B
   def paramValue(): Boolean = zeroOrMore(SyslogParser.ParamValueMatcher)
 
   def sdName(): Boolean = times(1, 32, SyslogParser.SdNameMatcher)
+
+  def msg(): Boolean =
+    sp() && capture(binding.message) {
+      any()
+    }
+
+  private def capturePrival(rule: => Boolean): Boolean = {
+    mark()
+    val state = rule
+    if (binding.facility.isDefined || binding.severity.isDefined) {
+      val prival = partition().asDigit()
+
+      // Read severity or facility
+      if (binding.facility.isDefined) {
+        val facility = binding.facility.get
+        builder.put(facility.key, facility.bind(prival >> 3))
+      }
+      if (binding.severity.isDefined) {
+        val severity = binding.severity.get
+        builder.put(severity.key, severity.bind(prival & 7))
+      }
+    }
+    state
+  }
+
+  // scalastyle:on
+
+}
+
+/**
+  * Syslog parser that transform incoming [[ByteString]] to [[Json]].
+  * This parser is Rfc3164 compliant.
+  *
+  * @param bytes  data to parse.
+  * @param config parser configuration.
+  */
+private class Rfc3164Parser(bytes: ByteString, config: Rfc3164.Config) extends ByteStringParser(bytes) with ParserHelpers {
+
+  private val binding = config.binding
+
+  private val mode = config.mode
+
+  override def process(): Boolean =
+    header() &&
+      colon() &&
+      optional(msg()) &&
+      eoi()
+
+  // scalastyle:off
+  def header(): Boolean =
+    pri() && timestamp() && sp() && hostname() && sp() && appName() && procId()
+
+  def pri(): Boolean =
+    openQuote() && capturePrival(priVal()) && closeQuote()
+
+  def priVal(): Boolean = times(1, 3, CharMatchers.Digit)
+
+  def hostname(): Boolean =
+    capture(binding.hostname) {
+      times(1, mode.hostname, CharMatchers.PrintUsAscii)
+    }
+
+  def appName(): Boolean =
+    capture(binding.appName) {
+      times(1, mode.appName, SyslogParser.AppNameMatcher)
+    }
+
+  def procId(): Boolean =
+    openBracket() &&
+      capture(binding.procId) {
+        times(1, mode.procId, SyslogParser.ProcIdMatcher)
+      } &&
+      closeBracket()
+
+  def timestamp(): Boolean =
+    capture(binding.timestamp) {
+      fullDate()
+    }
+
+  def fullDate(): Boolean =
+    dateMonth() && sp() && dateMDay() && sp() && fullTime()
+
+  def dateMonth(): Boolean = times(3, CharMatchers.Alpha)
+
+  def dateMDay(): Boolean = times(2, CharMatchers.Digit)
+
+  def fullTime(): Boolean = timeHour() && colon() && timeMinute() && colon() && timeSecond()
+
+  def timeHour(): Boolean = times(2, CharMatchers.Digit)
+
+  def timeMinute(): Boolean = times(2, CharMatchers.Digit)
+
+  def timeSecond(): Boolean = times(2, CharMatchers.Digit)
 
   def msg(): Boolean =
     sp() && capture(binding.message) {
