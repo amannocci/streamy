@@ -25,79 +25,86 @@ package io.techcode.streamy.fingerprint.component
 
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
-import io.techcode.streamy.fingerprint.component.FingerprintTransformerBench._
 
 /**
   * Fingerprint transformer bench.
   *
-  * Benchmark                                                Mode  Cnt        Score       Error  Units
-  * FingerprintTransformerBench.benchAlder32                thrpt   20  3182163,688 ±  3644,464  ops/s
-  * FingerprintTransformerBench.benchCrc32                  thrpt   20  3684606,141 ± 13613,941  ops/s
-  * FingerprintTransformerBench.benchCrc32c                 thrpt   20  3019386,407 ±  5976,112  ops/s
-  * FingerprintTransformerBench.benchFarmHashFingerprint64  thrpt   20  3762133,759 ±  5891,104  ops/s
-  * FingerprintTransformerBench.benchMd5                    thrpt   20  1731620,350 ±  3215,174  ops/s
-  * FingerprintTransformerBench.benchMurmur3_128            thrpt   20  2727832,043 ±  3514,204  ops/s
-  * FingerprintTransformerBench.benchMurmur3_32             thrpt   20  5339783,961 ± 12122,176  ops/s
-  * FingerprintTransformerBench.benchSha1                   thrpt   20  1407266,374 ±  3087,984  ops/s
-  * FingerprintTransformerBench.benchSha256                 thrpt   20  1033798,398 ±  1131,969  ops/s
-  * FingerprintTransformerBench.benchSha384                 thrpt   20   863588,079 ±   936,946  ops/s
-  * FingerprintTransformerBench.benchSha512                 thrpt   20   808811,133 ±  3746,056  ops/s
-  * FingerprintTransformerBench.benchSipHash24              thrpt   20  3129688,670 ±  3663,746  ops/s
+  * Benchmark                                 Mode  Cnt        Score       Error  Units
+  * FingerprintTransformerBench.alder32      thrpt   20  4686576.959 ± 13602.988  ops/s
+  * FingerprintTransformerBench.crc32        thrpt   20  5485118.562 ± 10160.267  ops/s
+  * FingerprintTransformerBench.crc32c       thrpt   20  5866767.950 ± 14128.656  ops/s
+  * FingerprintTransformerBench.farmHash     thrpt   20  5412289.991 ± 17282.797  ops/s
+  * FingerprintTransformerBench.md5          thrpt   20  2548109.185 ±  3993.488  ops/s
+  * FingerprintTransformerBench.murmur3_128  thrpt   20  4076691.529 ± 13666.090  ops/s
+  * FingerprintTransformerBench.murmur3_32   thrpt   20  7490568.120 ± 27839.105  ops/s
+  * FingerprintTransformerBench.sha1         thrpt   20  2046655.977 ±  6422.633  ops/s
+  * FingerprintTransformerBench.sha256       thrpt   20  1618330.819 ±  4246.589  ops/s
+  * FingerprintTransformerBench.sha384       thrpt   20  1187285.739 ±  3253.281  ops/s
+  * FingerprintTransformerBench.sha512       thrpt   20  1182532.462 ±  2985.362  ops/s
+  * FingerprintTransformerBench.sipHash24    thrpt   20  4450924.230 ±  8829.009  ops/s
   */
 class FingerprintTransformerBench {
 
-  @Benchmark def benchMd5(): Json = Md5Fingerprint(Simple)
+  @Benchmark def md5(): Json = FingerprintTransformerBench.Transformer.Md5(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchSha1(): Json = Sha1Fingerprint(Simple)
+  @Benchmark def sha1(): Json = FingerprintTransformerBench.Transformer.Sha1(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchSha256(): Json = Sha256Fingerprint(Simple)
+  @Benchmark def sha256(): Json = FingerprintTransformerBench.Transformer.Sha256(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchSha384(): Json = Sha384Fingerprint(Simple)
+  @Benchmark def sha384(): Json = FingerprintTransformerBench.Transformer.Sha384(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchSha512(): Json = Sha512Fingerprint(Simple)
+  @Benchmark def sha512(): Json = FingerprintTransformerBench.Transformer.Sha512(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchAlder32(): Json = Alder32Fingerprint(Simple)
+  @Benchmark def alder32(): Json = FingerprintTransformerBench.Transformer.Alder32(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchCrc32(): Json = Crc32Fingerprint(Simple)
+  @Benchmark def crc32(): Json = FingerprintTransformerBench.Transformer.Crc32(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchCrc32c(): Json = Crc32cFingerprint(Simple)
+  @Benchmark def crc32c(): Json = FingerprintTransformerBench.Transformer.Crc32c(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchMurmur3_32(): Json = Murmur3_32Fingerprint(Simple)
+  @Benchmark def murmur3_32(): Json = FingerprintTransformerBench.Transformer.Murmur3_32(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchMurmur3_128(): Json = Murmur3_128Fingerprint(Simple)
+  @Benchmark def murmur3_128(): Json = FingerprintTransformerBench.Transformer.Murmur3_128(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchSipHash24(): Json = SipHash24Fingerprint(Simple)
+  @Benchmark def sipHash24(): Json = FingerprintTransformerBench.Transformer.SipHash24(FingerprintTransformerBench.Sample.Simple)
 
-  @Benchmark def benchFarmHashFingerprint64(): Json = FarmHashFingerprint(Simple)
+  @Benchmark def farmHash(): Json = FingerprintTransformerBench.Transformer.FarmHash(FingerprintTransformerBench.Sample.Simple)
 
 }
 
 object FingerprintTransformerBench {
 
-  val Simple: Json = Json.parse("""{"message":"test"}""").getOrElse(JsNull)
+  object Sample {
 
-  val Md5Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "md5"))
+    val Simple: Json = Json.parse("""{"message":"test"}""").getOrElse(JsNull)
 
-  val Sha1Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sha1"))
+  }
 
-  val Sha256Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sha256"))
+  object Transformer {
 
-  val Sha384Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sha384"))
+    val Md5 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "md5"))
 
-  val Sha512Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sha512"))
+    val Sha1 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sha1"))
 
-  val Alder32Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "alder32"))
+    val Sha256 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sha256"))
 
-  val Crc32Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "crc32"))
+    val Sha384 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sha384"))
 
-  val Crc32cFingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "crc32c"))
+    val Sha512 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sha512"))
 
-  val Murmur3_32Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "murmur3_32"))
+    val Alder32 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "alder32"))
 
-  val Murmur3_128Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "murmur3_128"))
+    val Crc32 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "crc32"))
 
-  val SipHash24Fingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sipHash24"))
+    val Crc32c = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "crc32c"))
 
-  val FarmHashFingerprint = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "farmHashFingerprint64"))
+    val Murmur3_32 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "murmur3_32"))
+
+    val Murmur3_128 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "murmur3_128"))
+
+    val SipHash24 = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "sipHash24"))
+
+    val FarmHash = new FingerprintTransformer(FingerprintTransformer.Config(source = Root / "message", hashing = "farmHashFingerprint64"))
+
+  }
 
 }
