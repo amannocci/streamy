@@ -46,6 +46,7 @@ lazy val bench = project
   .in(file("bench"))
   .dependsOn(
     core % "test->test",
+    `plugin-date` % "test->test",
     `plugin-elasticsearch` % "test->test",
     `plugin-fingerprint` % "test->test",
     `plugin-graphite` % "test->test",

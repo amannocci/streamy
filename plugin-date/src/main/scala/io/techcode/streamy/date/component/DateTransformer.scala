@@ -38,7 +38,7 @@ import io.techcode.streamy.util.json._
 /**
   * Date transformer implementation.
   */
-private class DateTransformer(config: DateTransformer.Config) extends FlowTransformer(config) {
+private[component] class DateTransformer(config: DateTransformer.Config) extends FlowTransformer(config) {
 
   // Thread-safe: Date time formatter
   val inputFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(config.inputPattern)
