@@ -60,6 +60,12 @@ lazy val core = project
   .in(file("core"))
   .settings(commonSettings, Packages.settings, Dependencies.testSettings, Publish.settings)
 
+lazy val `plugin-date` = project
+  .in(file("plugin-date"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(testkit % "test->test")
+
 lazy val `plugin-elasticsearch` = project
   .in(file("plugin-elasticsearch"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
@@ -106,6 +112,7 @@ lazy val root = project
   .settings(Seq(publish := {}))
   .aggregate(
     core,
+    `plugin-date`,
     `plugin-elasticsearch`,
     `plugin-fingerprint`,
     `plugin-graphite`,
