@@ -31,7 +31,7 @@ parallelExecution in ThisBuild := false
 lazy val commonSettings = Seq(
   name := "streamy",
   version := "0.1.0-SNAPSHOT",
-  scalaVersion := "2.12.5",
+  scalaVersion := "2.12.6",
 
   // Disable test in assembly
   test in assembly := {},
