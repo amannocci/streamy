@@ -21,41 +21,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component
+package io.techcode.streamy.util.printer
 
-import akka.util.ByteString
-import io.techcode.streamy.util.StreamException
-import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.printer.ByteStringPrinter
-
-import scala.language.postfixOps
+import io.techcode.streamy.util.json.Json
 
 /**
-  * Sink transformer abstract implementation that provide
-  * a convenient way to process a convertion from [[Json]] to [[ByteString]].
+  * Represent an abstract printer that provide an efficient way to print [[Json]].
+  *
+  * @param pkt input to print.
   */
-abstract class SinkTransformer extends Transformer[Json, ByteString] {
+abstract class AbstractPrinter[Out](pkt: Json) {
 
   /**
-    * Apply transform component on packet.
+    * Attempt to print input [[Json]].
     *
-    * @param pkt packet involved.
-    * @return printing result.
+    * @return [[Out]] object result of printing or [[None]].
     */
-  def apply(pkt: Json): ByteString = {
-    val printer: ByteStringPrinter = newPrinter(pkt)
-    printer.print() match {
-      case Some(result) => result
-      case None => throw new StreamException(printer.error(), Some(pkt))
-    }
-  }
+  def print(): Option[Out]
 
   /**
-    * Create a new json printer.
+    * This method must be override and considered as root rule printing.
     *
-    * @param pkt packet involved.
-    * @return json printer.
+    * @return true if printing succeeded, otherwise false.
     */
-  def newPrinter(pkt: Json): ByteStringPrinter
+  def process(): Boolean
+
+  /**
+    * Compute error message report.
+    *
+    * @return error message report.
+    */
+  def error(): String = "Unexpected printing error occured"
 
 }

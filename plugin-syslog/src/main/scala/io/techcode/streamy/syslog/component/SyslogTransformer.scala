@@ -30,9 +30,10 @@ import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.util.parser.{SyslogFraming, SyslogParser}
 import io.techcode.streamy.syslog.util.printer.SyslogPrinter
+import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json.Json
-import io.techcode.streamy.util.parser.{Binder, ByteStringParser}
-import io.techcode.streamy.util.printer.JsonPrinter
+import io.techcode.streamy.util.parser.ByteStringParser
+import io.techcode.streamy.util.printer.ByteStringPrinter
 
 /**
   * Syslog transformer companion.
@@ -93,7 +94,7 @@ object SyslogTransformer {
     */
   def printer(conf: Rfc5424.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromFunction(new SinkTransformer {
-      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc5424(pkt, conf)
+      override def newPrinter(pkt: Json): ByteStringPrinter = SyslogPrinter.rfc5424(pkt, conf)
     })
 
   /**
@@ -105,7 +106,7 @@ object SyslogTransformer {
     */
   def printer(conf: Rfc3164.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromFunction(new SinkTransformer {
-      override def newPrinter(pkt: Json): JsonPrinter = SyslogPrinter.rfc3164(pkt, conf)
+      override def newPrinter(pkt: Json): ByteStringPrinter = SyslogPrinter.rfc3164(pkt, conf)
     })
 
   // Common related stuff

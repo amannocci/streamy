@@ -564,45 +564,12 @@ class JsonSpec extends WordSpecLike with Matchers {
       input should equal(JsNull)
     }
 
-    "asciiStringify should escape non-ascii characters" in {
-      def jo = Json.obj(
-        "key1" -> "\u2028\u2029\u2030",
-        "key2" -> "\u00E1\u00E9\u00ED\u00F3\u00FA",
-        "key3" -> "\u00A9\u00A3",
-        "key4" -> "\u6837\u54C1"
-      )
-
-      Json.asciiStringify(jo) should equal(
-        "{\"key1\":\"\\u2028\\u2029\\u2030\"," +
-          "\"key3\":\"\\u00A9\\u00A3\"," +
-          "\"key2\":\"\\u00E1\\u00E9\\u00ED\\u00F3\\u00FA\"," +
-          "\"key4\":\"\\u6837\\u54C1\"}"
-      )
-    }
-
-    "asciiStringify should escape ascii characters properly" in {
-      def jo = Json.obj(
-        "key1" -> "ab\n\tcd",
-        "key2" -> "\"\r"
-      )
-
-      Json.asciiStringify(jo) should equal("""{"key1":"ab\n\tcd","key2":"\"\r"}""")
-    }
-
     "be convert to json object when possible" in {
       Json.obj().asObject should equal(Some(Json.obj()))
     }
 
     "fail to be convert to json object when not possible" in {
       JsString("10").asObject should equal(None)
-    }
-
-    "return true when it can be convert to json object" in {
-      Json.obj().isObject should equal(true)
-    }
-
-    "return false when it can be convert to json object" in {
-      JsString("10").isObject should equal(false)
     }
 
     "can be convert to iterator" in {
@@ -621,28 +588,12 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsString("10").asArray should equal(None)
     }
 
-    "return true when it can be convert to json array" in {
-      Json.arr().isArray should equal(true)
-    }
-
-    "return false when it can be convert to json array" in {
-      JsString("10").isArray should equal(false)
-    }
-
     "be convert to boolean when possible" in {
       JsTrue.asBoolean should equal(Some(true))
     }
 
     "fail to be convert to boolean when not possible" in {
       JsString("10").asBoolean should equal(None)
-    }
-
-    "return true when it can be convert to boolean" in {
-      JsTrue.isBoolean should equal(true)
-    }
-
-    "return false when it can be convert to boolean" in {
-      JsString("10").isBoolean should equal(false)
     }
 
     "return correct size for boolean" in {
@@ -658,14 +609,6 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.asString should equal(None)
     }
 
-    "return true when it can be convert to string" in {
-      JsString("10").isString should equal(true)
-    }
-
-    "return false when it can be convert to string" in {
-      JsTrue.isString should equal(false)
-    }
-
     "return correct size for string" in {
       JsString("test").sizeHint should equal(6) // "test"
     }
@@ -676,14 +619,6 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "fail to be convert to number when not possible" in {
       JsTrue.asNumber should equal(None)
-    }
-
-    "return true when it can be convert to number" in {
-      JsBigDecimal(BigDecimal("1e20")).isNumber should equal(true)
-    }
-
-    "return false when it can be convert to number" in {
-      JsTrue.isNumber should equal(false)
     }
 
     "return correct size for number" in {
@@ -698,14 +633,6 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.asNull should equal(None)
     }
 
-    "return true when it can be convert to null" in {
-      JsNull.isNull should equal(true)
-    }
-
-    "return false when it can be convert to null" in {
-      JsTrue.isNull should equal(false)
-    }
-
     "return correct size for null" in {
       JsNull.sizeHint should equal(4)
     }
@@ -716,14 +643,6 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "fail to be convert to int when not possible" in {
       JsTrue.asInt should equal(None)
-    }
-
-    "return true when it can be convert to int" in {
-      JsInt(1).isInt should equal(true)
-    }
-
-    "return false when it can be convert to int" in {
-      JsTrue.isInt should equal(false)
     }
 
     "return correct size for int" in {
@@ -750,14 +669,6 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.asLong should equal(None)
     }
 
-    "return true when it can be convert to long" in {
-      JsLong(1).isLong should equal(true)
-    }
-
-    "return false when it can be convert to long" in {
-      JsTrue.isLong should equal(false)
-    }
-
     "return correct size for long" in {
       // Positive cases
       var size = 1
@@ -782,14 +693,6 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.asFloat should equal(None)
     }
 
-    "return true when it can be convert to float" in {
-      JsFloat(1.0F).isFloat should equal(true)
-    }
-
-    "return false when it can be convert to float" in {
-      JsTrue.isFloat should equal(false)
-    }
-
     "return correct size for float" in {
       JsDouble(2.0F).sizeHint should equal(3)
     }
@@ -802,14 +705,6 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.asDouble should equal(None)
     }
 
-    "return true when it can be convert to double" in {
-      JsDouble(1.0D).isDouble should equal(true)
-    }
-
-    "return false when it can be convert to double" in {
-      JsTrue.isDouble should equal(false)
-    }
-
     "return correct size for double" in {
       JsDouble(2.0D).sizeHint should equal(3)
     }
@@ -820,14 +715,6 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "fail to be convert to bytes when not possible" in {
       JsTrue.asBytes should equal(None)
-    }
-
-    "return true when it can be convert to bytes" in {
-      JsBytes(ByteString("test")).isBytes should equal(true)
-    }
-
-    "return false when it can be convert to bytes" in {
-      JsTrue.isBytes should equal(false)
     }
 
     "handle patch with operations" in {

@@ -28,8 +28,9 @@ import akka.stream.scaladsl.{Flow, Framing => StreamFraming}
 import akka.util.ByteString
 import io.techcode.streamy.component.SourceTransformer
 import io.techcode.streamy.graphite.util.parser.GraphiteParser
+import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json.Json
-import io.techcode.streamy.util.parser.{Binder, ByteStringParser}
+import io.techcode.streamy.util.parser.ByteStringParser
 
 /**
   * Graphite transformer companion.

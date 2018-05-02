@@ -23,8 +23,7 @@
  */
 package io.techcode.streamy.util.json
 
-import java.io.{InputStream, StringWriter}
-import java.math.{BigInteger, BigDecimal => JBigDec}
+import java.io.InputStream
 
 import akka.util.ByteString
 import com.fasterxml.jackson.core._
@@ -33,16 +32,13 @@ import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.`type`.TypeFactory
 import com.fasterxml.jackson.databind.deser.Deserializers
 import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.databind.node.{BigIntegerNode, DecimalNode}
-import com.fasterxml.jackson.databind.ser.Serializers
-import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream
 
 import scala.annotation.{switch, tailrec}
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.control.NonFatal
 
-private[json] object JsonJackson {
+private[json] object JsonConverter {
 
   // Json mapper
   private val mapper = (new ObjectMapper).registerModule(StreamyModule)
@@ -56,7 +52,7 @@ private[json] object JsonJackson {
     * @param data the bytestring to parse.
     */
   def parse(data: ByteString): Either[Throwable, Json] = try {
-    Right(mapper.readValue(factory.createParser(new ByteBufferBackedInputStream(data.asByteBuffer)), classOf[Json]))
+    Right(mapper.readValue(factory.createParser(data.toArray[Byte]), classOf[Json]))
   } catch {
     case NonFatal(error) => Left(error)
   }
@@ -99,36 +95,7 @@ private[json] object JsonJackson {
     *
     * @return a String with the json representation.
     */
-  def stringify(json: Json, escapeNonASCII: Boolean): String = withStringWriter { ctx =>
-    val gen = stringJsonGenerator(ctx)
-
-    if (escapeNonASCII) {
-      gen.enable(JsonGenerator.Feature.ESCAPE_NON_ASCII)
-    }
-
-    mapper.writeValue(gen, json)
-    ctx.flush()
-    ctx.getBuffer.toString
-  }
-
-  // Create a new string json generator
-  private def stringJsonGenerator(out: java.io.StringWriter) = factory.createGenerator(out)
-
-  // String writer context
-  private def withStringWriter[T](f: StringWriter => T): T = {
-    val sw = new StringWriter()
-    try {
-      f(sw)
-    } catch {
-      case err: Throwable => throw err
-    } finally {
-      if (sw != null) try {
-        sw.close()
-      } catch {
-        case _: Throwable => ()
-      }
-    }
-  }
+  def print(json: Json): String = new JsonPrinter(json).print().get
 
 }
 
@@ -139,7 +106,6 @@ private[json] object StreamyModule extends SimpleModule("StreamyJson", Version.u
 
   override def setupModule(context: SetupContext) {
     context.addDeserializers(new StreamyDeserializers)
-    context.addSerializers(new StreamySerializers)
   }
 
 }
@@ -155,84 +121,6 @@ private[json] class StreamyDeserializers extends Deserializers.Base {
       new JsonValueDeserializer(config.getTypeFactory, classType)
     } else {
       null
-    }
-  }
-
-}
-
-/**
-  * Streamy serializers implementations.
-  */
-private[json] class StreamySerializers extends Serializers.Base {
-
-  override def findSerializer(config: SerializationConfig, javaType: JavaType, bean: BeanDescription): JsonSerializer[Object] = {
-    val ser: Object = if (classOf[Json].isAssignableFrom(bean.getBeanClass)) {
-      JsonValueSerializer
-    } else {
-      null
-    }
-    ser.asInstanceOf[JsonSerializer[Object]]
-  }
-
-}
-
-/**
-  * Json serializer implementation.
-  */
-private[json] object JsonValueSerializer extends JsonSerializer[Json] {
-
-  // Maximum magnitude of BigDecimal to write out as a plain string
-  val MaxPlain: BigDecimal = 1e20
-
-  // Minimum magnitude of BigDecimal to write out as a plain string
-  val MinPlain: BigDecimal = 1e-10
-
-  def serialize(value: Json, json: JsonGenerator, provider: SerializerProvider): Unit = {
-    if (value.isObject) {
-      json.writeStartObject()
-      value.asObject.get.underlying.foreach { t =>
-        json.writeFieldName(t._1)
-        serialize(t._2, json, provider)
-      }
-      json.writeEndObject()
-    } else if (value.isArray) {
-      json.writeStartArray()
-      value.asArray.get.underlying.foreach { v =>
-        serialize(v, json, provider)
-      }
-      json.writeEndArray()
-    } else if (value.isString) {
-      json.writeString(value.asString.get)
-    } else if (value.isBoolean) {
-      json.writeBoolean(value.asBoolean.get)
-    } else if (value.isInt) {
-      json.writeNumber(value.asInt.get)
-    } else if (value.isLong) {
-      json.writeNumber(value.asLong.get)
-    } else if (value.isFloat) {
-      json.writeNumber(value.asFloat.get)
-    } else if (value.isDouble) {
-      json.writeNumber(value.asDouble.get)
-    } else if (value.isBytes) {
-      json.writeBinary(value.asBytes.get.toArray[Byte])
-    } else if (value.isNumber) {
-      // Workaround #3784: Same behaviour as if JsonGenerator were
-      // configured with WRITE_BIGDECIMAL_AS_PLAIN, but forced as this
-      // configuration is ignored when called from ObjectMapper.valueToTree
-      val shouldWritePlain = {
-        val va = value.asNumber.get.abs
-        va < MaxPlain && va > MinPlain
-      }
-      val stripped = value.asNumber.get.bigDecimal.stripTrailingZeros
-      val raw = if (shouldWritePlain) stripped.toPlainString else stripped.toString
-
-      if (raw.indexOf('E') < 0 && raw.indexOf('.') < 0) {
-        json.writeTree(new BigIntegerNode(new BigInteger(raw)))
-      } else {
-        json.writeTree(new DecimalNode(new JBigDec(raw)))
-      }
-    } else {
-      json.writeNull()
     }
   }
 

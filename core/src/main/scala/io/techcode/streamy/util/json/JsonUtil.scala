@@ -53,19 +53,20 @@ object JsonUtil {
     */
   def flatten(js: JsObject, prefix: String = EmptyPrefix): JsObject = js.fields.foldLeft(Json.obj()) {
     case (acc, (k, v: Json)) =>
-      if (v.isObject) {
-        // Deep merge will always successed
-        if (prefix.isEmpty) {
-          acc.deepMerge(flatten(v.asObject.get, k)).get
-        } else {
-          acc.deepMerge(flatten(v.asObject.get, s"$prefix.$k")).get
-        }
-      } else {
-        if (prefix.isEmpty) {
-          acc.asObject.get.put(k, v)
-        } else {
-          acc.asObject.get.put(s"$prefix.$k", v)
-        }
+      v match {
+        case _: JsObject =>
+          // Deep merge will always successed
+          if (prefix.isEmpty) {
+            acc.deepMerge(flatten(v.asObject.get, k)).get
+          } else {
+            acc.deepMerge(flatten(v.asObject.get, s"$prefix.$k")).get
+          }
+        case _ =>
+          if (prefix.isEmpty) {
+            acc.asObject.get.put(k, v)
+          } else {
+            acc.asObject.get.put(s"$prefix.$k", v)
+          }
       }
   }
 

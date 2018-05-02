@@ -229,14 +229,8 @@ private class Rfc5424Parser(bytes: ByteString, config: Rfc5424.Config) extends B
       val prival = partition().asDigit()
 
       // Read severity or facility
-      if (binding.facility.isDefined) {
-        val facility = binding.facility.get
-        builder.put(facility.key, facility.bind(prival >> 3))
-      }
-      if (binding.severity.isDefined) {
-        val severity = binding.severity.get
-        builder.put(severity.key, severity.bind(prival & 7))
-      }
+      binding.facility.foreach(_.bind(builder, prival >> 3))
+      binding.severity.foreach(_.bind(builder, prival & 7))
     }
     state
   }
@@ -322,14 +316,8 @@ private class Rfc3164Parser(bytes: ByteString, config: Rfc3164.Config) extends B
       val prival = partition().asDigit()
 
       // Read severity or facility
-      if (binding.facility.isDefined) {
-        val facility = binding.facility.get
-        builder.put(facility.key, facility.bind(prival >> 3))
-      }
-      if (binding.severity.isDefined) {
-        val severity = binding.severity.get
-        builder.put(severity.key, severity.bind(prival & 7))
-      }
+      binding.facility.foreach(_.bind(builder, prival >> 3))
+      binding.severity.foreach(_.bind(builder, prival & 7))
     }
     state
   }

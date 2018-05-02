@@ -26,7 +26,7 @@ package io.techcode.streamy.component
 import akka.util.ByteString
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.printer.JsonPrinter
+import io.techcode.streamy.util.printer.DerivedByteStringPrinter
 import org.scalatest._
 
 /**
@@ -35,7 +35,7 @@ import org.scalatest._
 class SinkTransformerSpec extends WordSpec with Matchers {
 
   class Impl(succeeded: Boolean) extends SinkTransformer {
-    def newPrinter(pkt: Json): JsonPrinter = new JsonPrinter(pkt) {
+    def newPrinter(pkt: Json): DerivedByteStringPrinter = new DerivedByteStringPrinter(pkt) {
       override def process(): Boolean = succeeded
     }
   }

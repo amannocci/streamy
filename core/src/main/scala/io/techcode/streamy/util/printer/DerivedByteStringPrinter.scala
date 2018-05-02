@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,36 +23,27 @@
  */
 package io.techcode.streamy.util.printer
 
+import java.lang.{StringBuilder => JStringBuilder}
+
 import akka.util.ByteString
 import io.techcode.streamy.util.json.Json
-import org.scalatest._
 
 /**
-  * JsonPrinter spec.
+  * Represent a derived [[ByteString]] printer based on [[JStringBuilder]] that provide an efficient way to print [[Json]].
+  *
+  * @param pkt input to print.
   */
-class JsonPrinterSpec extends WordSpecLike with Matchers {
+abstract class DerivedByteStringPrinter(pkt: Json) extends ByteStringPrinter(pkt) {
 
-  "JsonPrinter" should {
-    "print correctly a json value when success" in {
-      val printer = new Impl(Json.obj("foo" -> "bar"))
-      printer.print() should equal(Some(ByteString("""{"foo":"bar"}""")))
-    }
-    "print correctly a json value when failed" in {
-      val printer = new Impl(Json.obj("foo" -> "bar"), false)
-      printer.print() should equal(None)
-    }
+  // Used to build
+  protected var builder: JStringBuilder = new JStringBuilder(256)
 
-    "implement an error message by default" in {
-      val printer = new Impl(Json.obj("foo" -> "bar"))
-      printer.error() should equal("Unexpected printing error occured")
+  def print(): Option[ByteString] = {
+    if (process()) {
+      Some(ByteString(builder.toString))
+    } else {
+      None
     }
   }
 
-}
-
-class Impl(pkt: Json, success: Boolean = true) extends JsonPrinter(pkt) {
-  override def process(): Boolean = {
-    builder.putBytes(pkt.toString.getBytes)
-    success
-  }
 }

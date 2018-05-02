@@ -26,8 +26,9 @@ package io.techcode.streamy.graphite.util.parser
 import akka.util.ByteString
 import com.google.common.base.CharMatcher
 import io.techcode.streamy.graphite.component.GraphiteTransformer
+import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.parser.{Binder, ByteStringParser}
+import io.techcode.streamy.util.parser.ByteStringParser
 
 /**
   * Graphite parser companion.

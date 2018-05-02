@@ -61,42 +61,35 @@ object Json {
     *
     * @param data the bytestring to parse.
     */
-  @inline def parse(data: ByteString): Either[Throwable, Json] = JsonJackson.parse(data)
+  @inline def parse(data: ByteString): Either[Throwable, Json] = JsonConverter.parse(data)
 
   /**
     * Parses a string representing a Json input, and returns it as a [[Json]].
     *
     * @param data the string to parse.
     */
-  @inline def parse(data: Array[Byte]): Either[Throwable, Json] = JsonJackson.parse(data)
+  @inline def parse(data: Array[Byte]): Either[Throwable, Json] = JsonConverter.parse(data)
 
   /**
     * Parses a string representing a Json input, and returns it as a [[Json]].
     *
     * @param input the string to parse.
     */
-  @inline def parse(input: String): Either[Throwable, Json] = JsonJackson.parse(input)
+  @inline def parse(input: String): Either[Throwable, Json] = JsonConverter.parse(input)
 
   /**
     * Parses a stream representing a Json input, and returns it as a [[Json]].
     *
     * @param stream the InputStream to parse.
     */
-  @inline def parse(stream: InputStream): Either[Throwable, Json] = JsonJackson.parse(stream)
+  @inline def parse(stream: InputStream): Either[Throwable, Json] = JsonConverter.parse(stream)
 
   /**
     * Converts a [[Json]] to its string representation.
     *
     * @return a string with the json representation.
     */
-  @inline def stringify(json: Json): String = JsonJackson.stringify(json, escapeNonASCII = false)
-
-  /**
-    * Converts a [[Json]] to its string representation.
-    *
-    * @return all non-ascii characters escaped.
-    */
-  @inline def asciiStringify(json: Json): String = JsonJackson.stringify(json, escapeNonASCII = true)
+  @inline def stringify(json: Json): String = JsonConverter.print(json)
 
 }
 
@@ -145,83 +138,6 @@ sealed trait Json {
     * @return deep merged json value or none if failed.
     */
   def deepMerge(other: Json): Option[Json] = None
-
-  /**
-    * Returns true if the json value is a json object.
-    *
-    * @return true if the json value is a json object, otherwise false.
-    */
-  def isObject: Boolean = false
-
-  /**
-    * Returns true if the json value is a json array.
-    *
-    * @return true if the json value is a json array, otherwise false.
-    */
-  def isArray: Boolean = false
-
-  /**
-    * Returns true if the json value is a json bytes.
-    *
-    * @return true if the json value is a json bytes, otherwise false.
-    */
-  def isBytes: Boolean = false
-
-  /**
-    * Returns true if the json value is a json boolean.
-    *
-    * @return true if the json value is a json boolean, otherwise false.
-    */
-  def isBoolean: Boolean = false
-
-  /**
-    * Returns true if the json value is a json string.
-    *
-    * @return true if the json value is a json string, otherwise false.
-    */
-  def isString: Boolean = false
-
-  /**
-    * Returns true if the json value is a json number.
-    *
-    * @return true if the json value is a json number, otherwise false.
-    */
-  def isNumber: Boolean = false
-
-  /**
-    * Returns true if the json value is a json null.
-    *
-    * @return true if the json value is a json null, otherwise false.
-    */
-  def isNull: Boolean = false
-
-  /**
-    * Returns true if the json value is a json int.
-    *
-    * @return true if the json value is a json int, otherwise false.
-    */
-  def isInt: Boolean = false
-
-  /**
-    * Returns true if the json value is a json long.
-    *
-    * @return true if the json value is a json long, otherwise false.
-    */
-  def isLong: Boolean = false
-
-  /**
-    * Returns true if the json value is a json double.
-    *
-    * @return true if the json value is a json double, otherwise false.
-    */
-  def isDouble: Boolean = false
-
-  /**
-    * Returns true if the json value is a json float.
-    *
-    * @return true if the json value is a json float, otherwise false.
-    */
-  def isFloat: Boolean = false
 
   /**
     * Returns current json value as json object.
@@ -323,8 +239,6 @@ sealed trait Json {
   */
 case object JsNull extends Json {
 
-  override val isNull: Boolean = true
-
   override val asNull: Option[Unit] = Some(())
 
   override val copy: Json = this
@@ -339,8 +253,6 @@ case object JsNull extends Json {
   * @param value underlying value.
   */
 sealed abstract class JsBoolean(value: Boolean) extends Json {
-
-  override val isBoolean: Boolean = true
 
   override val asBoolean: Option[Boolean] = Some(value)
 
@@ -372,8 +284,6 @@ case object JsFalse extends JsBoolean(false) {
   * @param value underlying value.
   */
 case class JsInt(value: Int) extends Json {
-
-  override def isInt: Boolean = true
 
   override def asInt: Option[Int] = Some(value)
 
@@ -444,8 +354,6 @@ case class JsInt(value: Int) extends Json {
   */
 case class JsLong(value: Long) extends Json {
 
-  override def isLong: Boolean = true
-
   override def asLong: Option[Long] = Some(value)
 
   override def copy(): Json = this
@@ -496,8 +404,6 @@ case class JsLong(value: Long) extends Json {
   */
 case class JsFloat(value: Float) extends Json {
 
-  override def isFloat: Boolean = true
-
   override def asFloat: Option[Float] = Some(value)
 
   override def copy(): Json = this
@@ -511,8 +417,6 @@ case class JsFloat(value: Float) extends Json {
   */
 case class JsDouble(value: Double) extends Json {
 
-  override def isDouble: Boolean = true
-
   override def asDouble: Option[Double] = Some(value)
 
   override def copy(): Json = this
@@ -525,8 +429,6 @@ case class JsDouble(value: Double) extends Json {
   * @param value underlying value.
   */
 case class JsBigDecimal(value: BigDecimal) extends Json {
-
-  override def isNumber: Boolean = true
 
   override def asNumber: Option[BigDecimal] = Some(value)
 
@@ -542,8 +444,6 @@ case class JsBigDecimal(value: BigDecimal) extends Json {
   */
 case class JsString(value: String) extends Json {
 
-  override def isString: Boolean = true
-
   override def asString: Option[String] = Some(value)
 
   override def copy(): Json = this
@@ -558,8 +458,6 @@ case class JsString(value: String) extends Json {
   * @param value underlying value.
   */
 case class JsBytes(value: ByteString) extends Json {
-
-  override def isBytes: Boolean = true
 
   override def asBytes: Option[ByteString] = Some(value)
 
@@ -681,8 +579,6 @@ case class JsArray private[json](
     * @return a Seq containing all elements of this JsArray.
     */
   def toSeq: Seq[Json] = underlying.view
-
-  override def isArray: Boolean = true
 
   override def asArray: Option[JsArray] = Some(this)
 
@@ -851,8 +747,6 @@ case class JsObject private[json](
 
     merge(this, x)
   }
-
-  override def isObject: Boolean = true
 
   override def asObject: Option[JsObject] = Some(this)
 

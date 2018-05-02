@@ -25,6 +25,7 @@ package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
 import com.google.common.base.CharMatcher
+import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
 
 import scala.language.implicitConversions
@@ -122,10 +123,8 @@ abstract class ByteStringParser(val bytes: ByteString) {
     mark()
     var state = inner
     if (state && field.isDefined) {
-      val binding = field.get.bind(bytes.slice(_mark, _cursor))
-      if (binding.isDefined) {
-        builder.put(field.get.key, binding.get)
-      } else {
+      val binding = field.get.bind(builder, bytes.slice(_mark, _cursor))
+      if (!binding) {
         state = optional
       }
     }

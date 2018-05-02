@@ -33,7 +33,7 @@ import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing
 import io.techcode.streamy.syslog.component.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.parser.{IntBinder, StringBinder}
+import io.techcode.streamy.util.{IntBinder, StringBinder}
 
 /**
   * Syslog transformer spec.

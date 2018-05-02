@@ -24,6 +24,7 @@
 package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
+import io.techcode.streamy.util.{IntBinder, StringBinder}
 import io.techcode.streamy.util.json.Json
 import org.scalatest._
 
@@ -359,7 +360,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process correctly when using sub parser when possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
+      val parser: ByteStringParser = new ByteStringParser(ByteString("foobar")) {
         val subParsing: ByteStringParser {
           def process(): Boolean
         } = new ByteStringParser(bytes) {
@@ -372,7 +373,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process correctly when using sub parser when impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
+      val parser: ByteStringParser = new ByteStringParser(ByteString("foobar")) {
         val subParsing: ByteStringParser {
           def process(): Boolean
         } = new ByteStringParser(bytes) {

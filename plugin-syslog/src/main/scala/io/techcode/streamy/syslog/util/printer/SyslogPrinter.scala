@@ -23,38 +23,39 @@
  */
 package io.techcode.streamy.syslog.util.printer
 
+import java.lang.{StringBuilder => JStringBuilder}
 import java.net.InetAddress
 
 import akka.util.ByteString
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.component.SyslogTransformer._
+import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.parser.Binder
-import io.techcode.streamy.util.printer.JsonPrinter
+import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter}
 
 /**
   * Syslog printer companion.
   */
 object SyslogPrinter {
 
-  val Nil: ByteString = ByteString('-')
-  val Space: ByteString = ByteString(' ')
-  val Date: ByteString = ByteString("1970-01-01T00:00:00.000Z")
-  val DateStamp: ByteString = ByteString("Jan 1 00:00:00.000")
-  val ProcId: ByteString = ByteString("1")
-  val AppName: ByteString = ByteString("streamy")
+  val Nil: String = "-"
+  val Space: Char = ' '
+  val Date: String = "1970-01-01T00:00:00.000Z"
+  val DateStamp: String = "Jan 1 00:00:00.000"
+  val ProcId: String = "1"
+  val AppName: String = "streamy"
   val Facility: Int = 3
   val Severity: Int = 6
-  val SemiColon: ByteString = ByteString(':')
-  val NewLine: ByteString = ByteString('\n')
-  val Inf: ByteString = ByteString('<')
-  val Sup: ByteString = ByteString('>')
-  val OpenBracket: ByteString = ByteString('[')
-  val CloseBracket: ByteString = ByteString(']')
-  val Version: ByteString = ByteString('1')
+  val SemiColon: Char = ':'
+  val NewLine: Char = '\n'
+  val Inf: Char = '<'
+  val Sup: Char = '>'
+  val OpenBracket: Char = '['
+  val CloseBracket: Char = ']'
+  val Version: Char = '1'
 
   // Default hostname
-  val HostName: ByteString = ByteString(InetAddress.getLocalHost.getHostName)
+  val HostName: String = InetAddress.getLocalHost.getHostName
 
   /**
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
@@ -64,7 +65,7 @@ object SyslogPrinter {
     * @param conf printer configuration.
     * @return new syslog printer Rfc5424 compliant.
     */
-  def rfc5424(pkt: Json, conf: Rfc5424.Config): JsonPrinter = new Rfc5424Printer(pkt, conf)
+  def rfc5424(pkt: Json, conf: Rfc5424.Config): ByteStringPrinter = new Rfc5424Printer(pkt, conf)
 
   /**
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
@@ -74,14 +75,14 @@ object SyslogPrinter {
     * @param conf printer configuration.
     * @return new syslog printer Rfc3164 compliant.
     */
-  def rfc3164(pkt: Json, conf: Rfc3164.Config): JsonPrinter = new Rfc3164Printer(pkt, conf)
+  def rfc3164(pkt: Json, conf: Rfc3164.Config): ByteStringPrinter = new Rfc3164Printer(pkt, conf)
 
 }
 
 /**
   * Printer helpers containing various shortcut for printing.
   */
-private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
+private abstract class PrinterHelpers(pkt: Json) extends DerivedByteStringPrinter(pkt) {
 
   /**
     * Print data part to format syslog message.
@@ -89,12 +90,14 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     * @param conf         name of the field.
     * @param defaultValue default value.
     */
-  def computeVal(conf: Option[Binder], defaultValue: ByteString): ByteString = {
+  def computeVal(conf: Option[Binder], defaultValue: String)(hook: => Unit): Unit = {
     if (conf.isDefined) {
-      val binder = conf.get
-      pkt.evaluate(Root / binder.key).map(binder.bind).getOrElse(defaultValue)
+      conf.get.bind(builder, pkt)(hook)
     } else {
-      defaultValue
+      if (defaultValue.nonEmpty) {
+        hook
+        builder.append(defaultValue)
+      }
     }
   }
 
@@ -104,7 +107,7 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     * @param facilityConf configuration for facility.
     * @param severityConf configuration for severity.
     */
-  def computePrival(facilityConf: Option[Binder], severityConf: Option[Binder]): ByteString = {
+  def computePrival(facilityConf: Option[Binder], severityConf: Option[Binder]): Unit = {
     var prival: Int = 0
     if (severityConf.isDefined) {
       val binder = severityConf.get
@@ -118,29 +121,30 @@ private abstract class PrinterHelpers(pkt: Json) extends JsonPrinter(pkt) {
     } else {
       prival += SyslogPrinter.Facility << 3
     }
-    ByteString.fromArrayUnsafe(prival.toString.getBytes)
+    builder.append(prival)
   }
 
   /**
     * Prepare framing record.
     *
     * @param framing framing configuration.
-    * @param size    size of the record.
     */
-  def framing(framing: Framing, size: Int)(record: => Unit): Boolean = {
-    // Handle start of framing
-    if (framing == Framing.Count) {
-      val count = ByteString(size.toString)
-      builder ++= count
-      builder ++= SyslogPrinter.Space
-    }
-
+  def framing(framing: Framing)(record: => Unit): Boolean = {
     // Print record
     record
 
+    // Handle start of framing
+    if (framing == Framing.Count) {
+      val count = new JStringBuilder
+      count.append(builder.length())
+      count.append(SyslogPrinter.Space)
+      count.append(builder)
+      builder = count
+    }
+
     // Handle end of framing
     if (framing == Framing.Delimiter) {
-      builder ++= SyslogPrinter.NewLine
+      builder.append(SyslogPrinter.NewLine)
     }
     true
   }
@@ -159,64 +163,33 @@ private class Rfc3164Printer(pkt: Json, conf: Rfc3164.Config) extends PrinterHel
   // Fast binding access
   private val binding: Rfc3164.Binding = conf.binding
 
-  // Compute prival
-  private val prival: ByteString = computePrival(binding.facility, binding.severity)
-
-  // Compute timestamp
-  private val timestamp: ByteString = computeVal(binding.timestamp, SyslogPrinter.DateStamp)
-
-  // Compute hostname
-  private val hostname: ByteString = computeVal(binding.hostname, SyslogPrinter.HostName)
-
-  // Compute appName
-  private val appName: ByteString = computeVal(binding.appName, SyslogPrinter.AppName)
-
-  // Compute proc id
-  private val procId: ByteString = computeVal(binding.procId, SyslogPrinter.ProcId)
-
-  // Compute message
-  private val message: ByteString = binding.message.flatMap { binder =>
-    pkt.evaluate(Root / binder.key).map(binder.bind)
-  }.getOrElse(ByteString.empty)
-
-  // Size of the record
-  private val size: Int = {
-    6 + prival.length +
-      timestamp.length +
-      hostname.length +
-      appName.length +
-      procId.length +
-      (if (message.nonEmpty) message.length + 2 else 0)
-  }
-
   override def process(): Boolean =
-    framing(conf.framing, size) {
+    framing(conf.framing) {
       // Add prival
-      builder ++= SyslogPrinter.Inf
-      builder ++= prival
-      builder ++= SyslogPrinter.Sup
+      builder.append(SyslogPrinter.Inf)
+      computePrival(binding.facility, binding.severity)
+      builder.append(SyslogPrinter.Sup)
 
       // Add timestamp
-      builder ++= timestamp
-      builder ++= SyslogPrinter.Space
+      computeVal(binding.timestamp, SyslogPrinter.DateStamp)()
+      builder.append(SyslogPrinter.Space)
 
       // Add hostname
-      builder ++= hostname
-      builder ++= SyslogPrinter.Space
+      computeVal(binding.hostname, SyslogPrinter.HostName)()
+      builder.append(SyslogPrinter.Space)
 
       // Add app name
-      builder ++= appName
+      computeVal(binding.appName, SyslogPrinter.AppName)()
 
       // Add proc id
-      builder ++= SyslogPrinter.OpenBracket
-      builder ++= procId
-      builder ++= SyslogPrinter.CloseBracket
+      builder.append(SyslogPrinter.OpenBracket)
+      computeVal(binding.procId, SyslogPrinter.ProcId)()
+      builder.append(SyslogPrinter.CloseBracket)
 
       // Add message
-      if (message.nonEmpty) {
-        builder ++= SyslogPrinter.SemiColon
-        builder ++= SyslogPrinter.Space
-        builder ++= message
+      computeVal(binding.message, "") {
+        builder.append(SyslogPrinter.SemiColon)
+        builder.append(SyslogPrinter.Space)
       }
     }
 
@@ -234,78 +207,43 @@ private class Rfc5424Printer(pkt: Json, conf: Rfc5424.Config) extends PrinterHel
   // Fast binding access
   private val binding: Rfc5424.Binding = conf.binding
 
-  // Compute prival
-  private val prival: ByteString = computePrival(binding.facility, binding.severity)
-
-  // Compute timestamp
-  private val timestamp: ByteString = computeVal(binding.timestamp, SyslogPrinter.Date)
-
-  // Compute hostname
-  private val hostname: ByteString = computeVal(binding.hostname, SyslogPrinter.Nil)
-
-  // Compute appName
-  private val appName: ByteString = computeVal(binding.appName, SyslogPrinter.Nil)
-
-  // Compute proc id
-  private val procId: ByteString = computeVal(binding.procId, SyslogPrinter.Nil)
-
-  // Compute msg id
-  private val msgId: ByteString = computeVal(binding.msgId, SyslogPrinter.Nil)
-
-  // Compute message
-  private val message: ByteString = binding.message.flatMap { binder =>
-    pkt.evaluate(Root / binder.key).map(binder.bind)
-  }.getOrElse(ByteString.empty)
-
-  // Size of the record
-  private val size: Int = {
-    10 + prival.length +
-      timestamp.length +
-      hostname.length +
-      appName.length +
-      procId.length +
-      msgId.length +
-      (if (message.nonEmpty) message.length + 1 else 0)
-  }
-
   override def process(): Boolean =
-    framing(conf.framing, size) {
+    framing(conf.framing) {
       // Add prival
-      builder ++= SyslogPrinter.Inf
-      builder ++= prival
-      builder ++= SyslogPrinter.Sup
+      builder.append(SyslogPrinter.Inf)
+      computePrival(binding.facility, binding.severity)
+      builder.append(SyslogPrinter.Sup)
 
       // Add version
-      builder ++= SyslogPrinter.Version
-      builder ++= SyslogPrinter.Space
+      builder.append(SyslogPrinter.Version)
+      builder.append(SyslogPrinter.Space)
 
       // Add timestamp
-      builder ++= timestamp
-      builder ++= SyslogPrinter.Space
+      computeVal(binding.timestamp, SyslogPrinter.Date)()
+      builder.append(SyslogPrinter.Space)
 
       // Add hostname
-      builder ++= hostname
-      builder ++= SyslogPrinter.Space
+      computeVal(binding.hostname, SyslogPrinter.Nil)()
+      builder.append(SyslogPrinter.Space)
 
       // Add app name
-      builder ++= appName
-      builder ++= SyslogPrinter.Space
+      computeVal(binding.appName, SyslogPrinter.Nil)()
+      builder.append(SyslogPrinter.Space)
 
       // Add proc id
-      builder ++= procId
-      builder ++= SyslogPrinter.Space
+      computeVal(binding.procId, SyslogPrinter.Nil)()
+      builder.append(SyslogPrinter.Space)
 
       // Add message id
-      builder ++= msgId
-      builder ++= SyslogPrinter.Space
+      computeVal(binding.msgId, SyslogPrinter.Nil)()
+      builder.append(SyslogPrinter.Space)
 
       // Skip structured data
-      builder ++= SyslogPrinter.Nil
+      builder.append(SyslogPrinter.Nil)
 
       // Add message
-      if (message.nonEmpty) {
-        builder ++= SyslogPrinter.Space
-        builder ++= message
+      computeVal(binding.message, "") {
+        builder.append(SyslogPrinter.Space)
       }
     }
 

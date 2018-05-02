@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,41 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.component
+package io.techcode.streamy.util.printer
 
 import akka.util.ByteString
-import io.techcode.streamy.util.StreamException
-import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.printer.ByteStringPrinter
-
-import scala.language.postfixOps
+import io.techcode.streamy.util.json.Json
+import org.scalatest._
 
 /**
-  * Sink transformer abstract implementation that provide
-  * a convenient way to process a convertion from [[Json]] to [[ByteString]].
+  * Direct bytestring printer spec.
   */
-abstract class SinkTransformer extends Transformer[Json, ByteString] {
+class DirectByteStringPrinterSpec extends WordSpecLike with Matchers {
 
-  /**
-    * Apply transform component on packet.
-    *
-    * @param pkt packet involved.
-    * @return printing result.
-    */
-  def apply(pkt: Json): ByteString = {
-    val printer: ByteStringPrinter = newPrinter(pkt)
-    printer.print() match {
-      case Some(result) => result
-      case None => throw new StreamException(printer.error(), Some(pkt))
+  "Direct byteString printer" should {
+    "print correctly a json value when success" in {
+      val printer = new DirectByteStringPrinterImpl(Json.obj("foo" -> "bar"))
+      printer.print() should equal(Some(ByteString("""{"foo":"bar"}""")))
+    }
+
+    "print correctly a json value when failed" in {
+      val printer = new DirectByteStringPrinterImpl(Json.obj("foo" -> "bar"), false)
+      printer.print() should equal(None)
+    }
+
+    "implement an error message by default" in {
+      val printer = new DirectByteStringPrinterImpl(Json.obj("foo" -> "bar"))
+      printer.error() should equal("Unexpected printing error occured")
     }
   }
 
-  /**
-    * Create a new json printer.
-    *
-    * @param pkt packet involved.
-    * @return json printer.
-    */
-  def newPrinter(pkt: Json): ByteStringPrinter
+}
 
+class DirectByteStringPrinterImpl(pkt: Json, success: Boolean = true) extends DirectByteStringPrinter(pkt) {
+  override def process(): Boolean = {
+    builder.putBytes(pkt.toString.getBytes())
+    success
+  }
 }

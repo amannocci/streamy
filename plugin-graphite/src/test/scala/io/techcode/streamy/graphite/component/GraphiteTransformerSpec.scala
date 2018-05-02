@@ -28,7 +28,7 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.parser.{FloatBinder, LongBinder, StringBinder}
+import io.techcode.streamy.util.{FloatBinder, LongBinder, StringBinder}
 
 /**
   * Graphite transformer spec.
