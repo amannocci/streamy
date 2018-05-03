@@ -82,10 +82,22 @@ class BinderSpec extends WordSpecLike with Matchers {
       builder.result() should equal(ByteString("test"))
     }
 
+    "fail to convert a json value in bytestring" in {
+      val builder = ByteString.newBuilder
+      StringBinder("foobar").bind(builder, Json.obj("foobar" -> 1))()
+      builder.result() should equal(ByteString.empty)
+    }
+
     "convert correctly a json value in string" in {
       val builder = new JStringBuilder
       StringBinder("foobar").bind(builder, Json.obj("foobar" -> "test"))()
       builder.toString should equal("test")
+    }
+
+    "fail to convert a json value in string" in {
+      val builder = new JStringBuilder
+      StringBinder("foobar").bind(builder, Json.obj("foobar" -> 1))()
+      builder.toString should equal("")
     }
   }
 
@@ -150,10 +162,22 @@ class BinderSpec extends WordSpecLike with Matchers {
       builder.result() should equal(ByteString("1"))
     }
 
+    "fail to convert a json value in bytestring" in {
+      val builder = ByteString.newBuilder
+      IntBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.result() should equal(ByteString.empty)
+    }
+
     "convert correctly a json value in string" in {
       val builder = new JStringBuilder
       IntBinder("foobar").bind(builder, Json.obj("foobar" -> JsInt(1)))()
       builder.toString should equal("1")
+    }
+
+    "fail to convert a json value in string" in {
+      val builder = new JStringBuilder
+      IntBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.toString should equal("")
     }
 
   }
@@ -219,10 +243,22 @@ class BinderSpec extends WordSpecLike with Matchers {
       builder.result() should equal(ByteString("1"))
     }
 
+    "fail to convert a json value in bytestring" in {
+      val builder = ByteString.newBuilder
+      LongBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.result() should equal(ByteString.empty)
+    }
+
     "convert correctly a json value in string" in {
       val builder = new JStringBuilder
       LongBinder("foobar").bind(builder, Json.obj("foobar" -> JsLong(1)))()
       builder.toString should equal("1")
+    }
+
+    "fail to convert a json value in string" in {
+      val builder = new JStringBuilder
+      LongBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.toString should equal("")
     }
 
   }
@@ -288,11 +324,24 @@ class BinderSpec extends WordSpecLike with Matchers {
       builder.result() should equal(ByteString("1.0"))
     }
 
+    "fail to convert a json value in bytestring" in {
+      val builder = ByteString.newBuilder
+      FloatBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.result() should equal(ByteString.empty)
+    }
+
     "convert correctly a json value in string" in {
       val builder = new JStringBuilder
       FloatBinder("foobar").bind(builder, Json.obj("foobar" -> JsFloat(1)))()
       builder.toString should equal("1.0")
     }
+
+    "fail to convert a json value in string" in {
+      val builder = new JStringBuilder
+      FloatBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.toString should equal("")
+    }
+
   }
 
   "Double binder" should {
@@ -356,11 +405,24 @@ class BinderSpec extends WordSpecLike with Matchers {
       builder.result() should equal(ByteString("1.0"))
     }
 
+    "fail to convert a json value in bytestring" in {
+      val builder = ByteString.newBuilder
+      DoubleBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.result() should equal(ByteString.empty)
+    }
+
     "convert correctly a json value in string" in {
       val builder = new JStringBuilder
       DoubleBinder("foobar").bind(builder, Json.obj("foobar" -> JsDouble(1)))()
       builder.toString should equal("1.0")
     }
+
+    "fail to convert a json value in string" in {
+      val builder = new JStringBuilder
+      DoubleBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.toString should equal("")
+    }
+
   }
 
   "Bytes binder" should {
@@ -412,11 +474,24 @@ class BinderSpec extends WordSpecLike with Matchers {
       builder.result() should equal(ByteString("test"))
     }
 
+    "fail to convert a json value in bytestring" in {
+      val builder = ByteString.newBuilder
+      BytesBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.result() should equal(ByteString.empty)
+    }
+
     "convert correctly a json value in string" in {
       val builder = new JStringBuilder
       BytesBinder("foobar").bind(builder, Json.obj("foobar" -> JsBytes(ByteString("test"))))()
       builder.toString should equal("test")
     }
+
+    "fail to convert a json value in string" in {
+      val builder = new JStringBuilder
+      BytesBinder("foobar").bind(builder, Json.obj("foobar" -> "1"))()
+      builder.toString should equal("")
+    }
+
   }
 
 }
