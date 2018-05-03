@@ -29,8 +29,11 @@ import io.techcode.streamy.util.printer.StringPrinter
 import scala.annotation.tailrec
 
 /**
+  * A JsonPrinter serializes a JSON AST to a String.
+  * It's an adaptation of the amazing spray-json project.
+  * All credits goes to it's initial contributor.
   *
-  * @param value
+  * @param value json ast to serialize.
   */
 class JsonPrinter(value: Json) extends StringPrinter(value) {
 
@@ -39,6 +42,11 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
     true
   }
 
+  /**
+    * Print an arbitrary json value.
+    *
+    * @param value json value.
+    */
   def printValue(value: Json): Unit = {
     value match {
       case x: JsObject => printObject(x)
@@ -56,6 +64,11 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
     }
   }
 
+  /**
+    * Print an arbitrary json object value.
+    *
+    * @param value json object value.
+    */
   def printObject(value: JsObject) {
     builder.append(JsonPrinter.OpenBrace)
     if (value.underlying.nonEmpty) {
@@ -75,6 +88,11 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
     builder.append(JsonPrinter.CloseBrace)
   }
 
+  /**
+    * Print an arbitrary json array value.
+    *
+    * @param value json array value.
+    */
   def printArray(value: JsArray) {
     builder.append(JsonPrinter.OpenBracket)
     if (value.underlying.nonEmpty) {
@@ -92,19 +110,24 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
     builder.append(JsonPrinter.CloseBracket)
   }
 
-  protected def printString(s: String) {
+  /**
+    * Print a string value.
+    *
+    * @param value string value.
+    */
+  private def printString(value: String) {
     @tailrec def firstToBeEncoded(ix: Int = 0): Int =
-      if (ix == s.length) -1 else if (requiresEncoding(s.charAt(ix))) ix else firstToBeEncoded(ix + 1)
+      if (ix == value.length) -1 else if (requiresEncoding(value.charAt(ix))) ix else firstToBeEncoded(ix + 1)
 
     builder.append(JsonPrinter.Quote)
     firstToBeEncoded() match {
-      case -1 ⇒ builder.append(s)
+      case -1 ⇒ builder.append(value)
       case first ⇒
-        builder.append(s, 0, first)
+        builder.append(value, 0, first)
 
         @tailrec def append(ix: Int): Unit =
-          if (ix < s.length) {
-            s.charAt(ix) match {
+          if (ix < value.length) {
+            value.charAt(ix) match {
               case c if !requiresEncoding(c) => builder.append(c)
               case '"' => builder.append("\\\"")
               case '\\' => builder.append("\\\\")
@@ -143,7 +166,7 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
   */
 object JsonPrinter {
 
-  //
+  // Constants
   val Null: String = "null"
   val True: String = "true"
   val False: String = "false"
@@ -153,5 +176,12 @@ object JsonPrinter {
   val CloseBrace: Char = '}'
   val OpenBracket: Char = '['
   val CloseBracket: Char = ']'
+
+  /**
+    * Create a new json printer.
+    *
+    * @param value json value to print.
+    */
+  def apply(value: Json): JsonPrinter = new JsonPrinter(value)
 
 }

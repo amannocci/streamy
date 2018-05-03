@@ -95,7 +95,7 @@ private[json] object JsonConverter {
     *
     * @return a String with the json representation.
     */
-  def print(json: Json): String = new JsonPrinter(json).print().get
+  def print(json: Json): String = JsonPrinter(json).print().get
 
 }
 
