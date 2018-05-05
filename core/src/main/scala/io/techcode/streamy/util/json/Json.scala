@@ -132,14 +132,6 @@ sealed trait Json {
   }
 
   /**
-    * Deep merge this object with another one.
-    *
-    * @param other other json value.
-    * @return deep merged json value or none if failed.
-    */
-  def deepMerge(other: Json): Option[Json] = None
-
-  /**
     * Returns current json value as json object.
     *
     * @return current json value as json object if possible, otherwise [[None]].
@@ -699,6 +691,34 @@ case class JsObject private[json](
   }
 
   /**
+    * Deep merge this object with another one.
+    *
+    * @param other other json value.
+    * @return deep merged json value or none if failed.
+    */
+  def deepMerge(other: JsObject): JsObject = {
+    def merge(left: JsObject, right: JsObject): JsObject = {
+      val result = left.underlying.clone()
+
+      right.underlying.foreach {
+        case (rightKey, rightValue) =>
+          val maybeExistingValue = left.underlying.get(rightKey)
+
+          val newValue = (maybeExistingValue, rightValue) match {
+            case (Some(e: JsObject), o: JsObject) => merge(e, o)
+            case _ => rightValue
+          }
+
+          result += rightKey -> newValue
+      }
+
+      JsObject(result)
+    }
+
+    merge(this, other)
+  }
+
+  /**
     * Removes the specified key from this map if present.
     *
     * @param key key whose mapping is to be removed from the json object.
@@ -720,24 +740,6 @@ case class JsObject private[json](
     */
   def put(field: (String, Json)): JsObject =
     JsObject(underlying.clone() += field)
-
-  override def deepMerge(other: Json): Option[JsObject] = other.asObject.map { x =>
-    def merge(existingObject: JsObject, otherObject: JsObject): JsObject = {
-      val result = existingObject.underlying ++ otherObject.underlying.map {
-        case (otherKey, otherValue) =>
-          val maybeExistingValue = existingObject.underlying.get(otherKey)
-
-          val newValue = (maybeExistingValue, otherValue) match {
-            case (Some(e: JsObject), o: JsObject) => merge(e, o)
-            case _ => otherValue
-          }
-          otherKey -> newValue
-      }
-      JsObject(result)
-    }
-
-    merge(this, x)
-  }
 
   override def asObject: Option[JsObject] = Some(this)
 

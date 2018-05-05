@@ -51,21 +51,21 @@ object JsonUtil {
     * @param prefix accumultator.
     * @return json object with dot notation.
     */
-  def flatten(js: JsObject, prefix: String = EmptyPrefix): JsObject = js.fields.foldLeft(Json.obj()) {
+  def flatten(js: JsObject, prefix: String = EmptyPrefix): JsObject = js.fields.foldLeft[JsObject](Json.obj()) {
     case (acc, (k, v: Json)) =>
       v match {
-        case _: JsObject =>
+        case obj: JsObject =>
           // Deep merge will always successed
           if (prefix.isEmpty) {
-            acc.deepMerge(flatten(v.asObject.get, k)).get
+            acc.deepMerge(flatten(obj, k))
           } else {
-            acc.deepMerge(flatten(v.asObject.get, s"$prefix.$k")).get
+            acc.deepMerge(flatten(obj, s"$prefix.$k"))
           }
         case _ =>
           if (prefix.isEmpty) {
-            acc.asObject.get.put(k, v)
+            acc.put(k, v)
           } else {
-            acc.asObject.get.put(s"$prefix.$k", v)
+            acc.put(s"$prefix.$k", v)
           }
       }
   }

@@ -29,18 +29,19 @@ import org.openjdk.jmh.annotations.Benchmark
 /**
   * Json bench.
   *
-  * Benchmark                  Mode  Cnt          Score         Error  Units
-  * JsonBench.sizeOfBoolean   thrpt   20  383786564,399 ± 5719602,963  ops/s
-  * JsonBench.sizeOfDouble    thrpt   20     405973,902 ±    5508,228  ops/s
-  * JsonBench.sizeOfFloat     thrpt   20     637717,711 ±    9582,861  ops/s
-  * JsonBench.sizeOfInt       thrpt   20   80227505,913 ±  544809,624  ops/s
-  * JsonBench.sizeOfLong      thrpt   20   80049668,639 ± 1418872,361  ops/s
-  * JsonBench.sizeOfNull      thrpt   20  397903186,125 ± 4661371,194  ops/s
-  * JsonBench.sizeOfNumber    thrpt   20     801240,215 ±   15385,757  ops/s
-  * JsonBench.sizeOfString    thrpt   20  405808076,145 ± 6456433,208  ops/s
-  * JsonBench.jsObjectMerge   thrpt   20   10453731.824 ±   27275.448  ops/s
-  * JsonBench.jsObjectPut     thrpt   20   31257556.224 ±   91964.570  ops/s
-  * JsonBench.jsObjectRemove  thrpt   20   34733958.871 ±   59629.057  ops/s
+  * Benchmark                     Mode  Cnt          Score          Error  Units
+  * JsonBench.jsObjectDeepMerge  thrpt   20    4661650.592 ±    17629.346  ops/s
+  * JsonBench.jsObjectMerge      thrpt   20   10637587.953 ±    83426.949  ops/s
+  * JsonBench.jsObjectPut        thrpt   20   32169277.167 ±   185800.184  ops/s
+  * JsonBench.jsObjectRemove     thrpt   20   34739219.428 ±   225275.530  ops/s
+  * JsonBench.sizeOfBoolean      thrpt   20  593776699.742 ± 15838080.011  ops/s
+  * JsonBench.sizeOfDouble       thrpt   20     907602.836 ±     4266.168  ops/s
+  * JsonBench.sizeOfFloat        thrpt   20    2829499.576 ±    14212.255  ops/s
+  * JsonBench.sizeOfInt          thrpt   20  126880646.503 ±  2641026.566  ops/s
+  * JsonBench.sizeOfLong         thrpt   20  125732192.726 ±   167151.973  ops/s
+  * JsonBench.sizeOfNull         thrpt   20  596134223.045 ±  1579742.453  ops/s
+  * JsonBench.sizeOfNumber       thrpt   20   10678000.593 ±    25752.126  ops/s
+  * JsonBench.sizeOfString       thrpt   20  632913582.587 ±  1715777.853  ops/s
   */
 class JsonBench {
 
@@ -64,6 +65,10 @@ class JsonBench {
     Sample.JsonObj.merge(Sample.JsonObj)
   }
 
+  @Benchmark def jsObjectDeepMerge(): JsObject = {
+    Sample.DeepJsonObj.deepMerge(Sample.DeepJsonObj)
+  }
+
   @Benchmark def jsObjectPut(): JsObject = {
     Sample.JsonObj.put("foobar" -> "test")
   }
@@ -84,6 +89,13 @@ object JsonBench {
       "float" -> Float.MaxValue,
       "double" -> Double.MaxValue,
       "string" -> "string"
+    )
+
+    val DeepJsonObj: JsObject = Json.obj(
+      "int" -> Int.MaxValue,
+      "long" -> Long.MaxValue,
+      "string" -> "string",
+      "obj" -> JsonObj
     )
 
   }

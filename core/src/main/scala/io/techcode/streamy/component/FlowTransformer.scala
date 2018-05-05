@@ -38,23 +38,28 @@ import scala.language.postfixOps
 abstract class FlowTransformer(config: Config) extends Transformer[Json, Json](config) {
 
   // Choose right transform function
-  private val function: (Json => Json) = {
+  private val function: Json => Json = {
     if (config.target.isEmpty || config.source == config.target.get) {
       // Transform inplace and report error if needed
-      (pkt: Json) =>
+      pkt: Json =>
         pkt.evaluate(config.source)
           .flatMap(transform(_, pkt))
           .flatMap(x => pkt.patch(Replace(config.source, x)))
           .getOrElse(onError(Transformer.GenericErrorMsg, pkt))
     } else {
       // Transform inplace and then copy to target
-      (pkt: Json) =>
+      pkt: Json =>
         pkt.evaluate(config.source)
           .flatMap(transform(_, pkt))
           .flatMap { v =>
             val operated: Option[Json] = {
               if (config.target.get == Root) {
-                pkt.deepMerge(v)
+                {
+                  for {
+                    x <- pkt.asObject
+                    y <- v.asObject
+                  } yield (x, y)
+                }.map(r => r._1.merge(r._2))
               } else {
                 Some(pkt)
               }

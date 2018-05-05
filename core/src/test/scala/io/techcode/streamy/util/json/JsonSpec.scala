@@ -173,7 +173,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "not fail to deep merge when the objects are empty" in {
-      Json.obj().deepMerge(Json.obj()) should equal(Some(Json.obj()))
+      Json.obj().deepMerge(Json.obj()) should equal(Json.obj())
     }
 
     "deep merge correctly when the source object is empty" in {
@@ -183,7 +183,7 @@ class JsonSpec extends WordSpecLike with Matchers {
         "field3" -> JsNull
       )
 
-      populatedObj.deepMerge(Json.obj()) should equal(Some(populatedObj))
+      populatedObj.deepMerge(Json.obj()) should equal(populatedObj)
     }
 
     "deep merge correctly when the incoming object is empty" in {
@@ -193,11 +193,7 @@ class JsonSpec extends WordSpecLike with Matchers {
         "field3" -> JsNull
       )
 
-      Json.obj().deepMerge(populatedObj) should equal(Some(populatedObj))
-    }
-
-    "fail to deep merge a json value" in {
-      JsString("1").deepMerge(Json.obj()) should equal(None)
+      Json.obj().deepMerge(populatedObj) should equal(populatedObj)
     }
 
     "should keep existing attributes where there is no collision and overwrite existing attributes on collision when value is not a JsArray or JsObject" in {
@@ -212,14 +208,14 @@ class JsonSpec extends WordSpecLike with Matchers {
         "field4" -> 789,
         "field5" -> "xyz",
         "field6" -> JsNull
-      )) should equal(Some(Json.obj(
+      )) should equal(Json.obj(
         "field1" -> 123,
         "field2" -> "abc",
         "field3" -> JsNull,
         "field4" -> 789,
         "field5" -> "xyz",
         "field6" -> JsNull
-      )))
+      ))
     }
 
     "should keep existing attributes where there is no collision and recursively merge where elements are both of type JsArray or both of type JsObject" in {
@@ -243,7 +239,7 @@ class JsonSpec extends WordSpecLike with Matchers {
           "field2b" -> "yyy",
           "field3c" -> "zzz"
         )
-      )) should equal(Some(Json.obj(
+      )) should equal(Json.obj(
         "field1" -> 123,
         "field2" -> "abc",
         "field3" -> Json.arr(
@@ -254,7 +250,7 @@ class JsonSpec extends WordSpecLike with Matchers {
           "field2b" -> "yyy",
           "field3c" -> "zzz"
         )
-      )))
+      ))
     }
 
     "should keep existing attributes where there is no collision and properly merge a deep structure" in {
@@ -294,7 +290,7 @@ class JsonSpec extends WordSpecLike with Matchers {
           "field2b" -> "yyy",
           "field2d" -> "zzz"
         )
-      )) should equal(Some(Json.obj(
+      )) should equal(Json.obj(
         "field1a" -> Json.obj(
           "field2a" -> Json.obj(
             "field3a" -> Json.obj(
@@ -314,11 +310,7 @@ class JsonSpec extends WordSpecLike with Matchers {
           "field2c" -> JsNull,
           "field2d" -> "zzz"
         )
-      )))
-    }
-
-    "deep merge only JsObject" in {
-      Json.obj().deepMerge(JsNull) should equal(None)
+      ))
     }
 
     "return correct size" in {
