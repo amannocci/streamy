@@ -23,20 +23,24 @@
  */
 package io.techcode.streamy.util.json
 
+import io.techcode.streamy.util.json.JsonBench.Sample
 import org.openjdk.jmh.annotations.Benchmark
 
 /**
   * Json bench.
   *
-  * Benchmark                 Mode  Cnt          Score         Error  Units
-  * JsonBench.sizeOfBoolean  thrpt   20  383786564,399 ± 5719602,963  ops/s
-  * JsonBench.sizeOfDouble   thrpt   20     405973,902 ±    5508,228  ops/s
-  * JsonBench.sizeOfFloat    thrpt   20     637717,711 ±    9582,861  ops/s
-  * JsonBench.sizeOfInt      thrpt   20   80227505,913 ±  544809,624  ops/s
-  * JsonBench.sizeOfLong     thrpt   20   80049668,639 ± 1418872,361  ops/s
-  * JsonBench.sizeOfNull     thrpt   20  397903186,125 ± 4661371,194  ops/s
-  * JsonBench.sizeOfNumber   thrpt   20     801240,215 ±   15385,757  ops/s
-  * JsonBench.sizeOfString   thrpt   20  405808076,145 ± 6456433,208  ops/s
+  * Benchmark                  Mode  Cnt          Score         Error  Units
+  * JsonBench.sizeOfBoolean   thrpt   20  383786564,399 ± 5719602,963  ops/s
+  * JsonBench.sizeOfDouble    thrpt   20     405973,902 ±    5508,228  ops/s
+  * JsonBench.sizeOfFloat     thrpt   20     637717,711 ±    9582,861  ops/s
+  * JsonBench.sizeOfInt       thrpt   20   80227505,913 ±  544809,624  ops/s
+  * JsonBench.sizeOfLong      thrpt   20   80049668,639 ± 1418872,361  ops/s
+  * JsonBench.sizeOfNull      thrpt   20  397903186,125 ± 4661371,194  ops/s
+  * JsonBench.sizeOfNumber    thrpt   20     801240,215 ±   15385,757  ops/s
+  * JsonBench.sizeOfString    thrpt   20  405808076,145 ± 6456433,208  ops/s
+  * JsonBench.jsObjectMerge   thrpt   20    4746259.865 ±  9489.696    ops/s
+  * JsonBench.jsObjectPut     thrpt   20    6661202.890 ± 12452.082    ops/s
+  * JsonBench.jsObjectRemove  thrpt   20    6869800.091 ± 86388.755    ops/s
   */
 class JsonBench {
 
@@ -55,5 +59,33 @@ class JsonBench {
   @Benchmark def sizeOfNumber(): Int = JsBigDecimal(BigDecimal("1e20")).sizeHint()
 
   @Benchmark def sizeOfString(): Int = JsString("1e20").sizeHint
+
+  @Benchmark def jsObjectMerge(): JsObject = {
+    Sample.JsonObj.merge(Sample.JsonObj)
+  }
+
+  @Benchmark def jsObjectPut(): JsObject = {
+    Sample.JsonObj.put("foobar" -> "test")
+  }
+
+  @Benchmark def jsObjectRemove(): JsObject = {
+    Sample.JsonObj.remove("double")
+  }
+
+}
+
+object JsonBench {
+
+  object Sample {
+
+    val JsonObj: JsObject = Json.obj(
+      "int" -> Int.MaxValue,
+      "long" -> Long.MaxValue,
+      "float" -> Float.MaxValue,
+      "double" -> Double.MaxValue,
+      "string" -> "string"
+    )
+
+  }
 
 }
