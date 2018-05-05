@@ -38,9 +38,9 @@ import org.openjdk.jmh.annotations.Benchmark
   * JsonBench.sizeOfNull      thrpt   20  397903186,125 ± 4661371,194  ops/s
   * JsonBench.sizeOfNumber    thrpt   20     801240,215 ±   15385,757  ops/s
   * JsonBench.sizeOfString    thrpt   20  405808076,145 ± 6456433,208  ops/s
-  * JsonBench.jsObjectMerge   thrpt   20    4746259.865 ±  9489.696    ops/s
-  * JsonBench.jsObjectPut     thrpt   20    6661202.890 ± 12452.082    ops/s
-  * JsonBench.jsObjectRemove  thrpt   20    6869800.091 ± 86388.755    ops/s
+  * JsonBench.jsObjectMerge   thrpt   20   10453731.824 ±   27275.448  ops/s
+  * JsonBench.jsObjectPut     thrpt   20   31257556.224 ±   91964.570  ops/s
+  * JsonBench.jsObjectRemove  thrpt   20   34733958.871 ±   59629.057  ops/s
   */
 class JsonBench {
 

@@ -693,11 +693,9 @@ case class JsObject private[json](
     * @return new json object merged.
     */
   def merge(other: JsObject): JsObject = {
-    val builder = mutable.AnyRefMap[String, Json]()
-    builder.sizeHint(underlying.size + other.underlying.size)
-    builder ++= underlying
-    builder ++= other.underlying
-    JsObject(builder)
+    val builder = underlying.clone()
+    builder.sizeHint(other.underlying.size)
+    JsObject(builder ++= other.underlying)
   }
 
   /**
@@ -706,15 +704,13 @@ case class JsObject private[json](
     * @param key key whose mapping is to be removed from the json object.
     * @return new json object.
     */
-  def remove(key: String): JsObject = {
+  def remove(key: String): JsObject =
     if (underlying.contains(key)) {
-      val builder = mutable.AnyRefMap[String, Json]()
-      builder ++= underlying
+      val builder = underlying.clone()
       JsObject(builder -= key)
     } else {
       this
     }
-  }
 
   /**
     * Put the specified value with the specified key in this JsObject.
@@ -722,13 +718,8 @@ case class JsObject private[json](
     * @param field key and value to be associated.
     * @return new json object.
     */
-  def put(field: (String, Json)): JsObject = {
-    val builder = mutable.AnyRefMap[String, Json]()
-    builder.sizeHint(underlying.size + 1)
-    builder ++= underlying
-    builder += field
-    JsObject(builder)
-  }
+  def put(field: (String, Json)): JsObject =
+    JsObject(underlying.clone() += field)
 
   override def deepMerge(other: Json): Option[JsObject] = other.asObject.map { x =>
     def merge(existingObject: JsObject, otherObject: JsObject): JsObject = {
