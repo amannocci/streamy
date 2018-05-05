@@ -31,12 +31,12 @@ import org.openjdk.jmh.annotations.Benchmark
 /**
   * Json converter bench.
   *
-  * Benchmark                             Mode  Cnt        Score      Error  Units
-  * JsonConverterBench.parseByteString   thrpt   20   353623.560 ±  761.032  ops/s
-  * JsonConverterBench.parseBytes        thrpt   20   359455.272 ± 2065.001  ops/s
-  * JsonConverterBench.parseInputStream  thrpt   20   313175.914 ±  963.117  ops/s
-  * JsonConverterBench.parseString       thrpt   20   337981.761 ±  832.755  ops/s
-  * JsonConverterBench.stringify         thrpt   20   439173.350 ± 4634.660  ops/s
+  * Benchmark                             Mode  Cnt       Score      Error  Units
+  * JsonConverterBench.parseByteString   thrpt   20  339328.830 ± 1576.074  ops/s
+  * JsonConverterBench.parseBytes        thrpt   20  342529.538 ± 3368.933  ops/s
+  * JsonConverterBench.parseInputStream  thrpt   20  300831.306 ± 1167.004  ops/s
+  * JsonConverterBench.parseString       thrpt   20  339976.360 ± 1783.041  ops/s
+  * JsonConverterBench.print             thrpt   20  568632.750 ± 3483.906  ops/s
   */
 class JsonConverterBench {
 
