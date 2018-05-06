@@ -95,7 +95,7 @@ private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOp
   * @param path json path.
   * @param ops  sequence of operations.
   */
-case class Bulk(path: JsonPointer, ops: Seq[JsonOperation]) extends AbstractOperation(path) {
+case class Bulk(path: JsonPointer = Root, ops: Seq[JsonOperation]) extends AbstractOperation(path) {
 
   def apply(json: Json): Option[Json] = {
     if (path.underlying.isEmpty) {
