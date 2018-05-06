@@ -684,11 +684,8 @@ case class JsObject private[json](
     *
     * @return new json object merged.
     */
-  def merge(other: JsObject): JsObject = {
-    val builder = underlying.clone()
-    builder.sizeHint(other.underlying.size)
-    JsObject(builder ++= other.underlying)
-  }
+  def merge(other: JsObject): JsObject =
+    JsObject(underlying ++ other.underlying)
 
   /**
     * Deep merge this object with another one.
@@ -726,8 +723,7 @@ case class JsObject private[json](
     */
   def remove(key: String): JsObject =
     if (underlying.contains(key)) {
-      val builder = underlying.clone()
-      JsObject(builder -= key)
+      JsObject(underlying - key)
     } else {
       this
     }
@@ -739,7 +735,7 @@ case class JsObject private[json](
     * @return new json object.
     */
   def put(field: (String, Json)): JsObject =
-    JsObject(underlying.clone() += field)
+    JsObject(underlying + field)
 
   override def asObject: Option[JsObject] = Some(this)
 
@@ -785,7 +781,7 @@ case class JsObjectBuilder private(
     */
   def remove(key: String): JsObjectBuilder = {
     if (modifiable) {
-      underlying.remove(key)
+      underlying -= key
     }
     this
   }

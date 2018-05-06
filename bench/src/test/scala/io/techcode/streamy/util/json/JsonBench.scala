@@ -29,19 +29,19 @@ import org.openjdk.jmh.annotations.Benchmark
 /**
   * Json bench.
   *
-  * Benchmark                     Mode  Cnt          Score          Error  Units
-  * JsonBench.jsObjectDeepMerge  thrpt   20    4661650.592 ±    17629.346  ops/s
-  * JsonBench.jsObjectMerge      thrpt   20   10637587.953 ±    83426.949  ops/s
-  * JsonBench.jsObjectPut        thrpt   20   32169277.167 ±   185800.184  ops/s
-  * JsonBench.jsObjectRemove     thrpt   20   34739219.428 ±   225275.530  ops/s
-  * JsonBench.sizeOfBoolean      thrpt   20  593776699.742 ± 15838080.011  ops/s
-  * JsonBench.sizeOfDouble       thrpt   20     907602.836 ±     4266.168  ops/s
-  * JsonBench.sizeOfFloat        thrpt   20    2829499.576 ±    14212.255  ops/s
-  * JsonBench.sizeOfInt          thrpt   20  126880646.503 ±  2641026.566  ops/s
-  * JsonBench.sizeOfLong         thrpt   20  125732192.726 ±   167151.973  ops/s
-  * JsonBench.sizeOfNull         thrpt   20  596134223.045 ±  1579742.453  ops/s
-  * JsonBench.sizeOfNumber       thrpt   20   10678000.593 ±    25752.126  ops/s
-  * JsonBench.sizeOfString       thrpt   20  632913582.587 ±  1715777.853  ops/s
+  * Benchmark                     Mode  Cnt          Score         Error  Units
+  * JsonBench.jsObjectDeepMerge  thrpt   20    4619275.263 ±   13331.739  ops/s
+  * JsonBench.jsObjectMerge      thrpt   20   18448338.686 ±   74711.403  ops/s
+  * JsonBench.jsObjectPut        thrpt   20   31021091.147 ±   80648.889  ops/s
+  * JsonBench.jsObjectRemove     thrpt   20   35558980.545 ±   58338.391  ops/s
+  * JsonBench.sizeOfBoolean      thrpt   20  600008514.993 ± 2056584.910  ops/s
+  * JsonBench.sizeOfDouble       thrpt   20     921418.428 ±    3084.545  ops/s
+  * JsonBench.sizeOfFloat        thrpt   20    2834863.921 ±    7170.611  ops/s
+  * JsonBench.sizeOfInt          thrpt   20  127173678.158 ± 2710535.287  ops/s
+  * JsonBench.sizeOfLong         thrpt   20  125545400.334 ± 2400845.844  ops/s
+  * JsonBench.sizeOfNull         thrpt   20  600796620.964 ± 1474248.936  ops/s
+  * JsonBench.sizeOfNumber       thrpt   20   10799327.105 ±   22829.902  ops/s
+  * JsonBench.sizeOfString       thrpt   20  637878878.510 ± 2603274.692  ops/s
   */
 class JsonBench {
 
