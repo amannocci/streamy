@@ -98,6 +98,10 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
       JsonBridge(Some(JsDouble(2.0D))).asDouble should equal(Some(2.0D))
     }
 
+    "provide a shortcut to convert optional json in optional number" in {
+      JsonBridge(Some(JsDouble(2.0D))).asNumber should equal(Some(JsDouble(2.0D)))
+    }
+
     "provide a shortcut to convert optional json in optional byte" in {
       JsonBridge(Some(JsInt(2))).asInt should equal(Some(2))
     }
@@ -123,7 +127,7 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
     }
 
     "provide a shortcut to convert optional json in optional big decimal" in {
-      JsonBridge(Some(JsBigDecimal(BigDecimal.valueOf(0)))).asNumber should equal(Some(BigDecimal.valueOf(0)))
+      JsonBridge(Some(JsBigDecimal(BigDecimal.valueOf(0)))).asBigDecimal should equal(Some(BigDecimal.valueOf(0)))
     }
 
     "provide a shortcut to convert optional json in optional none" in {

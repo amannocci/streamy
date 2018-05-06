@@ -51,16 +51,12 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
     value match {
       case x: JsObject => printObject(x)
       case x: JsArray => printArray(x)
-      case _: JsNull.type => builder.append(JsonPrinter.Null)
+      case x: JsString => printString(x.value)
+      case x: JsNumber => printNumber(x)
+      case x: JsBytes => printBytes(x)
       case _: JsTrue.type => builder.append(JsonPrinter.True)
       case _: JsFalse.type => builder.append(JsonPrinter.False)
-      case x: JsInt => builder.append(x.value)
-      case x: JsLong => builder.append(x.value)
-      case x: JsFloat => builder.append(x.value)
-      case x: JsDouble => builder.append(x.value)
-      case x: JsBigDecimal => builder.append(x.value)
-      case x: JsBytes => printString(Base64.rfc2045().encodeToString(x.value.toArray[Byte], false))
-      case x: JsString => printString(x.value)
+      case _: JsNull.type => builder.append(JsonPrinter.Null)
     }
   }
 
@@ -77,7 +73,7 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
         if (firstValue) {
           firstValue = false
         } else {
-          builder.append(',')
+          builder.append(JsonPrinter.Comma)
         }
 
         printString(curr._1)
@@ -101,13 +97,39 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
         if (firstValue) {
           firstValue = false
         } else {
-          builder.append(',')
+          builder.append(JsonPrinter.Comma)
         }
 
         printValue(curr)
       }
     }
     builder.append(JsonPrinter.CloseBracket)
+  }
+
+  /**
+    * Print a json number value.
+    *
+    * @param value json number value.
+    */
+  private def printNumber(value: JsNumber): Unit = {
+    value match {
+      case x: JsInt => builder.append(x.value)
+      case x: JsLong => builder.append(x.value)
+      case x: JsFloat => builder.append(x.value)
+      case x: JsDouble => builder.append(x.value)
+      case x: JsBigDecimal => builder.append(x.value)
+    }
+  }
+
+  /**
+    * Print a json bytes value.
+    *
+    * @param value json bytes value.
+    */
+  private def printBytes(value: JsBytes): Unit = {
+    builder.append(JsonPrinter.Quote)
+      .append(Base64.rfc2045().encodeToString(value.value.toArray[Byte], false))
+      .append(JsonPrinter.Quote)
   }
 
   /**
@@ -176,6 +198,7 @@ object JsonPrinter {
   val CloseBrace: Char = '}'
   val OpenBracket: Char = '['
   val CloseBracket: Char = ']'
+  val Comma: Char = ','
 
   /**
     * Create a new json printer.

@@ -52,6 +52,13 @@ package object json extends JsonImplicit {
     def asArray: Option[JsArray] = self.flatMap(_.asArray)
 
     /**
+      * Returns current optional json value as json number.
+      *
+      * @return current optional json value as json number if possible, otherwise [[None]].
+      */
+    def asNumber: Option[JsNumber] = self.flatMap(_.asNumber)
+
+    /**
       * Returns current optional json value as byte string.
       *
       * @return current optional json value as byte string if possible, otherwise [[None]].
@@ -73,13 +80,6 @@ package object json extends JsonImplicit {
     def asString: Option[String] = self.flatMap(_.asString)
 
     /**
-      * Returns current optional json value as json number.
-      *
-      * @return current optional json value as json number if possible, otherwise [[None]].
-      */
-    def asNumber: Option[BigDecimal] = self.flatMap(_.asNumber)
-
-    /**
       * Returns current optional json value as json null.
       *
       * @return current optional json value as json null if possible, otherwise [[None]].
@@ -99,6 +99,13 @@ package object json extends JsonImplicit {
       * @return current optional json value as json long if possible, otherwise [[None]].
       */
     def asLong: Option[Long] = self.flatMap(_.asLong)
+
+    /**
+      * Returns current optional json value as json big decimal.
+      *
+      * @return current optional json value as json big decimal if possible, otherwise [[None]].
+      */
+    def asBigDecimal: Option[BigDecimal] = self.flatMap(_.asBigDecimal)
 
     /**
       * Returns current optional json value as json double.

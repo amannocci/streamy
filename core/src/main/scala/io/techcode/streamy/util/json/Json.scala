@@ -146,6 +146,13 @@ sealed trait Json {
   def asArray: Option[JsArray] = None
 
   /**
+    * Returns current json value as json number.
+    *
+    * @return current json value as json number if possible, otherwise [[None]].
+    */
+  def asNumber: Option[JsNumber] = None
+
+  /**
     * Returns current json value as byte string.
     *
     * @return current json value as byte string if possible, otherwise [[None]].
@@ -167,11 +174,11 @@ sealed trait Json {
   def asString: Option[String] = None
 
   /**
-    * Returns current json value as json number.
+    * Returns current json value as json big decimal.
     *
-    * @return current json value as json number if possible, otherwise [[None]].
+    * @return current json value as json big decimal if possible, otherwise [[None]].
     */
-  def asNumber: Option[BigDecimal] = None
+  def asBigDecimal: Option[BigDecimal] = None
 
   /**
     * Returns current json value as json null.
@@ -271,13 +278,57 @@ case object JsFalse extends JsBoolean(false) {
 }
 
 /**
+  * Represents a Json number value.
+  */
+trait JsNumber extends Json {
+
+  override def asNumber: Option[JsNumber] = Some(this)
+
+  /**
+    * Returns the value of json number as an Int.
+    */
+  @inline def toInt: Int
+
+  /**
+    * Returns the value of json number as an Long.
+    */
+  @inline def toLong: Long
+
+  /**
+    * Returns the value of json number as an Float.
+    */
+  @inline def toFloat: Float
+
+  /**
+    * Returns the value of json number as an Double.
+    */
+  @inline def toDouble: Double
+
+  /**
+    * Returns the value of json number as an BigDecimal.
+    */
+  @inline def toBigDecimal: BigDecimal
+
+}
+
+/**
   * Represent a json int value.
   *
   * @param value underlying value.
   */
-case class JsInt(value: Int) extends Json {
+case class JsInt(value: Int) extends JsNumber {
 
   override def asInt: Option[Int] = Some(value)
+
+  override def toInt: Int = value
+
+  override def toLong: Long = value.toLong
+
+  override def toFloat: Float = value.toFloat
+
+  override def toDouble: Double = value.toDouble
+
+  override def toBigDecimal: BigDecimal = BigDecimal(value)
 
   override def copy(): Json = this
 
@@ -344,9 +395,19 @@ case class JsInt(value: Int) extends Json {
   *
   * @param value underlying value.
   */
-case class JsLong(value: Long) extends Json {
+case class JsLong(value: Long) extends JsNumber {
 
   override def asLong: Option[Long] = Some(value)
+
+  override def toInt: Int = value.toInt
+
+  override def toLong: Long = value
+
+  override def toFloat: Float = value.toFloat
+
+  override def toDouble: Double = value.toDouble
+
+  override def toBigDecimal: BigDecimal = BigDecimal(value)
 
   override def copy(): Json = this
 
@@ -394,9 +455,19 @@ case class JsLong(value: Long) extends Json {
   *
   * @param value underlying value.
   */
-case class JsFloat(value: Float) extends Json {
+case class JsFloat(value: Float) extends JsNumber {
 
   override def asFloat: Option[Float] = Some(value)
+
+  override def toInt: Int = value.toInt
+
+  override def toLong: Long = value.toLong
+
+  override def toFloat: Float = value
+
+  override def toDouble: Double = value.toDouble
+
+  override def toBigDecimal: BigDecimal = BigDecimal(value)
 
   override def copy(): Json = this
 
@@ -407,9 +478,19 @@ case class JsFloat(value: Float) extends Json {
   *
   * @param value underlying value.
   */
-case class JsDouble(value: Double) extends Json {
+case class JsDouble(value: Double) extends JsNumber {
 
   override def asDouble: Option[Double] = Some(value)
+
+  override def toInt: Int = value.toInt
+
+  override def toLong: Long = value.toLong
+
+  override def toFloat: Float = value.toFloat
+
+  override def toDouble: Double = value
+
+  override def toBigDecimal: BigDecimal = BigDecimal(value)
 
   override def copy(): Json = this
 
@@ -420,9 +501,19 @@ case class JsDouble(value: Double) extends Json {
   *
   * @param value underlying value.
   */
-case class JsBigDecimal(value: BigDecimal) extends Json {
+case class JsBigDecimal(value: BigDecimal) extends JsNumber {
 
-  override def asNumber: Option[BigDecimal] = Some(value)
+  override def asBigDecimal: Option[BigDecimal] = Some(value)
+
+  override def toInt: Int = value.toInt
+
+  override def toLong: Long = value.toLong
+
+  override def toFloat: Float = value.toFloat
+
+  override def toDouble: Double = value.toDouble
+
+  override def toBigDecimal: BigDecimal = value
 
   override def copy(): Json = this
 

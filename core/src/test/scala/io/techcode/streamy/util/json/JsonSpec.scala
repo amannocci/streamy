@@ -605,16 +605,36 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsString("test").sizeHint should equal(6) // "test"
     }
 
-    "be convert to number when possible" in {
-      JsBigDecimal(BigDecimal("1e20")).asNumber should equal(Some(BigDecimal("1e20")))
+    "be convert to big decimal when possible" in {
+      JsBigDecimal(BigDecimal("1e20")).asBigDecimal should equal(Some(BigDecimal("1e20")))
     }
 
-    "fail to be convert to number when not possible" in {
-      JsTrue.asNumber should equal(None)
+    "fail to be convert to big decimal when not possible" in {
+      JsTrue.asBigDecimal should equal(None)
     }
 
-    "return correct size for number" in {
+    "return correct size for big decimal" in {
       JsBigDecimal(BigDecimal("2e128")).sizeHint should equal(6)
+    }
+
+    "return int conversion for big decimal" in {
+      JsBigDecimal(BigDecimal(6)).toInt should equal(6)
+    }
+
+    "return long conversion for big decimal" in {
+      JsBigDecimal(BigDecimal(6L)).toLong should equal(6L)
+    }
+
+    "return float conversion for big decimal" in {
+      JsBigDecimal(BigDecimal(6.0F)).toFloat should equal(6.0F)
+    }
+
+    "return double conversion for big decimal" in {
+      JsBigDecimal(BigDecimal(6.0D)).toDouble should equal(6.0D)
+    }
+
+    "return big decimal conversion for big decimal" in {
+      JsBigDecimal(BigDecimal("2e128")).toBigDecimal should equal(BigDecimal("2e128"))
     }
 
     "be convert to null when possible" in {
@@ -653,6 +673,26 @@ class JsonSpec extends WordSpecLike with Matchers {
       }
     }
 
+    "return int conversion for int" in {
+      JsInt(1).toInt should equal(1)
+    }
+
+    "return long conversion for int" in {
+      JsInt(1).toLong should equal(1L)
+    }
+
+    "return float conversion for int" in {
+      JsInt(1).toFloat should equal(1.0F)
+    }
+
+    "return double conversion for int" in {
+      JsInt(1).toDouble should equal(1.0D)
+    }
+
+    "return big decimal conversion for int" in {
+      JsInt(1).toBigDecimal should equal(BigDecimal(1))
+    }
+
     "be convert to long when possible" in {
       JsLong(1).asLong should equal(Some(1))
     }
@@ -677,6 +717,26 @@ class JsonSpec extends WordSpecLike with Matchers {
       }
     }
 
+    "return int conversion for long" in {
+      JsLong(1L).toInt should equal(1)
+    }
+
+    "return long conversion for long" in {
+      JsLong(1L).toLong should equal(1L)
+    }
+
+    "return float conversion for long" in {
+      JsLong(1L).toFloat should equal(1.0F)
+    }
+
+    "return double conversion for long" in {
+      JsLong(1L).toDouble should equal(1.0D)
+    }
+
+    "return big decimal conversion for long" in {
+      JsLong(1L).toBigDecimal should equal(BigDecimal(1))
+    }
+
     "be convert to float when possible" in {
       JsFloat(1.0F).asFloat should equal(Some(1.0F))
     }
@@ -686,7 +746,27 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "return correct size for float" in {
-      JsDouble(2.0F).sizeHint should equal(3)
+      JsFloat(2.0F).sizeHint should equal(3)
+    }
+
+    "return int conversion for float" in {
+      JsFloat(2.0F).toInt should equal(2)
+    }
+
+    "return long conversion for float" in {
+      JsFloat(2.0F).toLong should equal(2L)
+    }
+
+    "return float conversion for float" in {
+      JsFloat(2.0F).toFloat should equal(2.0F)
+    }
+
+    "return double conversion for float" in {
+      JsFloat(2.0F).toDouble should equal(2.0D)
+    }
+
+    "return big decimal conversion for float" in {
+      JsFloat(2.0F).toBigDecimal should equal(BigDecimal(2.0F))
     }
 
     "be convert to double when possible" in {
@@ -699,6 +779,34 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return correct size for double" in {
       JsDouble(2.0D).sizeHint should equal(3)
+    }
+
+    "return int conversion for double" in {
+      JsDouble(2.0D).toInt should equal(2)
+    }
+
+    "return long conversion for double" in {
+      JsDouble(2.0D).toLong should equal(2L)
+    }
+
+    "return float conversion for double" in {
+      JsDouble(2.0D).toFloat should equal(2.0F)
+    }
+
+    "return double conversion for double" in {
+      JsDouble(2.0D).toDouble should equal(2.0D)
+    }
+
+    "return big decimal conversion for double" in {
+      JsDouble(2.0D).toBigDecimal should equal(BigDecimal(2.0D))
+    }
+
+    "be convert to number when possible" in {
+      JsDouble(1.0D).asNumber should equal(Some(JsDouble(1.0D)))
+    }
+
+    "fail to be convert to number when not possible" in {
+      JsTrue.asNumber should equal(None)
     }
 
     "be convert to bytes when possible" in {
