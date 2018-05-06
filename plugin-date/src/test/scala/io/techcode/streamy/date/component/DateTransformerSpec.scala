@@ -35,39 +35,39 @@ class DateTransformerSpec extends TestTransformer {
   "Date transformer" should {
     "be able to convert iso8601 to iso8601 date format" in {
       except(
-        JsonTransformerSpec.Transformer.Idempotent,
-        JsonTransformerSpec.Input.Iso8601,
-        JsonTransformerSpec.Output.Iso8601
+        DateTransformerSpec.Transformer.Idempotent,
+        DateTransformerSpec.Input.Iso8601,
+        DateTransformerSpec.Output.Iso8601
       )
     }
 
     "be able to convert iso8601 to custom date format" in {
       except(
-        JsonTransformerSpec.Transformer.FromIsoToCustom,
-        JsonTransformerSpec.Input.Iso8601,
-        JsonTransformerSpec.Output.Custom
+        DateTransformerSpec.Transformer.FromIsoToCustom,
+        DateTransformerSpec.Input.Iso8601,
+        DateTransformerSpec.Output.Custom
       )
     }
 
     "be able to convert custom to iso8601 date format" in {
       except(
-        JsonTransformerSpec.Transformer.FromCustomToIso,
-        JsonTransformerSpec.Input.Custom,
-        JsonTransformerSpec.Output.Iso8601
+        DateTransformerSpec.Transformer.FromCustomToIso,
+        DateTransformerSpec.Input.Custom,
+        DateTransformerSpec.Output.Iso8601
       )
     }
 
     "throw an exception for non string input" in {
       exceptError(
-        JsonTransformerSpec.Transformer.Validation,
-        JsonTransformerSpec.Input.NotString
+        DateTransformerSpec.Transformer.Validation,
+        DateTransformerSpec.Input.NotString
       )
     }
   }
 
 }
 
-object JsonTransformerSpec {
+object DateTransformerSpec {
 
   object Input {
 
