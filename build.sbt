@@ -53,6 +53,7 @@ lazy val bench = project
     `plugin-json` % "test->test",
     `plugin-metric` % "test->test",
     `plugin-syslog` % "test->test",
+    `plugin-tcp` % "test->test"
   )
   .settings(Benchs.settings)
   .enablePlugins(JmhPlugin)
@@ -103,6 +104,12 @@ lazy val `plugin-syslog` = project
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
+lazy val `plugin-tcp` = project
+  .in(file("plugin-tcp"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(testkit % "test->test")
+
 lazy val testkit = project
   .in(file("test"))
   .settings(commonSettings, Publish.settings)
@@ -120,5 +127,6 @@ lazy val root = project
     `plugin-json`,
     `plugin-metric`,
     `plugin-syslog`,
+    `plugin-tcp`,
     testkit
   )
