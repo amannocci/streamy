@@ -128,13 +128,13 @@ private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
   @inline def set(json: Json, value: Json): Option[Json] = add(json, value)
 
   def add(json: Json, value: Json): Option[Json] = json.asObject.map { x =>
-    x.underlying.put(key, value)
+    x.underlying.update(key, value)
     x
   }
 
   def replace(json: Json, value: Json): Option[Json] = json.asObject.flatMap { x =>
     if (x.underlying.contains(key)) {
-      x.underlying.put(key, value)
+      x.underlying.update(key, value)
       Some(x)
     } else {
       None
