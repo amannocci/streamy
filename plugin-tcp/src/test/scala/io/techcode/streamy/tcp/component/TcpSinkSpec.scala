@@ -27,7 +27,6 @@ import akka.Done
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.techcode.streamy.TestSystem
-import io.techcode.streamy.tcp.component.TcpFlow.ReconnectConfig
 import io.techcode.streamy.tcp.event.{TcpConnectionCloseEvent, TcpConnectionCreateEvent}
 
 import scala.concurrent.duration._
@@ -87,15 +86,13 @@ object TcpSinkSpec {
 
   object Sink {
 
-    val Simple = TcpFlow.ClientConfig(
+    val Simple = TcpFlow.Client.Config(
       host = "localhost",
       port = 500
     )
 
-    val SimpleWithReconnect = TcpFlow.ClientConfig(
-      host = "localhost",
-      port = 500,
-      reconnect = Some(ReconnectConfig(
+    val SimpleWithReconnect = Simple.copy(
+      reconnect = Some(TcpFlow.Client.ReconnectConfig(
         minBackoff = 1 seconds,
         maxBackoff = 1 second,
         randomFactor = 0.2D

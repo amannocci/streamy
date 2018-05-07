@@ -40,7 +40,7 @@ object TcpSink {
     *
     * @param config sink configuration.
     */
-  def client(config: TcpFlow.ClientConfig)(implicit system: ActorSystem): Sink[ByteString, Future[Done]] =
+  def client(config: TcpFlow.Client.Config)(implicit system: ActorSystem): Sink[ByteString, Future[Done]] =
     TcpFlow.client(config).toMat(Sink.ignore)(Keep.right)
 
 }

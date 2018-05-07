@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.tcp.event
 
-import io.techcode.streamy.tcp.component.TcpFlow.ClientConfig
+import io.techcode.streamy.tcp.component.TcpFlow
 
 
 /**
@@ -36,11 +36,11 @@ sealed trait TcpEvent
   *
   * @param config configuration of the tcp connection created.
   */
-case class TcpConnectionCreateEvent(config: ClientConfig) extends TcpEvent
+case class TcpConnectionCreateEvent(config: TcpFlow.Client.Config) extends TcpEvent
 
 /**
   * This event is fire when a tcp connection is closed.
   *
   * @param config configuration of the tcp connection closed.
   */
-case class TcpConnectionCloseEvent(config: ClientConfig) extends TcpEvent
+case class TcpConnectionCloseEvent(config: TcpFlow.Client.Config) extends TcpEvent

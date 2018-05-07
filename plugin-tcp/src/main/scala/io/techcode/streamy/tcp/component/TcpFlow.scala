@@ -38,28 +38,32 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
   */
 object TcpFlow {
 
-  // Client component configuration
-  case class ClientConfig(
-    host: String,
-    port: Int,
-    idleTimeout: Duration = Duration.Inf,
-    connectTimeout: Duration = Duration.Inf,
-    reconnect: Option[ReconnectConfig] = None
-  )
+  // Client related stuff
+  object Client {
 
-  // Reconnect component configuration
-  case class ReconnectConfig(
-    minBackoff: FiniteDuration,
-    maxBackoff: FiniteDuration,
-    randomFactor: Double
-  )
+    case class Config(
+      host: String,
+      port: Int,
+      idleTimeout: Duration = Duration.Inf,
+      connectTimeout: Duration = Duration.Inf,
+      reconnect: Option[ReconnectConfig] = None
+    )
+
+    // Reconnect component configuration
+    case class ReconnectConfig(
+      minBackoff: FiniteDuration,
+      maxBackoff: FiniteDuration,
+      randomFactor: Double
+    )
+
+  }
 
   /**
     * Create a new tcp client flow.
     *
     * @param config flow configuration.
     */
-  def client(config: ClientConfig)(implicit system: ActorSystem): Flow[ByteString, ByteString, Any] = {
+  def client(config: Client.Config)(implicit system: ActorSystem): Flow[ByteString, ByteString, Any] = {
     // Connection configuration
     val connection: Flow[ByteString, ByteString, Any] = Flow.lazyInitAsync[ByteString, ByteString, Any] { () =>
       // Lazily create a connection on first element
