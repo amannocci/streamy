@@ -40,6 +40,10 @@ class FlowTransformerSpec extends WordSpec with Matchers {
     override def transform(value: Json): Option[Json] = value.asString.map(v => s"${v}bar")
   }
 
+  class ImplParent(config: ImplConfig) extends FlowTransformer(config) {
+    override def transform(value: Json, pkt: Json): Option[Json] = value.asString.map(v => s"${v}bar")
+  }
+
   // Component configuration
   case class ImplConfig(
     override val source: JsonPointer,
@@ -68,6 +72,13 @@ class FlowTransformerSpec extends WordSpec with Matchers {
       val input = Json.obj("message" -> "foo")
       val component = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
       component.apply(input) should equal(Json.obj("target" -> "foobar"))
+    }
+
+    "transform correctly a packet inplace with parent transform" in {
+      val input = Json.obj("message" -> "foo")
+      val component = new ImplParent(ImplConfig(Root / "message"))
+      component.transform(JsNull) should equal(None)
+      component.apply(input) should equal(Json.obj("message" -> "foobar"))
     }
 
     "skip correctly a packet with a wrong source field" in {

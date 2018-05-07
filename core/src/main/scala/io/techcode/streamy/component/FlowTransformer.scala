@@ -100,7 +100,7 @@ abstract class FlowTransformer(config: Config) extends Transformer[Json, Json](c
     * @param value value to transform.
     * @return json structure.
     */
-  def transform(value: Json): Option[Json]
+  def transform(value: Json): Option[Json] = None
 
   /**
     * Apply transform component on packet.
