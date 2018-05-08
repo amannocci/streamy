@@ -44,7 +44,7 @@ abstract class ByteStringParser(val bytes: ByteString) {
   private var _cursor: Int = 0
 
   // Used to build json object directly
-  lazy protected val builder: JsObjectBuilder = Json.objectBuilder()
+  protected var builder: JsObjectBuilder = Json.objectBuilder()
 
   /**
     * Attempt to parse input [[ByteString]].
@@ -326,9 +326,9 @@ abstract class ByteStringParser(val bytes: ByteString) {
     * @return true if sub parser succeeded, otherwise false.
     */
   final def subParser[T <: ByteStringParser](parser: T, action: T => Boolean): Boolean = {
+    parser.builder = builder
     if (action(parser)) {
       _cursor = parser._cursor
-      builder.putAll(parser.builder)
       true
     } else {
       false
