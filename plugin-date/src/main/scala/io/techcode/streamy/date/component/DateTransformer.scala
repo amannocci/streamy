@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.date.component
 
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import akka.NotUsed
@@ -40,12 +39,8 @@ import io.techcode.streamy.util.json._
   */
 private[component] class DateTransformer(config: DateTransformer.Config) extends FlowTransformer(config) {
 
-  // Thread-safe: Date time formatter
-  val inputFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(config.inputPattern)
-  val outputFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(config.outputPattern)
-
   override def transform(value: Json): Option[Json] =
-    value.asString.map(v => LocalDateTime.parse(v, inputFormatter).format(outputFormatter))
+    value.asString.map(v => config.outputFormatter.format(config.inputFormatter.parse(v)))
 
 }
 
@@ -55,7 +50,7 @@ private[component] class DateTransformer(config: DateTransformer.Config) extends
 object DateTransformer {
 
   // Iso 8601
-  val Iso8601: String = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+  val Iso8601: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
 
   // Component configuration
   case class Config(
@@ -63,8 +58,8 @@ object DateTransformer {
     override val target: Option[JsonPointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
-    inputPattern: String,
-    outputPattern: String
+    inputFormatter: DateTimeFormatter,
+    outputFormatter: DateTimeFormatter
   ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
   /**

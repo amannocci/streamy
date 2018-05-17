@@ -23,6 +23,9 @@
  */
 package io.techcode.streamy.date.component
 
+import java.time.format.DateTimeFormatter
+import java.time.{ZoneId, ZoneOffset}
+
 import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.util.json._
@@ -38,6 +41,14 @@ class DateTransformerSpec extends TestTransformer {
         DateTransformerSpec.Transformer.Idempotent,
         DateTransformerSpec.Input.Iso8601,
         DateTransformerSpec.Output.Iso8601
+      )
+    }
+
+    "be able to convert iso8601 zoned to iso8601 zoned date format" in {
+      except(
+        DateTransformerSpec.Transformer.Idempotent,
+        DateTransformerSpec.Input.Iso8601Zoned,
+        DateTransformerSpec.Output.Iso8601Zoned
       )
     }
 
@@ -73,6 +84,8 @@ object DateTransformerSpec {
 
     val Iso8601: JsObject = Json.obj("date" -> "2000-10-11T14:32:52Z")
 
+    val Iso8601Zoned: JsObject = Json.obj("date" -> "2000-10-11T14:32:52+0200")
+
     val Custom: JsObject = Json.obj("date" -> "Wed Oct 11 14:32:52 2000")
 
     val NotString: JsObject = Json.obj("date" -> 1)
@@ -83,27 +96,27 @@ object DateTransformerSpec {
 
     val Idempotent = DateTransformer(DateTransformer.Config(
       source = Root / "date",
-      inputPattern = DateTransformer.Iso8601,
-      outputPattern = DateTransformer.Iso8601
+      inputFormatter = DateTransformer.Iso8601,
+      outputFormatter = DateTransformer.Iso8601
     ))
 
     val FromIsoToCustom = DateTransformer(DateTransformer.Config(
       source = Root / "date",
-      inputPattern = DateTransformer.Iso8601,
-      outputPattern = "EEE MMM dd HH:mm:ss yyyy"
+      inputFormatter = DateTransformer.Iso8601,
+      outputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy")
     ))
 
     val FromCustomToIso = DateTransformer(DateTransformer.Config(
       source = Root / "date",
-      inputPattern = "EEE MMM dd HH:mm:ss yyyy",
-      outputPattern = DateTransformer.Iso8601
+      inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy").withZone(ZoneId.of("UTC")),
+      outputFormatter = DateTransformer.Iso8601.withZone(ZoneOffset.UTC)
     ))
 
     val Validation = DateTransformer(DateTransformer.Config(
       source = Root / "date",
       onError = ErrorBehaviour.Discard,
-      inputPattern = "EEE MMM dd HH:mm:ss yyyy",
-      outputPattern = DateTransformer.Iso8601
+      inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy").withZone(ZoneId.of("UTC")),
+      outputFormatter = DateTransformer.Iso8601
     ))
 
   }
@@ -111,6 +124,8 @@ object DateTransformerSpec {
   object Output {
 
     val Iso8601: JsObject = Json.obj("date" -> "2000-10-11T14:32:52Z")
+
+    val Iso8601Zoned: JsObject = Json.obj("date" -> "2000-10-11T14:32:52+02")
 
     val Custom: JsObject = Json.obj("date" -> "Wed Oct 11 14:32:52 2000")
 
