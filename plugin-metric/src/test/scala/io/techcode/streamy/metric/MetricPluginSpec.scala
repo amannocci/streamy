@@ -25,22 +25,22 @@ package io.techcode.streamy.metric
 
 import akka.actor.Kill
 import com.typesafe.config.{Config, ConfigFactory}
-import io.techcode.streamy.metric.event.MetricJvmEvent
+import io.techcode.streamy.metric.event.MetricEvent
 import io.techcode.streamy.plugin.TestPlugin
 
 class MetricPluginSpec extends TestPlugin {
 
   "Plugin" can {
     "be started with jvm enable" in {
-      system.eventStream.subscribe(testActor, classOf[MetricJvmEvent])
+      system.eventStream.subscribe(testActor, classOf[MetricEvent.Jvm])
       create(classOf[MetricPlugin], MetricPluginSpec.JvmEnableConf)
-      expectMsgClass(classOf[MetricJvmEvent])
+      expectMsgClass(classOf[MetricEvent.Jvm])
     }
 
     "be started with jvm enable and embedded" in {
-      system.eventStream.subscribe(testActor, classOf[MetricJvmEvent])
+      system.eventStream.subscribe(testActor, classOf[MetricEvent.Jvm])
       create(classOf[MetricPlugin], MetricPluginSpec.JvmEnableEmbeddedConf)
-      expectMsgClass(classOf[MetricJvmEvent])
+      expectMsgClass(classOf[MetricEvent.Jvm])
     }
 
     "be started with jvm disable" in {

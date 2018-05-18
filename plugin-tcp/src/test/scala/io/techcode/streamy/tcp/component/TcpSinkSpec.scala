@@ -27,7 +27,7 @@ import akka.Done
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.techcode.streamy.TestSystem
-import io.techcode.streamy.tcp.event.{TcpConnectionCloseEvent, TcpConnectionCreateEvent}
+import io.techcode.streamy.tcp.event.TcpEvent
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -57,23 +57,23 @@ class TcpSinkSpec extends TestSystem {
     }
 
     "send event correctly" in {
-      system.eventStream.subscribe(testActor, classOf[TcpConnectionCreateEvent])
-      system.eventStream.subscribe(testActor, classOf[TcpConnectionCloseEvent])
+      system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
+      system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
       Source.single(TcpFlowSpec.Input)
         .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple))
 
-      expectMsgClass(classOf[TcpConnectionCreateEvent])
-      expectMsgClass(classOf[TcpConnectionCloseEvent])
+      expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
+      expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
     }
 
     "send event correctly with reconnect" in {
-      system.eventStream.subscribe(testActor, classOf[TcpConnectionCreateEvent])
-      system.eventStream.subscribe(testActor, classOf[TcpConnectionCloseEvent])
+      system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
+      system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
       Source.single(TcpFlowSpec.Input)
         .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect))
 
-      expectMsgClass(classOf[TcpConnectionCreateEvent])
-      expectMsgClass(classOf[TcpConnectionCloseEvent])
+      expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
+      expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
     }
 
   }

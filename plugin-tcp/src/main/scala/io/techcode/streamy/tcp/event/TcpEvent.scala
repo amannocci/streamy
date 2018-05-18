@@ -23,24 +23,33 @@
  */
 package io.techcode.streamy.tcp.event
 
+import akka.actor.DeadLetterSuppression
 import io.techcode.streamy.tcp.component.TcpFlow
 
-
 /**
-  * Tcp event.
+  * Tcp events.
   */
-sealed trait TcpEvent
+object TcpEvent {
 
-/**
-  * This event is fire when a tcp connection is created.
-  *
-  * @param config configuration of the tcp connection created.
-  */
-case class TcpConnectionCreateEvent(config: TcpFlow.Client.Config) extends TcpEvent
+  // Marker interface for tcp events
+  sealed trait TcpEvent extends DeadLetterSuppression
 
-/**
-  * This event is fire when a tcp connection is closed.
-  *
-  * @param config configuration of the tcp connection closed.
-  */
-case class TcpConnectionCloseEvent(config: TcpFlow.Client.Config) extends TcpEvent
+  object Client {
+
+    /**
+      * This event is fire when a tcp client connection is created.
+      *
+      * @param config configuration of the tcp connection created.
+      */
+    case class ConnectionCreated(config: TcpFlow.Client.Config) extends TcpEvent
+
+    /**
+      * This event is fire when a tcp client connection is closed.
+      *
+      * @param config configuration of the tcp connection closed.
+      */
+    case class ConnectionClosed(config: TcpFlow.Client.Config) extends TcpEvent
+
+  }
+
+}

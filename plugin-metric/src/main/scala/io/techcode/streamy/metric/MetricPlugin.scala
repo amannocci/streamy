@@ -28,7 +28,7 @@ import java.lang.management.ManagementFactory
 import akka.stream.Materializer
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.jvm.{BufferPoolMetricSet, GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
-import io.techcode.streamy.metric.event.MetricJvmEvent
+import io.techcode.streamy.metric.event.MetricEvent
 import io.techcode.streamy.plugin.{Plugin, PluginData}
 import io.techcode.streamy.util.json.JsonUtil
 import pureconfig._
@@ -71,7 +71,7 @@ class MetricPlugin(
 
         // Emit event
         val evt = JsonUtil.fromRawMap(entry)
-        system.eventStream.publish(MetricJvmEvent(evt))
+        system.eventStream.publish(MetricEvent.Jvm(evt))
 
         // If embedded log
         if (jvmConf.embedded) {

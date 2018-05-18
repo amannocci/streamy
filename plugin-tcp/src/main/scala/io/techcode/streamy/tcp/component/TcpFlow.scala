@@ -28,7 +28,7 @@ import java.net.InetSocketAddress
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Flow, RestartFlow, Sink, Tcp}
 import akka.util.ByteString
-import io.techcode.streamy.tcp.event.{TcpConnectionCloseEvent, TcpConnectionCreateEvent}
+import io.techcode.streamy.tcp.event.TcpEvent
 
 import scala.concurrent.Future
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -67,14 +67,14 @@ object TcpFlow {
     // Connection configuration
     val connection: Flow[ByteString, ByteString, Any] = Flow.lazyInitAsync[ByteString, ByteString, Any] { () =>
       // Lazily create a connection on first element
-      system.eventStream.publish(TcpConnectionCreateEvent(config))
+      system.eventStream.publish(TcpEvent.Client.ConnectionCreated(config))
       Future.successful(
         Tcp().outgoingConnection(
           InetSocketAddress.createUnresolved(config.host, config.port),
           connectTimeout = config.connectTimeout,
           idleTimeout = config.idleTimeout
         ).alsoTo(Sink.onComplete { _ =>
-          system.eventStream.publish(TcpConnectionCloseEvent(config))
+          system.eventStream.publish(TcpEvent.Client.ConnectionClosed(config))
         }))
     }
 

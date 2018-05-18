@@ -23,16 +23,22 @@
  */
 package io.techcode.streamy.metric.event
 
+import akka.actor.DeadLetterSuppression
 import io.techcode.streamy.util.json.Json
 
 /**
-  * Metric event.
+  * Metric events.
   */
-sealed trait MetricEvent
+object MetricEvent {
 
-/**
-  * This event is fire when jvm metrics are emitted.
-  *
-  * @param data jvm metrics data.
-  */
-case class MetricJvmEvent(data: Json) extends MetricEvent
+  // Marker interface for metric events
+  sealed trait MetricEvent extends DeadLetterSuppression
+
+  /**
+    * This event is fire when jvm metrics are emitted.
+    *
+    * @param data jvm metrics data.
+    */
+  case class Jvm(data: Json) extends MetricEvent
+
+}
