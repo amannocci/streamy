@@ -61,7 +61,6 @@ class PluginSpec extends StreamyTestSystem with MockitoSugar {
     val typed: Class[_] = classOf[Impl]
     system.actorOf(Props(
       typed,
-      materializer,
       PluginData(
         null,
         description,
@@ -74,9 +73,8 @@ class PluginSpec extends StreamyTestSystem with MockitoSugar {
 }
 
 class Impl(
-  override val _materializer: Materializer,
   override val data: PluginData
-) extends Plugin(_materializer, data) {
+) extends Plugin(data) {
 
   override def onStart(): Unit = {
     log.info("start")

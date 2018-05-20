@@ -40,9 +40,8 @@ import scala.concurrent.duration.FiniteDuration
   * Metric plugin implementation.
   */
 class MetricPlugin(
-  _materializer: Materializer,
   data: PluginData
-) extends Plugin(_materializer, data) {
+) extends Plugin(data) {
 
   // Retrieve configuration
   private val conf: Config = loadConfigOrThrow[Config](data.conf)

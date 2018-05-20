@@ -24,8 +24,9 @@
 package io.techcode.streamy.plugin
 
 import akka.actor.{Actor, ActorLogging, ActorSystem}
-import akka.stream.Materializer
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
 import io.techcode.streamy.event.{LoadingPluginEvent, RunningPluginEvent, StoppedPluginEvent, StoppingPluginEvent}
+import io.techcode.streamy.util.StreamException
 
 import scala.reflect.io.Directory
 
@@ -33,12 +34,19 @@ import scala.reflect.io.Directory
   * Abstract plugin implementation based on Actor.
   */
 abstract class Plugin(
-  val _materializer: Materializer,
   val data: PluginData
 ) extends Actor with ActorLogging {
 
-  implicit final val materializer: Materializer = _materializer
+  val decider: Supervision.Decider = { ex =>
+    ex match {
+      case streamEx: StreamException => log.error(streamEx.toJson)
+      case _ => log.error("An error occured", ex)
+    }
+    Supervision.Resume
+  }
+
   implicit final val system: ActorSystem = context.system
+  implicit final val materializer: Materializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))(context)
 
   def receive: Receive = {
     case _ => log.info("Plugin can't handle anything")

@@ -27,7 +27,6 @@ import java.net.{URL, URLClassLoader}
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.pattern.gracefulStop
-import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
 import io.techcode.streamy.event._
@@ -43,7 +42,7 @@ import scala.reflect.io.{Directory, File, Path}
 /**
   * The plugin manager that handle all plugins stuff.
   */
-class PluginManager(system: ActorSystem, materializer: Materializer, conf: Config) {
+class PluginManager(system: ActorSystem, conf: Config) {
 
   // Actor refs
   private[streamy] var _plugins: Map[String, PluginContainer] = Map.empty
@@ -92,7 +91,6 @@ class PluginManager(system: ActorSystem, materializer: Materializer, conf: Confi
         // Start plugin
         val pluginRef = system.actorOf(Props(
           typed,
-          materializer,
           pluginData
         ))
 

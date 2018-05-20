@@ -39,7 +39,6 @@ trait TestPlugin extends TestSystem {
     val description: PluginDescription = loadConfigOrThrow[PluginDescription](ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
     system.actorOf(Props(
       typed,
-      materializer,
       PluginData(
         null,
         description,

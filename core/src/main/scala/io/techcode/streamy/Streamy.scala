@@ -50,14 +50,6 @@ object Streamy extends App {
     "message" -> "Initializing actor system",
     "type" -> "lifecycle"
   ))
-  val decider: Supervision.Decider = { ex =>
-    ex match {
-      case streamEx: StreamException => log.error(streamEx.toJson)
-      case _ => log.error("An error occured", ex)
-    }
-    Supervision.Resume
-  }
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
   // Register all monitor
   log.info(Json.obj(
@@ -74,7 +66,7 @@ object Streamy extends App {
   val conf = system.settings.config.resolve()
 
   // Attempt to deploy plugins
-  val pluginManager = new PluginManager(system, materializer, conf.getConfig("streamy"))
+  val pluginManager = new PluginManager(system, conf.getConfig("streamy"))
   log.info(Json.obj(
     "message" -> "Starting all plugins",
     "type" -> "lifecycle"
@@ -109,7 +101,6 @@ object Streamy extends App {
     pluginManager.stop()
 
     // Stop systems
-    materializer.shutdown()
     system.terminate()
   }
 
