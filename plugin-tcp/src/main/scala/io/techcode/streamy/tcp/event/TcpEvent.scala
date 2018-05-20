@@ -32,7 +32,7 @@ import io.techcode.streamy.tcp.component.TcpFlow
 object TcpEvent {
 
   // Marker interface for tcp events
-  sealed trait TcpEvent extends DeadLetterSuppression
+  sealed trait All extends DeadLetterSuppression
 
   object Client {
 
@@ -41,14 +41,14 @@ object TcpEvent {
       *
       * @param config configuration of the tcp connection created.
       */
-    case class ConnectionCreated(config: TcpFlow.Client.Config) extends TcpEvent
+    case class ConnectionCreated(config: TcpFlow.Client.Config) extends All
 
     /**
       * This event is fire when a tcp client connection is closed.
       *
       * @param config configuration of the tcp connection closed.
       */
-    case class ConnectionClosed(config: TcpFlow.Client.Config) extends TcpEvent
+    case class ConnectionClosed(config: TcpFlow.Client.Config) extends All
 
   }
 

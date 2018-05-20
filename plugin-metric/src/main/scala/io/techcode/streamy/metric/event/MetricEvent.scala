@@ -32,13 +32,13 @@ import io.techcode.streamy.util.json.Json
 object MetricEvent {
 
   // Marker interface for metric events
-  sealed trait MetricEvent extends DeadLetterSuppression
+  sealed trait All extends DeadLetterSuppression
 
   /**
     * This event is fire when jvm metrics are emitted.
     *
     * @param data jvm metrics data.
     */
-  case class Jvm(data: Json) extends MetricEvent
+  case class Jvm(data: Json) extends All
 
 }
