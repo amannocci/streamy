@@ -42,16 +42,13 @@ import scala.reflect.io.{Directory, File, Path}
 /**
   * The plugin manager that handle all plugins stuff.
   */
-class PluginManager(conf: Config) extends Actor with ActorLogging {
+class PluginManager(conf: Config) extends Actor with ActorLogging with ActorListener {
 
   // Actor refs
-  private[streamy] var _plugins: Map[String, PluginContainer] = Map.empty
+  private var plugins: Map[String, PluginContainer] = Map.empty
 
   // Plugin class loader
-  private var _pluginClassLoader: ClassLoader = _
-
-  // Register plugin event listener
-  context.actorOf(Props(classOf[PluginsListener], this))
+  private var pluginClassLoader: ClassLoader = _
 
   // Configuration
   private val lifecycleConfig = loadConfigOrThrow[LifecycleConfig](conf, "lifecycle")
@@ -61,6 +58,8 @@ class PluginManager(conf: Config) extends Actor with ActorLogging {
     * Start all plugins.
     */
   override def preStart(): Unit = {
+    eventStream.subscribe(self, classOf[PluginEvent.All])
+
     // Retrieve all plugin description
     val pluginDescriptions = getPluginDescriptions
 
@@ -68,7 +67,7 @@ class PluginManager(conf: Config) extends Actor with ActorLogging {
     val toLoads = checkDependencies(pluginDescriptions)
 
     // Load all valid jars
-    _pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file.get).toArray, getClass.getClassLoader)
+    pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file.get).toArray, getClass.getClassLoader)
 
     // Waiting response list
     toLoads.foreach(pluginDescription => {
@@ -77,7 +76,7 @@ class PluginManager(conf: Config) extends Actor with ActorLogging {
         val pluginConf = mergeConfig(s"plugin.${pluginDescription.name}", pluginDescription)
 
         // Load main plugin class
-        val typed = Class.forName(pluginDescription.main.get, true, _pluginClassLoader)
+        val typed = Class.forName(pluginDescription.main.get, true, pluginClassLoader)
 
         // Plugin container
         val pluginData = PluginData(
@@ -93,7 +92,7 @@ class PluginManager(conf: Config) extends Actor with ActorLogging {
         ))
 
         // Add to map
-        _plugins += (pluginDescription.name -> PluginContainer(
+        plugins += (pluginDescription.name -> PluginContainer(
           description = pluginDescription,
           conf = pluginConf,
           ref = pluginRef
@@ -126,7 +125,12 @@ class PluginManager(conf: Config) extends Actor with ActorLogging {
           "type" -> "lifecycle"
         ), ex)
     }
-    _plugins = Map.empty
+
+    // Unregister listener
+    super.postStop()
+
+    // Clear plugins mapping
+    plugins = Map.empty
   }
 
   /**
@@ -205,26 +209,11 @@ class PluginManager(conf: Config) extends Actor with ActorLogging {
     toLoads
   }
 
-  def receive: Receive = {
-    case _ => log.info("Plugin manager can't handle anything")
-  }
-
-}
-
-/**
-  * Plugin listener that help to maintain current state plugin.
-  */
-private class PluginsListener(manager: PluginManager) extends Actor with ActorLogging with ActorListener {
-
-  override def preStart(): Unit = {
-    eventStream.subscribe(self, classOf[PluginEvent.All])
-  }
-
   override def receive: Receive = {
     case evt: PluginEvent.All =>
-      val container = manager._plugins.get(evt.name)
+      val container = plugins.get(evt.name)
       if (container.isDefined) {
-        manager._plugins += (evt.name -> container.get.copy(ref = sender(), state = evt.toState))
+        plugins += (evt.name -> container.get.copy(ref = sender(), state = evt.toState))
         log.info(Json.obj(
           "message" -> s"Plugin ${evt.name} is ${evt.toString.toLowerCase()}",
           "type" -> "plugin",
