@@ -40,7 +40,6 @@ trait TestPlugin extends TestSystem {
     system.actorOf(Props(
       typed,
       PluginData(
-        null,
         description,
         conf,
         Path(".").toDirectory

@@ -28,49 +28,56 @@ import io.techcode.streamy.plugin.PluginState
 import io.techcode.streamy.plugin.PluginState.PluginState
 
 /**
-  * Represent an app event.
+  * All plugin events.
   */
-abstract class PluginEvent(val name: String) extends DeadLetterSuppression {
+object PluginEvent {
 
   /**
-    * Convert a plugin event to a plugin lifecycle state.
-    *
-    * @return plugin lifecycle state.
+    * Represent an app event.
     */
-  def toState: PluginState
+  abstract class All(val name: String) extends DeadLetterSuppression {
 
-  override def toString: String = toState.toString
+    /**
+      * Convert a plugin event to a plugin lifecycle state.
+      *
+      * @return plugin lifecycle state.
+      */
+    def toState: PluginState
 
-}
+    override def toString: String = toState.toString
 
-/**
-  * Represent an plugin loading event.
-  * This event is fired when a plugin is loading.
-  */
-case class LoadingPluginEvent(override val name: String) extends PluginEvent(name) {
-  def toState: PluginState = PluginState.Loading
-}
+  }
 
-/**
-  * Represent an plugin running event.
-  * This event is fired when a plugin is running.
-  */
-case class RunningPluginEvent(override val name: String) extends PluginEvent(name) {
-  def toState: PluginState = PluginState.Running
-}
+  /**
+    * Represent an plugin loading event.
+    * This event is fired when a plugin is loading.
+    */
+  case class Loading(override val name: String) extends All(name) {
+    def toState: PluginState = PluginState.Loading
+  }
 
-/**
-  * Represent an plugin stopping event.
-  * This event is fired when a plugin is stopping.
-  */
-case class StoppingPluginEvent(override val name: String) extends PluginEvent(name) {
-  def toState: PluginState = PluginState.Stopping
-}
+  /**
+    * Represent an plugin running event.
+    * This event is fired when a plugin is running.
+    */
+  case class Running(override val name: String) extends All(name) {
+    def toState: PluginState = PluginState.Running
+  }
 
-/**
-  * Represent an plugin stopping event.
-  * This event is fired when a plugin is stopped.
-  */
-case class StoppedPluginEvent(override val name: String) extends PluginEvent(name) {
-  def toState: PluginState = PluginState.Stopped
+  /**
+    * Represent an plugin stopping event.
+    * This event is fired when a plugin is stopping.
+    */
+  case class Stopping(override val name: String) extends All(name) {
+    def toState: PluginState = PluginState.Stopping
+  }
+
+  /**
+    * Represent an plugin stopping event.
+    * This event is fired when a plugin is stopped.
+    */
+  case class Stopped(override val name: String) extends All(name) {
+    def toState: PluginState = PluginState.Stopped
+  }
+
 }

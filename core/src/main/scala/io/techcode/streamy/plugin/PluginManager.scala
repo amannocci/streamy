@@ -25,7 +25,7 @@ package io.techcode.streamy.plugin
 
 import java.net.{URL, URLClassLoader}
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern.gracefulStop
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
@@ -42,7 +42,7 @@ import scala.reflect.io.{Directory, File, Path}
 /**
   * The plugin manager that handle all plugins stuff.
   */
-class PluginManager(system: ActorSystem, conf: Config) {
+class PluginManager(conf: Config) extends Actor with ActorLogging {
 
   // Actor refs
   private[streamy] var _plugins: Map[String, PluginContainer] = Map.empty
@@ -51,8 +51,7 @@ class PluginManager(system: ActorSystem, conf: Config) {
   private var _pluginClassLoader: ClassLoader = _
 
   // Register plugin event listener
-  private val listener: ActorRef = system.actorOf(Props(classOf[PluginsListener], this))
-  system.eventStream.subscribe(listener, classOf[PluginEvent])
+  context.actorOf(Props(classOf[PluginsListener], this))
 
   // Configuration
   private val lifecycleConfig = loadConfigOrThrow[LifecycleConfig](conf, "lifecycle")
@@ -61,7 +60,7 @@ class PluginManager(system: ActorSystem, conf: Config) {
   /**
     * Start all plugins.
     */
-  def start(): Unit = {
+  override def preStart(): Unit = {
     // Retrieve all plugin description
     val pluginDescriptions = getPluginDescriptions
 
@@ -82,14 +81,13 @@ class PluginManager(system: ActorSystem, conf: Config) {
 
         // Plugin container
         val pluginData = PluginData(
-          this,
           pluginDescription,
           pluginConf,
           Directory(folderConfig.data.toFile)
         )
 
         // Start plugin
-        val pluginRef = system.actorOf(Props(
+        val pluginRef = context.actorOf(Props(
           typed,
           pluginData
         ))
@@ -101,7 +99,7 @@ class PluginManager(system: ActorSystem, conf: Config) {
           ref = pluginRef
         ))
       } catch {
-        case ex: Exception => system.log.error(Json.obj(
+        case ex: Exception => log.error(Json.obj(
           "message" -> s"Can't load '${pluginDescription.name}' plugin",
           "type" -> "lifecycle"
         ), ex)
@@ -112,36 +110,24 @@ class PluginManager(system: ActorSystem, conf: Config) {
   /**
     * Stop all plugins.
     */
-  def stop(): Unit = {
+  override def postStop(): Unit = {
     try {
-      val signal = Future.sequence(_plugins.values.map { data =>
+      val signal = Future.sequence(context.children.map { ref =>
         // Launch graceful stop
-        gracefulStop(data.ref, lifecycleConfig.gracefulTimeout)
+        gracefulStop(ref, lifecycleConfig.gracefulTimeout)
       })
       Await.result(signal, lifecycleConfig.shutdownTimeout)
       // All plugins are stopped
     } catch {
       // the actor wasn't stopped within 5 seconds
       case ex: akka.pattern.AskTimeoutException =>
-        system.log.error(Json.obj(
+        log.error(Json.obj(
           "message" -> "Failed to graceful shutdown",
           "type" -> "lifecycle"
         ), ex)
     }
     _plugins = Map.empty
   }
-
-  /**
-    * Returns collections of plugins backed by actor ref.
-    */
-  def plugins: Map[String, PluginContainer] = _plugins
-
-  /**
-    * Returns the plugin class loader used to load all plugins.
-    *
-    * @return plugin class loader.
-    */
-  def pluginClassLoader: ClassLoader = _pluginClassLoader
 
   /**
     * Merge all configurations levels.
@@ -178,7 +164,7 @@ class PluginManager(system: ActorSystem, conf: Config) {
         val description = loadConfigOrThrow[PluginDescription](conf).copy(file = Some(jar.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
-        case _: ConfigException.Missing => system.log.error(Json.obj(
+        case _: ConfigException.Missing => log.error(Json.obj(
           "message" -> s"Can't load '${jar.name}' plugin",
           "type" -> "lifecycle"
         ))
@@ -202,7 +188,7 @@ class PluginManager(system: ActorSystem, conf: Config) {
           if (pluginDescriptions.contains(dependency)) {
             true
           } else {
-            system.log.error(Json.obj(
+            log.error(Json.obj(
               "message" -> s"Can't load '${pluginDescription.name}' plugin because of unknown dependency '$dependency'",
               "type" -> "lifecycle"
             ))
@@ -219,15 +205,23 @@ class PluginManager(system: ActorSystem, conf: Config) {
     toLoads
   }
 
+  def receive: Receive = {
+    case _ => log.info("Plugin manager can't handle anything")
+  }
+
 }
 
 /**
   * Plugin listener that help to maintain current state plugin.
   */
-private class PluginsListener(manager: PluginManager) extends Actor with ActorLogging {
+private class PluginsListener(manager: PluginManager) extends Actor with ActorLogging with ActorListener {
+
+  override def preStart(): Unit = {
+    eventStream.subscribe(self, classOf[PluginEvent.All])
+  }
 
   override def receive: Receive = {
-    case evt: PluginEvent =>
+    case evt: PluginEvent.All =>
       val container = manager._plugins.get(evt.name)
       if (container.isDefined) {
         manager._plugins += (evt.name -> container.get.copy(ref = sender(), state = evt.toState))

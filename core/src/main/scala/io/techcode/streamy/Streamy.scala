@@ -23,11 +23,9 @@
  */
 package io.techcode.streamy
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.event.slf4j.Logger
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import io.techcode.streamy.plugin.PluginManager
-import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.monitor.DeadLetterMonitor
 
@@ -66,12 +64,11 @@ object Streamy extends App {
   val conf = system.settings.config.resolve()
 
   // Attempt to deploy plugins
-  val pluginManager = new PluginManager(system, conf.getConfig("streamy"))
   log.info(Json.obj(
     "message" -> "Starting all plugins",
     "type" -> "lifecycle"
   ))
-  pluginManager.start()
+  val pluginManager: ActorRef = system.actorOf(Props(classOf[PluginManager], conf.getConfig("streamy")))
 
   // Handle dry run
   if (args.length > 0 && args(0).equals("--dry-run")) {
@@ -98,7 +95,6 @@ object Streamy extends App {
       "message" -> "Stopping all plugins",
       "type" -> "lifecycle"
     ))
-    pluginManager.stop()
 
     // Stop systems
     system.terminate()

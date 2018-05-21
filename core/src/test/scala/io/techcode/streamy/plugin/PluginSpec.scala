@@ -24,7 +24,6 @@
 package io.techcode.streamy.plugin
 
 import akka.actor.{ActorRef, Kill, Props}
-import akka.stream.Materializer
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.StreamyTestSystem
 import org.scalatest.mockito.MockitoSugar
@@ -62,7 +61,6 @@ class PluginSpec extends StreamyTestSystem with MockitoSugar {
     system.actorOf(Props(
       typed,
       PluginData(
-        null,
         description,
         conf,
         Path(".").toDirectory

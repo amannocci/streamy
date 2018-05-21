@@ -32,13 +32,11 @@ import scala.reflect.io.Directory
 /**
   * Plugin data informations for loose coupling.
   *
-  * @param pluginManager plugin manager.
-  * @param description   plugin description.
-  * @param conf          plugin configuration.
-  * @param dataFolder    plugin data folder.
+  * @param description plugin description.
+  * @param conf        plugin configuration.
+  * @param dataFolder  plugin data folder.
   */
 case class PluginData(
-  pluginManager: PluginManager,
   description: PluginDescription,
   conf: Config,
   dataFolder: Directory

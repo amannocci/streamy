@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.plugin
 
+import akka.actor.{ActorRef, PoisonPill, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.StreamyTestSystem
 import org.scalatest.OneInstancePerTest
@@ -35,21 +36,10 @@ class PluginManagerSpec extends StreamyTestSystem with MockitoSugar with OneInst
 
   val conf: Config = ConfigFactory.load().getConfig("streamy")
 
-  val manager = new PluginManager(system, conf)
-
   "Plugin manager" should {
     "be started and stopped" in {
-      val manager = new PluginManager(system, conf)
-      manager.start()
-      manager.stop()
-    }
-
-    "provide a class loader" in {
-      manager.pluginClassLoader
-    }
-
-    "provide a mapping of all plugins" in {
-      manager.plugins
+      val manager: ActorRef = system.actorOf(Props(classOf[PluginManager], conf))
+      manager ! PoisonPill
     }
   }
 

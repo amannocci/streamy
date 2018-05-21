@@ -25,7 +25,7 @@ package io.techcode.streamy.plugin
 
 import akka.actor.{Actor, ActorLogging, ActorSystem}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
-import io.techcode.streamy.event.{LoadingPluginEvent, RunningPluginEvent, StoppedPluginEvent, StoppingPluginEvent}
+import io.techcode.streamy.event._
 import io.techcode.streamy.util.StreamException
 
 import scala.reflect.io.Directory
@@ -53,15 +53,15 @@ abstract class Plugin(
   }
 
   override def preStart(): Unit = {
-    system.eventStream.publish(LoadingPluginEvent(data.description.name))
+    system.eventStream.publish(PluginEvent.Loading(data.description.name))
     onStart()
-    system.eventStream.publish(RunningPluginEvent(data.description.name))
+    system.eventStream.publish(PluginEvent.Running(data.description.name))
   }
 
   override def postStop(): Unit = {
-    system.eventStream.publish(StoppingPluginEvent(data.description.name))
+    system.eventStream.publish(PluginEvent.Stopping(data.description.name))
     onStop()
-    system.eventStream.publish(StoppedPluginEvent(data.description.name))
+    system.eventStream.publish(PluginEvent.Stopped(data.description.name))
   }
 
   /**

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,34 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.util.monitor
+package io.techcode.streamy.event
 
-import akka.actor.{Actor, ActorLogging, DeadLetter}
-import io.techcode.streamy.event.ActorListener
-import io.techcode.streamy.util.json.Json
+import akka.actor.Actor
+import akka.event.EventStream
 
 /**
-  * Dead letter monitoring.
+  * Scala API: Mix in ActorListener into your Actor to easily obtain a reference to the eventStream,
+  * which is available under the name "eventStream".
+  * Lifecyle hooks are override for easy usage.
+  *
+  * {{{
+  * class MyActor extends Actor with ActorListener {
+  *   override def preStart(): Unit = {
+  *     eventStream.subscribe(self, classOf[MyEvent])
+  *   }
+  *
+  *   def receive = {
+  *     case _: MyEvent => log.info("We've got yet another event on our hands")
+  *   }
+  * }
+  * }}}
   */
-class DeadLetterMonitor extends Actor with ActorLogging with ActorListener {
+trait ActorListener {
+  this: Actor ⇒
 
-  override def preStart(): Unit = {
-    context.system.eventStream.subscribe(self, classOf[DeadLetter])
-  }
+  val eventStream: EventStream = context.system.eventStream
 
-  override def receive: Receive = {
-    case dead: DeadLetter => log.error(Json.obj(
-      "type" -> "monitor",
-      "name" -> "dead-letter",
-      "sender" -> dead.sender.toString(),
-      "recipent" -> dead.recipient.toString(),
-      "message" -> dead.message.toString
-    ))
-    case _ => log.warning(Json.obj(
-      "type" -> "monitor",
-      "name" -> "dead-letter",
-      "message" -> "Dead letter monitor don't support other messages"
-    ))
-  }
+  // Don't re-subscribe, skip call to preStart
+  override def postRestart(reason: Throwable): Unit = ()
+
+  // Don't remove subscription, skip call to postStop, no children to stop
+  override def preRestart(reason: Throwable, message: Option[Any]): Unit = ()
+
+  override def postStop(): Unit = eventStream.unsubscribe(self)
 
 }
