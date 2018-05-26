@@ -117,7 +117,10 @@ lazy val testkit = project
 
 lazy val root = project
   .in(file("."))
-  .settings(Seq(publish := {}))
+  .settings(
+    publish := (),
+    publishLocal := ()
+  )
   .aggregate(
     core,
     `plugin-date`,
