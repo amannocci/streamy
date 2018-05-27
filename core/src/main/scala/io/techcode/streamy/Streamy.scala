@@ -23,10 +23,10 @@
  */
 package io.techcode.streamy
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
-import akka.event.slf4j.Logger
+import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.event.Logging
 import io.techcode.streamy.plugin.PluginManager
-import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.logging._
 import io.techcode.streamy.util.monitor.DeadLetterMonitor
 
 /**
@@ -41,33 +41,33 @@ object Streamy extends App {
   implicit val system: ActorSystem = ActorSystem(ApplicationName)
 
   // Logger
-  val log = Logger(ApplicationName)
+  val log = Logging(system, getClass)
 
   // Materializer system
-  log.info(Json.obj(
-    "message" -> "Initializing actor system",
-    "type" -> "lifecycle"
-  ))
+  log.withContext {
+    log.putMDC("type", "lifecyle")
+    log.info("Initializing actor system")
+  }
 
   // Register all monitor
-  log.info(Json.obj(
-    "message" -> "Starting all monitors",
-    "type" -> "lifecycle"
-  ))
+  log.withContext {
+    log.putMDC("type", "lifecyle")
+    log.info("Starting all monitors")
+  }
   val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor], "monitor-dead-letter")
 
   // Loading configuration
-  log.info(Json.obj(
-    "message" -> "Loading configuration with fallback",
-    "type" -> "lifecycle"
-  ))
+  log.withContext {
+    log.putMDC("type", "lifecyle")
+    log.info("Loading configuration with fallback")
+  }
   val conf = system.settings.config.resolve()
 
   // Attempt to deploy plugins
-  log.info(Json.obj(
-    "message" -> "Starting all plugins",
-    "type" -> "lifecycle"
-  ))
+  log.withContext {
+    log.putMDC("type", "lifecyle")
+    log.info("Starting all plugins")
+  }
   val pluginManager: ActorRef = system.actorOf(Props(classOf[PluginManager], conf.getConfig("streamy")))
 
   // Handle dry run
@@ -84,17 +84,17 @@ object Streamy extends App {
     */
   def shutdown(): Unit = {
     // Stop all monitors
-    log.info(Json.obj(
-      "message" -> "Stopping all monitors",
-      "type" -> "lifecycle"
-    ))
+    log.withContext {
+      log.putMDC("type", "lifecyle")
+      log.info("Stopping all monitors")
+    }
     system.stop(deadLetterMonitor)
 
     // Stop all plugins
-    log.info(Json.obj(
-      "message" -> "Stopping all plugins",
-      "type" -> "lifecycle"
-    ))
+    log.withContext {
+      log.putMDC("type", "lifecyle")
+      log.info("Stopping all plugins")
+    }
 
     // Stop systems
     system.terminate()

@@ -30,7 +30,6 @@ object Dependencies {
   // Dependencies version
   val akkaVersion = "2.5.12"
   val logbackVersion = "1.2.3"
-  val logbackContribVersion = "0.3.0"
   val jacksonVersion = "2.9.5"
   val metricsJvmVersion = "4.0.2"
   val guavaVersion = "24.1-jre"

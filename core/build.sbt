@@ -47,7 +47,6 @@ libraryDependencies ++= Seq(
 // All other libraries
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % logbackVersion, // EPL/LGPL License
-  "io.techcode.logback.contrib" % "logback-json-layout" % logbackContribVersion, // MIT License
   "com.google.guava" % "guava" % guavaVersion, // Apache 2 License
   "com.github.pureconfig" %% "pureconfig" % pureConfigVersion, // Mozilla Public License 2.0
   "org.scala-lang" % "scala-reflect" % scalaVersion.value

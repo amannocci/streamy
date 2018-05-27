@@ -24,8 +24,9 @@
 package io.techcode.streamy.util.monitor
 
 import akka.actor.{Actor, ActorLogging, DeadLetter}
+import akka.event.LoggingAdapter
 import io.techcode.streamy.event.ActorListener
-import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.logging._
 
 /**
   * Dead letter monitoring.
@@ -36,19 +37,26 @@ class DeadLetterMonitor extends Actor with ActorLogging with ActorListener {
     context.system.eventStream.subscribe(self, classOf[DeadLetter])
   }
 
+  /**
+    * Common mdc mapping.
+    *
+    * @param log implicit logging.
+    */
+  private def mdc(log: LoggingAdapter): LoggingAdapter = {
+    log.putMDC("type", "monitor")
+    log.putMDC("name", "dead-letter")
+    log
+  }
+
   override def receive: Receive = {
-    case dead: DeadLetter => log.error(Json.obj(
-      "type" -> "monitor",
-      "name" -> "dead-letter",
-      "sender" -> dead.sender.toString(),
-      "recipent" -> dead.recipient.toString(),
-      "message" -> dead.message.toString
-    ))
-    case _ => log.warning(Json.obj(
-      "type" -> "monitor",
-      "name" -> "dead-letter",
-      "message" -> "Dead letter monitor don't support other messages"
-    ))
+    case dead: DeadLetter => log.withContext {
+      mdc(log).putMDC("sender", dead.sender.toString())
+      log.putMDC("recipent", dead.recipient.toString())
+      log.error(dead.message.toString)
+    }
+    case _ => log.withContext {
+      mdc(log).warning("Dead letter monitor don't support other messages")
+    }
   }
 
 }

@@ -3,7 +3,7 @@
   <!-- Stdout appender -->
   <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-      <layout class="io.techcode.logback.contrib.JsonLayout">
+      <layout class="io.techcode.streamy.util.logging.JsonLayout">
         <type>application</type>
       </layout>
     </encoder>

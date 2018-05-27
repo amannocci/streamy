@@ -26,11 +26,12 @@ package io.techcode.streamy.plugin
 import java.net.{URL, URLClassLoader}
 
 import akka.actor.{Actor, ActorLogging, Props}
+import akka.event.LoggingAdapter
 import akka.pattern.gracefulStop
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
 import io.techcode.streamy.event._
-import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.logging._
 import pureconfig._
 
 import scala.collection.mutable
@@ -53,6 +54,16 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
   // Configuration
   private val lifecycleConfig = loadConfigOrThrow[LifecycleConfig](conf, "lifecycle")
   private val folderConfig = loadConfigOrThrow[FolderConfig](conf, "folder")
+
+  /**
+    * Common mdc mapping.
+    *
+    * @param log implicit logging.
+    */
+  private def mdc(log: LoggingAdapter): LoggingAdapter = {
+    log.putMDC("type", "application")
+    log
+  }
 
   /**
     * Start all plugins.
@@ -98,10 +109,9 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
           ref = pluginRef
         ))
       } catch {
-        case ex: Exception => log.error(Json.obj(
-          "message" -> s"Can't load '${pluginDescription.name}' plugin",
-          "type" -> "lifecycle"
-        ), ex)
+        case ex: Exception => log.withContext {
+          mdc(log).error(ex, "Can't load '{}' plugin", pluginDescription.name)
+        }
       }
     })
   }
@@ -119,11 +129,9 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
       // All plugins are stopped
     } catch {
       // the actor wasn't stopped within 5 seconds
-      case ex: akka.pattern.AskTimeoutException =>
-        log.error(Json.obj(
-          "message" -> "Failed to graceful shutdown",
-          "type" -> "lifecycle"
-        ), ex)
+      case ex: akka.pattern.AskTimeoutException => log.withContext {
+        mdc(log).error(ex, "Failed to graceful shutdown")
+      }
     }
 
     // Unregister listener
@@ -168,10 +176,9 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
         val description = loadConfigOrThrow[PluginDescription](conf).copy(file = Some(jar.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
-        case _: ConfigException.Missing => log.error(Json.obj(
-          "message" -> s"Can't load '${jar.name}' plugin",
-          "type" -> "lifecycle"
-        ))
+        case _: ConfigException.Missing => log.withContext {
+          mdc(log).error("Can't load '{}' plugin", jar.name)
+        }
       }
     }
     pluginDescriptions
@@ -192,10 +199,9 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
           if (pluginDescriptions.contains(dependency)) {
             true
           } else {
-            log.error(Json.obj(
-              "message" -> s"Can't load '${pluginDescription.name}' plugin because of unknown dependency '$dependency'",
-              "type" -> "lifecycle"
-            ))
+            log.withContext {
+              mdc(log).error("Can't load '{}' plugin because of unknown dependency '{}'", pluginDescription.name, dependency)
+            }
             false
           }
         })
@@ -214,11 +220,9 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
       val container = plugins.get(evt.name)
       if (container.isDefined) {
         plugins += (evt.name -> container.get.copy(ref = sender(), state = evt.toState))
-        log.info(Json.obj(
-          "message" -> s"Plugin ${evt.name} is ${evt.toString.toLowerCase()}",
-          "type" -> "plugin",
-          "plugin" -> evt.name
-        ))
+        log.withContext {
+          mdc(log).info("Plugin {} is {}", evt.name, evt.toString.toLowerCase())
+        }
       }
   }
 
