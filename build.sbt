@@ -118,8 +118,8 @@ lazy val testkit = project
 lazy val root = project
   .in(file("."))
   .settings(
-    publish := (),
-    publishLocal := ()
+    publish := {},
+    publishLocal := {}
   )
   .aggregate(
     core,
