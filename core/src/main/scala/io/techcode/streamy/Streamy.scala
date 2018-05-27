@@ -24,7 +24,7 @@
 package io.techcode.streamy
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.event.Logging
+import akka.event.{Logging, LoggingAdapter}
 import io.techcode.streamy.plugin.PluginManager
 import io.techcode.streamy.util.logging._
 import io.techcode.streamy.util.monitor.DeadLetterMonitor
@@ -45,28 +45,24 @@ object Streamy extends App {
 
   // Materializer system
   log.withContext {
-    log.putMDC("type", "lifecyle")
-    log.info("Initializing actor system")
+    mdc(log).info("Initializing actor system")
   }
-
+  akka.event.Logging.Error
   // Register all monitor
   log.withContext {
-    log.putMDC("type", "lifecyle")
-    log.info("Starting all monitors")
+    mdc(log).info("Starting all monitors")
   }
   val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor], "monitor-dead-letter")
 
   // Loading configuration
   log.withContext {
-    log.putMDC("type", "lifecyle")
-    log.info("Loading configuration with fallback")
+    mdc(log).info("Loading configuration with fallback")
   }
   val conf = system.settings.config.resolve()
 
   // Attempt to deploy plugins
   log.withContext {
-    log.putMDC("type", "lifecyle")
-    log.info("Starting all plugins")
+    mdc(log).info("Starting all plugins")
   }
   val pluginManager: ActorRef = system.actorOf(Props(classOf[PluginManager], conf.getConfig("streamy")))
 
@@ -80,20 +76,28 @@ object Streamy extends App {
   }
 
   /**
+    * Common mdc mapping.
+    *
+    * @param log implicit logging.
+    */
+  private def mdc(log: LoggingAdapter): LoggingAdapter = {
+    log.putMDC("type", "lifecyle")
+    log
+  }
+
+  /**
     * Shutdown streamy system.
     */
   def shutdown(): Unit = {
     // Stop all monitors
     log.withContext {
-      log.putMDC("type", "lifecyle")
-      log.info("Stopping all monitors")
+      mdc(log).info("Stopping all monitors")
     }
     system.stop(deadLetterMonitor)
 
     // Stop all plugins
     log.withContext {
-      log.putMDC("type", "lifecyle")
-      log.info("Stopping all plugins")
+      mdc(log).info("Stopping all plugins")
     }
 
     // Stop systems
