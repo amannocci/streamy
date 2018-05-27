@@ -1,2 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration />
+<configuration>
+    <!-- Stdout appender -->
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="io.techcode.streamy.util.logging.JsonLayout">
+                <timestamp>timestamp</timestamp>
+                <level>level</level>
+                <thread>thread</thread>
+                <stacktrace>stacktrace</stacktrace>
+                <message>message</message>
+            </layout>
+        </encoder>
+    </appender>
+
+    <!-- Root -->
+    <root level="info">
+        <appender-ref ref="stdout"/>
+    </root>
+</configuration>

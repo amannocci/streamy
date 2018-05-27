@@ -25,33 +25,41 @@ package io.techcode.streamy.util.logging
 
 import java.time.Instant
 
+import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.{ILoggingEvent, IThrowableProxy, ThrowableProxyUtil}
 import ch.qos.logback.core.{CoreConstants, LayoutBase}
-import io.techcode.streamy.util.json.{JsObjectBuilder, Json}
+import io.techcode.streamy.util.json._
 
 /**
   * Json layout implementation.
   */
 class JsonLayout extends LayoutBase[ILoggingEvent] {
 
-  private var `type`: Option[String] = None
+  private var timestamp: String = "timestamp"
+  private var level: String = "level"
+  private var thread: String = "thread"
+  private var stacktrace: String = "stacktrace"
+  private var message: String = "message"
 
-  def setType(`type`: String): Unit = {
-    this.`type` = Some(`type`)
-  }
+  def setTimestamp(timestamp: String): Unit = this.timestamp = timestamp
+
+  def setLevel(level: String): Unit = this.level = level
+
+  def setThread(thread: String): Unit = this.thread = thread
+
+  def setStacktrace(stacktrace: String): Unit = this.stacktrace = stacktrace
+
+  def setMessage(message: String): Unit = this.message = message
 
   override def doLayout(event: ILoggingEvent): String = {
     val log: JsObjectBuilder = Json.objectBuilder()
-    `type`.foreach(log.put(JsonLayout.LogType, _))
-    log.put(JsonLayout.LogLevel, event.getLevel.toString)
-    log.put(JsonLayout.LogThread, event.getThreadName)
-    log.put(JsonLayout.LogTimestamp, Instant.ofEpochMilli(event.getTimeStamp).toString)
-    event.getMDCPropertyMap.forEach { (key: String, value: String) =>
-      log.put(key, value)
-    }
-    log.put(JsonLayout.LogMessage, event.getFormattedMessage)
+    event.getMDCPropertyMap.forEach((key: String, value: String) => log.put(key, value))
+    log.put(level, JsonLayout.levelToString(event.getLevel))
+    log.put(thread, event.getThreadName)
+    log.put(timestamp, Instant.ofEpochMilli(event.getTimeStamp).toString)
+    log.put(message, event.getFormattedMessage)
     val th: IThrowableProxy = event.getThrowableProxy
-    if (th != null) log.put(JsonLayout.LogStacktrace, ThrowableProxyUtil.asString(th))
+    if (th != null) log.put(stacktrace, ThrowableProxyUtil.asString(th))
     log.result().toString + CoreConstants.LINE_SEPARATOR
   }
 
@@ -59,12 +67,28 @@ class JsonLayout extends LayoutBase[ILoggingEvent] {
 
 object JsonLayout {
 
-  // Some constant
-  val LogStacktrace = "stacktrace"
-  val LogLevel = "level"
-  val LogThread = "thread"
-  val LogTimestamp = "timestamp"
-  val LogType = "type"
-  val LogMessage = "message"
+  /**
+    * All level convertions.
+    */
+  private object JsLevel {
+    val Debug = JsString("debug")
+    val Trace = JsString("trace")
+    val Info = JsString("info")
+    val Warning = JsString("warning")
+    val Error = JsString("error")
+  }
+
+  /**
+    * Convertion from level to string representation.
+    *
+    * @param level level to convert.
+    */
+  def levelToString(level: Level): Json = level match {
+    case Level.DEBUG => JsLevel.Debug
+    case Level.TRACE => JsLevel.Trace
+    case Level.INFO => JsLevel.Info
+    case Level.WARN => JsLevel.Warning
+    case Level.ERROR => JsLevel.Error
+  }
 
 }

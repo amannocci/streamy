@@ -23,8 +23,7 @@
  */
 package io.techcode.streamy.util
 
-import akka.event.LoggingAdapter
-import org.slf4j.MDC
+import akka.event.DiagnosticLoggingAdapter
 
 package object logging {
 
@@ -33,7 +32,7 @@ package object logging {
     *
     * @param underlying logging adapter.
     */
-  implicit class RichLogging(val underlying: LoggingAdapter) extends AnyVal {
+  implicit class RichLogging(val underlying: DiagnosticLoggingAdapter) extends AnyVal {
 
     /**
       * Create a new context cleaning mdc at the end.
@@ -43,16 +42,8 @@ package object logging {
     def withContext(inner: => Unit): Unit = try {
       inner
     } finally {
-      MDC.clear()
+      underlying.clearMDC()
     }
-
-    /**
-      * Clean shortcut to fill mdc.
-      *
-      * @param key   key element.
-      * @param value value of element.
-      */
-    @inline def putMDC(key: String, value: String): Unit = MDC.put(key, value)
 
   }
 

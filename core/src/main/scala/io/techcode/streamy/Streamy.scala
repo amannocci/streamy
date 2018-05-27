@@ -23,10 +23,8 @@
  */
 package io.techcode.streamy
 
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.event.{Logging, LoggingAdapter}
+import akka.actor.{ActorSystem, Props}
 import io.techcode.streamy.plugin.PluginManager
-import io.techcode.streamy.util.logging._
 import io.techcode.streamy.util.monitor.DeadLetterMonitor
 
 /**
@@ -40,31 +38,19 @@ object Streamy extends App {
   // Actor system
   implicit val system: ActorSystem = ActorSystem(ApplicationName)
 
-  // Logger
-  val log = Logging(system, getClass)
-
   // Materializer system
-  log.withContext {
-    mdc(log).info("Initializing actor system")
-  }
-  akka.event.Logging.Error
+  system.log.info("Initializing actor system")
+
   // Register all monitor
-  log.withContext {
-    mdc(log).info("Starting all monitors")
-  }
+  system.log.info("Starting all monitors")
   val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor], "monitor-dead-letter")
 
   // Loading configuration
-  log.withContext {
-    mdc(log).info("Loading configuration with fallback")
-  }
+  system.log.info("Loading configuration with fallback")
   val conf = system.settings.config.resolve()
 
   // Attempt to deploy plugins
-  log.withContext {
-    mdc(log).info("Starting all plugins")
-  }
-  val pluginManager: ActorRef = system.actorOf(Props(classOf[PluginManager], conf.getConfig("streamy")))
+  system.actorOf(Props(classOf[PluginManager], conf.getConfig("streamy")))
 
   // Handle dry run
   if (args.length > 0 && args(0).equals("--dry-run")) {
@@ -76,29 +62,12 @@ object Streamy extends App {
   }
 
   /**
-    * Common mdc mapping.
-    *
-    * @param log implicit logging.
-    */
-  private def mdc(log: LoggingAdapter): LoggingAdapter = {
-    log.putMDC("type", "lifecyle")
-    log
-  }
-
-  /**
     * Shutdown streamy system.
     */
   def shutdown(): Unit = {
     // Stop all monitors
-    log.withContext {
-      mdc(log).info("Stopping all monitors")
-    }
+    system.log.info("Stopping all monitors")
     system.stop(deadLetterMonitor)
-
-    // Stop all plugins
-    log.withContext {
-      mdc(log).info("Stopping all plugins")
-    }
 
     // Stop systems
     system.terminate()

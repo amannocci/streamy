@@ -25,8 +25,7 @@ package io.techcode.streamy.plugin
 
 import java.net.{URL, URLClassLoader}
 
-import akka.actor.{Actor, ActorLogging, Props}
-import akka.event.LoggingAdapter
+import akka.actor.{Actor, DiagnosticActorLogging, Props}
 import akka.pattern.gracefulStop
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
@@ -43,7 +42,7 @@ import scala.reflect.io.{Directory, File, Path}
 /**
   * The plugin manager that handle all plugins stuff.
   */
-class PluginManager(conf: Config) extends Actor with ActorLogging with ActorListener {
+class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with ActorListener {
 
   // Actor refs
   private var plugins: Map[String, PluginContainer] = Map.empty
@@ -55,20 +54,17 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
   private val lifecycleConfig = loadConfigOrThrow[LifecycleConfig](conf, "lifecycle")
   private val folderConfig = loadConfigOrThrow[FolderConfig](conf, "folder")
 
-  /**
-    * Common mdc mapping.
-    *
-    * @param log implicit logging.
-    */
-  private def mdc(log: LoggingAdapter): LoggingAdapter = {
-    log.putMDC("type", "application")
-    log
-  }
+  // Common mdc
+  private val commonMdc = Map("type" -> "application")
 
   /**
     * Start all plugins.
     */
   override def preStart(): Unit = {
+    log.withContext {
+      log.mdc(commonMdc)
+      log.info("Starting all plugins")
+    }
     eventStream.subscribe(self, classOf[PluginEvent.All])
 
     // Retrieve all plugin description
@@ -97,10 +93,7 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
         )
 
         // Start plugin
-        val pluginRef = context.actorOf(Props(
-          typed,
-          pluginData
-        ))
+        val pluginRef = context.actorOf(Props(typed, pluginData))
 
         // Add to map
         plugins += (pluginDescription.name -> PluginContainer(
@@ -110,7 +103,8 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
         ))
       } catch {
         case ex: Exception => log.withContext {
-          mdc(log).error(ex, "Can't load '{}' plugin", pluginDescription.name)
+          log.mdc(commonMdc)
+          log.error(ex, "Can't load '{}' plugin", pluginDescription.name)
         }
       }
     })
@@ -120,6 +114,10 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
     * Stop all plugins.
     */
   override def postStop(): Unit = {
+    log.withContext {
+      log.mdc(commonMdc)
+      log.info("Stopping all plugins")
+    }
     try {
       val signal = Future.sequence(context.children.map { ref =>
         // Launch graceful stop
@@ -130,7 +128,8 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
     } catch {
       // the actor wasn't stopped within 5 seconds
       case ex: akka.pattern.AskTimeoutException => log.withContext {
-        mdc(log).error(ex, "Failed to graceful shutdown")
+        log.mdc(commonMdc)
+        log.error(ex, "Failed to graceful shutdown")
       }
     }
 
@@ -177,7 +176,8 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
         pluginDescriptions += (description.name -> description)
       } catch {
         case _: ConfigException.Missing => log.withContext {
-          mdc(log).error("Can't load '{}' plugin", jar.name)
+          log.mdc(commonMdc)
+          log.error("Can't load '{}' plugin", jar.name)
         }
       }
     }
@@ -200,7 +200,8 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
             true
           } else {
             log.withContext {
-              mdc(log).error("Can't load '{}' plugin because of unknown dependency '{}'", pluginDescription.name, dependency)
+              log.mdc(commonMdc)
+              log.error("Can't load '{}' plugin because of unknown dependency '{}'", pluginDescription.name, dependency)
             }
             false
           }
@@ -221,7 +222,8 @@ class PluginManager(conf: Config) extends Actor with ActorLogging with ActorList
       if (container.isDefined) {
         plugins += (evt.name -> container.get.copy(ref = sender(), state = evt.toState))
         log.withContext {
-          mdc(log).info("Plugin {} is {}", evt.name, evt.toString.toLowerCase())
+          log.mdc(commonMdc)
+          log.info("Plugin {} is {}", evt.name, evt.toString.toLowerCase())
         }
       }
   }
