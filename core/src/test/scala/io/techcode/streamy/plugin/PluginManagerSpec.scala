@@ -26,13 +26,12 @@ package io.techcode.streamy.plugin
 import akka.actor.{ActorRef, PoisonPill, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.StreamyTestSystem
-import org.scalatest.OneInstancePerTest
 import org.scalatest.mockito.MockitoSugar
 
 /**
   * PluginManager spec.
   */
-class PluginManagerSpec extends StreamyTestSystem with MockitoSugar with OneInstancePerTest {
+class PluginManagerSpec extends StreamyTestSystem with MockitoSugar {
 
   val conf: Config = ConfigFactory.load().getConfig("streamy")
 
