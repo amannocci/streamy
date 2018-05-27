@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.date.component
 
+import java.time.format.DateTimeFormatter
+
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -58,20 +60,20 @@ object DateTransformerBench {
 
     val Idempotent: DateTransformer = new DateTransformer(DateTransformer.Config(
       source = Root / "date",
-      inputPattern = DateTransformer.Iso8601,
-      outputPattern = DateTransformer.Iso8601
+      inputFormatter = DateTransformer.Iso8601,
+      outputFormatter = DateTransformer.Iso8601
     ))
 
     val FromIsoToCustom: DateTransformer = new DateTransformer(DateTransformer.Config(
       source = Root / "date",
-      inputPattern = DateTransformer.Iso8601,
-      outputPattern = "EEE MMM dd HH:mm:ss yyyy"
+      inputFormatter = DateTransformer.Iso8601,
+      outputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy")
     ))
 
     val FromCustomToIso: DateTransformer = new DateTransformer(DateTransformer.Config(
       source = Root / "date",
-      inputPattern = "EEE MMM dd HH:mm:ss yyyy",
-      outputPattern = DateTransformer.Iso8601
+      inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy"),
+      outputFormatter = DateTransformer.Iso8601
     ))
 
   }
