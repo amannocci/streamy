@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.util
 
-import com.google.common.base.Throwables
 import io.techcode.streamy.util.json._
 
 import scala.util.control.NoStackTrace
@@ -35,22 +34,5 @@ import scala.util.control.NoStackTrace
   * @param state current pkt state.
   * @param ex    parent exception raised.
   */
-class StreamException(msg: String, state: Option[Json] = None, ex: Option[Throwable] = None) extends RuntimeException(msg) with NoStackTrace {
-
-  /**
-    * Convert the exception to a json object.
-    *
-    * @return json object.
-    */
-  def toJson: Json = {
-    var result: JsObject = Json.obj("message" -> msg)
-    if (state.isDefined) {
-      result = result.put("state", state.get)
-    }
-    if (ex.isDefined) {
-      result = result.put("exception", Throwables.getStackTraceAsString(ex.get))
-    }
-    result
-  }
-
-}
+class StreamException(val msg: String, val state: Option[Json] = None, val ex: Option[Throwable] = None)
+  extends RuntimeException(msg) with NoStackTrace

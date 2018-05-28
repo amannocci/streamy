@@ -37,38 +37,6 @@ class StreamExceptionSpec extends WordSpecLike with Matchers {
     "not have a stacktrace" in {
       generic.getStackTrace.length should equal(0)
     }
-
-    "be convert to json" in {
-      generic.toJson should equal(Json.obj("message" -> "foobar"))
-    }
-
-    "be convert to json with state" in {
-      new StreamException("foobar", Some(Json.obj("details" -> "test"))).toJson should equal(Json.obj(
-        "message" -> "foobar",
-        "state" -> Json.obj("details" -> "test")
-      ))
-    }
-
-    "be convert to json with string state" in {
-      new StreamException("foobar", Some("test")).toJson should equal(Json.obj(
-        "message" -> "foobar",
-        "state" -> "test"
-      ))
-    }
-
-    "be convert to json with exception" in {
-      new StreamException("foobar", ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
-        "message" -> "foobar", "exception" -> s"io.techcode.streamy.util.StreamException: test${scala.util.Properties.lineSeparator}"
-      ))
-    }
-
-    "be convert to json with exception and state" in {
-      new StreamException("foobar", state = Some(Json.obj("details" -> "test")), ex = Some(new StreamException("test"))).toJson should equal(Json.obj(
-        "message" -> "foobar",
-        "state" -> Json.obj("details" -> "test"),
-        "exception" -> s"io.techcode.streamy.util.StreamException: test${scala.util.Properties.lineSeparator}"
-      ))
-    }
   }
 
 }
