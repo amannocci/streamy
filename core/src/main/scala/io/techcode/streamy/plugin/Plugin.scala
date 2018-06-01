@@ -23,10 +23,11 @@
  */
 package io.techcode.streamy.plugin
 
-import akka.actor.{Actor, ActorLogging, ActorSystem}
+import akka.actor.{Actor, ActorSystem, DiagnosticActorLogging}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
 import io.techcode.streamy.event._
 import io.techcode.streamy.util.StreamException
+import io.techcode.streamy.util.logging._
 
 import scala.reflect.io.Directory
 
@@ -35,12 +36,25 @@ import scala.reflect.io.Directory
   */
 abstract class Plugin(
   val data: PluginData
-) extends Actor with ActorLogging {
+) extends Actor with DiagnosticActorLogging {
 
   val decider: Supervision.Decider = { ex =>
     ex match {
-      case streamEx: StreamException => log.error(streamEx.toJson)
-      case _ => log.error("An error occured", ex)
+      case streamEx: StreamException =>
+        log.withContext {
+          log.mdc(if (streamEx.state.isDefined) {
+            Map("state" -> streamEx.state.get.toString)
+          } else {
+            Map.empty[String, String]
+          })
+
+          if (streamEx.ex.isDefined) {
+            log.error(streamEx.ex.get, streamEx.msg)
+          } else {
+            log.error(streamEx.msg)
+          }
+        }
+      case _ => log.error(ex, "An error occured")
     }
     Supervision.Resume
   }
