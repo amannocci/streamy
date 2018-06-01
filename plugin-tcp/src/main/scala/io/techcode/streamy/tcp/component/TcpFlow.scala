@@ -26,10 +26,12 @@ package io.techcode.streamy.tcp.component
 import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
+import akka.io.Inet.SocketOption
 import akka.stream.scaladsl.{Flow, RestartFlow, Sink, Tcp}
 import akka.util.ByteString
 import io.techcode.streamy.tcp.event.TcpEvent
 
+import scala.collection.immutable
 import scala.concurrent.Future
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -46,7 +48,8 @@ object TcpFlow {
       port: Int,
       idleTimeout: Duration = Duration.Inf,
       connectTimeout: Duration = Duration.Inf,
-      reconnect: Option[ReconnectConfig] = None
+      reconnect: Option[ReconnectConfig] = None,
+      options: immutable.Traversable[SocketOption] = Nil
     )
 
     // Reconnect component configuration
@@ -72,7 +75,8 @@ object TcpFlow {
         Tcp().outgoingConnection(
           InetSocketAddress.createUnresolved(config.host, config.port),
           connectTimeout = config.connectTimeout,
-          idleTimeout = config.idleTimeout
+          idleTimeout = config.idleTimeout,
+          options = config.options
         ).alsoTo(Sink.onComplete { _ =>
           system.eventStream.publish(TcpEvent.Client.ConnectionClosed(config))
         }))
