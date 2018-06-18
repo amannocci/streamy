@@ -25,7 +25,6 @@ package io.techcode.streamy.util.monitor
 
 import akka.actor.{Actor, DeadLetter, DiagnosticActorLogging}
 import io.techcode.streamy.event.ActorListener
-import io.techcode.streamy.util.logging._
 
 /**
   * Dead letter monitoring.
@@ -43,17 +42,15 @@ class DeadLetterMonitor extends Actor with DiagnosticActorLogging with ActorList
   }
 
   override def receive: Receive = {
-    case dead: DeadLetter => log.withContext {
+    case dead: DeadLetter =>
       log.mdc(commonMdc ++ Map(
         "sender" -> dead.sender.toString(),
         "recipent" -> dead.recipient.toString()
       ))
       log.error(dead.message.toString)
-    }
-    case _ => log.withContext {
+    case _ =>
       log.mdc(commonMdc)
       log.warning("Dead letter monitor don't support other messages")
-    }
   }
 
 }

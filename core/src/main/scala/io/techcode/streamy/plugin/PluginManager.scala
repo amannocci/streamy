@@ -30,7 +30,6 @@ import akka.pattern.gracefulStop
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
 import io.techcode.streamy.event._
-import io.techcode.streamy.util.logging._
 import pureconfig._
 
 import scala.collection.mutable
@@ -61,10 +60,8 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
     * Start all plugins.
     */
   override def preStart(): Unit = {
-    log.withContext {
-      log.mdc(commonMdc)
-      log.info("Starting all plugins")
-    }
+    log.mdc(commonMdc)
+    log.info("Starting all plugins")
     eventStream.subscribe(self, classOf[PluginEvent.All])
 
     // Retrieve all plugin description
@@ -102,7 +99,7 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
           ref = pluginRef
         ))
       } catch {
-        case ex: Exception => log.withContext {
+        case ex: Exception => {
           log.mdc(commonMdc)
           log.error(ex, "Can't load '{}' plugin", pluginDescription.name)
         }
@@ -114,10 +111,8 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
     * Stop all plugins.
     */
   override def postStop(): Unit = {
-    log.withContext {
-      log.mdc(commonMdc)
-      log.info("Stopping all plugins")
-    }
+    log.mdc(commonMdc)
+    log.info("Stopping all plugins")
     try {
       val signal = Future.sequence(context.children.map { ref =>
         // Launch graceful stop
@@ -127,7 +122,7 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
       // All plugins are stopped
     } catch {
       // the actor wasn't stopped within 5 seconds
-      case ex: akka.pattern.AskTimeoutException => log.withContext {
+      case ex: akka.pattern.AskTimeoutException => {
         log.mdc(commonMdc)
         log.error(ex, "Failed to graceful shutdown")
       }
@@ -175,7 +170,7 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
         val description = loadConfigOrThrow[PluginDescription](conf).copy(file = Some(jar.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
-        case _: ConfigException.Missing => log.withContext {
+        case _: ConfigException.Missing => {
           log.mdc(commonMdc)
           log.error("Can't load '{}' plugin", jar.name)
         }
@@ -199,10 +194,9 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
           if (pluginDescriptions.contains(dependency)) {
             true
           } else {
-            log.withContext {
-              log.mdc(commonMdc)
-              log.error("Can't load '{}' plugin because of unknown dependency '{}'", pluginDescription.name, dependency)
-            }
+
+            log.mdc(commonMdc)
+            log.error("Can't load '{}' plugin because of unknown dependency '{}'", pluginDescription.name, dependency)
             false
           }
         })
@@ -221,10 +215,8 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
       val container = plugins.get(evt.name)
       if (container.isDefined) {
         plugins += (evt.name -> container.get.copy(ref = sender(), state = evt.toState))
-        log.withContext {
-          log.mdc(commonMdc)
-          log.info("Plugin {} is {}", evt.name, evt.toString.toLowerCase())
-        }
+        log.mdc(commonMdc)
+        log.info("Plugin {} is {}", evt.name, evt.toString.toLowerCase())
       }
   }
 
