@@ -24,4 +24,7 @@
     <root level="debug">
         <appender-ref ref="async-console"/>
     </root>
+
+    <!-- Shutdown Hook -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
 </configuration>

@@ -17,4 +17,7 @@
     <root level="info">
         <appender-ref ref="stdout"/>
     </root>
+
+    <!-- Shutdown Hook -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
 </configuration>
