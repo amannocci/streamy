@@ -28,15 +28,15 @@ import sbt._
 object Dependencies {
 
   // Dependencies version
-  val akkaVersion = "2.5.12"
+  val akkaVersion = "2.5.13"
   val logbackVersion = "1.2.3"
   val jacksonVersion = "2.9.5"
   val metricsJvmVersion = "4.0.2"
-  val guavaVersion = "24.1-jre"
+  val guavaVersion = "25.1-jre"
   val pureConfigVersion = "0.9.1"
-  val sttpVersion = "1.1.13"
+  val sttpVersion = "1.1.14"
   val scalaTestVersion = "3.0.5"
-  val mockitoVersion = "2.15.0"
+  val mockitoVersion = "2.19.0"
   val elasticsearchVersion = "6.2.2"
 
   val testSettings = Seq(
