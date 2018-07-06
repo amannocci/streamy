@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.tcp.event
 
+import java.net.InetSocketAddress
+
 import akka.actor.DeadLetterSuppression
 import io.techcode.streamy.tcp.component.TcpFlow
 
@@ -33,6 +35,26 @@ object TcpEvent {
 
   // Marker interface for tcp events
   sealed trait All extends DeadLetterSuppression
+
+  object Server {
+
+    /**
+      * This event is fire when a tcp server connection is created.
+      *
+      * @param localAddress  Local IP Socket address.
+      * @param remoteAddress Remote IP Socket address.
+      */
+    case class ConnectionCreated(localAddress: InetSocketAddress, remoteAddress: InetSocketAddress) extends All
+
+    /**
+      * This event is fire when a tcp server connection is closed.
+      *
+      * @param localAddress  Local IP Socket address.
+      * @param remoteAddress Remote IP Socket address.
+      */
+    case class ConnectionClosed(localAddress: InetSocketAddress, remoteAddress: InetSocketAddress) extends All
+
+  }
 
   object Client {
 
