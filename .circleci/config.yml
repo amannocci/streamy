@@ -33,7 +33,7 @@ jobs:
         # fallback to using the latest cache if no exact match is found
         - v1-dependencies-
     # Install bats
-    - run: apt-get install -qq bats gawk
+    - run: sudo apt-get install -qq bats gawk
 
     # Run logic
     - run: bats core/src/test/bash
