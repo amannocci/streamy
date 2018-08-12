@@ -1,0 +1,53 @@
+version: 2
+jobs:
+  build:
+    docker:
+    - image: circleci/openjdk:8-jdk
+    - image: docker.elastic.co/elasticsearch/elasticsearch:5.6.8
+      environment:
+        xpack.security.enabled: false
+        xpack.monitoring.enabled: false
+        xpack.ml.enabled: false
+        xpack.graph.enabled: false
+        xpack.watcher.enabled: false
+        cluster.name: testing
+        bootstrap.memory_lock: false
+        discovery.type: single-node
+        ES_JAVA_OPTS: -Xms128m -Xmx128m
+    - image: appropriate/nc:latest
+      command: [nc, -lk, 500]
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+
+    steps:
+    # Download docker images
+    - checkout
+
+    # Download and cache dependencies
+    - restore_cache:
+        keys:
+        - v1-dependencies-{{ checksum "build.sbt" }}
+        # fallback to using the latest cache if no exact match is found
+        - v1-dependencies-
+    # Install bats
+    - run: apt-get install -qq bats gawk
+
+    # Run logic
+    - run: bats core/src/test/bash
+    - run: chmod -R +x scripts/*
+    - run: sbt -batch -mem 2048 clean
+    - run: sbt -batch -mem 2048 scalastyle
+    - run: sbt -batch -mem 2048 compile
+    - run: sbt -batch -mem 2048 ";coverage;test;coverageReport;coverageAggregate"
+
+    # Save download & cache dependencies
+    - save_cache:
+        paths:
+        - ~/.m2
+        key: v1-dependencies--{{ checksum "build.sbt" }}
+
+    post:
+    - bash <(curl -s https://codecov.io/bash)
