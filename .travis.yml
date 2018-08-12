@@ -26,11 +26,11 @@ before_install:
 # Run
 script:
   - bats core/src/test/bash
-  - chmod -R +x sbt sbt-dist/* scripts/*
-  - ./sbt -batch -mem 2048 clean
-  - ./sbt -batch -mem 2048 scalastyle
-  - ./sbt -batch -mem 2048 compile
-  - ./sbt -batch -mem 2048 ";coverage;test;coverageReport;coverageAggregate"
+  - chmod -R +x scripts/*
+  - sbt -batch -mem 2048 clean
+  - sbt -batch -mem 2048 scalastyle
+  - sbt -batch -mem 2048 compile
+  - sbt -batch -mem 2048 ";coverage;test;coverageReport;coverageAggregate"
 
 # Upload codecov
 after_success:
