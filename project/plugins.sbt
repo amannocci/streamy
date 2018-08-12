@@ -23,7 +23,7 @@
  */
 
 // Native Packager
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.3")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.6")
 
 // Scalastyle checker
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
