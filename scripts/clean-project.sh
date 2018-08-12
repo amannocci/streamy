@@ -7,13 +7,16 @@ source "${PWD}/scripts/common.sh"
 function clean {
   rm -rf "$1" 2> /dev/null
 }
+clean "${BASE_PROJECT}/bench/target"
 clean "${BASE_PROJECT}/core/target"
+clean "${BASE_PROJECT}/plugin-date/target"
+clean "${BASE_PROJECT}/plugin-elasticsearch/target"
 clean "${BASE_PROJECT}/plugin-fingerprint/target"
+clean "${BASE_PROJECT}/plugin-graphite/target"
 clean "${BASE_PROJECT}/plugin-json/target"
 clean "${BASE_PROJECT}/plugin-metric/target"
 clean "${BASE_PROJECT}/plugin-syslog/target"
-clean "${BASE_PROJECT}/plugin-graphite/target"
-clean "${BASE_PROJECT}/plugin-elasticsearch/target"
+clean "${BASE_PROJECT}/plugin-tcp/target"
 clean "${BASE_PROJECT}/project/target"
 clean "${BASE_PROJECT}/project/project"
 

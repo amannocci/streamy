@@ -6,11 +6,6 @@ source "${PWD}/scripts/common.sh"
 # Constants
 SCRIPT_DIR=${BASE_PROJECT}/scripts
 
-# Changing permission
-info "Make sbt executable"
-chmod +x "${BASE_PROJECT}/sbt"
-chmod +x -R "${BASE_PROJECT}/sbt-dist"
-
 info "Make scripts executable"
 chmod +x -R "${SCRIPT_DIR}"
 

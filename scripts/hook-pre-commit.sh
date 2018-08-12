@@ -20,8 +20,8 @@ fi
 try bats -t core/src/test/bash
 
 # Validate scala project
-try ./sbt -batch -mem 2048 clean
-try ./sbt -batch -mem 2048 scalastyle
-try ./sbt -batch -mem 2048 compile
-try ./sbt -batch -mem 2048 test
+try sbt -batch -mem 2048 clean
+try sbt -batch -mem 2048 scalastyle
+try sbt -batch -mem 2048 compile
+try sbt -batch -mem 2048 test
 info "The project is valid"
