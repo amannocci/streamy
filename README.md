@@ -1,5 +1,5 @@
 # Streamy
-[![Build Status](https://travis-ci.org/amannocci/streamy.svg?branch=master)](https://travis-ci.org/amannocci/streamy)
+[![CircleCI](https://circleci.com/gh/amannocci/streamy/tree/master.svg?style=svg)](https://circleci.com/gh/amannocci/streamy/tree/master)
 [![codecov](https://codecov.io/gh/amannocci/streamy/branch/master/graph/badge.svg)](https://codecov.io/gh/amannocci/streamy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
