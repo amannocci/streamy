@@ -28,7 +28,7 @@ import sbt._
 object Dependencies {
 
   // Dependencies version
-  val akkaVersion = "2.5.13"
+  val akkaVersion = "2.5.14"
   val logbackVersion = "1.2.3"
   val jacksonVersion = "2.9.5"
   val metricsJvmVersion = "4.0.2"
