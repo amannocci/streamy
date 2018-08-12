@@ -15,7 +15,7 @@ jobs:
         discovery.type: single-node
         ES_JAVA_OPTS: -Xms128m -Xmx128m
     - image: appropriate/nc:latest
-      command: [nc, -lk, 500]
+      command: ['nc', '-lk', '500']
     working_directory: ~/repo
 
     environment:
@@ -43,11 +43,11 @@ jobs:
     - run: sbt -batch -mem 2048 compile
     - run: sbt -batch -mem 2048 ";coverage;test;coverageReport;coverageAggregate"
 
+    # Send report to codecov
+    - run: bash <(curl -s https://codecov.io/bash)
+
     # Save download & cache dependencies
     - save_cache:
         paths:
         - ~/.m2
         key: v1-dependencies--{{ checksum "build.sbt" }}
-
-    post:
-    - bash <(curl -s https://codecov.io/bash)
