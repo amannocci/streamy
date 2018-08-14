@@ -742,6 +742,13 @@ case class JsObject private[json](
 ) extends Json {
 
   /**
+    * Applies a function f to all elements of this json object.
+    *
+    * @param f the function that is applied.
+    */
+  def foreach(f: ((String, Json)) => Unit): Unit = underlying.foreach[Unit](f)
+
+  /**
     * Return all fields as a seq.
     *
     * @return seq that contains all fields.

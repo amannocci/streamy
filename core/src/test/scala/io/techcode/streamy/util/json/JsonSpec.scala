@@ -88,6 +88,12 @@ class JsonSpec extends WordSpecLike with Matchers {
       builder.get("foobar") should equal(Some(JsString("test")))
     }
 
+    "be iterate using a foreach" in {
+      var founded = false
+      Json.obj("test" -> "test").foreach(el => founded |= el._2.equals(JsString("test")))
+      founded should equal(true)
+    }
+
     "return field set" in {
       Json.obj("test" -> "test").fieldSet should equal(Set("test" -> JsString("test")))
     }
