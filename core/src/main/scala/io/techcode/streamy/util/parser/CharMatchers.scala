@@ -69,7 +69,7 @@ object CharMatchers {
   // [!-~]
   val PrintUsAscii: CharMatcher = CharMatcher.inRange('!', '~').precomputed()
 
-  // Rfc2045
-  val Base64: CharMatcher = CharMatcher.anyOf("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
+  // Rfc4648
+  val Base64: CharMatcher = UpperAlpha.or(LowerAlpha).or(Digit).or(CharMatcher.anyOf("+/=")).precomputed()
 
 }
