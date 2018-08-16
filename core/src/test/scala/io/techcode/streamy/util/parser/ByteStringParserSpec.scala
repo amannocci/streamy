@@ -24,367 +24,375 @@
 package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
-import io.techcode.streamy.util.{IntBinder, StringBinder}
 import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.{IntBinder, NoneBinder, StringBinder}
 import org.scalatest._
 
 /**
   * ByteString parser spec.
   */
+// scalastyle:off
 class ByteStringParserSpec extends WordSpecLike with Matchers {
 
   "ByteString parser" should {
-    "compute correctly error message for empty input" in {
-      val parser = new ByteStringParser(ByteString("")) {
-        override def process(): Boolean = true
-      }
-      parser.error() should equal("Unexpected empty input")
-    }
-
     "compute correctly error message for input" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = true
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = false
       }
-      parser.error() should equal("Unexpected 'f' at index 0")
+      parser.parse(ByteString("foobar")) should equal(Left(ParseException("Unexpected input at index 0")))
     }
 
     "return current character based on cursor" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = true
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
+          current() should equal('f')
+          true
+        }
       }
-      parser.current() should equal('f')
+      parser.parse(ByteString("foobar"))
     }
 
     "return bytestring partition" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           mark()
           str("foo")
+          partition().asString() should equal("foo")
+          true
         }
       }
-      parser.process()
-      parser.partition().asString() should equal("foo")
+      parser.parse(ByteString("foobar"))
     }
 
     "return current cursor position" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = true
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = true
       }
       parser.cursor() should equal(0)
     }
 
     "detect end of input" in {
-      val parser = new ByteStringParser(ByteString("")) {
-        override def process(): Boolean = true
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = eoi()
       }
-      parser.eoi() should equal(true)
+      parser.parse(ByteString("")).isRight should equal(true)
     }
 
     "capture properly a value if present" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
-          capture(Some(StringBinder("test"))) {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
+          capture(StringBinder("test")) {
             str("foo")
           }
         }
       }
-      parser.parse() should equal(Some(Json.obj("test" -> "foo")))
+      parser.parse(ByteString("foobar")) should equal(Right(Json.obj("test" -> "foo")))
     }
 
     "not capture a value if undefined" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
-          capture(None) {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
+          capture(NoneBinder) {
             str("foo")
           }
         }
       }
-      parser.parse() should equal(Some(Json.obj()))
+      parser.parse(ByteString("foobar")) should equal(Right(Json.obj()))
     }
 
     "not capture properly an optional value if present" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
-          capture(Some(IntBinder("foobar")), optional = true) {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
+          capture(IntBinder("foobar"), optional = true) {
             zeroOrMore(str("1"))
           }
         }
       }
-      parser.parse() should equal(Some(Json.obj()))
+      parser.parse(ByteString("foobar")) should equal(Right(Json.obj()))
     }
 
     "not capture properly a value if absent" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
-          capture(Some(IntBinder("foobar"))) {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
+          capture(IntBinder("foobar")) {
             zeroOrMore(str("1"))
           }
         }
       }
-      parser.parse() should equal(None)
+      parser.parse(ByteString("foobar")).toOption should equal(None)
     }
 
     "process a character if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = ch('f')
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = ch('f')
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process a character if impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = ch('c')
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = ch('c')
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
     "process a characters sequence if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = str("foo")
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = str("foo")
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process a characters sequence if impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = str("foa")
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = str("foa")
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("foobar")).isRight should equal(false)
+    }
+
+    "process an utf-8 characters sequence if possible" in {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = utf8 {
+          str("ABCDEFGHIJKLMNOPQRSTUVWXYZ /0123456789abcdefghijklmnopqrstuvwxyz £©µÀÆÖÞßéöÿ–—‘“”„†•…‰™œŠŸž€ ΑΒΓΔΩαβγδω АБВГДабвгд∀∂∈ℝ∧∪≡∞ ↑↗↨↻⇣ ┐┼╔╘░►☺♀ ﬁ�⑀₂ἠḂӥẄɐː⍎אԱა")
+        }
+      }
+      parser.parse(ByteString("ABCDEFGHIJKLMNOPQRSTUVWXYZ /0123456789abcdefghijklmnopqrstuvwxyz £©µÀÆÖÞßéöÿ–—‘“”„†•…‰™œŠŸž€ ΑΒΓΔΩαβγδω АБВГДабвгд∀∂∈ℝ∧∪≡∞ ↑↗↨↻⇣ ┐┼╔╘░►☺♀ ﬁ�⑀₂ἠḂӥẄɐː⍎אԱა")).isRight should equal(true)
     }
 
     "process a number of time a char matcher if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           times(1, CharMatchers.All)
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("f")).isRight should equal(true)
     }
 
     "process a number of time a char matcher if impossible" in {
-      val parser = new ByteStringParser(ByteString("1foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           times(2, CharMatchers.Digit)
         }
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("1foobar")).isRight should equal(false)
     }
 
     "process a number of time an inner rule if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           times(1) {
             str("foo")
           }
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foo")).isRight should equal(true)
     }
 
     "process a number of time an inner rule if impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           times(2) {
             str("foo")
           }
         }
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("foobar")).isRight should equal(false)
     }
     "process a minimum number of time a char matcher if possible" in {
-      val parser = new ByteStringParser(ByteString("f1oobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           times(1, 2, CharMatchers.LowerAlpha)
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("f1oobar")).isRight should equal(true)
     }
 
     "process a maximum number of time a char matcher if possible" in {
-      val parser = new ByteStringParser(ByteString("fo1obar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           times(1, 2, CharMatchers.LowerAlpha)
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("fo1obar")).isRight should equal(true)
     }
 
     "process a number of time in a range a char matcher if impossible" in {
-      val parser = new ByteStringParser(ByteString("1foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           times(1, 2, CharMatchers.LowerAlpha)
         }
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("1foobar")).isRight should equal(false)
     }
 
     "process any character" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           any()
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process zero or more character using a char matcher if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           zeroOrMore(CharMatchers.LowerAlpha)
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process zero or more character using a char matcher if impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           zeroOrMore(CharMatchers.Digit)
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process zero or more character using a inner rule if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           zeroOrMore {
             str("foo")
           }
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process zero or more character using an inner rule if impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           zeroOrMore {
             str("123")
           }
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process one or more character using a char matcher if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           oneOrMore(CharMatchers.LowerAlpha)
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process one or more character using a char matcher if impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           oneOrMore(CharMatchers.Digit)
         }
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
     "process one or more character using an inner rule if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           oneOrMore {
             str("foo")
           }
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process one or more character using an inner rule if impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           oneOrMore {
             str("123")
           }
         }
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
     "process an optional inner rule if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           optional {
             str("foo")
           }
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process an optional inner rule if impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
           optional {
             str("123")
           }
         }
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process correctly first inner rule if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = or(
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = or(
           str("foo"),
           str("123")
         )
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process correctly second inner rule if possible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = or(
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = or(
           str("123"),
           str("foo")
         )
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process correctly when or rule is impossible" in {
-      val parser = new ByteStringParser(ByteString("foobar")) {
-        override def process(): Boolean = or(
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = or(
           str("123"),
           str("123")
         )
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
     "process correctly when using sub parser when possible" in {
-      val parser: ByteStringParser = new ByteStringParser(ByteString("foobar")) {
+      val parser: ByteStringParser = new ByteStringParser() {
         val subParsing: ByteStringParser {
-          def process(): Boolean
-        } = new ByteStringParser(bytes) {
-          override def process(): Boolean = str("foo")
+          def root(): Boolean
+        } = new ByteStringParser {
+          override def root(): Boolean = str("foo")
         }
 
-        override def process(): Boolean = subParser[ByteStringParser](subParsing, _.process()) && str("bar")
+        override def root(): Boolean = subParser[ByteStringParser](subParsing, _.root()) && str("bar")
       }
-      parser.parse().isDefined should equal(true)
+      parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process correctly when using sub parser when impossible" in {
-      val parser: ByteStringParser = new ByteStringParser(ByteString("foobar")) {
+      val parser: ByteStringParser = new ByteStringParser() {
         val subParsing: ByteStringParser {
-          def process(): Boolean
-        } = new ByteStringParser(bytes) {
-          override def process(): Boolean = str("bar")
+          def root(): Boolean
+        } = new ByteStringParser {
+          override def root(): Boolean = str("bar")
         }
 
-        override def process(): Boolean = subParser[ByteStringParser](subParsing, _.process()) && str("bar")
+        override def root(): Boolean = subParser[ByteStringParser](subParsing, _.root()) && str("bar")
       }
-      parser.parse().isDefined should equal(false)
+      parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
   }
 
 }
+// scalastyle:on

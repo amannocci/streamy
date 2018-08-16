@@ -23,12 +23,36 @@
  */
 package io.techcode.streamy.util.printer
 
-import akka.util.ByteString
+import java.lang.{StringBuilder => JStringBuilder}
+
+import akka.util.{ByteString, ByteStringBuilder}
 import io.techcode.streamy.util.json.Json
 
 /**
   * Represent a [[ByteString]] printer that provide an efficient way to print [[Json]].
-  *
-  * @param pkt input to print.
   */
-abstract class ByteStringPrinter(pkt: Json) extends AbstractPrinter[ByteString](pkt)
+trait ByteStringPrinter extends Printer[ByteString]
+
+/**
+  * Represent a direct [[ByteString]] printer that provide an efficient way to print [[Json]].
+  */
+trait DirectByteStringPrinter extends ByteStringPrinter {
+
+  // Used to build bytestring directly
+  protected var builder: ByteStringBuilder = ByteString.newBuilder
+
+  override def cleanup(): Unit = builder = ByteString.newBuilder
+
+}
+
+/**
+  * Represent a derived [[ByteString]] printer based on [[JStringBuilder]] that provide an efficient way to print [[Json]].
+  */
+trait DerivedByteStringPrinter extends ByteStringPrinter {
+
+  // Used to build bytestring indirectly
+  protected var builder: JStringBuilder = new JStringBuilder(256)
+
+  override def cleanup(): Unit = builder.setLength(0)
+
+}

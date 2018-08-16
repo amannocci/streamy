@@ -30,10 +30,10 @@ import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.util.parser.{SyslogFraming, SyslogParser}
 import io.techcode.streamy.syslog.util.printer.SyslogPrinter
-import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.parser.ByteStringParser
 import io.techcode.streamy.util.printer.ByteStringPrinter
+import io.techcode.streamy.util.{Binder, NoneBinder}
 
 /**
   * Syslog transformer companion.
@@ -60,7 +60,7 @@ object SyslogTransformer {
     }
 
     framing.via(Flow.fromFunction(new SourceTransformer {
-      override def newParser(pkt: ByteString): ByteStringParser = SyslogParser.rfc5424(pkt, conf)
+      def newParser(): ByteStringParser = SyslogParser.rfc5424(conf)
     }))
   }
 
@@ -81,7 +81,7 @@ object SyslogTransformer {
     }
 
     framing.via(Flow.fromFunction(new SourceTransformer {
-      override def newParser(pkt: ByteString): ByteStringParser = SyslogParser.rfc3164(pkt, conf)
+      def newParser(): ByteStringParser = SyslogParser.rfc3164(conf)
     }))
   }
 
@@ -94,7 +94,7 @@ object SyslogTransformer {
     */
   def printer(conf: Rfc5424.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromFunction(new SinkTransformer {
-      override def newPrinter(pkt: Json): ByteStringPrinter = SyslogPrinter.rfc5424(pkt, conf)
+      def newPrinter(): ByteStringPrinter = SyslogPrinter.rfc5424(conf)
     })
 
   /**
@@ -106,7 +106,7 @@ object SyslogTransformer {
     */
   def printer(conf: Rfc3164.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromFunction(new SinkTransformer {
-      override def newPrinter(pkt: Json): ByteStringPrinter = SyslogPrinter.rfc3164(pkt, conf)
+      def newPrinter(): ByteStringPrinter = SyslogPrinter.rfc3164(conf)
     })
 
   // Common related stuff
@@ -132,15 +132,15 @@ object SyslogTransformer {
     }
 
     case class Binding(
-      facility: Option[Binder] = None,
-      severity: Option[Binder] = None,
-      timestamp: Option[Binder] = None,
-      hostname: Option[Binder] = None,
-      appName: Option[Binder] = None,
-      procId: Option[Binder] = None,
-      msgId: Option[Binder] = None,
-      structData: Option[Binder] = None,
-      message: Option[Binder] = None
+      facility: Binder = NoneBinder,
+      severity: Binder = NoneBinder,
+      timestamp: Binder = NoneBinder,
+      hostname: Binder = NoneBinder,
+      appName: Binder = NoneBinder,
+      procId: Binder = NoneBinder,
+      msgId: Binder = NoneBinder,
+      structData: Binder = NoneBinder,
+      message: Binder = NoneBinder
     )
 
     case class Config(
@@ -197,13 +197,13 @@ object SyslogTransformer {
     }
 
     case class Binding(
-      facility: Option[Binder] = None,
-      severity: Option[Binder] = None,
-      timestamp: Option[Binder] = None,
-      hostname: Option[Binder] = None,
-      appName: Option[Binder] = None,
-      procId: Option[Binder] = None,
-      message: Option[Binder] = None
+      facility: Binder = NoneBinder,
+      severity: Binder = NoneBinder,
+      timestamp: Binder = NoneBinder,
+      hostname: Binder = NoneBinder,
+      appName: Binder = NoneBinder,
+      procId: Binder = NoneBinder,
+      message: Binder = NoneBinder
     )
 
     sealed abstract class Mode(

@@ -29,9 +29,9 @@ import java.net.InetAddress
 import akka.util.ByteString
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.component.SyslogTransformer._
-import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter}
+import io.techcode.streamy.util.{Binder, SomeBinder}
 
 /**
   * Syslog printer companion.
@@ -61,28 +61,26 @@ object SyslogPrinter {
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
     * This printer is Rfc5424 compliant.
     *
-    * @param pkt  data to print.
     * @param conf printer configuration.
     * @return new syslog printer Rfc5424 compliant.
     */
-  def rfc5424(pkt: Json, conf: Rfc5424.Config): ByteStringPrinter = new Rfc5424Printer(pkt, conf)
+  def rfc5424(conf: Rfc5424.Config): ByteStringPrinter = new Rfc5424Printer(conf)
 
   /**
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
     * This printer is Rfc3164 compliant.
     *
-    * @param pkt  data to print.
     * @param conf printer configuration.
     * @return new syslog printer Rfc3164 compliant.
     */
-  def rfc3164(pkt: Json, conf: Rfc3164.Config): ByteStringPrinter = new Rfc3164Printer(pkt, conf)
+  def rfc3164(conf: Rfc3164.Config): ByteStringPrinter = new Rfc3164Printer(conf)
 
 }
 
 /**
   * Printer helpers containing various shortcut for printing.
   */
-private abstract class PrinterHelpers(pkt: Json) extends DerivedByteStringPrinter(pkt) {
+private abstract class PrinterHelpers extends DerivedByteStringPrinter {
 
   /**
     * Print data part to format syslog message.
@@ -90,9 +88,9 @@ private abstract class PrinterHelpers(pkt: Json) extends DerivedByteStringPrinte
     * @param conf         name of the field.
     * @param defaultValue default value.
     */
-  def computeVal(conf: Option[Binder], defaultValue: String)(hook: => Unit): Unit = {
+  def computeVal(conf: Binder, defaultValue: String)(hook: => Unit): Unit = {
     if (conf.isDefined) {
-      conf.get.bind(builder, pkt)(hook)
+      conf.bind(builder, data)(hook)
     } else {
       if (defaultValue.nonEmpty) {
         hook
@@ -107,19 +105,19 @@ private abstract class PrinterHelpers(pkt: Json) extends DerivedByteStringPrinte
     * @param facilityConf configuration for facility.
     * @param severityConf configuration for severity.
     */
-  def computePrival(facilityConf: Option[Binder], severityConf: Option[Binder]): Unit = {
+  def computePrival(facilityConf: Binder, severityConf: Binder): Unit = {
     var prival: Int = 0
-    if (severityConf.isDefined) {
-      val binder = severityConf.get
-      prival = pkt.evaluate(Root / binder.key).asInt.getOrElse(SyslogPrinter.Severity)
-    } else {
-      prival = SyslogPrinter.Severity
+    severityConf match {
+      case binder: SomeBinder =>
+        prival = data.evaluate(Root / binder.key).asInt.getOrElse(SyslogPrinter.Severity)
+      case _ =>
+        prival = SyslogPrinter.Severity
     }
-    if (facilityConf.isDefined) {
-      val binder = facilityConf.get
-      prival += pkt.evaluate(Root / binder.key).asInt.getOrElse(SyslogPrinter.Facility) << 3
-    } else {
-      prival += SyslogPrinter.Facility << 3
+    facilityConf match {
+      case binder: SomeBinder =>
+        prival += data.evaluate(Root / binder.key).asInt.getOrElse(SyslogPrinter.Facility) << 3
+      case _ =>
+        prival += SyslogPrinter.Facility << 3
     }
     builder.append(prival)
   }
@@ -129,7 +127,7 @@ private abstract class PrinterHelpers(pkt: Json) extends DerivedByteStringPrinte
     *
     * @param framing framing configuration.
     */
-  def framing(framing: Framing)(record: => Unit): Boolean = {
+  def framing(framing: Framing)(record: => Unit): Unit = {
     // Print record
     record
 
@@ -146,7 +144,6 @@ private abstract class PrinterHelpers(pkt: Json) extends DerivedByteStringPrinte
     if (framing == Framing.Delimiter) {
       builder.append(SyslogPrinter.NewLine)
     }
-    true
   }
 
 }
@@ -155,15 +152,14 @@ private abstract class PrinterHelpers(pkt: Json) extends DerivedByteStringPrinte
   * Syslog printer that transform incoming [[Json]] to [[ByteString]].
   * This printer is Rfc3164 compliant.
   *
-  * @param pkt  data to print.
   * @param conf printer configuration.
   */
-private class Rfc3164Printer(pkt: Json, conf: Rfc3164.Config) extends PrinterHelpers(pkt) {
+private class Rfc3164Printer(conf: Rfc3164.Config) extends PrinterHelpers {
 
   // Fast binding access
   private val binding: Rfc3164.Binding = conf.binding
 
-  override def process(): Boolean =
+  override def run(): ByteString = {
     framing(conf.framing) {
       // Add prival
       builder.append(SyslogPrinter.Inf)
@@ -192,6 +188,8 @@ private class Rfc3164Printer(pkt: Json, conf: Rfc3164.Config) extends PrinterHel
         builder.append(SyslogPrinter.Space)
       }
     }
+    ByteString(builder.toString)
+  }
 
 }
 
@@ -199,15 +197,14 @@ private class Rfc3164Printer(pkt: Json, conf: Rfc3164.Config) extends PrinterHel
   * Syslog printer that transform incoming [[Json]] to [[ByteString]].
   * This printer is Rfc5424 compliant.
   *
-  * @param pkt  data to print.
   * @param conf printer configuration.
   */
-private class Rfc5424Printer(pkt: Json, conf: Rfc5424.Config) extends PrinterHelpers(pkt) {
+private class Rfc5424Printer(conf: Rfc5424.Config) extends PrinterHelpers {
 
   // Fast binding access
   private val binding: Rfc5424.Binding = conf.binding
 
-  override def process(): Boolean =
+  override def run(): ByteString = {
     framing(conf.framing) {
       // Add prival
       builder.append(SyslogPrinter.Inf)
@@ -246,5 +243,7 @@ private class Rfc5424Printer(pkt: Json, conf: Rfc5424.Config) extends PrinterHel
         builder.append(SyslogPrinter.Space)
       }
     }
+    ByteString(builder.toString)
+  }
 
 }

@@ -23,8 +23,6 @@
  */
 package io.techcode.streamy.util.json
 
-import java.io.InputStream
-
 import akka.util.ByteString
 import com.fasterxml.jackson.core._
 import com.fasterxml.jackson.databind.Module.SetupContext
@@ -78,24 +76,6 @@ private[json] object JsonConverter {
   } catch {
     case NonFatal(error) => Left(error)
   }
-
-  /**
-    * Parses a stream representing a Json input, and returns it as a [[Json]].
-    *
-    * @param stream the InputStream to parse.
-    */
-  def parse(stream: InputStream): Either[Throwable, Json] = try {
-    Right(mapper.readValue(factory.createParser(stream), classOf[Json]))
-  } catch {
-    case NonFatal(error) => Left(error)
-  }
-
-  /**
-    * Converts a [[Json]] to its string representation.
-    *
-    * @return a String with the json representation.
-    */
-  def print(json: Json): String = JsonPrinter(json).print().get
 
 }
 

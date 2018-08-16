@@ -33,7 +33,7 @@ import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing
 import io.techcode.streamy.syslog.component.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.{IntBinder, StringBinder}
+import io.techcode.streamy.util.{IntBinder, NoneBinder, StringBinder}
 
 /**
   * Syslog transformer spec.
@@ -327,13 +327,13 @@ object SyslogTransformerSpec {
 
     object Transformer {
       val Binding = SyslogTransformer.Rfc3164.Binding(
-        facility = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Facility)),
-        severity = Some(IntBinder(SyslogTransformer.Rfc3164.Id.Severity)),
-        timestamp = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp, StandardCharsets.US_ASCII)),
-        hostname = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Hostname, StandardCharsets.US_ASCII)),
-        appName = Some(StringBinder(SyslogTransformer.Rfc3164.Id.AppName, StandardCharsets.US_ASCII)),
-        procId = Some(StringBinder(SyslogTransformer.Rfc3164.Id.ProcId, StandardCharsets.US_ASCII)),
-        message = Some(StringBinder(SyslogTransformer.Rfc3164.Id.Message))
+        facility = IntBinder(SyslogTransformer.Rfc3164.Id.Facility),
+        severity = IntBinder(SyslogTransformer.Rfc3164.Id.Severity),
+        timestamp = StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp, StandardCharsets.US_ASCII),
+        hostname = StringBinder(SyslogTransformer.Rfc3164.Id.Hostname, StandardCharsets.US_ASCII),
+        appName = StringBinder(SyslogTransformer.Rfc3164.Id.AppName, StandardCharsets.US_ASCII),
+        procId = StringBinder(SyslogTransformer.Rfc3164.Id.ProcId, StandardCharsets.US_ASCII),
+        message = StringBinder(SyslogTransformer.Rfc3164.Id.Message)
       )
 
       val ParserStrictDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc3164.Config(
@@ -430,15 +430,15 @@ object SyslogTransformerSpec {
     object Transformer {
 
       private val Binding = SyslogTransformer.Rfc5424.Binding(
-        facility = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Facility)),
-        severity = Some(IntBinder(SyslogTransformer.Rfc5424.Id.Severity)),
-        timestamp = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII)),
-        hostname = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII)),
-        appName = Some(StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII)),
-        procId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII)),
-        msgId = Some(StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII)),
-        structData = Some(StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII)),
-        message = Some(StringBinder(SyslogTransformer.Rfc5424.Id.Message))
+        facility = IntBinder(SyslogTransformer.Rfc5424.Id.Facility),
+        severity = IntBinder(SyslogTransformer.Rfc5424.Id.Severity),
+        timestamp = StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII),
+        hostname = StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII),
+        appName = StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII),
+        procId = StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII),
+        msgId = StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII),
+        structData = StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII),
+        message = StringBinder(SyslogTransformer.Rfc5424.Id.Message)
       )
 
       val ParserStrictDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
@@ -479,9 +479,9 @@ object SyslogTransformerSpec {
 
       val PrinterDefault: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         binding = Binding.copy(
-          facility = None,
-          severity = None,
-          procId = None
+          facility = NoneBinder,
+          severity = NoneBinder,
+          procId = NoneBinder
         )
       ))
 

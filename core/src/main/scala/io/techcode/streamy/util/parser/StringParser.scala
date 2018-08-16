@@ -21,29 +21,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.util.printer
+package io.techcode.streamy.util.parser
 
-import java.lang.{StringBuilder => JStringBuilder}
+import io.techcode.streamy.util.{Binder, SomeBinder}
 
-import akka.util.ByteString
-import io.techcode.streamy.util.json.Json
+import scala.language.implicitConversions
 
 /**
-  * Represent a derived [[ByteString]] printer based on [[JStringBuilder]] that provide an efficient way to print [[Json]].
-  *
-  * @param pkt input to print.
+  * Represent a [[String]] parser that provide an efficient way to parse [[String]].
   */
-abstract class DerivedByteStringPrinter(pkt: Json) extends ByteStringPrinter(pkt) {
+abstract class StringParser extends Parser[String] {
 
-  // Used to build
-  protected var builder: JStringBuilder = new JStringBuilder(256)
+  final def length: Int = data.length
 
-  def print(): Option[ByteString] = {
-    if (process()) {
-      Some(ByteString(builder.toString))
-    } else {
-      None
+  final def current(): Char = data.charAt(_cursor)
+
+  final def capture(field: Binder, optional: Boolean = false)(inner: => Boolean): Boolean = {
+    mark()
+    var state = inner
+    if (state && field.isDefined) {
+      val binding = field.bind(builder, data.slice(_mark, _cursor))
+      if (!binding) {
+        state = optional
+      }
     }
+    state
   }
 
 }

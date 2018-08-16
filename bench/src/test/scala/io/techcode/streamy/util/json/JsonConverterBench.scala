@@ -23,8 +23,6 @@
  */
 package io.techcode.streamy.util.json
 
-import java.io.ByteArrayInputStream
-
 import akka.util.ByteString
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -34,7 +32,6 @@ import org.openjdk.jmh.annotations.Benchmark
   * Benchmark                             Mode  Cnt       Score      Error  Units
   * JsonConverterBench.parseByteString   thrpt   20  339328.830 ± 1576.074  ops/s
   * JsonConverterBench.parseBytes        thrpt   20  342529.538 ± 3368.933  ops/s
-  * JsonConverterBench.parseInputStream  thrpt   20  300831.306 ± 1167.004  ops/s
   * JsonConverterBench.parseString       thrpt   20  339976.360 ± 1783.041  ops/s
   * JsonConverterBench.print             thrpt   20  568632.750 ± 3483.906  ops/s
   */
@@ -46,9 +43,7 @@ class JsonConverterBench {
 
   @Benchmark def parseString(): Json = JsonConverter.parse(JsonConverterBench.Sample.StringImpl).getOrElse(JsNull)
 
-  @Benchmark def parseInputStream(): Json = JsonConverter.parse(new ByteArrayInputStream(JsonConverterBench.Sample.BytesImpl)).getOrElse(JsNull)
-
-  @Benchmark def print(): String = JsonConverter.print(JsonConverterBench.Sample.JsonObj)
+  @Benchmark def print(): String = Json.print(JsonConverterBench.Sample.JsonObj).getOrElse(JsNull)
 
 }
 

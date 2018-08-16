@@ -23,8 +23,8 @@
  */
 package io.techcode.streamy.util.printer
 
-import akka.util.ByteString
 import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.parser.ParseException
 import org.scalatest._
 
 /**
@@ -34,26 +34,29 @@ class StringPrinterSpec extends WordSpecLike with Matchers {
 
   "String printer" should {
     "print correctly a json value when success" in {
-      val printer = new StringPrinterImpl(Json.obj("foo" -> "bar"))
-      printer.print() should equal(Some("""{"foo":"bar"}"""))
+      val printer = new StringPrinterImpl()
+      printer.print(Json.obj("foo" -> "bar")).toOption should equal(Some("""{"foo":"bar"}"""))
     }
 
     "print correctly a json value when failed" in {
-      val printer = new StringPrinterImpl(Json.obj("foo" -> "bar"), false)
-      printer.print() should equal(None)
+      val printer = new StringPrinterImpl(false)
+      printer.print(Json.obj("foo" -> "bar")).isLeft should equal(true)
     }
 
     "implement an error message by default" in {
-      val printer = new StringPrinterImpl(Json.obj("foo" -> "bar"))
-      printer.error() should equal("Unexpected printing error occured")
+      val printer = new StringPrinterImpl(false)
+      printer.print(Json.obj("foo" -> "bar")).isLeft should equal(true)
     }
   }
 
 }
 
-class StringPrinterImpl(pkt: Json, success: Boolean = true) extends StringPrinter(pkt) {
-  override def process(): Boolean = {
-    builder.append(pkt)
-    success
+class StringPrinterImpl(success: Boolean = true) extends StringPrinter {
+  override def run(): String = {
+    if (!success) {
+      throw new PrintException("Unexpected printing error occured")
+    }
+    builder.append(data)
+    builder.toString
   }
 }

@@ -35,6 +35,9 @@ import scala.language.postfixOps
   */
 abstract class SourceTransformer extends Transformer[ByteString, Json] {
 
+  // Thread safe parser
+  private val parser = ThreadLocal.withInitial[ByteStringParser](() => newParser())
+
   /**
     * Apply transform component on packet.
     *
@@ -42,19 +45,17 @@ abstract class SourceTransformer extends Transformer[ByteString, Json] {
     * @return parsing result.
     */
   def apply(pkt: ByteString): Json = {
-    val parser: ByteStringParser = newParser(pkt)
-    parser.parse() match {
-      case Some(result) => result
-      case None => onError(parser.error(), JsString(pkt.utf8String))
+    parser.get().parse(pkt) match {
+      case Right(result) => result
+      case Left(ex) => onError(ex.getMessage, JsString(pkt.utf8String))
     }
   }
 
   /**
     * Create a new bytestring parser.
     *
-    * @param pkt packet involved.
     * @return bytestring parser.
     */
-  def newParser(pkt: ByteString): ByteStringParser
+  def newParser(): ByteStringParser
 
 }

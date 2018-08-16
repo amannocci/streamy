@@ -34,26 +34,29 @@ class DirectByteStringPrinterSpec extends WordSpecLike with Matchers {
 
   "Direct byteString printer" should {
     "print correctly a json value when success" in {
-      val printer = new DirectByteStringPrinterImpl(Json.obj("foo" -> "bar"))
-      printer.print() should equal(Some(ByteString("""{"foo":"bar"}""")))
+      val printer = new DirectByteStringPrinterImpl()
+      printer.print(Json.obj("foo" -> "bar")).toOption should equal(Some(ByteString("""{"foo":"bar"}""")))
     }
 
     "print correctly a json value when failed" in {
-      val printer = new DirectByteStringPrinterImpl(Json.obj("foo" -> "bar"), false)
-      printer.print() should equal(None)
+      val printer = new DirectByteStringPrinterImpl(false)
+      printer.print(Json.obj("foo" -> "bar")).isLeft should equal(true)
     }
 
     "implement an error message by default" in {
-      val printer = new DirectByteStringPrinterImpl(Json.obj("foo" -> "bar"))
-      printer.error() should equal("Unexpected printing error occured")
+      val printer = new DirectByteStringPrinterImpl(false)
+      printer.print(Json.obj("foo" -> "bar")).isLeft should equal(true)
     }
   }
 
 }
 
-class DirectByteStringPrinterImpl(pkt: Json, success: Boolean = true) extends DirectByteStringPrinter(pkt) {
-  override def process(): Boolean = {
-    builder.putBytes(pkt.toString.getBytes())
-    success
+class DirectByteStringPrinterImpl(success: Boolean = true) extends DirectByteStringPrinter {
+  override def run(): ByteString = {
+    if (!success) {
+      throw new PrintException("Unexpected printing error occured")
+    }
+    builder.putBytes(data.toString.getBytes())
+    builder.result()
   }
 }

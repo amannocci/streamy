@@ -25,6 +25,7 @@ package io.techcode.streamy.util.printer
 
 import akka.util.ByteString
 import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.parser.ParseException
 import org.scalatest._
 
 /**
@@ -34,26 +35,29 @@ class DerivedByteStringPrinterSpec extends WordSpecLike with Matchers {
 
   "Derived byteString printer" should {
     "print correctly a json value when success" in {
-      val printer = new DerivedByteStringPrinterImpl(Json.obj("foo" -> "bar"))
-      printer.print() should equal(Some(ByteString("""{"foo":"bar"}""")))
+      val printer = new DerivedByteStringPrinterImpl()
+      printer.print(Json.obj("foo" -> "bar")).toOption should equal(Some(ByteString("""{"foo":"bar"}""")))
     }
 
     "print correctly a json value when failed" in {
-      val printer = new DerivedByteStringPrinterImpl(Json.obj("foo" -> "bar"), false)
-      printer.print() should equal(None)
+      val printer = new DerivedByteStringPrinterImpl(false)
+      printer.print(Json.obj("foo" -> "bar")).isLeft should equal(true)
     }
 
     "implement an error message by default" in {
-      val printer = new DerivedByteStringPrinterImpl(Json.obj("foo" -> "bar"))
-      printer.error() should equal("Unexpected printing error occured")
+      val printer = new DerivedByteStringPrinterImpl(false)
+      printer.print(Json.obj("foo" -> "bar")).isLeft should equal(true)
     }
   }
 
 }
 
-class DerivedByteStringPrinterImpl(pkt: Json, success: Boolean = true) extends DerivedByteStringPrinter(pkt) {
-  override def process(): Boolean = {
-    builder.append(pkt)
-    success
+class DerivedByteStringPrinterImpl(success: Boolean = true) extends DerivedByteStringPrinter {
+  override def run(): ByteString = {
+    if (!success) {
+      throw new PrintException("Unexpected printing error occured")
+    }
+    builder.append(data)
+    ByteString(builder.toString)
   }
 }

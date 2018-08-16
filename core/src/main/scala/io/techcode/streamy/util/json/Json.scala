@@ -23,14 +23,16 @@
  */
 package io.techcode.streamy.util.json
 
-import java.io.InputStream
-
 import akka.util.ByteString
+import io.techcode.streamy.util.printer.PrintException
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 object Json {
+
+  // Thread safe printer
+  private val printer = ThreadLocal.withInitial[JsonPrinter](() => JsonPrinter())
 
   /**
     * Construct a new JsObject, with the order of fields in the Seq.
@@ -78,18 +80,11 @@ object Json {
   @inline def parse(input: String): Either[Throwable, Json] = JsonConverter.parse(input)
 
   /**
-    * Parses a stream representing a Json input, and returns it as a [[Json]].
-    *
-    * @param stream the InputStream to parse.
-    */
-  @inline def parse(stream: InputStream): Either[Throwable, Json] = JsonConverter.parse(stream)
-
-  /**
     * Converts a [[Json]] to its string representation.
     *
     * @return a string with the json representation.
     */
-  @inline def stringify(json: Json): String = JsonConverter.print(json)
+  @inline def print(json: Json): Either[PrintException, String] = printer.get().print(json)
 
 }
 
@@ -229,7 +224,10 @@ sealed trait Json {
     */
   def sizeHint(): Int = toString.length
 
-  override def toString: String = Json.stringify(this)
+  override def toString: String = Json.print(this) match {
+    case Left(ex) => throw ex
+    case Right(result) => result
+  }
 
 }
 

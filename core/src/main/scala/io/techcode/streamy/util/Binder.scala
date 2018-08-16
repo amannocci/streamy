@@ -31,9 +31,14 @@ import com.google.common.primitives.{Doubles, Floats, Ints, Longs}
 import io.techcode.streamy.util.json._
 
 /**
-  * Represent a binder able to convert a raw value to a Json value.
+  * Common trait binder.
   */
-sealed abstract class Binder(val key: String) {
+trait Binder {
+
+  /**
+    * Returns true if the binder is an instance of [[SomeBinder]], false otherwise.
+    */
+  def isDefined: Boolean
 
   /**
     * Bind an [[Boolean]] value into [[JsObjectBuilder]]
@@ -117,12 +122,49 @@ sealed abstract class Binder(val key: String) {
 }
 
 /**
+  * Represent a binder that bind to nothing.
+  * Usefull to skip binding.
+  */
+case object NoneBinder extends Binder {
+
+  def isDefined: Boolean = false
+
+  def bind(builder: JsObjectBuilder, value: Boolean): Boolean = false
+
+  def bind(builder: JsObjectBuilder, value: Int): Boolean = false
+
+  def bind(builder: JsObjectBuilder, value: Long): Boolean = false
+
+  def bind(builder: JsObjectBuilder, value: Float): Boolean = false
+
+  def bind(builder: JsObjectBuilder, value: Double): Boolean = false
+
+  def bind(builder: JsObjectBuilder, value: String): Boolean = false
+
+  def bind(builder: JsObjectBuilder, value: ByteString): Boolean = false
+
+  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean = false
+
+  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean = false
+
+}
+
+/**
+  * Represent a binder able to convert a raw value to a Json value.
+  */
+sealed abstract class SomeBinder(val key: String) extends Binder {
+
+  def isDefined: Boolean = true
+
+}
+
+/**
   * Specific string binder implementation.
   *
   * @param key     key if binding.
   * @param charset charset specification.
   */
-case class StringBinder(override val key: String, charset: Charset = StandardCharsets.UTF_8) extends Binder(key) {
+case class StringBinder(override val key: String, charset: Charset = StandardCharsets.UTF_8) extends SomeBinder(key) {
 
   def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
     builder.put(key, JsString(value.toString))
@@ -184,7 +226,7 @@ case class StringBinder(override val key: String, charset: Charset = StandardCha
   *
   * @param key key if binding.
   */
-case class BytesBinder(override val key: String) extends Binder(key) {
+case class BytesBinder(override val key: String) extends SomeBinder(key) {
 
   def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
     builder.put(key, JsBytes(ByteString(value.toString)))
@@ -246,7 +288,7 @@ case class BytesBinder(override val key: String) extends Binder(key) {
   *
   * @param key key if binding.
   */
-case class IntBinder(override val key: String) extends Binder(key) {
+case class IntBinder(override val key: String) extends SomeBinder(key) {
 
   def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
     builder.put(key, JsInt(if (value) 1 else 0))
@@ -311,7 +353,7 @@ case class IntBinder(override val key: String) extends Binder(key) {
   *
   * @param key key if binding.
   */
-case class LongBinder(override val key: String) extends Binder(key) {
+case class LongBinder(override val key: String) extends SomeBinder(key) {
 
   def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
     builder.put(key, JsLong(if (value) 1 else 0))
@@ -375,7 +417,7 @@ case class LongBinder(override val key: String) extends Binder(key) {
   *
   * @param key key if binding.
   */
-case class FloatBinder(override val key: String) extends Binder(key) {
+case class FloatBinder(override val key: String) extends SomeBinder(key) {
 
   def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
     builder.put(key, JsFloat(if (value) 1 else 0))
@@ -439,7 +481,7 @@ case class FloatBinder(override val key: String) extends Binder(key) {
   *
   * @param key key if binding.
   */
-case class DoubleBinder(override val key: String) extends Binder(key) {
+case class DoubleBinder(override val key: String) extends SomeBinder(key) {
 
   def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
     builder.put(key, JsDouble(if (value) 1 else 0))

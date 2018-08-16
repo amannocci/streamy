@@ -59,9 +59,9 @@ object GraphiteTransformerSpec {
 
   object Transformer {
     val Binding = GraphiteTransformer.Binding(
-      path = Some(StringBinder("key")),
-      value = Some(FloatBinder("value")),
-      timestamp = Some(LongBinder("timestamp")),
+      path = StringBinder("key"),
+      value = FloatBinder("value"),
+      timestamp = LongBinder("timestamp"),
     )
 
     val Parsing: Flow[ByteString, Json, NotUsed] = GraphiteTransformer.parser(GraphiteTransformer.Config(

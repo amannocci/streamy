@@ -113,7 +113,7 @@ abstract class FlowTransformer(config: Config) extends Transformer[Json, Json](c
 }
 
 /**
-  * Simple transformer companion.
+  * Flow transformer companion.
   */
 object FlowTransformer {
 

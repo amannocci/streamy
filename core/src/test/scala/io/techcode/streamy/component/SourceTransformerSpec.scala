@@ -34,23 +34,18 @@ import org.scalatest._
   */
 class SourceTransformerSpec extends WordSpec with Matchers {
 
-  class Impl(succeeded: Boolean) extends SourceTransformer {
-    override def newParser(pkt: ByteString): ByteStringParser = new ByteStringParser(pkt) {
-      override def process(): Boolean = succeeded
+  class Impl extends SourceTransformer {
+    override def newParser(): ByteStringParser = new ByteStringParser {
+      override def run(): Json = Json.obj()
+
+      override def root(): Boolean = true
     }
   }
 
   "Source transformer" should {
     "parse correctly a bytestring when success" in {
-      val source = new Impl(true)
+      val source = new Impl()
       source(ByteString.empty) should equal(Json.obj())
-    }
-
-    "parse correctly a bytestring when failed" in {
-      val source = new Impl(false)
-      assertThrows[StreamException] {
-        source(ByteString.empty)
-      }
     }
   }
 

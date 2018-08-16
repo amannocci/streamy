@@ -46,7 +46,7 @@ object GraphiteParser {
     * @param config parser configuration.
     * @return new graphite parser compliant with Graphite protocol.
     */
-  def parser(bytes: ByteString, config: GraphiteTransformer.Config): ByteStringParser = new GraphiteParser(bytes, config)
+  def parser(config: GraphiteTransformer.Config): ByteStringParser = new GraphiteParser(config)
 
 }
 
@@ -64,14 +64,13 @@ private trait ParserHelpers {
   * Graphite parser that transform incoming [[ByteString]] to [[Json]].
   * This parser is compliant with Graphite protocol.
   *
-  * @param bytes  data to parse.
   * @param config parser configuration.
   */
-private class GraphiteParser(bytes: ByteString, config: GraphiteTransformer.Config) extends ByteStringParser(bytes) with ParserHelpers {
+private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStringParser with ParserHelpers {
 
   private val binding = config.binding
 
-  override def process(): Boolean =
+  override def root(): Boolean =
     path() &&
       sp() &&
       value() &&
@@ -85,7 +84,7 @@ private class GraphiteParser(bytes: ByteString, config: GraphiteTransformer.Conf
 
   def timestamp(): Boolean = parseUntilDelimiter(binding.timestamp)
 
-  @inline private def parseUntilDelimiter(field: Option[Binder]): Boolean =
+  @inline private def parseUntilDelimiter(field: Binder): Boolean =
     capture(field) {
       oneOrMore(GraphiteParser.DelimiterMatcher)
     }

@@ -32,14 +32,12 @@ import scala.annotation.tailrec
   * A JsonPrinter serializes a JSON AST to a String.
   * It's an adaptation of the amazing spray-json project.
   * All credits goes to it's initial contributor.
-  *
-  * @param value json ast to serialize.
   */
-class JsonPrinter(value: Json) extends StringPrinter(value) {
+private[json] class JsonPrinter extends StringPrinter {
 
-  override def process(): Boolean = {
-    printValue(value)
-    true
+  override def run(): String = {
+    printValue(data)
+    builder.toString
   }
 
   /**
@@ -172,7 +170,7 @@ class JsonPrinter(value: Json) extends StringPrinter(value) {
   }
 
   private def requiresEncoding(c: Char): Boolean = {
-    // from RFC 4627
+    // From RFC 4627
     // unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
     c match {
       case '"' => true
@@ -202,9 +200,7 @@ object JsonPrinter {
 
   /**
     * Create a new json printer.
-    *
-    * @param value json value to print.
     */
-  def apply(value: Json): JsonPrinter = new JsonPrinter(value)
+  def apply(): JsonPrinter = new JsonPrinter()
 
 }

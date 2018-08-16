@@ -29,20 +29,12 @@ import io.techcode.streamy.util.json._
 
 /**
   * Represent a [[String]] printer that provide an efficient way to print [[Json]].
-  *
-  * @param pkt input to print.
   */
-abstract class StringPrinter(pkt: Json) extends AbstractPrinter[String](pkt) {
+trait StringPrinter extends Printer[String] {
 
-  // Used to build bytestring directly
+  // Used to build string directly
   protected var builder: JStringBuilder = new JStringBuilder(256)
 
-  def print(): Option[String] = {
-    if (process()) {
-      Some(builder.toString)
-    } else {
-      None
-    }
-  }
+  override def cleanup(): Unit = builder.setLength(0)
 
 }

@@ -50,21 +50,19 @@ object SyslogParser {
     * Create a syslog parser that transform incoming [[ByteString]] to [[Json]].
     * This parser is Rfc5424 compliant.
     *
-    * @param bytes  data to parse.
     * @param config parser configuration.
     * @return new syslog parser Rfc5424 compliant.
     */
-  def rfc5424(bytes: ByteString, config: Rfc5424.Config): ByteStringParser = new Rfc5424Parser(bytes, config)
+  def rfc5424(config: Rfc5424.Config): ByteStringParser = new Rfc5424Parser(config)
 
   /**
     * Create a syslog parser that transform incoming [[ByteString]] to [[Json]].
     * This parser is Rfc3164 compliant.
     *
-    * @param bytes  data to parse.
     * @param config parser configuration.
     * @return new syslog parser Rfc3164 compliant.
     */
-  def rfc3164(bytes: ByteString, config: Rfc3164.Config): ByteStringParser = new Rfc3164Parser(bytes, config)
+  def rfc3164(config: Rfc3164.Config): ByteStringParser = new Rfc3164Parser(config)
 
 }
 
@@ -102,16 +100,15 @@ private trait ParserHelpers {
   * Syslog parser that transform incoming [[ByteString]] to [[Json]].
   * This parser is Rfc5424 compliant.
   *
-  * @param bytes  data to parse.
   * @param config parser configuration.
   */
-private class Rfc5424Parser(bytes: ByteString, config: Rfc5424.Config) extends ByteStringParser(bytes) with ParserHelpers {
+private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser with ParserHelpers {
 
   private val binding = config.binding
 
   private val mode = config.mode
 
-  override def process(): Boolean =
+  override def root(): Boolean =
     header() &&
       sp() &&
       structuredData() &&
@@ -229,8 +226,8 @@ private class Rfc5424Parser(bytes: ByteString, config: Rfc5424.Config) extends B
       val prival = partition().asDigit()
 
       // Read severity or facility
-      binding.facility.foreach(_.bind(builder, prival >> 3))
-      binding.severity.foreach(_.bind(builder, prival & 7))
+      binding.facility.bind(builder, prival >> 3)
+      binding.severity.bind(builder, prival & 7)
     }
     state
   }
@@ -243,16 +240,15 @@ private class Rfc5424Parser(bytes: ByteString, config: Rfc5424.Config) extends B
   * Syslog parser that transform incoming [[ByteString]] to [[Json]].
   * This parser is Rfc3164 compliant.
   *
-  * @param bytes  data to parse.
   * @param config parser configuration.
   */
-private class Rfc3164Parser(bytes: ByteString, config: Rfc3164.Config) extends ByteStringParser(bytes) with ParserHelpers {
+private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser with ParserHelpers {
 
   private val binding = config.binding
 
   private val mode = config.mode
 
-  override def process(): Boolean =
+  override def root(): Boolean =
     header() &&
       colon() &&
       optional(msg()) &&
@@ -316,8 +312,8 @@ private class Rfc3164Parser(bytes: ByteString, config: Rfc3164.Config) extends B
       val prival = partition().asDigit()
 
       // Read severity or facility
-      binding.facility.foreach(_.bind(builder, prival >> 3))
-      binding.severity.foreach(_.bind(builder, prival & 7))
+      binding.facility.bind(builder, prival >> 3)
+      binding.severity.bind(builder, prival & 7)
     }
     state
   }

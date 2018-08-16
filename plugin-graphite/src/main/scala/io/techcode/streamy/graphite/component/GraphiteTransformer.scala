@@ -28,9 +28,9 @@ import akka.stream.scaladsl.{Flow, Framing => StreamFraming}
 import akka.util.ByteString
 import io.techcode.streamy.component.SourceTransformer
 import io.techcode.streamy.graphite.util.parser.GraphiteParser
-import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.parser.ByteStringParser
+import io.techcode.streamy.util.{Binder, NoneBinder}
 
 /**
   * Graphite transformer companion.
@@ -47,15 +47,15 @@ object GraphiteTransformer {
   def parser(conf: Config): Flow[ByteString, Json, NotUsed] = {
     StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
       .via(Flow.fromFunction(new SourceTransformer {
-        override def newParser(pkt: ByteString): ByteStringParser = GraphiteParser.parser(pkt, conf)
+        override def newParser(): ByteStringParser = GraphiteParser.parser(conf)
       }))
   }
 
   // Fields binding
   case class Binding(
-    path: Option[Binder] = None,
-    value: Option[Binder] = None,
-    timestamp: Option[Binder] = None
+    path: Binder = NoneBinder,
+    value: Binder = NoneBinder,
+    timestamp: Binder = NoneBinder
   )
 
   // Configuration

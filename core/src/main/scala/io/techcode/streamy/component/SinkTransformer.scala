@@ -36,6 +36,9 @@ import scala.language.postfixOps
   */
 abstract class SinkTransformer extends Transformer[Json, ByteString] {
 
+  // Thread safe printer
+  private val printer = ThreadLocal.withInitial[ByteStringPrinter](() => newPrinter())
+
   /**
     * Apply transform component on packet.
     *
@@ -43,19 +46,17 @@ abstract class SinkTransformer extends Transformer[Json, ByteString] {
     * @return printing result.
     */
   def apply(pkt: Json): ByteString = {
-    val printer: ByteStringPrinter = newPrinter(pkt)
-    printer.print() match {
-      case Some(result) => result
-      case None => throw new StreamException(printer.error(), Some(pkt))
+    printer.get().print(pkt) match {
+      case Right(result) => result
+      case Left(ex) => throw new StreamException(ex.getMessage, Some(pkt))
     }
   }
 
   /**
     * Create a new json printer.
     *
-    * @param pkt packet involved.
     * @return json printer.
     */
-  def newPrinter(pkt: Json): ByteStringPrinter
+  def newPrinter(): ByteStringPrinter
 
 }
