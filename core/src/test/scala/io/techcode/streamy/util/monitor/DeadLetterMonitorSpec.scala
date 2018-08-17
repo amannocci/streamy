@@ -23,7 +23,8 @@
  */
 package io.techcode.streamy.util.monitor
 
-import akka.actor.{DeadLetter, Kill, Props}
+import akka.actor.{DeadLetter, PoisonPill, Props}
+import akka.testkit.TestProbe
 import io.techcode.streamy.StreamyTestSystem
 
 /**
@@ -34,18 +35,29 @@ class DeadLetterMonitorSpec extends StreamyTestSystem {
   "Dead letter monitoring" can {
     "be started and stopped" in {
       val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor])
-      deadLetterMonitor ! Kill
+      val probe = TestProbe()
+      probe watch deadLetterMonitor
+      deadLetterMonitor ! PoisonPill
+      probe.expectTerminated(deadLetterMonitor)
     }
 
     "handle correctly dead letter" in {
       val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor])
+      val probe = TestProbe()
+      probe watch deadLetterMonitor
       system.eventStream.subscribe(deadLetterMonitor, classOf[DeadLetter])
       system.eventStream.publish(DeadLetter("Test", deadLetterMonitor, deadLetterMonitor))
+      deadLetterMonitor ! PoisonPill
+      probe.expectTerminated(deadLetterMonitor)
     }
 
     "not receive message by default" in {
       val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor])
+      val probe = TestProbe()
+      probe watch deadLetterMonitor
       deadLetterMonitor ! "test"
+      deadLetterMonitor ! PoisonPill
+      probe.expectTerminated(deadLetterMonitor)
     }
   }
 
