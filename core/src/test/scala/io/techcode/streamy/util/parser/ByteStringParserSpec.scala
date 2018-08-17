@@ -45,6 +45,9 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "return current character based on cursor" in {
       val parser = new ByteStringParser() {
         override def root(): Boolean = {
+          mark()
+          ch('f')
+          unmark()
           current() should equal('f')
           true
         }
@@ -150,6 +153,13 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
+    "process a characters sequence by skipping if not enough characters are remaining" in {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = str("foobart")
+      }
+      parser.parse(ByteString("foobar")).isRight should equal(false)
+    }
+
     "process an utf-8 characters sequence if possible" in {
       val parser = new ByteStringParser() {
         override def root(): Boolean = utf8 {
@@ -186,6 +196,15 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       parser.parse(ByteString("1foobar")).isRight should equal(false)
     }
 
+    "process a number of time a char matcher by skipping if not enough characters are remaining" in {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
+          times(4, CharMatchers.Digit)
+        }
+      }
+      parser.parse(ByteString("foo")).isRight should equal(false)
+    }
+
     "process a number of time an inner rule if possible" in {
       val parser = new ByteStringParser() {
         override def root(): Boolean = {
@@ -207,6 +226,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       }
       parser.parse(ByteString("foobar")).isRight should equal(false)
     }
+
     "process a minimum number of time a char matcher if possible" in {
       val parser = new ByteStringParser() {
         override def root(): Boolean = {
@@ -232,6 +252,15 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
         }
       }
       parser.parse(ByteString("1foobar")).isRight should equal(false)
+    }
+
+    "process a number of time in a range a char matcher by skipping if there isn't enough remaining characters" in {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = {
+          times(1, 2, CharMatchers.LowerAlpha)
+        }
+      }
+      parser.parse(ByteString.empty).isRight should equal(false)
     }
 
     "process any character" in {

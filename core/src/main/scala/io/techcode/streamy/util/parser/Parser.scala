@@ -214,20 +214,16 @@ trait Parser[In] {
     */
   final def times(count: Int)(rule: => Boolean): Boolean = {
     require(count > 0)
-    if (_cursor + count <= length) {
-      var c = 0
-      var state = true
-      while (c < count && state) {
-        if (rule) {
-          c += 1
-        } else {
-          state = false
-        }
+    var c = 0
+    var state = true
+    while (_cursor < length && c < count && state) {
+      if (rule) {
+        c += 1
+      } else {
+        state = false
       }
-      count == c
-    } else {
-      false
     }
+    count == c
   }
 
   /**
