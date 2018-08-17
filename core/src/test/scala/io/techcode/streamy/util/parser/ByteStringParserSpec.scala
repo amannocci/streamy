@@ -153,10 +153,19 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "process an utf-8 characters sequence if possible" in {
       val parser = new ByteStringParser() {
         override def root(): Boolean = utf8 {
-          str("ABCDEFGHIJKLMNOPQRSTUVWXYZ /0123456789abcdefghijklmnopqrstuvwxyz £©µÀÆÖÞßéöÿ–—‘“”„†•…‰™œŠŸž€ ΑΒΓΔΩαβγδω АБВГДабвгд∀∂∈ℝ∧∪≡∞ ↑↗↨↻⇣ ┐┼╔╘░►☺♀ ﬁ�⑀₂ἠḂӥẄɐː⍎אԱა")
+          str("ABCDEFGHIJKLMNOPQRSTUVWXYZ /0123456789abcdefghijklmnopqrstuvwxyz £©µÀÆÖÞßéöÿ–—‘“”„†•…‰™œŠŸž€ ΑΒΓΔΩαβγδω АБВГДабвгд∀∂∈ℝ∧∪≡∞ ↑↗↨↻⇣ ┐┼╔╘░►☺♀ ﬁ�⑀₂ἠḂӥẄɐː⍎אԱა\uD841\uDF0E")
         }
       }
-      parser.parse(ByteString("ABCDEFGHIJKLMNOPQRSTUVWXYZ /0123456789abcdefghijklmnopqrstuvwxyz £©µÀÆÖÞßéöÿ–—‘“”„†•…‰™œŠŸž€ ΑΒΓΔΩαβγδω АБВГДабвгд∀∂∈ℝ∧∪≡∞ ↑↗↨↻⇣ ┐┼╔╘░►☺♀ ﬁ�⑀₂ἠḂӥẄɐː⍎אԱა")).isRight should equal(true)
+      parser.parse(ByteString("ABCDEFGHIJKLMNOPQRSTUVWXYZ /0123456789abcdefghijklmnopqrstuvwxyz £©µÀÆÖÞßéöÿ–—‘“”„†•…‰™œŠŸž€ ΑΒΓΔΩαβγδω АБВГДабвгд∀∂∈ℝ∧∪≡∞ ↑↗↨↻⇣ ┐┼╔╘░►☺♀ ﬁ�⑀₂ἠḂӥẄɐː⍎אԱა\uD841\uDF0E")).isRight should equal(true)
+    }
+
+    "process an utf-8 characters sequence if impossible" in {
+      val parser = new ByteStringParser() {
+        override def root(): Boolean = utf8 {
+          str("�")
+        }
+      }
+      parser.parse(ByteString(0xf8, 0xa1, 0xa1, 0xa1, 0xa1)).isRight should equal(true)
     }
 
     "process a number of time a char matcher if possible" in {
