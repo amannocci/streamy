@@ -52,6 +52,7 @@ lazy val bench = project
     `plugin-graphite` % "test->test",
     `plugin-json` % "test->test",
     `plugin-metric` % "test->test",
+    `plugin-protobuf` % "test->test",
     `plugin-syslog` % "test->test",
     `plugin-tcp` % "test->test"
   )
@@ -98,6 +99,12 @@ lazy val `plugin-metric` = project
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
+lazy val `plugin-protobuf` = project
+  .in(file("plugin-protobuf"))
+  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(testkit % "test->test")
+
 lazy val `plugin-syslog` = project
   .in(file("plugin-syslog"))
   .settings(commonSettings, Dependencies.testSettings, Publish.settings)
@@ -129,6 +136,7 @@ lazy val root = project
     `plugin-graphite`,
     `plugin-json`,
     `plugin-metric`,
+    `plugin-protobuf`,
     `plugin-syslog`,
     `plugin-tcp`,
     testkit

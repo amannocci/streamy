@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (c) 2018
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,10 @@
  * THE SOFTWARE.
  */
 
-// Native Packager
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.6")
+name := name.value + "-plugin-protobuf"
 
-// Scalastyle checker
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
+// Disable some plugins
+disablePlugins(AssemblyPlugin)
 
-// JMH Benchmark
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.3")
-
-// Code coverage
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
-
-// Protobuf
-addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.6.3")
+// Enable some plugins
+enablePlugins(ProtobufPlugin)

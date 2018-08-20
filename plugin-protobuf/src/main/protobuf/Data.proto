@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_package = "io.techcode.streamy.protobuf";
+option java_outer_classname = "Data";
+
+message Pkt {
+    map<string, string> attrs = 1;
+}
+
+message Pkts {
+    repeated Pkt pkt = 1;
+}
