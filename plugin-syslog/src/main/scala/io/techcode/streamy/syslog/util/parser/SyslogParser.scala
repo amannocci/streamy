@@ -82,6 +82,8 @@ private trait ParserHelpers {
 
   @inline def sp(): Boolean = ch(' ')
 
+  @inline def ws(): Boolean = oneOrMore(ch(' '))
+
   @inline def nilValue(): Boolean = dash()
 
   @inline def dash(): Boolean = ch('-')
@@ -286,11 +288,11 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser wit
     }
 
   def fullDate(): Boolean =
-    dateMonth() && sp() && dateMDay() && sp() && fullTime()
+    dateMonth() && ws() && dateMDay() && sp() && fullTime()
 
   def dateMonth(): Boolean = times(3, CharMatchers.Alpha)
 
-  def dateMDay(): Boolean = times(2, CharMatchers.Digit)
+  def dateMDay(): Boolean = times(1, 2, CharMatchers.Digit)
 
   def fullTime(): Boolean = timeHour() && colon() && timeMinute() && colon() && timeSecond()
 

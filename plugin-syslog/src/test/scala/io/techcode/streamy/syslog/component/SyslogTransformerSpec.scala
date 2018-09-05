@@ -301,7 +301,7 @@ object SyslogTransformerSpec {
 
     object Input {
 
-      val ParserSimple: ByteString = ByteString("""<34>Apr 24 13:51:20 mymachine.example.com su[77042]: 'su root' failed for lonvick on /dev/pts/8""")
+      val ParserSimple: ByteString = ByteString("""<34>Apr  4 13:51:20 mymachine.example.com su[77042]: 'su root' failed for lonvick on /dev/pts/8""")
       val ParserSimpleDelimiter: ByteString = framingDelimiter(ParserSimple)
       val ParserSimpleCount: ByteString = framingCount(ParserSimple)
 
@@ -379,7 +379,7 @@ object SyslogTransformerSpec {
       val ParserSimple: Json = Json.obj(
         SyslogTransformer.Rfc3164.Id.Facility -> 4,
         SyslogTransformer.Rfc3164.Id.Severity -> 2,
-        SyslogTransformer.Rfc3164.Id.Timestamp -> "Apr 24 13:51:20",
+        SyslogTransformer.Rfc3164.Id.Timestamp -> "Apr  4 13:51:20",
         SyslogTransformer.Rfc3164.Id.Hostname -> "mymachine.example.com",
         SyslogTransformer.Rfc3164.Id.AppName -> "su",
         SyslogTransformer.Rfc3164.Id.ProcId -> "77042",
