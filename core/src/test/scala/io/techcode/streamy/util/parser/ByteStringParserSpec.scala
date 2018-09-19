@@ -430,6 +430,19 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
+    "process correctly when using sub parser and capture" in {
+      val parser: ByteStringParser = new ByteStringParser() {
+        val subParsing: ByteStringParser {
+          def root(): Boolean
+        } = new ByteStringParser {
+          override def root(): Boolean = capture(StringBinder("foo"))(str("foo"))
+        }
+
+        override def root(): Boolean = subParser[ByteStringParser](subParsing, _.root()) && capture(StringBinder("bar"))(str("bar"))
+      }
+      parser.parse(ByteString("foobar")) should equal(Right(Json.obj("foo" -> "foo", "bar" -> "bar")))
+    }
+
   }
 
 }

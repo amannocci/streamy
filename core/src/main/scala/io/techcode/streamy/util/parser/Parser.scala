@@ -363,6 +363,7 @@ trait Parser[In] {
     parser.data = data
     if (action(parser)) {
       _cursor = parser._cursor
+      builder.putAll(parser.builder)
       true
     } else {
       false
