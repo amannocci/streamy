@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.syslog.util.parser
 
+import java.nio.charset.StandardCharsets
+
 import akka.util.ByteString
 import io.techcode.streamy.syslog.component.SyslogTransformer
 import io.techcode.streamy.util.json._
@@ -56,14 +58,14 @@ private object SyslogParserBench {
 
   val Rfc5424Complete: ByteStringParser =
     SyslogParser.rfc5424(SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
-      facility = StringBinder(SyslogTransformer.Rfc5424.Id.Facility),
-      severity = StringBinder(SyslogTransformer.Rfc5424.Id.Severity),
-      timestamp = StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp),
-      hostname = StringBinder(SyslogTransformer.Rfc5424.Id.Hostname),
-      appName = StringBinder(SyslogTransformer.Rfc5424.Id.AppName),
-      procId = StringBinder(SyslogTransformer.Rfc5424.Id.ProcId),
-      msgId = StringBinder(SyslogTransformer.Rfc5424.Id.MsgId),
-      structData = StringBinder(SyslogTransformer.Rfc5424.Id.StructData),
+      facility = StringBinder(SyslogTransformer.Rfc5424.Id.Facility, StandardCharsets.US_ASCII),
+      severity = StringBinder(SyslogTransformer.Rfc5424.Id.Severity, StandardCharsets.US_ASCII),
+      timestamp = StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII),
+      hostname = StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII),
+      appName = StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII),
+      procId = StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII),
+      msgId = StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII),
+      structData = StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII),
       message = BytesBinder(SyslogTransformer.Rfc5424.Id.Message)
     )))
 
