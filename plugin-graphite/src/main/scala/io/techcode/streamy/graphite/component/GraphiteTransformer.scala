@@ -46,9 +46,7 @@ object GraphiteTransformer {
     */
   def parser(conf: Config): Flow[ByteString, Json, NotUsed] = {
     StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
-      .via(Flow.fromFunction(new SourceTransformer {
-        override def newParser(): ByteStringParser = GraphiteParser.parser(conf)
-      }))
+      .via(Flow.fromGraph(SourceTransformer(() => GraphiteParser.parser(conf))))
   }
 
   // Fields binding

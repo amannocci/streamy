@@ -23,29 +23,29 @@
  */
 package io.techcode.streamy.component
 
+import akka.stream.scaladsl.{Flow, Source}
+import akka.stream.testkit.scaladsl.TestSink
 import akka.util.ByteString
-import io.techcode.streamy.util.StreamException
+import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.ByteStringParser
-import org.scalatest._
 
 /**
   * Source transformer spec.
   */
-class SourceTransformerSpec extends WordSpec with Matchers {
-
-  class Impl extends SourceTransformer {
-    override def newParser(): ByteStringParser = new ByteStringParser {
-      override def run(): Json = Json.obj()
-
-      override def root(): Boolean = true
-    }
-  }
+class SourceTransformerSpec extends StreamyTestSystem {
 
   "Source transformer" should {
     "parse correctly a bytestring when success" in {
-      val source = new Impl()
-      source(ByteString.empty) should equal(Json.obj())
+      val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser {
+        override def run(): Json = Json.obj()
+
+        override def root(): Boolean = true
+      }))
+      Source.single(ByteString.empty)
+        .via(source)
+        .runWith(TestSink.probe[Json])
+        .requestNext() should equal(Json.obj())
     }
   }
 

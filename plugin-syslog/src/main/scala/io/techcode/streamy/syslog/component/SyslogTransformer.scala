@@ -31,8 +31,6 @@ import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.util.parser.{SyslogFraming, SyslogParser}
 import io.techcode.streamy.syslog.util.printer.SyslogPrinter
 import io.techcode.streamy.util.json.Json
-import io.techcode.streamy.util.parser.ByteStringParser
-import io.techcode.streamy.util.printer.ByteStringPrinter
 import io.techcode.streamy.util.{Binder, NoneBinder}
 
 /**
@@ -59,9 +57,7 @@ object SyslogTransformer {
       }
     }
 
-    framing.via(Flow.fromFunction(new SourceTransformer {
-      def newParser(): ByteStringParser = SyslogParser.rfc5424(conf)
-    }))
+    framing.via(Flow.fromGraph(SourceTransformer(() => SyslogParser.rfc5424(conf))))
   }
 
   /**
@@ -80,9 +76,7 @@ object SyslogTransformer {
       }
     }
 
-    framing.via(Flow.fromFunction(new SourceTransformer {
-      def newParser(): ByteStringParser = SyslogParser.rfc3164(conf)
-    }))
+    framing.via(Flow.fromGraph(SourceTransformer(() => SyslogParser.rfc3164(conf))))
   }
 
   /**
@@ -93,9 +87,7 @@ object SyslogTransformer {
     * @return new syslog flow Rfc5424 compliant.
     */
   def printer(conf: Rfc5424.Config): Flow[Json, ByteString, NotUsed] =
-    Flow.fromFunction(new SinkTransformer {
-      def newPrinter(): ByteStringPrinter = SyslogPrinter.rfc5424(conf)
-    })
+    Flow.fromGraph(SinkTransformer(() => SyslogPrinter.rfc5424(conf)))
 
   /**
     * Create a syslog flow that transform incoming [[Json]] to [[ByteString]].
@@ -105,9 +97,7 @@ object SyslogTransformer {
     * @return new syslog flow Rfc3164 compliant.
     */
   def printer(conf: Rfc3164.Config): Flow[Json, ByteString, NotUsed] =
-    Flow.fromFunction(new SinkTransformer {
-      def newPrinter(): ByteStringPrinter = SyslogPrinter.rfc3164(conf)
-    })
+    Flow.fromGraph(SinkTransformer(() => SyslogPrinter.rfc3164(conf)))
 
   // Common related stuff
   object Framing extends Enumeration {

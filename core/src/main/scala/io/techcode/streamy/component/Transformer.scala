@@ -24,33 +24,6 @@
 package io.techcode.streamy.component
 
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.Transformer.{Config, ErrorBehaviour}
-import io.techcode.streamy.util.StreamException
-import io.techcode.streamy.util.json._
-
-/**
-  * Abstract transformer implementation that provide a good way to handle errors.
-  */
-abstract class Transformer[In, Out](config: Config = Transformer.DefaultConfig) extends (In => Out) {
-
-  /**
-    * Handle parsing error by discarding or wrapping or skipping.
-    *
-    * @param state value of field when error is raised.
-    * @param ex    exception if one is raised.
-    * @return result json value.
-    */
-  def onError[T <: Json](msg: String = Transformer.GenericErrorMsg, state: T, ex: Option[Throwable] = None): T = {
-    config.onError match {
-      case ErrorBehaviour.Discard =>
-        throw new StreamException(msg, state = Some(state))
-      case ErrorBehaviour.DiscardAndReport =>
-        throw new StreamException(msg, state = Some(state), ex)
-      case ErrorBehaviour.Skip => state
-    }
-  }
-
-}
 
 /**
   * Transformer companion.

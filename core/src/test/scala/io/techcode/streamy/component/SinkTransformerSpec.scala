@@ -23,24 +23,25 @@
  */
 package io.techcode.streamy.component
 
+import akka.stream.scaladsl.Source
+import akka.stream.testkit.scaladsl.TestSink
 import akka.util.ByteString
+import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.printer.DerivedByteStringPrinter
-import org.scalatest._
 
 /**
   * Sink transformer spec.
   */
-class SinkTransformerSpec extends WordSpec with Matchers {
-
-  class Impl(succeeded: Boolean) extends SinkTransformer {
-    def newPrinter(): DerivedByteStringPrinter = () => ByteString.empty
-  }
+class SinkTransformerSpec extends StreamyTestSystem {
 
   "Sink transformer" should {
     "print correctly a json value when success" in {
-      val sink = new Impl(true)
-      sink(Json.obj("foo" -> "bar")) should equal(ByteString.empty)
+      val sink = SinkTransformer(() => () => ByteString.empty)
+
+      Source.single(Json.obj("foo" -> "bar"))
+        .via(sink)
+        .runWith(TestSink.probe[ByteString])
+        .requestNext() should equal(ByteString.empty)
     }
   }
 

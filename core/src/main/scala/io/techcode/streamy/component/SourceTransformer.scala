@@ -23,39 +23,55 @@
  */
 package io.techcode.streamy.component
 
+import akka.stream.ActorAttributes.SupervisionStrategy
+import akka.stream._
+import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.ByteStringParser
 
 import scala.language.postfixOps
+import scala.util.control.NonFatal
 
 /**
   * Source transformer abstract implementation that provide
-  * a convenient way to process a convertion from [[ByteString]] to [[Json]].
+  * a convenient way to process a conversion from [[ByteString]] to [[Json]].
   */
-abstract class SourceTransformer extends Transformer[ByteString, Json] {
+final case class SourceTransformer(factory: () ⇒ ByteStringParser) extends GraphStage[FlowShape[ByteString, Json]] {
 
-  // Thread safe parser
-  private val parser = ThreadLocal.withInitial[ByteStringParser](() => newParser())
+  val in: Inlet[ByteString] = Inlet[ByteString]("sourceTransformer.in")
 
-  /**
-    * Apply transform component on packet.
-    *
-    * @param pkt packet involved.
-    * @return parsing result.
-    */
-  def apply(pkt: ByteString): Json = {
-    parser.get().parse(pkt) match {
-      case Right(result) => result
-      case Left(ex) => onError(ex.getMessage, JsString(pkt.utf8String))
+  val out: Outlet[Json] = Outlet[Json]("sourceTransformer.out")
+
+  override val shape = FlowShape(in, out)
+
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
+
+    // Set handler
+    setHandlers(in, out, this)
+
+    private val parser = factory()
+
+    private def decider = inheritedAttributes.mandatoryAttribute[SupervisionStrategy].decider
+
+    override def onPush(): Unit = {
+      try {
+        val pkt = grab(in)
+        parser.parse(pkt) match {
+          case Right(result) => push(out, result)
+          case Left(ex) => throw new StreamException(ex.getMessage, Some(pkt), Some(ex))
+        }
+      } catch {
+        case NonFatal(ex) ⇒ decider(ex) match {
+          case Supervision.Stop ⇒ failStage(ex)
+          case _ ⇒ pull(in)
+        }
+      }
     }
-  }
 
-  /**
-    * Create a new bytestring parser.
-    *
-    * @return bytestring parser.
-    */
-  def newParser(): ByteStringParser
+    override def onPull(): Unit = pull(in)
+
+  }
 
 }

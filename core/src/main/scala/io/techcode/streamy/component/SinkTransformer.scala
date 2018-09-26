@@ -23,40 +23,55 @@
  */
 package io.techcode.streamy.component
 
+import akka.stream.ActorAttributes.SupervisionStrategy
+import akka.stream._
+import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.printer.ByteStringPrinter
 
 import scala.language.postfixOps
+import scala.util.control.NonFatal
 
 /**
   * Sink transformer abstract implementation that provide
   * a convenient way to process a convertion from [[Json]] to [[ByteString]].
   */
-abstract class SinkTransformer extends Transformer[Json, ByteString] {
+final case class SinkTransformer(factory: () ⇒ ByteStringPrinter) extends GraphStage[FlowShape[Json, ByteString]] {
 
-  // Thread safe printer
-  private val printer = ThreadLocal.withInitial[ByteStringPrinter](() => newPrinter())
+  val in: Inlet[Json] = Inlet[Json]("sinkTransformer.in")
 
-  /**
-    * Apply transform component on packet.
-    *
-    * @param pkt packet involved.
-    * @return printing result.
-    */
-  def apply(pkt: Json): ByteString = {
-    printer.get().print(pkt) match {
-      case Right(result) => result
-      case Left(ex) => throw new StreamException(ex.getMessage, Some(pkt))
+  val out: Outlet[ByteString] = Outlet[ByteString]("sinkTransformer.out")
+
+  override val shape = FlowShape(in, out)
+
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
+
+    // Set handler
+    setHandlers(in, out, this)
+
+    private val printer = factory()
+
+    private def decider = inheritedAttributes.mandatoryAttribute[SupervisionStrategy].decider
+
+    override def onPush(): Unit = {
+      try {
+        val pkt = grab(in)
+        printer.print(pkt) match {
+          case Right(result) => push(out, result)
+          case Left(ex) => throw new StreamException(ex.getMessage, Some(pkt), Some(ex))
+        }
+      } catch {
+        case NonFatal(ex) ⇒ decider(ex) match {
+          case Supervision.Stop ⇒ failStage(ex)
+          case _ ⇒ pull(in)
+        }
+      }
     }
-  }
 
-  /**
-    * Create a new json printer.
-    *
-    * @return json printer.
-    */
-  def newPrinter(): ByteStringPrinter
+    override def onPull(): Unit = pull(in)
+
+  }
 
 }

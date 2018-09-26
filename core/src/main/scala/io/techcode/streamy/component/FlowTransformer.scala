@@ -27,6 +27,7 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBeh
 import io.techcode.streamy.component.FlowTransformer.{Config, SuccessBehaviour}
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
 import scala.language.postfixOps
@@ -35,7 +36,7 @@ import scala.language.postfixOps
   * Flow transformer abstract implementation that provide
   * a convenient way to process an update on [[Json]].
   */
-abstract class FlowTransformer(config: Config) extends Transformer[Json, Json](config) {
+abstract class FlowTransformer(config: Config) extends (Json => Json) {
 
   // Choose right transform function
   private val function: Json => Json = {
@@ -81,6 +82,23 @@ abstract class FlowTransformer(config: Config) extends Transformer[Json, Json](c
               operated.flatMap(_.patch(operations))
             }
           }.getOrElse(onError(Transformer.GenericErrorMsg, pkt))
+    }
+  }
+
+  /**
+    * Handle parsing error by discarding or wrapping or skipping.
+    *
+    * @param state value of field when error is raised.
+    * @param ex    exception if one is raised.
+    * @return result json value.
+    */
+  def onError[T <: Json](msg: String = Transformer.GenericErrorMsg, state: T, ex: Option[Throwable] = None): T = {
+    config.onError match {
+      case ErrorBehaviour.Discard =>
+        throw new StreamException(msg, state = Some(state))
+      case ErrorBehaviour.DiscardAndReport =>
+        throw new StreamException(msg, state = Some(state), ex)
+      case ErrorBehaviour.Skip => state
     }
   }
 
