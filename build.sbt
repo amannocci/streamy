@@ -25,14 +25,14 @@
 import sbt.Keys._
 import sbt._
 
-// Disable parallel execution
-parallelExecution in ThisBuild := false
+
+// Common settings
+ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / scalaVersion := "2.12.6"
+ThisBuild / organization := "io.techcode.streamy"
+ThisBuild / name := "streamy"
 
 lazy val commonSettings = Seq(
-  name := "streamy",
-  version := "0.1.0-SNAPSHOT",
-  scalaVersion := "2.12.6",
-
   // Disable test in assembly
   test in assembly := {},
 
@@ -57,70 +57,175 @@ lazy val bench = project
     `plugin-tcp` % "test->test"
   )
   .settings(Benchs.settings)
+  .disablePlugins(AssemblyPlugin)
   .enablePlugins(JmhPlugin)
 
 lazy val core = project
   .in(file("core"))
-  .settings(commonSettings, Packages.settings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value,
+    bashScriptExtraDefines +=
+      """
+        |source ./bin/make-default.sh
+        |source ./bin/setup-container.sh
+        |source ./bin/make-template.sh
+        |
+        |make_default
+        |setup_container
+        |make_template
+      """.stripMargin
+  )
+  .settings(
+    Dependencies.akka,
+    Dependencies.jackson,
+    Dependencies.logback,
+    Dependencies.guava,
+    Dependencies.config,
+    Dependencies.scala,
+    Dependencies.akkaTest,
+    Dependencies.testKit
+  )
+  .settings(Packages.settings)
+  .settings(Publish.settings)
+  .enablePlugins(JavaServerAppPackaging, SystemVPlugin)
+  .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-date` = project
   .in(file("plugin-date"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-elasticsearch` = project
   .in(file("plugin-elasticsearch"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value,
+
+    // Don't include scala in assembly
+    assemblyOption in assembly ~= {
+      _.copy(includeScala = false)
+    },
+
+    // Publish fat jars
+    artifact in(Compile, assembly) := {
+      val art = (artifact in(Compile, assembly)).value
+      art.withClassifier(Some("assembly"))
+    },
+    addArtifact(artifact in(Compile, assembly), assembly)
+  )
+  .settings(Dependencies.sttp, Dependencies.elasticTest)
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
 lazy val `plugin-fingerprint` = project
   .in(file("plugin-fingerprint"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-graphite` = project
   .in(file("plugin-graphite"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-json` = project
   .in(file("plugin-json"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-metric` = project
   .in(file("plugin-metric"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value,
+
+    // Don't include scala in assembly
+    assemblyOption in assembly ~= {
+      _.copy(includeScala = false)
+    },
+
+    // Publish fat jars
+    artifact in(Compile, assembly) := {
+      val art = (artifact in(Compile, assembly)).value
+      art.withClassifier(Some("assembly"))
+    },
+    addArtifact(artifact in(Compile, assembly), assembly)
+  )
+  .settings(Dependencies.metric)
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
 lazy val `plugin-protobuf` = project
   .in(file("plugin-protobuf"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
+  .enablePlugins(ProtobufPlugin)
 
 lazy val `plugin-syslog` = project
   .in(file("plugin-syslog"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-tcp` = project
   .in(file("plugin-tcp"))
-  .settings(commonSettings, Dependencies.testSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
 
 lazy val testkit = project
   .in(file("test"))
-  .settings(commonSettings, Publish.settings)
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value,
+    coverageEnabled := false
+  )
+  .settings(Dependencies.akkaTestLib, Dependencies.testKit)
+  .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
+  .disablePlugins(AssemblyPlugin)
 
 lazy val root = project
   .in(file("."))
@@ -129,6 +234,7 @@ lazy val root = project
     publishLocal := {}
   )
   .aggregate(
+    bench,
     core,
     `plugin-date`,
     `plugin-elasticsearch`,
@@ -141,3 +247,4 @@ lazy val root = project
     `plugin-tcp`,
     testkit
   )
+  .disablePlugins(AssemblyPlugin)
