@@ -32,6 +32,9 @@ ThisBuild / scalaVersion := "2.12.6"
 ThisBuild / organization := "io.techcode.streamy"
 ThisBuild / name := "streamy"
 
+// Disable parallel execution
+parallelExecution in ThisBuild := false
+
 lazy val commonSettings = Seq(
   // Disable test in assembly
   test in assembly := {},
