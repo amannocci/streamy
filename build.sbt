@@ -47,6 +47,10 @@ lazy val commonSettings = Seq(
 
 lazy val bench = project
   .in(file("bench"))
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
   .dependsOn(
     core % "test->test",
     `plugin-date` % "test->test",
