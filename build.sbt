@@ -200,6 +200,19 @@ lazy val `plugin-protobuf` = project
   .disablePlugins(AssemblyPlugin)
   .enablePlugins(ProtobufPlugin)
 
+lazy val `plugin-riemann` = project
+  .in(file("plugin-riemann"))
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(`plugin-protobuf` % "provided->compile")
+  .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
+  .enablePlugins(ProtobufPlugin)
+
 lazy val `plugin-syslog` = project
   .in(file("plugin-syslog"))
   .settings(
@@ -250,6 +263,7 @@ lazy val root = project
     `plugin-json`,
     `plugin-metric`,
     `plugin-protobuf`,
+    `plugin-riemann`,
     `plugin-syslog`,
     `plugin-tcp`,
     testkit
