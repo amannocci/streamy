@@ -25,7 +25,6 @@ package io.techcode.streamy.metric
 
 import java.lang.management.ManagementFactory
 
-import akka.stream.Materializer
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.jvm.{BufferPoolMetricSet, GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
 import io.techcode.streamy.metric.event.MetricEvent

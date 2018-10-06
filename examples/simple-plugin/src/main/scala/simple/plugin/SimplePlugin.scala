@@ -11,6 +11,7 @@ class SimplePlugin(
 
   override def onStart(): Unit = {
     // On start hook
+    log.info("Hello world")
   }
 
   override def onStop(): Unit = {
