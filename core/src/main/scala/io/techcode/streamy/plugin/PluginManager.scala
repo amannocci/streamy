@@ -31,6 +31,7 @@ import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
 import io.techcode.streamy.event._
 import pureconfig._
+import pureconfig.error.ConfigReaderException
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -170,10 +171,9 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
         val description = loadConfigOrThrow[PluginDescription](conf).copy(file = Some(jar.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
-        case _: ConfigException.Missing => {
+        case _: ConfigReaderException[_] =>
           log.mdc(commonMdc)
           log.error("Can't load '{}' plugin", jar.name)
-        }
       }
     }
     pluginDescriptions
