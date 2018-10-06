@@ -121,6 +121,13 @@ class SyslogTransformerSpec extends TestTransformer {
             )
           }
 
+          "throw an error when a prefix syslog message count is truncated" in {
+            exceptError(
+              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
+              SyslogTransformerSpec.Rfc3164.Input.ParserTruncated
+            )
+          }
+
           "throw an error when a prefix syslog message count is greater than max allowed" in {
             exceptError(
               SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
@@ -225,6 +232,13 @@ class SyslogTransformerSpec extends TestTransformer {
             )
           }
 
+          "throw an error when a prefix syslog message count is truncated" in {
+            exceptError(
+              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
+              SyslogTransformerSpec.Rfc5424.Input.ParserTruncated
+            )
+          }
+
           "throw an error when a prefix syslog message count is greater than max allowed" in {
             exceptError(
               SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
@@ -305,6 +319,7 @@ object SyslogTransformerSpec {
       val ParserSimpleDelimiter: ByteString = framingDelimiter(ParserSimple)
       val ParserSimpleCount: ByteString = framingCount(ParserSimple)
 
+      val ParserTruncated: ByteString = ByteString("""200 <34>Apr  4 13:51:20 mymachine.example.com su[77042]: 'su root' failed for lonvick on /dev/pts/8""")
       val ParserMalformed: ByteString = ByteString("""<34> Apr 24 13:51:20 mymachine.example.com su[77042]: 'su root' failed for lonvick on /dev/pts/8""")
       val ParserMalformedDelimiter: ByteString = framingDelimiter(ParserMalformed)
       val ParserMalformedCount: ByteString = framingCount(ParserMalformed)
@@ -408,6 +423,7 @@ object SyslogTransformerSpec {
       val ParserAlternativeDelimiter: ByteString = framingDelimiter(ParserAlternative)
       val ParserAlternativeCount: ByteString = framingCount(ParserAlternative)
 
+      val ParserTruncated: ByteString = ByteString("""200 <34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
       val ParserMalformed: ByteString = ByteString("""<34> 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 [sigSig ver="1"] 'su root' failed for lonvick on /dev/pts/8""")
       val ParserMalformedDelimiter: ByteString = framingDelimiter(ParserMalformed)
       val ParserMalformedCount: ByteString = framingCount(ParserMalformed)
