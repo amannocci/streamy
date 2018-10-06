@@ -1,5 +1,3 @@
-import Dependencies._
-
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
@@ -8,5 +6,5 @@ lazy val root = (project in file(".")).
       version := "0.1.0-SNAPSHOT"
     )),
     name := "plugin-simple-library",
-    libraryDependencies ++= settings
+    libraryDependencies ++= Seq("io.techcode.streamy" %% "streamy-core" % "0.1.0-SNAPSHOT" % Provided)
   )
