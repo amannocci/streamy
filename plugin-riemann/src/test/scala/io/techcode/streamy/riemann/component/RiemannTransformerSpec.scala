@@ -39,8 +39,8 @@ class RiemannTransformerSpec extends TestTransformer {
     "print and parse data correctly" in {
       except[Json, Json](
         RiemannTransformerSpec.Transformer,
-        RiemannTransformerSpec.Doc,
-        RiemannTransformerSpec.Doc
+        RiemannTransformerSpec.Input,
+        RiemannTransformerSpec.Output
       )
     }
   }
@@ -49,7 +49,7 @@ class RiemannTransformerSpec extends TestTransformer {
 
 object RiemannTransformerSpec {
 
-  val Doc: Json = Json.obj(
+  val Input: Json = Json.obj(
     "ok" -> true,
     "error" -> "test",
     "events" -> Json.arr(
@@ -61,7 +61,10 @@ object RiemannTransformerSpec {
         "description" -> "metric",
         "tags" -> Json.arr("crit", "prod"),
         "ttl" -> 12.0F,
-        "attributes" -> Json.obj("foo" -> "bar"),
+        "attributes" -> Json.obj(
+          "foo" -> "bar",
+          "number" -> 1.0
+        ),
         "time_micros" -> System.currentTimeMillis(),
         "metric_sint64" -> 0L,
         "metric_d" -> 0D,
@@ -73,5 +76,29 @@ object RiemannTransformerSpec {
   val Transformer: Flow[Json, Json, NotUsed] =
     RiemannTransformer.printer(RiemannTransformer.Printer.Config())
       .via(RiemannTransformer.parser(RiemannTransformer.Parser.Config()))
+
+  val Output: Json = Json.obj(
+    "ok" -> true,
+    "error" -> "test",
+    "events" -> Json.arr(
+      Json.obj(
+        "time" -> System.currentTimeMillis(),
+        "state" -> "ok",
+        "service" -> "test",
+        "host" -> "example.com",
+        "description" -> "metric",
+        "tags" -> Json.arr("crit", "prod"),
+        "ttl" -> 12.0F,
+        "attributes" -> Json.obj(
+          "foo" -> "bar",
+          "number" -> "1.0"
+        ),
+        "time_micros" -> System.currentTimeMillis(),
+        "metric_sint64" -> 0L,
+        "metric_d" -> 0D,
+        "metric_f" -> 0F,
+      )
+    )
+  )
 
 }

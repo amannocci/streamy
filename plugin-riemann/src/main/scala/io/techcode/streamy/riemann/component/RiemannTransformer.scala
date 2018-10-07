@@ -136,7 +136,12 @@ object RiemannTransformer {
             evt.evaluate(eventBinding.ttl).asFloat.foreach(event.setTtl)
             evt.evaluate(eventBinding.attributes).asObject.foreach { el =>
               el.foreach { pair =>
-                pair._2.asString.foreach(value => event.addAttributes(Proto.Attribute.newBuilder().setKey(pair._1).setValue(value)))
+                pair._2 match {
+                  case JsString(value) =>
+                    event.addAttributes(Proto.Attribute.newBuilder().setKey(pair._1).setValue(value))
+                  case x: Json =>
+                    event.addAttributes(Proto.Attribute.newBuilder().setKey(pair._1).setValue(x.toString))
+                }
               }
             }
             evt.evaluate(eventBinding.timeMicros).asLong.foreach(event.setTimeMicros)
