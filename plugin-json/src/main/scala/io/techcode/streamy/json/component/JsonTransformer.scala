@@ -25,11 +25,14 @@ package io.techcode.streamy.json.component
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
+import akka.util.ByteString
 import io.techcode.streamy.component.FlowTransformer
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.json.component.JsonTransformer.Bind
+import io.techcode.streamy.json.component.JsonTransformer.Bind.Bind
 import io.techcode.streamy.json.component.JsonTransformer.Mode.Mode
 import io.techcode.streamy.util.json._
 
@@ -44,13 +47,20 @@ object JsonTransformer {
     override val target: Option[JsonPointer] = None,
     override val onSuccess: SuccessBehaviour = SuccessBehaviour.Skip,
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip,
-    mode: Mode = Mode.Deserialize
+    mode: Mode = Mode.Deserialize,
+    bind: Bind = Bind.String
   ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
   // Mode implementation
   object Mode extends Enumeration {
     type Mode = Value
     val Serialize, Deserialize = Value
+  }
+
+  // Bind implementation
+  object Bind extends Enumeration {
+    type Bind = Value
+    val Bytes, String = Value
   }
 
   /**
@@ -75,7 +85,12 @@ object JsonTransformer {
   */
 private class SerializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
 
-  @inline override def transform(value: Json): Option[Json] = Some(value.toString)
+  @inline override def transform(value: Json): Option[Json] = {
+    config.bind match {
+      case Bind.String => Some(value.toString)
+      case Bind.Bytes => Some(ByteString(value.toString))
+    }
+  }
 
 }
 
@@ -86,22 +101,25 @@ private class SerializerTransformer(config: JsonTransformer.Config) extends Flow
   */
 private class DeserializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
 
-  @inline override def transform(value: Json): Option[Json] = value.asString.map { field =>
-    // Try to avoid parsing of wrong json
-    if (field.nonEmpty && field.charAt(0) == '{') {
-      // Try to parse
-      handle(value, Json.parse(field))
-    } else {
-      onError(state = value)
-    }
-  }.orElse {
-    value.asBytes.map { field =>
-      // Try to avoid parsing of wrong json
-      if (field.nonEmpty && (field(0) & 0xFF).toChar == '{') {
-        // Try to parse
-        handle(value, Json.parse(field))
-      } else {
-        onError(state = value)
+  @inline override def transform(value: Json): Option[Json] = {
+    config.bind match {
+      case Bind.String => value.asString.map { field =>
+        // Try to avoid parsing of wrong json
+        if (field.nonEmpty && field.charAt(0) == '{') {
+          // Try to parse
+          handle(value, Json.parse(field))
+        } else {
+          onError(state = value)
+        }
+      }
+      case Bind.Bytes => value.asBytes.map { field =>
+        // Try to avoid parsing of wrong json
+        if (field.nonEmpty && (field(0) & 0xFF).toChar == '{') {
+          // Try to parse
+          handle(value, Json.parse(field))
+        } else {
+          onError(state = value)
+        }
       }
     }
   }

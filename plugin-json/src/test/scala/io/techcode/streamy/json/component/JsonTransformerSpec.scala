@@ -25,7 +25,7 @@ package io.techcode.streamy.json.component
 
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
-import io.techcode.streamy.json.component.JsonTransformer.{Config, Mode}
+import io.techcode.streamy.json.component.JsonTransformer.{Bind, Config, Mode}
 import io.techcode.streamy.util.json.{Json, _}
 
 /**
@@ -84,7 +84,7 @@ class JsonTransformerSpec extends TestTransformer {
 
     "deserialize correctly a packet inplace from bytestring" in {
       except(
-        JsonTransformerSpec.Transformer.DeserializeSource,
+        JsonTransformerSpec.Transformer.DeserializeSourceBytes,
         JsonTransformerSpec.Input.DeserializeInplaceByteString,
         JsonTransformerSpec.Output.DeserializeInplace
       )
@@ -92,7 +92,7 @@ class JsonTransformerSpec extends TestTransformer {
 
     "deserialize correctly a packet with a root target from bytestring" in {
       except(
-        JsonTransformerSpec.Transformer.DeserializeSourceToRoot,
+        JsonTransformerSpec.Transformer.DeserializeSourceToRootBytes,
         JsonTransformerSpec.Input.DeserializeSourceToRootByteString,
         JsonTransformerSpec.Output.DeserializeSourceToRootByteString
       )
@@ -100,7 +100,7 @@ class JsonTransformerSpec extends TestTransformer {
 
     "deserialize correctly a packet with a root target equal to an existing field from bytestring" in {
       except(
-        JsonTransformerSpec.Transformer.DeserializeSourceToExistingRoot,
+        JsonTransformerSpec.Transformer.DeserializeSourceToExistingRootBytes,
         JsonTransformerSpec.Input.DeserializeSourceToExistingRootByteString,
         JsonTransformerSpec.Output.DeserializeSourceToExistingRoot
       )
@@ -108,7 +108,7 @@ class JsonTransformerSpec extends TestTransformer {
 
     "fast skip correctly a packet with an empty source field from bytestring" in {
       except(
-        JsonTransformerSpec.Transformer.DeserializeSource,
+        JsonTransformerSpec.Transformer.DeserializeSourceBytes,
         JsonTransformerSpec.Input.SkipEmptyByteStringSource,
         JsonTransformerSpec.Input.SkipEmptyByteStringSource
       )
@@ -116,7 +116,7 @@ class JsonTransformerSpec extends TestTransformer {
 
     "fast skip correctly a packet with a wrong source field from bytestring" in {
       except(
-        JsonTransformerSpec.Transformer.DeserializeSource,
+        JsonTransformerSpec.Transformer.DeserializeSourceBytes,
         JsonTransformerSpec.Input.SkipByteStringSource,
         JsonTransformerSpec.Input.SkipByteStringSource
       )
@@ -124,7 +124,7 @@ class JsonTransformerSpec extends TestTransformer {
 
     "skip correctly a packet with a wrong source field from bytestring" in {
       except(
-        JsonTransformerSpec.Transformer.DeserializeSource,
+        JsonTransformerSpec.Transformer.DeserializeSourceBytes,
         JsonTransformerSpec.Input.SkipWrongJsonByteStringSource,
         JsonTransformerSpec.Input.SkipWrongJsonByteStringSource
       )
@@ -135,6 +135,14 @@ class JsonTransformerSpec extends TestTransformer {
         JsonTransformerSpec.Transformer.SerializeSource,
         JsonTransformerSpec.Input.SerializeInplace,
         JsonTransformerSpec.Output.SerializeInplace
+      )
+    }
+
+    "serialize correctly a packet inplace with bytes input" in {
+      except(
+        JsonTransformerSpec.Transformer.SerializeSourceBytes,
+        JsonTransformerSpec.Input.SerializeInplace,
+        JsonTransformerSpec.Output.SerializeInplaceBytes
       )
     }
 
@@ -198,11 +206,19 @@ object JsonTransformerSpec {
 
     val DeserializeSource = JsonTransformer(Config(Root / "message", mode = Mode.Deserialize))
 
+    val DeserializeSourceBytes = JsonTransformer(Config(Root / "message", mode = Mode.Deserialize, bind = Bind.Bytes))
+
     val DeserializeSourceToRoot = JsonTransformer(Config(Root / "message", Some(Root), mode = Mode.Deserialize))
+
+    val DeserializeSourceToRootBytes = JsonTransformer(Config(Root / "message", Some(Root), mode = Mode.Deserialize, bind = Bind.Bytes))
 
     val DeserializeSourceToExistingRoot = JsonTransformer(Config(Root / "message", Some(Root), mode = Mode.Deserialize))
 
+    val DeserializeSourceToExistingRootBytes = JsonTransformer(Config(Root / "message", Some(Root), mode = Mode.Deserialize, bind = Bind.Bytes))
+
     val SerializeSource = JsonTransformer(Config(Root / "message", mode = Mode.Serialize))
+
+    val SerializeSourceBytes = JsonTransformer(Config(Root / "message", mode = Mode.Serialize, bind = Bind.Bytes))
 
     val SerializeRootToTarget = JsonTransformer(Config(Root, Some(Root / "message"), mode = Mode.Serialize))
 
@@ -227,6 +243,8 @@ object JsonTransformerSpec {
     val DeserializeSourceToExistingRoot: JsObject = Json.obj("message" -> "foobar")
 
     val SerializeInplace: JsObject = Json.obj("message" -> """{"message":"foobar"}""")
+
+    val SerializeInplaceBytes: JsObject = Json.obj("message" -> ByteString("""{"message":"foobar"}"""))
 
     val SerializeRootToTarget: JsObject = Json.obj(
       "message" -> """{"test":"foobar"}""",
