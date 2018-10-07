@@ -49,12 +49,14 @@ class RiemannTransformerSpec extends TestTransformer {
 
 object RiemannTransformerSpec {
 
+  private val Time: Long = System.currentTimeMillis()
+
   val Input: Json = Json.obj(
     "ok" -> true,
     "error" -> "test",
     "events" -> Json.arr(
       Json.obj(
-        "time" -> System.currentTimeMillis(),
+        "time" -> Time,
         "state" -> "ok",
         "service" -> "test",
         "host" -> "example.com",
@@ -65,7 +67,7 @@ object RiemannTransformerSpec {
           "foo" -> "bar",
           "number" -> 1.0
         ),
-        "time_micros" -> System.currentTimeMillis(),
+        "time_micros" -> Time,
         "metric_sint64" -> 0L,
         "metric_d" -> 0D,
         "metric_f" -> 0F,
@@ -82,7 +84,7 @@ object RiemannTransformerSpec {
     "error" -> "test",
     "events" -> Json.arr(
       Json.obj(
-        "time" -> System.currentTimeMillis(),
+        "time" -> Time,
         "state" -> "ok",
         "service" -> "test",
         "host" -> "example.com",
@@ -93,7 +95,7 @@ object RiemannTransformerSpec {
           "foo" -> "bar",
           "number" -> "1.0"
         ),
-        "time_micros" -> System.currentTimeMillis(),
+        "time_micros" -> Time,
         "metric_sint64" -> 0L,
         "metric_d" -> 0D,
         "metric_f" -> 0F,
