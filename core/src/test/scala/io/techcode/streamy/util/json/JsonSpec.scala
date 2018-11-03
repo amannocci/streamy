@@ -88,6 +88,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       builder.get("foobar") should equal(Some(JsString("test")))
     }
 
+    "be create empty" in {
+      Json.obj().eq(Json.obj()) should equal(true)
+    }
+
     "be iterate using a foreach" in {
       var founded = false
       Json.obj("test" -> "test").foreach(el => founded |= el._2.equals(JsString("test")))
@@ -346,6 +350,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       builder.add("notModified")
       builder.addAll(Json.arrayBuilder().add("notModified"))
       builder.result() should equal(Json.arr("foobar", "foobar"))
+    }
+
+    "be create empty" in {
+      Json.arr().eq(Json.arr()) should equal(true)
     }
 
     "return head of json array if present" in {

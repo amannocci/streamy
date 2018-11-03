@@ -34,15 +34,31 @@ object Json {
   // Thread safe printer
   private val printer = ThreadLocal.withInitial[JsonPrinter](() => JsonPrinter())
 
+  // Singleton json object
+  private val jsonObjEmpty = Json.obj()
+
+  // Singleton json array
+  private val jsonArrayEmpty = Json.arr()
+
   /**
     * Construct a new JsObject, with the order of fields in the Seq.
     */
-  def obj(fields: (String, Json)*): JsObject = JsObject(mutable.AnyRefMap(fields: _*))
+  def obj(fields: (String, Json)*): JsObject =
+    if (fields.isEmpty) {
+      jsonObjEmpty
+    } else {
+      JsObject(mutable.AnyRefMap(fields: _*))
+    }
 
   /**
     * Construct a new JsArray with given values.
     */
-  def arr(values: Json*): JsArray = JsArray(mutable.ArrayBuffer(values: _ *))
+  def arr(values: Json*): JsArray =
+    if (values.isEmpty) {
+      jsonArrayEmpty
+    } else {
+      JsArray(mutable.ArrayBuffer(values: _ *))
+    }
 
   /**
     * Create a new json object builder.
