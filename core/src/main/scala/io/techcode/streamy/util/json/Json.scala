@@ -35,10 +35,10 @@ object Json {
   private val printer = ThreadLocal.withInitial[JsonPrinter](() => JsonPrinter())
 
   // Singleton json object
-  private val jsonObjEmpty = Json.obj()
+  private val jsonObjEmpty = JsObject(mutable.AnyRefMap())
 
   // Singleton json array
-  private val jsonArrayEmpty = Json.arr()
+  private val jsonArrayEmpty = JsArray(mutable.ArrayBuffer())
 
   /**
     * Construct a new JsObject, with the order of fields in the Seq.
