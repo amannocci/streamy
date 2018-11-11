@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.util.parser
 
-import io.techcode.streamy.util.{Binder, SomeBinder}
+import io.techcode.streamy.util.Binder
 
 import scala.language.implicitConversions
 
@@ -32,7 +32,12 @@ import scala.language.implicitConversions
   */
 abstract class StringParser extends Parser[String] {
 
-  final def length: Int = data.length
+  final def length: Int = {
+    if (_length == -1) {
+      _length = data.length
+    }
+    _length
+  }
 
   final def current(): Char = data.charAt(_cursor)
 

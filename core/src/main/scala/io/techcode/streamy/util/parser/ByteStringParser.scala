@@ -27,7 +27,7 @@ import java.nio.charset.Charset
 import java.nio.{ByteBuffer, CharBuffer}
 
 import akka.util.ByteString
-import io.techcode.streamy.util.{Binder, SomeBinder}
+import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.parser.ByteStringParser.UTF8
 
 import scala.annotation.tailrec
@@ -98,7 +98,12 @@ trait ByteStringParser extends Parser[ByteString] {
   // Decode mode
   private var reader: () => Char = asciiReader
 
-  def length: Int = data.length
+  final def length: Int = {
+    if (_length == -1) {
+      _length = data.length
+    }
+    _length
+  }
 
   @inline final def current(): Char = reader()
 

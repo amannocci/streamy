@@ -47,6 +47,9 @@ trait Parser[In] {
   // Used to build json object directly
   protected var builder: JsObjectBuilder = Json.objectBuilder()
 
+  // Cache length of data
+  protected var _length: Int = -1
+
   /**
     * Attempt to parse input [[ByteString]].
     *
@@ -82,6 +85,7 @@ trait Parser[In] {
     _mark = 0
     _cursor = 0
     _consumed = 0
+    _length = -1
     data = null.asInstanceOf[In]
     builder = Json.objectBuilder()
   }
