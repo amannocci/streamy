@@ -24,6 +24,7 @@
 package io.techcode.streamy.util.json
 
 import akka.util.ByteString
+import pureconfig.{ConfigReader, ConvertHelpers}
 
 import scala.language.implicitConversions
 
@@ -119,5 +120,8 @@ trait JsonImplicit {
     * @return json.
     */
   implicit def bigDecimalToJson(value: BigDecimal): Json = JsBigDecimal(value)
+
+  // Json reader to support pureconfig
+  implicit val jsonReader: ConfigReader[Json] = ConfigReader.fromString[Json](ConvertHelpers.tryF(Json.parse(_).toTry))
 
 }

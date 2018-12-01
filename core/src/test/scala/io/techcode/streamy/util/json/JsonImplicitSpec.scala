@@ -24,7 +24,9 @@
 package io.techcode.streamy.util.json
 
 import akka.util.ByteString
+import com.typesafe.config.ConfigFactory
 import org.scalatest._
+import pureconfig._
 
 /**
   * JsonImplicit spec.
@@ -32,6 +34,14 @@ import org.scalatest._
 class JsonImplicitSpec extends WordSpecLike with Matchers {
 
   "JsonImplicit" should {
+    "support pureconfig integration" in {
+      case class Test(
+        doc: Json
+      )
+      val test = loadConfigOrThrow[Test](ConfigFactory.parseString("""{"doc":{"test":"test"}}"""))
+      test.doc should equal(Json.obj("test" -> "test"))
+    }
+
     "provide a shortcut to convert json in string" in {
       jsonToString(Json.obj("test" -> "test")) should equal("""{"test":"test"}""")
     }
