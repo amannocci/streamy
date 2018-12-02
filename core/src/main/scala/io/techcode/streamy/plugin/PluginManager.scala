@@ -27,7 +27,7 @@ import java.net.{URL, URLClassLoader}
 
 import akka.actor.{Actor, DiagnosticActorLogging, Props}
 import akka.pattern.gracefulStop
-import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
 import io.techcode.streamy.event._
 import pureconfig._

@@ -55,21 +55,6 @@ object Streamy extends App {
   // Handle dry run
   if (args.length > 0 && args(0).equals("--dry-run")) {
     // Shutdown system
-    shutdown()
-  } else {
-    // Graceful shutdown
-    sys.addShutdownHook(shutdown())
-  }
-
-  /**
-    * Shutdown streamy system.
-    */
-  def shutdown(): Unit = {
-    // Stop all monitors
-    system.log.info("Stopping all monitors")
-    system.stop(deadLetterMonitor)
-
-    // Stop systems
     system.terminate()
   }
 

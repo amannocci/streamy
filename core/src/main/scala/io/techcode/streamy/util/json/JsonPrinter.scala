@@ -23,7 +23,8 @@
  */
 package io.techcode.streamy.util.json
 
-import com.typesafe.sslconfig.Base64
+import java.util.Base64
+
 import io.techcode.streamy.util.printer.StringPrinter
 
 import scala.annotation.tailrec
@@ -126,7 +127,7 @@ private[json] class JsonPrinter extends StringPrinter {
     */
   private def printBytes(value: JsBytes): Unit = {
     builder.append(JsonPrinter.Quote)
-      .append(Base64.rfc2045().encodeToString(value.value.toArray[Byte], false))
+      .append(Base64.getMimeEncoder.encodeToString(value.value.toArray[Byte]))
       .append(JsonPrinter.Quote)
   }
 
