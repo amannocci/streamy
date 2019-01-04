@@ -14,13 +14,14 @@ jobs:
         bootstrap.memory_lock: false
         discovery.type: single-node
         ES_JAVA_OPTS: -Xms128m -Xmx128m
-    - image: appropriate/nc:latest
-      command: ['nc', '-lk', '500']
+
+
     working_directory: ~/repo
 
     environment:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
+      CERT_FILES: ~/repo/plugin-tcp/src/test/resources
 
     steps:
     # Download docker images
@@ -32,8 +33,15 @@ jobs:
         - v1-dependencies-{{ checksum "build.sbt" }}
         # fallback to using the latest cache if no exact match is found
         - v1-dependencies-
-    # Install bats
-    - run: sudo apt-get install -qq bats gawk protobuf-compiler
+    # Install bats & nmap's ncat
+    - run: sudo apt-get install -qq bats gawk protobuf-compiler nmap
+
+    # Run ncat
+    - run: ncat -lk 5000
+    - run: ncat -lk 5001 -i 1s --ssl --ssl-cert "$CERT_FILES/test-cert.pem" --ssl-key "$CERT_FILES/test.key.pem"
+    - run: ncat -lk 5002 -i 1s --ssl --ssl-cert "$CERT_FILES/test-cert.pem" --ssl-key "$CERT_FILES/test.key.pem"
+    - run: ncat -lk 5003 -i 1s --ssl --ssl-cert "$CERT_FILES/test-cert.pem" --ssl-key "$CERT_FILES/test.key.pem"
+    - run: ncat -lk 5004 -i 1s --ssl --ssl-cert "$CERT_FILES/test-cert.pem" --ssl-key "$CERT_FILES/test.key.pem"
 
     # Run logic
     - run: bats core/src/test/bash

@@ -31,49 +31,91 @@ import io.techcode.streamy.tcp.event.TcpEvent
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.sys.process._
 
 /**
   * Tcp sink spec.
   */
 class TcpSinkSpec extends TestSystem {
 
-  "Tcp sink" should {
-    "send data correctly" in {
-      val result = Source.single(TcpFlowSpec.Input)
-        .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple))
+  /**
+    * WIP: test if we can use the Scala ProcessBuilder in the CI
+    */
+//    override def beforeAll(): Unit = {
+//      "bash ./plugin-tcp/src/test/resources/ncat.sh".run
+//    }
 
-      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
-        x should equal(Done)
+  "Tcp sink" when {
+    "tls is disabled" should {
+      "send data correctly" in {
+        val result = Source.single(TcpSinkSpec.Input)
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple))
+        whenReady(result, timeout(10 seconds), interval(100 millis)) { x =>
+          x should equal(Done)
+        }
+      }
+
+      "send data correctly with reconnect" in {
+        val result = Source.single(TcpSinkSpec.Input)
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect))
+        whenReady(result, timeout(10 seconds), interval(100 millis)) { x =>
+          x should equal(Done)
+        }
+      }
+
+      "send event correctly" in {
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
+        Source.single(TcpFlowSpec.Input)
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple))
+        expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
+        expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
+      }
+
+      "send event correctly with reconnect" in {
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
+        Source.single(TcpFlowSpec.Input)
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect))
+        expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
+        expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
       }
     }
 
-    "send data correctly with reconnect" in {
-      val result = Source.single(TcpFlowSpec.Input)
-        .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect))
-
-      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
-        x should equal(Done)
+    "tls is enabled" should {
+      "send data correctly" in {
+        val result = Source.single(TcpSinkSpec.Input)
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.Secure))
+        whenReady(result, timeout(10 seconds), interval(100 millis)) { x =>
+          x should equal(Done)
+        }
       }
-    }
 
-    "send event correctly" in {
-      system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
-      system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
-      Source.single(TcpFlowSpec.Input)
-        .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple))
+      "send data correctly with reconnect" in {
+        val result = Source.single(TcpSinkSpec.Input)
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.SecureWithReconnect))
+        whenReady(result, timeout(10 seconds), interval(100 millis)) { x =>
+          x should equal(Done)
+        }
+      }
 
-      expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
-      expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
-    }
+      "send event correctly" in {
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
+        Source.single(TcpFlowSpec.Input)
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.Secure))
+        expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
+        expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
+      }
 
-    "send event correctly with reconnect" in {
-      system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
-      system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
-      Source.single(TcpFlowSpec.Input)
-        .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect))
-
-      expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
-      expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
+      "send event correctly with reconnect" in {
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
+        Source.single(TcpFlowSpec.Input)
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.SecureWithReconnect))
+        expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
+        expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
+      }
     }
 
   }
@@ -88,12 +130,27 @@ object TcpSinkSpec {
 
     val Simple = TcpFlow.Client.Config(
       host = "localhost",
-      port = 500
+      port = 5000
     )
 
-    val SimpleWithReconnect = Simple.copy(
+    val SimpleWithReconnect: TcpFlow.Client.Config = Simple.copy(
       reconnect = Some(TcpFlow.Client.ReconnectConfig(
         minBackoff = 1 seconds,
+        maxBackoff = 1 second,
+        randomFactor = 0.2D
+      ))
+    )
+
+    val Secure = TcpFlow.Client.Config(
+      host = "localhost",
+      port = 5003,
+      secured = true
+    )
+
+    val SecureWithReconnect: TcpFlow.Client.Config = Secure.copy(
+      port = 5004,
+      reconnect = Some(TcpFlow.Client.ReconnectConfig(
+        minBackoff = 1 second,
         maxBackoff = 1 second,
         randomFactor = 0.2D
       ))

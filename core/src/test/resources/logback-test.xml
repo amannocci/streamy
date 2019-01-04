@@ -13,9 +13,16 @@
         </encoder>
     </appender>
 
-    <!-- Root -->
-    <root level="info">
+    <!-- Async appenders -->
+    <appender name="async-console" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>8192</queueSize>
         <appender-ref ref="stdout"/>
+    </appender>
+
+    <!-- Root -->
+    <root level="debug">
+        <appender-ref ref="async-console"/>
     </root>
 
     <!-- Shutdown Hook -->
