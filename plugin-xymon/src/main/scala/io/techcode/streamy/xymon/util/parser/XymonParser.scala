@@ -78,7 +78,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
     optional(
       plus() &&
         capture(binding.lifetime) {
-          duration() && durationUnit()
+          duration() && optional(durationUnit())
         }
     )
 
