@@ -61,7 +61,8 @@ lazy val bench = project
     `plugin-metric` % "test->test",
     `plugin-protobuf` % "test->test",
     `plugin-syslog` % "test->test",
-    `plugin-tcp` % "test->test"
+    `plugin-tcp` % "test->test",
+    `plugin-xymon` % "test->test"
   )
   .settings(Benchs.settings)
   .disablePlugins(AssemblyPlugin)
@@ -235,6 +236,17 @@ lazy val `plugin-tcp` = project
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
 
+lazy val `plugin-xymon` = project
+  .in(file("plugin-xymon"))
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
+
 lazy val testkit = project
   .in(file("test"))
   .settings(
@@ -266,6 +278,7 @@ lazy val root = project
     `plugin-riemann`,
     `plugin-syslog`,
     `plugin-tcp`,
+    `plugin-xymon`,
     testkit
   )
   .disablePlugins(AssemblyPlugin)
