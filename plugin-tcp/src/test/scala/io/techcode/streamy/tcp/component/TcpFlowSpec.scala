@@ -38,12 +38,10 @@ import scala.sys.process._
   */
 class TcpFlowSpec extends TestSystem {
 
-  /**
-    * WIP: test if we can use the Scala ProcessBuilder in the CI
-    */
-//  override def beforeAll(): Unit = {
-//    "bash ./plugin-tcp/src/test/resources/ncat.sh".run
-//  }
+  // Start ncat servers
+  override def beforeAll(): Unit = {
+    "bash ./plugin-tcp/src/test/resources/listener.sh".run
+  }
 
   "Tcp flow" when {
     "tls is disabled" should {
@@ -51,7 +49,7 @@ class TcpFlowSpec extends TestSystem {
         val result = Source.single(TcpFlowSpec.Input)
           .via(TcpFlow.client(TcpFlowSpec.Flow.Simple))
           .runWith(Sink.ignore)
-        whenReady(result, timeout(5 seconds), interval(500 millis)) { x =>
+        whenReady(result, timeout(10 seconds), interval(500 millis)) { x =>
           x should equal(Done)
         }
       }
@@ -60,7 +58,7 @@ class TcpFlowSpec extends TestSystem {
         val result = Source.single(TcpFlowSpec.Input)
           .via(TcpFlow.client(TcpFlowSpec.Flow.SimpleWithReconnect))
           .runWith(Sink.ignore)
-        whenReady(result, timeout(5 seconds), interval(500 millis)) { x =>
+        whenReady(result, timeout(10 seconds), interval(500 millis)) { x =>
           x should equal(Done)
         }
       }
@@ -134,7 +132,6 @@ object TcpFlowSpec {
   val Input = ByteString("Hello world !")
 
   object Flow {
-
     val Simple = TcpFlow.Client.Config(
       host = "localhost",
       port = 5000
@@ -163,5 +160,4 @@ object TcpFlowSpec {
       ))
     )
   }
-
 }

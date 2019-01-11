@@ -38,12 +38,10 @@ import scala.sys.process._
   */
 class TcpSinkSpec extends TestSystem {
 
-  /**
-    * WIP: test if we can use the Scala ProcessBuilder in the CI
-    */
-//    override def beforeAll(): Unit = {
-//      "bash ./plugin-tcp/src/test/resources/ncat.sh".run
-//    }
+  // Start ncat servers
+  override def beforeAll(): Unit = {
+    "bash ./plugin-tcp/src/test/resources/listener.sh".run
+  }
 
   "Tcp sink" when {
     "tls is disabled" should {
@@ -123,11 +121,10 @@ class TcpSinkSpec extends TestSystem {
 }
 
 object TcpSinkSpec {
-
+  
   val Input = ByteString("Hello world !")
 
   object Sink {
-
     val Simple = TcpFlow.Client.Config(
       host = "localhost",
       port = 5000
@@ -155,7 +152,5 @@ object TcpSinkSpec {
         randomFactor = 0.2D
       ))
     )
-
   }
-
 }
