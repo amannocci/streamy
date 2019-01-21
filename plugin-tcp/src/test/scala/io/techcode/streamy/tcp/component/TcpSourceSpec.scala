@@ -31,6 +31,7 @@ import io.techcode.streamy.tcp.event.TcpEvent
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
+import scala.sys.process._
 
 /**
   * Tcp source spec.
@@ -39,21 +40,36 @@ class TcpSourceSpec extends TestSystem {
 
   import system.dispatcher
 
-  "Tcp source" should {
-    "send event correctly" in {
+  "Tcp source" when {
+    "tls is enabled" should {
+      "receive event correctly" in {
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionCreated])
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionClosed])
+        TcpSource.server(TcpSourceSpec.Source.Simple).onComplete {
+          case Success(_) =>
+            Source.single(TcpSourceSpec.Input)
+              .runWith(TcpSink.client(TcpSourceSpec.Flow.Simple))
+          case Failure(ex) => ex.printStackTrace()
+        }
+        expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionCreated])
+        expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionClosed])
+      }
+    }
+  }
+
+  "tls is disabled" should {
+    "receive event correctly" in {
       system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionCreated])
       system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionClosed])
-      TcpSource.server(TcpSourceSpec.Source.Simple).onComplete {
+      TcpSource.server(TcpSourceSpec.Source.Secure).onComplete {
         case Success(_) =>
           Source.single(TcpSourceSpec.Input)
-            .runWith(TcpSink.client(TcpSourceSpec.Flow.Simple))
+            .runWith(TcpSink.client(TcpSourceSpec.Flow.Secure))
         case Failure(ex) => ex.printStackTrace()
       }
-
       expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionCreated])
       expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionClosed])
     }
-
   }
 
 }
@@ -67,16 +83,28 @@ object TcpSourceSpec {
     val Simple = TcpSource.Server.Config(
       akka.stream.scaladsl.Flow[ByteString],
       host = "localhost",
-      port = 5000
+      port = 4998
     )
 
+    val Secure = TcpSource.Server.Config(
+      akka.stream.scaladsl.Flow[ByteString],
+      host = "localhost",
+      port = 4999,
+      secured = true
+    )
   }
 
   object Flow {
 
     val Simple = TcpFlow.Client.Config(
       host = "localhost",
-      port = 5000
+      port = 4998
+    )
+
+    val Secure = TcpFlow.Client.Config(
+      host = "localhost",
+      port = 4999,
+      secured = true
     )
 
   }

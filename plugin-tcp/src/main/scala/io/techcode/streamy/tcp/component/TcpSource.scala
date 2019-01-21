@@ -27,9 +27,10 @@ import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
 import akka.stream.Materializer
 import akka.stream.scaladsl.Tcp.{IncomingConnection, ServerBinding}
-import akka.stream.scaladsl.{Flow, Sink, Tcp}
+import akka.stream.scaladsl.{Flow, Sink, Source, Tcp}
 import akka.util.ByteString
 import io.techcode.streamy.tcp.event.TcpEvent
+import io.techcode.streamy.tcp.util.TlsContext
 
 import scala.collection.immutable
 import scala.concurrent.Future
@@ -50,6 +51,7 @@ object TcpSource {
       handler: Flow[ByteString, ByteString, _],
       host: String,
       port: Int,
+      secured: Boolean = false,
       idleTimeout: Duration = Duration.Inf,
       backlog: Int = DefaultBacklog,
       options: immutable.Traversable[SocketOption] = Nil
@@ -63,16 +65,58 @@ object TcpSource {
     * @param config flow configuration.
     */
   def server(config: Server.Config)(implicit system: ActorSystem, materializer: Materializer): Future[ServerBinding] = {
-    Tcp()
-      .bind(config.host, config.port, config.backlog, config.options, halfClose = false, config.idleTimeout)
-      .to(Sink.foreach { conn: IncomingConnection ⇒
-        system.eventStream.publish(TcpEvent.Server.ConnectionCreated(conn.localAddress, conn.remoteAddress))
-        conn.flow.alsoTo(Sink.onComplete { _ =>
-          system.eventStream.publish(TcpEvent.Server.ConnectionClosed(conn.localAddress, conn.remoteAddress))
-        }).join(Flow.lazyInitAsync { () =>
-          Future.successful(config.handler)
-        }).run()
+    {
+      if (config.secured) {
+        tlsServer(config)
+      } else {
+        plainServer(config)
+      }
+    }.to(Sink.foreach { conn: IncomingConnection ⇒
+      system.eventStream.publish(TcpEvent.Server.ConnectionCreated(conn.localAddress, conn.remoteAddress))
+      conn.flow.alsoTo(Sink.onComplete { _ =>
+        system.eventStream.publish(TcpEvent.Server.ConnectionClosed(conn.localAddress, conn.remoteAddress))
+      }).join(Flow.lazyInitAsync { () =>
+        Future.successful(config.handler)
       }).run()
+    }).run()
   }
+
+  /**
+    * Create a tcp plain service.
+    *
+    * @param config source configuration.
+    * @return tcp plain server.
+    */
+  private def plainServer(config: Server.Config)(implicit system: ActorSystem): Source[IncomingConnection, Future[ServerBinding]] =
+    Tcp().bind(
+      config.host,
+      config.port,
+      config.backlog,
+      config.options,
+      halfClose = false,
+      config.idleTimeout
+    )
+
+  /**
+    * Create a tcp tls service.
+    *
+    * @param config source configuration.
+    * @return tcp tls server.
+    */
+  private def tlsServer(config: Server.Config)(implicit system: ActorSystem): Source[IncomingConnection, Future[ServerBinding]] = {
+    val ctx = TlsContext.create()
+
+    // Tls connection
+    Tcp().bindTls(
+      config.host,
+      config.port,
+      ctx.sslContext,
+      ctx.negotiateNewSession,
+      config.backlog,
+      config.options,
+      config.idleTimeout
+    )
+  }
+
 
 }

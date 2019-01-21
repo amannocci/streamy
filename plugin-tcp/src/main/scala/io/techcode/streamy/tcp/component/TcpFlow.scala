@@ -30,6 +30,7 @@ import akka.io.Inet.SocketOption
 import akka.stream.scaladsl.{Flow, RestartFlow, Sink, Tcp}
 import akka.util.ByteString
 import io.techcode.streamy.tcp.event.TcpEvent
+import io.techcode.streamy.tcp.util.TlsContext
 
 import scala.collection.immutable
 import scala.concurrent.Future
@@ -46,6 +47,7 @@ object TcpFlow {
     case class Config(
       host: String,
       port: Int,
+      secured: Boolean = false,
       idleTimeout: Duration = Duration.Inf,
       connectTimeout: Duration = Duration.Inf,
       reconnect: Option[ReconnectConfig] = None,
@@ -72,12 +74,13 @@ object TcpFlow {
       // Lazily create a connection on first element
       system.eventStream.publish(TcpEvent.Client.ConnectionCreated(config))
       Future.successful(
-        Tcp().outgoingConnection(
-          InetSocketAddress.createUnresolved(config.host, config.port),
-          connectTimeout = config.connectTimeout,
-          idleTimeout = config.idleTimeout,
-          options = config.options
-        ).alsoTo(Sink.onComplete { _ =>
+        {
+          if (config.secured) {
+            tlsConnection(config)
+          } else {
+            plainConnection(config)
+          }
+        }.alsoTo(Sink.onComplete { _ =>
           system.eventStream.publish(TcpEvent.Client.ConnectionClosed(config))
         }))
     }
@@ -96,6 +99,40 @@ object TcpFlow {
     } else {
       connection
     }
+  }
+
+  /**
+    * Create a tcp plain connection.
+    *
+    * @param config flow configuration.
+    * @return tcp plain connection.
+    */
+  private def plainConnection(config: Client.Config)(implicit system: ActorSystem): Flow[ByteString, ByteString, Any] =
+    Tcp().outgoingConnection(
+      InetSocketAddress.createUnresolved(config.host, config.port),
+      connectTimeout = config.connectTimeout,
+      idleTimeout = config.idleTimeout,
+      options = config.options
+    )
+
+  /**
+    * Create a tcp tls connection.
+    *
+    * @param config flow configuration.
+    * @return tcp tls connection.
+    */
+  private def tlsConnection(config: Client.Config)(implicit system: ActorSystem): Flow[ByteString, ByteString, Any] = {
+    val ctx = TlsContext.create()
+
+    // Tls connection
+    Tcp().outgoingTlsConnection(
+      InetSocketAddress.createUnresolved(config.host, config.port),
+      sslContext = ctx.sslContext,
+      negotiateNewSession = ctx.negotiateNewSession,
+      connectTimeout = config.connectTimeout,
+      idleTimeout = config.idleTimeout,
+      options = config.options
+    )
   }
 
 }

@@ -14,8 +14,8 @@ jobs:
         bootstrap.memory_lock: false
         discovery.type: single-node
         ES_JAVA_OPTS: -Xms128m -Xmx128m
-    - image: appropriate/nc:latest
-      command: ['nc', '-lk', '500']
+
+
     working_directory: ~/repo
 
     environment:
@@ -32,8 +32,8 @@ jobs:
         - v1-dependencies-{{ checksum "build.sbt" }}
         # fallback to using the latest cache if no exact match is found
         - v1-dependencies-
-    # Install bats
-    - run: sudo apt-get install -qq bats gawk protobuf-compiler
+    # Install bats & nmap's ncat
+    - run: sudo apt-get install -qq bats gawk protobuf-compiler nmap
 
     # Run logic
     - run: bats core/src/test/bash
