@@ -82,7 +82,7 @@ object TlsContext {
       case SslClientAuth.None ⇒ Some(TLSClientAuth.None)
     }
 
-    // New session negociation
+    // New session negotiation
     val negotiateNewSession = TLSProtocol.NegotiateNewSession(
       Some(cipherSuites.toList),
       Some(protocols.toList),

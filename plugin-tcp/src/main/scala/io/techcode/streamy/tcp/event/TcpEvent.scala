@@ -39,7 +39,7 @@ object TcpEvent {
   object Server {
 
     /**
-      * This event is fire when a tcp server connection is created.
+      * This event is fired when a tcp server connection is created.
       *
       * @param localAddress  Local IP Socket address.
       * @param remoteAddress Remote IP Socket address.
@@ -47,7 +47,7 @@ object TcpEvent {
     case class ConnectionCreated(localAddress: InetSocketAddress, remoteAddress: InetSocketAddress) extends All
 
     /**
-      * This event is fire when a tcp server connection is closed.
+      * This event is fired when a tcp server connection is closed.
       *
       * @param localAddress  Local IP Socket address.
       * @param remoteAddress Remote IP Socket address.
@@ -59,14 +59,14 @@ object TcpEvent {
   object Client {
 
     /**
-      * This event is fire when a tcp client connection is created.
+      * This event is fired when a tcp client connection is created.
       *
       * @param config configuration of the tcp connection created.
       */
     case class ConnectionCreated(config: TcpFlow.Client.Config) extends All
 
     /**
-      * This event is fire when a tcp client connection is closed.
+      * This event is fired when a tcp client connection is closed.
       *
       * @param config configuration of the tcp connection closed.
       */
