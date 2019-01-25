@@ -849,12 +849,87 @@ case class JsObject private[json](
   def put(field: (String, Json)): JsObject =
     JsObject(underlying + field)
 
+  /**
+    * Convert a json value to dot notation.
+    *
+    * @return json value with dot notation.
+    */
+  def flatten(): JsObject = flatten(this)
+
+  /**
+    * Convert a json object to dot notation.
+    *
+    * @param js     json object to flatten.
+    * @param prefix accumultator.
+    * @return json object with dot notation.
+    */
+  private def flatten(js: JsObject, prefix: String = ""): JsObject = js.fields.foldLeft[JsObject](Json.obj()) {
+    case (acc, (k, v: Json)) =>
+      v match {
+        case obj: JsObject =>
+          // Deep merge will always successed
+          if (prefix.isEmpty) {
+            acc.deepMerge(flatten(obj, k))
+          } else {
+            acc.deepMerge(flatten(obj, s"$prefix.$k"))
+          }
+        case _ =>
+          if (prefix.isEmpty) {
+            acc.put(k, v)
+          } else {
+            acc.put(s"$prefix.$k", v)
+          }
+      }
+  }
+
   override def asObject: Option[JsObject] = Some(this)
 
   def copy(): Json = JsObject(underlying.clone())
 
   override lazy val sizeHint: Int =
     1 + underlying.keys.map(_.length + 2).sum + underlying.values.map(_.sizeHint()).sum + (underlying.values.size * 2)
+
+}
+
+/**
+  * Json object companion.
+  */
+object JsObject {
+
+  /**
+    * Convert a map to json.
+    *
+    * @param map map with any values.
+    * @return json object.
+    */
+  def fromJsonMap(map: mutable.Map[String, Json]): JsObject = {
+    val builder = Json.objectBuilder()
+    map.foreach {
+      case (key: String, value: Json) => builder.put(key, value)
+    }
+    builder.result()
+  }
+
+  /**
+    * Convert a map to json.
+    *
+    * @param map map with any values.
+    * @return json object.
+    */
+  def fromRawMap(map: mutable.Map[String, Any]): JsObject = {
+    val builder = Json.objectBuilder()
+    map.foreach {
+      case (key: String, value: Int) => builder.put(key, intToJson(value))
+      case (key: String, value: Long) => builder.put(key, longToJson(value))
+      case (key: String, value: Double) => builder.put(key, doubleToJson(value))
+      case (key: String, value: Float) => builder.put(key, floatToJson(value))
+      case (key: String, value: BigDecimal) => builder.put(key, bigDecimalToJson(value))
+      case (key: String, value: Boolean) => builder.put(key, booleanToJson(value))
+      case (key: String, value: ByteString) => builder.put(key, byteStringToJson(value))
+      case (key: String, value: Any) => builder.put(key, stringToJson(value.toString))
+    }
+    builder.result()
+  }
 
 }
 

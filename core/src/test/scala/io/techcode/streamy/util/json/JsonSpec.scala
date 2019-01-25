@@ -23,11 +23,11 @@
  */
 package io.techcode.streamy.util.json
 
-import java.io.ByteArrayInputStream
-
 import akka.util.ByteString
 import com.google.common.math.{IntMath, LongMath}
 import org.scalatest._
+
+import scala.collection.mutable
 
 /**
   * Json spec.
@@ -104,6 +104,86 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return values as iterable" in {
       Json.obj("test" -> "test").values.head should equal(Seq(JsString("test")).head)
+    }
+
+    "flatten correctly a json object" in {
+      Json.obj(
+        "foobar" -> 0,
+        "test" -> Json.obj(
+          "test" -> "foobar",
+          "foobar" -> Json.obj("test" -> 0)
+        )
+      ).flatten() should equal(Json.obj(
+        "foobar" -> 0,
+        "test.test" -> "foobar",
+        "test.foobar.test" -> 0
+      ))
+    }
+
+    "convert correctly a map to json object" in {
+      val map: mutable.Map[String, Any] = mutable.AnyRefMap()
+      map.put("string", "string")
+      map.put("boolean", true)
+      map.put("int", 10)
+      map.put("long", 10L)
+      map.put("float", 1.0F)
+      map.put("double", 1.0D)
+      map.put("bigDecimal", BigDecimal(1))
+      map.put("byteString", ByteString("test"))
+      JsObject.fromRawMap(map) should equal(Json.obj(
+        "string" -> "string",
+        "boolean" -> true,
+        "int" -> 10,
+        "long" -> 10L,
+        "float" -> 1.0F,
+        "double" -> 1.0D,
+        "bigDecimal" -> BigDecimal(1),
+        "byteString" -> ByteString("test")
+      ))
+    }
+
+    "convert correctly a raw map to json object" in {
+      val map: mutable.Map[String, Any] = mutable.AnyRefMap()
+      map.put("string", "string")
+      map.put("boolean", true)
+      map.put("int", 10)
+      map.put("long", 10L)
+      map.put("float", 1.0F)
+      map.put("double", 1.0D)
+      map.put("bigDecimal", BigDecimal(1))
+      map.put("byteString", ByteString("test"))
+      JsObject.fromRawMap(map) should equal(Json.obj(
+        "string" -> "string",
+        "boolean" -> true,
+        "int" -> 10,
+        "long" -> 10L,
+        "float" -> 1.0F,
+        "double" -> 1.0D,
+        "bigDecimal" -> BigDecimal(1),
+        "byteString" -> ByteString("test")
+      ))
+    }
+
+    "convert correctly a json map to json object" in {
+      val map: mutable.Map[String, Json] = new mutable.LinkedHashMap()
+      map.put("string", "string")
+      map.put("boolean", true)
+      map.put("int", 10)
+      map.put("long", 10L)
+      map.put("float", 1.0F)
+      map.put("double", 1.0D)
+      map.put("bigDecimal", BigDecimal(1))
+      map.put("byteString", ByteString("test"))
+      JsObject.fromJsonMap(map) should equal(Json.obj(
+        "string" -> "string",
+        "boolean" -> true,
+        "int" -> 10,
+        "long" -> 10L,
+        "float" -> 1.0F,
+        "double" -> 1.0D,
+        "bigDecimal" -> BigDecimal(1),
+        "byteString" -> ByteString("test")
+      ))
     }
 
     "not be equals when there is a difference" in {

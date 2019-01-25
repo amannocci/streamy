@@ -77,6 +77,8 @@ class JsonBench {
     Sample.JsonObj.remove("double")
   }
 
+  @Benchmark def flatten(): JsObject = JsonBench.Sample.JsonObjToFlatten.flatten()
+
 }
 
 object JsonBench {
@@ -96,6 +98,21 @@ object JsonBench {
       "long" -> Long.MaxValue,
       "string" -> "string",
       "obj" -> JsonObj
+    )
+
+    val JsonObjToFlatten: JsObject = Json.obj(
+      "test01" -> Json.obj(
+        "test01" -> "test",
+        "test02" -> "test"
+      ),
+      "test02" -> Json.obj(
+        "test01" -> "test",
+        "test02" -> "test"
+      ),
+      "test03" -> Json.obj(
+        "test01" -> "test",
+        "test02" -> "test"
+      )
     )
 
   }

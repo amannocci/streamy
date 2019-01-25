@@ -29,7 +29,7 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.jvm.{BufferPoolMetricSet, GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
 import io.techcode.streamy.metric.event.MetricEvent
 import io.techcode.streamy.plugin.{Plugin, PluginData}
-import io.techcode.streamy.util.json.JsonUtil
+import io.techcode.streamy.util.json._
 import pureconfig._
 import pureconfig.generic.auto._
 
@@ -69,7 +69,7 @@ class MetricPlugin(
         Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
 
         // Emit event
-        val evt = JsonUtil.fromRawMap(entry)
+        val evt = JsObject.fromRawMap(entry)
         system.eventStream.publish(MetricEvent.Jvm(evt))
 
         // If embedded log
