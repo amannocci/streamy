@@ -53,18 +53,18 @@ object Dependencies {
   import Compile._, Test._
 
   val akka = libraryDependencies ++= Seq(akkaActor, akkaStream, akkaSlf4j).map(_ % "2.5.19")
-  val jackson = libraryDependencies ++= Seq(jacksonCore, jacksonDatabind).map(_ % "2.9.7")
+  val jackson = libraryDependencies ++= Seq(jacksonCore, jacksonDatabind).map(_ % "2.9.8")
   val logback = libraryDependencies ++= Seq(logbackClassic % "1.2.3")
-  val guava = libraryDependencies ++= Seq(googleGuava % "26.0-jre")
-  val config = libraryDependencies ++= Seq(pureConfig % "0.9.2")
+  val guava = libraryDependencies ++= Seq(googleGuava % "27.0.1-jre")
+  val config = libraryDependencies ++= Seq(pureConfig % "0.10.1")
   val scala = libraryDependencies ++= Seq(scalaReflect.value)
   val metric = libraryDependencies ++= Seq(metricsJvm % "4.0.2")
-  val sttp = libraryDependencies ++= Seq(sttpCore, sttpBackend).map(_ % "1.3.5")
+  val sttp = libraryDependencies ++= Seq(sttpCore, sttpBackend).map(_ % "1.5.8")
 
   private val akkaTesting = Seq(akkaTestkit, akkaStreamTestkit).map(_ % "2.5.19")
   val akkaTest = libraryDependencies ++= akkaTesting.map(_ % "test")
   val akkaTestLib = libraryDependencies ++= akkaTesting
-  val elasticTest = libraryDependencies ++= Seq(elastic).map(_ % "6.2.2" % "test")
-  val testKit = libraryDependencies ++= Seq(scalaTest % "3.0.5", mockitoCore % "2.22.0")
+  val elasticTest = libraryDependencies ++= Seq(elastic).map(_ % "6.5.4" % "test")
+  val testKit = libraryDependencies ++= Seq(scalaTest % "3.0.5", mockitoCore % "2.23.4")
 
 }

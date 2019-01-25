@@ -27,6 +27,7 @@ import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import pureconfig._
+import pureconfig.generic.auto._
 
 /**
   * JsonImplicit spec.
@@ -38,7 +39,7 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
       case class Test(
         doc: Json
       )
-      val test = loadConfigOrThrow[Test](ConfigFactory.parseString("""{"doc":{"test":"test"}}"""))
+      val test = loadConfigOrThrow[Test](ConfigFactory.parseString("""{"doc":"{\"test\":\"test\"}"}"""))
       test.doc should equal(Json.obj("test" -> "test"))
     }
 

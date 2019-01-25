@@ -26,6 +26,7 @@ package io.techcode.streamy.plugin
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import pureconfig._
+import pureconfig.generic.auto._
 
 import scala.reflect.io.Path
 

@@ -28,6 +28,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.StreamyTestSystem
 import org.scalatest.mockito.MockitoSugar
 import pureconfig._
+import pureconfig.generic.auto._
 
 import scala.reflect.io.Path
 

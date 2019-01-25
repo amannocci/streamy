@@ -27,6 +27,7 @@ import akka.actor.{ActorRef, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.TestSystem
 import pureconfig._
+import pureconfig.generic.auto._
 
 import scala.reflect.io.Path
 

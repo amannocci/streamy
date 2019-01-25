@@ -31,6 +31,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
 import io.techcode.streamy.event._
 import pureconfig._
+import pureconfig.generic.auto._
 import pureconfig.error.ConfigReaderException
 
 import scala.collection.mutable

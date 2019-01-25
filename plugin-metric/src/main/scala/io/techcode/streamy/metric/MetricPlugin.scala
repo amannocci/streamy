@@ -31,6 +31,7 @@ import io.techcode.streamy.metric.event.MetricEvent
 import io.techcode.streamy.plugin.{Plugin, PluginData}
 import io.techcode.streamy.util.json.JsonUtil
 import pureconfig._
+import pureconfig.generic.auto._
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
