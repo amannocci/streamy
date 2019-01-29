@@ -35,8 +35,6 @@ import io.techcode.streamy.xymon.component.XymonTransformer
   */
 object XymonPrinter {
 
-  def printer(conf: XymonTransformer.Printer.Config): ByteStringPrinter = new XymonPrinter(conf)
-
   val Host: String = "www,example,com"
   val Service: String = "streamy"
   val Color: String = "red"
@@ -46,6 +44,15 @@ object XymonPrinter {
   val Slash: Char = '/'
   val Colon: Char = ':'
   val Dot: Char = '.'
+
+  /**
+    * Create a xymon printer that transform incoming [[Json]] to [[ByteString]].
+    *
+    * @param conf printer configuration.
+    * @return new xymon printer.
+    */
+  def printer(conf: XymonTransformer.Printer.Config): ByteStringPrinter = new XymonPrinter(conf)
+
 }
 
 /**
@@ -53,39 +60,40 @@ object XymonPrinter {
   */
 private class XymonPrinter(conf: XymonTransformer.Printer.Config) extends PrinterHelpers {
 
+  // Fast binding access
   private val binding: XymonTransformer.Printer.Binding = conf.binding
 
   override def run(): ByteString = {
-    // status
+    // Add status
     builder.append(XymonTransformer.Id.Status)
 
-    // optionally add lifetime
+    // Optionally add lifetime
     computeVal(binding.lifetime, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Plus)
     }
 
-    // optionally add group
+    // Optionally add group
     computeVal(binding.group, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Slash)
       builder.append(XymonTransformer.Id.Group)
       builder.append(XymonPrinter.Colon)
     }
 
-    // space
+    // Space
     builder.append(XymonPrinter.Space)
 
-    // hostname and testname
+    // Hostname and testname
     computeVal(binding.host, XymonPrinter.Host)()
     builder.append(XymonPrinter.Dot)
     computeVal(binding.service, XymonPrinter.Service)()
 
-    // space
+    // Space
     builder.append(XymonPrinter.Space)
 
-    // color
+    // Color
     computeVal(binding.color, XymonPrinter.Color)()
 
-    // optionally add space and message
+    // Optionally add space and message
     computeVal(binding.message, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Space)
     }
