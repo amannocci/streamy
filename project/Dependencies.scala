@@ -52,7 +52,7 @@ object Dependencies {
 
   import Compile._, Test._
 
-  val akka = libraryDependencies ++= Seq(akkaActor, akkaStream, akkaSlf4j).map(_ % "2.5.19")
+  val akka = libraryDependencies ++= Seq(akkaActor, akkaStream, akkaSlf4j).map(_ % "2.5.20")
   val jackson = libraryDependencies ++= Seq(jacksonCore, jacksonDatabind).map(_ % "2.9.8")
   val logback = libraryDependencies ++= Seq(logbackClassic % "1.2.3")
   val guava = libraryDependencies ++= Seq(googleGuava % "27.0.1-jre")
@@ -61,7 +61,7 @@ object Dependencies {
   val metric = libraryDependencies ++= Seq(metricsJvm % "4.0.2")
   val sttp = libraryDependencies ++= Seq(sttpCore, sttpBackend).map(_ % "1.5.8")
 
-  private val akkaTesting = Seq(akkaTestkit, akkaStreamTestkit).map(_ % "2.5.19")
+  private val akkaTesting = Seq(akkaTestkit, akkaStreamTestkit).map(_ % "2.5.20")
   val akkaTest = libraryDependencies ++= akkaTesting.map(_ % "test")
   val akkaTestLib = libraryDependencies ++= akkaTesting
   val elasticTest = libraryDependencies ++= Seq(elastic).map(_ % "6.5.4" % "test")
