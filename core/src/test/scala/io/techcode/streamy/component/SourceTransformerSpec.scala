@@ -37,7 +37,7 @@ class SourceTransformerSpec extends StreamyTestSystem {
 
   "Source transformer" should {
     "parse correctly a bytestring when success" in {
-      val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser {
+      val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser[Json] {
         override def run(): Json = Json.obj()
 
         override def root(): Boolean = true

@@ -24,7 +24,8 @@
 package io.techcode.streamy.xymon.util.parser
 
 import com.google.common.base.CharMatcher
-import io.techcode.streamy.util.parser.{ByteStringParser, CharMatchers}
+import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.parser.{ByteStringParser, CharMatchers, ParseException}
 import io.techcode.streamy.xymon.component.XymonTransformer
 
 object XymonParser {
@@ -34,14 +35,14 @@ object XymonParser {
 
   private[parser] val TestNameMatcher: CharMatcher = CharMatcher.noneOf(". ").precomputed()
 
-  def parser(conf: XymonTransformer.Parser.Config): XymonParser = new XymonParser(conf)
+  def parser(conf: XymonTransformer.Parser.Config): ByteStringParser[Json] = new XymonParser(conf)
 }
 
 /**
   * Parser helpers containing various shortcut for character matching.
   */
 private[parser] trait ParserHelpers {
-  this: ByteStringParser =>
+  this: ByteStringParser[Json] =>
 
   @inline def sp(): Boolean = ch(' ')
 
@@ -59,9 +60,19 @@ private[parser] trait ParserHelpers {
   *   status[+LIFETIME][/group:GROUP] HOSTNAME.TESTNAME COLOR <additional_text>
   * For more information on the parameters, see the xymon man page
   */
-private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extends ByteStringParser with ParserHelpers {
+private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extends ByteStringParser[Json] with ParserHelpers {
 
   private val binding = config.binding
+
+  private implicit var builder: JsObjectBuilder = Json.objectBuilder()
+
+  def run(): Json = {
+    if (root()) {
+      builder.result()
+    } else {
+      throw new ParseException(s"Unexpected input at index ${_cursor}")
+    }
+  }
 
   override def root(): Boolean =
     str(XymonTransformer.Id.Status) &&
@@ -77,9 +88,10 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
   def lifetime(): Boolean =
     optional(
       plus() &&
-        capture(binding.lifetime) {
-          duration() && optional(durationUnit())
-        }
+        capture()(
+          duration() && optional(durationUnit()),
+          binding.lifetime(_)
+        )
     )
 
   def duration(): Boolean = oneOrMore(CharMatchers.Digit)
@@ -91,34 +103,45 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
       slash() &&
         oneOrMore(CharMatchers.LowerAlpha) &&
         colon() &&
-        capture(binding.group) {
-          oneOrMore(XymonParser.GroupNameMatcher)
-        }
+        capture()(
+          oneOrMore(XymonParser.GroupNameMatcher),
+          binding.group(_)
+        )
     )
 
   def hostAndService(): Boolean =
     host && dot() && service()
 
   def host(): Boolean =
-    capture(binding.host) {
-      oneOrMore(XymonParser.HostNameMatcher)
-    }
+    capture()(
+      oneOrMore(XymonParser.HostNameMatcher),
+      binding.host(_)
+    )
 
   def service(): Boolean =
-    capture(binding.service) {
-      oneOrMore(XymonParser.TestNameMatcher)
-    }
+    capture()(
+      oneOrMore(XymonParser.TestNameMatcher),
+      binding.service(_)
+    )
 
   def color(): Boolean =
-    capture(binding.color) {
-      oneOrMore(CharMatchers.LowerAlpha)
-    }
+    capture()(
+      oneOrMore(CharMatchers.LowerAlpha),
+      binding.color(_)
+    )
 
   def additionalText(): Boolean =
     optional(
       sp() &&
-      capture(binding.message) {
-        any()
-      }
+      capture()(
+        any(),
+        binding.message(_)
+      )
     )
+
+  override def cleanup(): Unit = {
+    super.cleanup()
+    builder = Json.objectBuilder()
+  }
+
 }

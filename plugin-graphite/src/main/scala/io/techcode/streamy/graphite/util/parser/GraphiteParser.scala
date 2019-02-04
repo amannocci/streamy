@@ -28,7 +28,7 @@ import com.google.common.base.CharMatcher
 import io.techcode.streamy.graphite.component.GraphiteTransformer
 import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.parser.ByteStringParser
+import io.techcode.streamy.util.parser.{ByteStringParser, ParseException}
 
 /**
   * Graphite parser companion.
@@ -42,11 +42,10 @@ object GraphiteParser {
     * Create a graphite parser that transform incoming [[ByteString]] to [[Json]].
     * This parser is compliant with Graphite protocol.
     *
-    * @param bytes  data to parse.
     * @param config parser configuration.
     * @return new graphite parser compliant with Graphite protocol.
     */
-  def parser(config: GraphiteTransformer.Config): ByteStringParser = new GraphiteParser(config)
+  def parser(config: GraphiteTransformer.Config): ByteStringParser[Json] = new GraphiteParser(config)
 
 }
 
@@ -54,7 +53,7 @@ object GraphiteParser {
   * Parser helpers containing various shortcut for character matching.
   */
 private trait ParserHelpers {
-  this: ByteStringParser =>
+  this: ByteStringParser[Json] =>
 
   @inline def sp(): Boolean = ch(' ')
 
@@ -66,9 +65,19 @@ private trait ParserHelpers {
   *
   * @param config parser configuration.
   */
-private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStringParser with ParserHelpers {
+private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStringParser[Json] with ParserHelpers {
 
   private val binding = config.binding
+
+  private implicit var builder: JsObjectBuilder = Json.objectBuilder()
+
+  def run(): Json = {
+    if (root()) {
+      builder.result()
+    } else {
+      throw new ParseException(s"Unexpected input at index ${_cursor}")
+    }
+  }
 
   override def root(): Boolean =
     path() &&
@@ -85,8 +94,14 @@ private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStr
   def timestamp(): Boolean = parseUntilDelimiter(binding.timestamp)
 
   @inline private def parseUntilDelimiter(field: Binder): Boolean =
-    capture(field) {
-      oneOrMore(GraphiteParser.DelimiterMatcher)
-    }
+    capture()(
+      oneOrMore(GraphiteParser.DelimiterMatcher),
+      field(_)
+    )
+
+  override def cleanup(): Unit = {
+    super.cleanup()
+    builder = Json.objectBuilder()
+  }
 
 }

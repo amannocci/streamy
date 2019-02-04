@@ -28,12 +28,12 @@ import java.lang.{StringBuilder => JStringBuilder}
 import io.techcode.streamy.util.json._
 
 /**
-  * Represent a [[String]] printer that provide an efficient way to print [[Json]].
+  * Represent a [[String]] printer that provide an efficient way to print [[In]].
   */
-trait StringPrinter extends Printer[String] {
+trait StringPrinter[In] extends Printer[In, String] {
 
   // Used to build string directly
-  protected var builder: JStringBuilder = new JStringBuilder(256)
+  protected implicit var builder: JStringBuilder = new JStringBuilder(256)
 
   override def cleanup(): Unit = builder.setLength(0)
 

@@ -27,6 +27,7 @@ import akka.util.ByteString
 import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter}
+import java.lang.{StringBuilder => JStringBuilder}
 import io.techcode.streamy.xymon.component.XymonTransformer
 
 
@@ -51,7 +52,7 @@ object XymonPrinter {
     * @param conf printer configuration.
     * @return new xymon printer.
     */
-  def printer(conf: XymonTransformer.Printer.Config): ByteStringPrinter = new XymonPrinter(conf)
+  def printer(conf: XymonTransformer.Printer.Config): ByteStringPrinter[Json] = new XymonPrinter(conf)
 
 }
 
@@ -102,10 +103,10 @@ private class XymonPrinter(conf: XymonTransformer.Printer.Config) extends Printe
   }
 }
 
-private abstract class PrinterHelpers extends DerivedByteStringPrinter {
+private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
   def computeVal(conf: Binder, defaultValue: String)(hook: => Unit): Unit = {
     if (conf.isDefined) {
-      conf.bind(builder, data)(hook)
+      conf.applyString(data, hook)
     } else {
       if (defaultValue.nonEmpty) {
         hook

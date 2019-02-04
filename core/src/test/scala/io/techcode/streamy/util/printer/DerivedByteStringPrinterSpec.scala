@@ -52,7 +52,7 @@ class DerivedByteStringPrinterSpec extends WordSpecLike with Matchers {
 
 }
 
-class DerivedByteStringPrinterImpl(success: Boolean = true) extends DerivedByteStringPrinter {
+class DerivedByteStringPrinterImpl(success: Boolean = true) extends DerivedByteStringPrinter[Json] {
   override def run(): ByteString = {
     if (!success) {
       throw new PrintException("Unexpected printing error occured")

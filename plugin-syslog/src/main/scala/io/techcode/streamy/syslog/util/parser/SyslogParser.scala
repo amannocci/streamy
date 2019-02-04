@@ -27,7 +27,7 @@ import akka.util.ByteString
 import com.google.common.base.CharMatcher
 import io.techcode.streamy.syslog.component.SyslogTransformer._
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.parser.{ByteStringParser, CharMatchers}
+import io.techcode.streamy.util.parser.{ByteStringParser, CharMatchers, ParseException}
 
 /**
   * Syslog parser companion.
@@ -53,7 +53,7 @@ object SyslogParser {
     * @param config parser configuration.
     * @return new syslog parser Rfc5424 compliant.
     */
-  def rfc5424(config: Rfc5424.Config): ByteStringParser = new Rfc5424Parser(config)
+  def rfc5424(config: Rfc5424.Config): ByteStringParser[Json] = new Rfc5424Parser(config)
 
   /**
     * Create a syslog parser that transform incoming [[ByteString]] to [[Json]].
@@ -62,7 +62,7 @@ object SyslogParser {
     * @param config parser configuration.
     * @return new syslog parser Rfc3164 compliant.
     */
-  def rfc3164(config: Rfc3164.Config): ByteStringParser = new Rfc3164Parser(config)
+  def rfc3164(config: Rfc3164.Config): ByteStringParser[Json] = new Rfc3164Parser(config)
 
 }
 
@@ -70,7 +70,7 @@ object SyslogParser {
   * Parser helpers containing various shortcut for character matching.
   */
 private trait ParserHelpers {
-  this: ByteStringParser =>
+  this: ByteStringParser[Json] =>
 
   @inline def openQuote(): Boolean = ch('<')
 
@@ -104,11 +104,21 @@ private trait ParserHelpers {
   *
   * @param config parser configuration.
   */
-private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser with ParserHelpers {
+private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Json] with ParserHelpers {
 
   private val binding = config.binding
 
   private val mode = config.mode
+
+  private implicit var builder: JsObjectBuilder = Json.objectBuilder()
+
+  def run(): Json = {
+    if (root()) {
+      builder.result()
+    } else {
+      throw new ParseException(s"Unexpected input at index ${_cursor}")
+    }
+  }
 
   override def root(): Boolean =
     header() &&
@@ -132,41 +142,46 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser wit
   def hostname(): Boolean =
     sp() && or(
       nilValue(),
-      capture(binding.hostname) {
-        times(1, mode.hostname, CharMatchers.PrintUsAscii)
-      }
+      capture()(
+        times(1, mode.hostname, CharMatchers.PrintUsAscii),
+        binding.hostname(_)
+      )
     )
 
   def appName(): Boolean =
     sp() && or(
       nilValue(),
-      capture(binding.appName) {
-        times(1, mode.appName, CharMatchers.PrintUsAscii)
-      }
+      capture()(
+        times(1, mode.appName, CharMatchers.PrintUsAscii),
+        binding.appName(_)
+      )
     )
 
   def procId(): Boolean =
     sp() && or(
       nilValue(),
-      capture(binding.procId) {
-        times(1, mode.procId, CharMatchers.PrintUsAscii)
-      }
+      capture()(
+        times(1, mode.procId, CharMatchers.PrintUsAscii),
+        binding.procId(_)
+      )
     )
 
   def msgId(): Boolean =
     sp() && or(
       nilValue(),
-      capture(binding.msgId) {
-        times(1, mode.msgId, CharMatchers.PrintUsAscii)
-      }
+      capture()(
+        times(1, mode.msgId, CharMatchers.PrintUsAscii),
+        binding.msgId(_)
+      )
     )
 
   def timestamp(): Boolean =
     sp() && or(
       nilValue(),
-      capture(binding.timestamp) {
-        fullDate() && ch('T') && fullTime()
-      }
+      capture()(
+        fullDate() && ch('T') && fullTime(),
+        binding.timestamp(_)
+      )
     )
 
   def fullDate(): Boolean =
@@ -201,9 +216,10 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser wit
 
   def structuredData(): Boolean = or(
     nilValue(),
-    capture(binding.structData) {
-      sdElement()
-    }
+    capture()(
+      sdElement(),
+      binding.structData(_)
+    )
   )
 
   def sdElement(): Boolean =
@@ -217,9 +233,10 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser wit
   def sdName(): Boolean = times(1, 32, SyslogParser.SdNameMatcher)
 
   def msg(): Boolean =
-    sp() && capture(binding.message) {
-      any()
-    }
+    sp() && capture()(
+      any(),
+      binding.message(_)
+    )
 
   private def capturePrival(rule: => Boolean): Boolean = {
     mark()
@@ -228,10 +245,15 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser wit
       val prival = partition().asDigit()
 
       // Read severity or facility
-      binding.facility.bind(builder, prival >> 3)
-      binding.severity.bind(builder, prival & 7)
+      binding.facility(prival >> 3)
+      binding.severity(prival & 7)
     }
     state
+  }
+
+  override def cleanup(): Unit = {
+    super.cleanup()
+    builder = Json.objectBuilder()
   }
 
   // scalastyle:on
@@ -244,11 +266,21 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser wit
   *
   * @param config parser configuration.
   */
-private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser with ParserHelpers {
+private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Json] with ParserHelpers {
 
   private val binding = config.binding
 
   private val mode = config.mode
+
+  private implicit var builder: JsObjectBuilder = Json.objectBuilder()
+
+  def run(): Json = {
+    if (root()) {
+      builder.result()
+    } else {
+      throw new ParseException(s"Unexpected input at index ${_cursor}")
+    }
+  }
 
   override def root(): Boolean =
     header() &&
@@ -266,26 +298,30 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser wit
   def priVal(): Boolean = times(1, 3, CharMatchers.Digit)
 
   def hostname(): Boolean =
-    capture(binding.hostname) {
-      times(1, mode.hostname, CharMatchers.PrintUsAscii)
-    }
+    capture()(
+      times(1, mode.hostname, CharMatchers.PrintUsAscii),
+      binding.hostname(_)
+    )
 
   def appName(): Boolean =
-    capture(binding.appName) {
-      times(1, mode.appName, SyslogParser.AppNameMatcher)
-    }
+    capture()(
+      times(1, mode.appName, SyslogParser.AppNameMatcher),
+      binding.appName(_)
+    )
 
   def procId(): Boolean =
     openBracket() &&
-      capture(binding.procId) {
-        times(1, mode.procId, SyslogParser.ProcIdMatcher)
-      } &&
+      capture()(
+        times(1, mode.procId, SyslogParser.ProcIdMatcher),
+        binding.procId(_)
+      ) &&
       closeBracket()
 
   def timestamp(): Boolean =
-    capture(binding.timestamp) {
-      fullDate()
-    }
+    capture()(
+      fullDate(),
+      binding.timestamp(_)
+    )
 
   def fullDate(): Boolean =
     dateMonth() && ws() && dateMDay() && sp() && fullTime()
@@ -303,9 +339,10 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser wit
   def timeSecond(): Boolean = times(2, CharMatchers.Digit)
 
   def msg(): Boolean =
-    sp() && capture(binding.message) {
-      any()
-    }
+    sp() && capture()(
+      any(),
+      binding.message(_)
+    )
 
   private def capturePrival(rule: => Boolean): Boolean = {
     mark()
@@ -314,10 +351,15 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser wit
       val prival = partition().asDigit()
 
       // Read severity or facility
-      binding.facility.bind(builder, prival >> 3)
-      binding.severity.bind(builder, prival & 7)
+      binding.facility(prival >> 3)
+      binding.severity(prival & 7)
     }
     state
+  }
+
+  override def cleanup(): Unit = {
+    super.cleanup()
+    builder = Json.objectBuilder()
   }
 
   // scalastyle:on

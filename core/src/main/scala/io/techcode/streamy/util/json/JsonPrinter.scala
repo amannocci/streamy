@@ -34,7 +34,7 @@ import scala.annotation.tailrec
   * It's an adaptation of the amazing spray-json project.
   * All credits goes to it's initial contributor.
   */
-private[json] class JsonPrinter extends StringPrinter {
+private[json] class JsonPrinter extends StringPrinter[Json] {
 
   override def run(): String = {
     printValue(data)

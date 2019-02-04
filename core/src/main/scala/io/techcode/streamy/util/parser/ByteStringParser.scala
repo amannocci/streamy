@@ -27,7 +27,6 @@ import java.nio.charset.Charset
 import java.nio.{ByteBuffer, CharBuffer}
 
 import akka.util.ByteString
-import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.parser.ByteStringParser.UTF8
 
 import scala.annotation.tailrec
@@ -36,7 +35,7 @@ import scala.language.implicitConversions
 /**
   * Represent a [[ByteString]] parser that provide an efficient way to parse [[ByteString]].
   */
-trait ByteStringParser extends Parser[ByteString] {
+trait ByteStringParser[Out] extends Parser[ByteString, Out] {
 
   // Buffers
   private val byteBuffer = ByteBuffer.allocate(4)
@@ -116,11 +115,11 @@ trait ByteStringParser extends Parser[ByteString] {
     }
   }
 
-  final def capture(field: Binder, optional: Boolean = false)(inner: => Boolean): Boolean = {
+  final def capture(optional: Boolean = false)(inner: => Boolean, field: ByteString => Boolean): Boolean = {
     mark()
     var state = inner
-    if (state && field.isDefined) {
-      val binding = field.bind(builder, data.slice(_mark, _cursor))
+    if (state) {
+      val binding = field(data.slice(_mark, _cursor))
       if (!binding) {
         state = optional
       }

@@ -23,14 +23,12 @@
  */
 package io.techcode.streamy.util.parser
 
-import io.techcode.streamy.util.Binder
-
 import scala.language.implicitConversions
 
 /**
   * Represent a [[String]] parser that provide an efficient way to parse [[String]].
   */
-abstract class StringParser extends Parser[String] {
+trait StringParser[Out] extends Parser[String, Out] {
 
   final def length: Int = {
     if (_length == -1) {
@@ -41,11 +39,11 @@ abstract class StringParser extends Parser[String] {
 
   final def current(): Char = data.charAt(_cursor)
 
-  final def capture(field: Binder, optional: Boolean = false)(inner: => Boolean): Boolean = {
+  final def capture(optional: Boolean = false)(inner: => Boolean, field: String => Boolean): Boolean = {
     mark()
     var state = inner
-    if (state && field.isDefined) {
-      val binding = field.bind(builder, data.slice(_mark, _cursor))
+    if (state) {
+      val binding = field(data.slice(_mark, _cursor))
       if (!binding) {
         state = optional
       }

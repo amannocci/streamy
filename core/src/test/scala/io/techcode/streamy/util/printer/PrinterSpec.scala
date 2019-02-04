@@ -33,7 +33,7 @@ class PrinterSpec extends WordSpecLike with Matchers {
 
   "Abstract printer" should {
     "be cleaned after print" in {
-      val printer = new Printer[Boolean] {
+      val printer = new Printer[Json, Boolean] {
         def run(): Boolean = false
       }
       printer.print(Json.obj("foo" -> "bar")).isRight should equal(true)

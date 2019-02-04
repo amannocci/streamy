@@ -81,7 +81,7 @@ private object SyslogPrinterBench {
     SyslogTransformer.Rfc3164.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
   )
 
-  val Rfc5424Complete: ByteStringPrinter =
+  val Rfc5424Complete: ByteStringPrinter[Json] =
     SyslogPrinter.rfc5424(Rfc5424.Config(
       binding = Rfc5424.Binding(
         facility = StringBinder(SyslogTransformer.Rfc5424.Id.Facility),
@@ -95,13 +95,13 @@ private object SyslogPrinterBench {
         message = BytesBinder(SyslogTransformer.Rfc5424.Id.Message)
       )))
 
-  val Rfc5424Message: ByteStringPrinter =
+  val Rfc5424Message: ByteStringPrinter[Json] =
     SyslogPrinter.rfc5424(Rfc5424.Config(
       binding = Rfc5424.Binding(
         message = BytesBinder(SyslogTransformer.Rfc5424.Id.Message)
       )))
 
-  val Rfc3164Complete: ByteStringPrinter =
+  val Rfc3164Complete: ByteStringPrinter[Json] =
     SyslogPrinter.rfc3164(Rfc3164.Config(
       binding = Rfc3164.Binding(
         facility = StringBinder(SyslogTransformer.Rfc3164.Id.Facility),
@@ -113,7 +113,7 @@ private object SyslogPrinterBench {
         message = BytesBinder(SyslogTransformer.Rfc3164.Id.Message)
       )))
 
-  val Rfc3164Message: ByteStringPrinter =
+  val Rfc3164Message: ByteStringPrinter[Json] =
     SyslogPrinter.rfc3164(Rfc3164.Config(
       binding = Rfc3164.Binding(
         message = BytesBinder(SyslogTransformer.Rfc3164.Id.Message)

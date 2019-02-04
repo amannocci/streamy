@@ -51,7 +51,7 @@ class StringPrinterSpec extends WordSpecLike with Matchers {
 
 }
 
-class StringPrinterImpl(success: Boolean = true) extends StringPrinter {
+class StringPrinterImpl(success: Boolean = true) extends StringPrinter[Json] {
   override def run(): String = {
     if (!success) {
       throw new PrintException("Unexpected printing error occured")

@@ -64,7 +64,7 @@ object SyslogPrinter {
     * @param conf printer configuration.
     * @return new syslog printer Rfc5424 compliant.
     */
-  def rfc5424(conf: Rfc5424.Config): ByteStringPrinter = new Rfc5424Printer(conf)
+  def rfc5424(conf: Rfc5424.Config): ByteStringPrinter[Json] = new Rfc5424Printer(conf)
 
   /**
     * Create a syslog printer that transform incoming [[Json]] to [[ByteString]].
@@ -73,14 +73,14 @@ object SyslogPrinter {
     * @param conf printer configuration.
     * @return new syslog printer Rfc3164 compliant.
     */
-  def rfc3164(conf: Rfc3164.Config): ByteStringPrinter = new Rfc3164Printer(conf)
+  def rfc3164(conf: Rfc3164.Config): ByteStringPrinter[Json] = new Rfc3164Printer(conf)
 
 }
 
 /**
   * Printer helpers containing various shortcut for printing.
   */
-private abstract class PrinterHelpers extends DerivedByteStringPrinter {
+private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
 
   /**
     * Print data part to format syslog message.
@@ -90,7 +90,7 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter {
     */
   def computeVal(conf: Binder, defaultValue: String)(hook: => Unit): Unit = {
     if (conf.isDefined) {
-      conf.bind(builder, data)(hook)
+      conf.applyString(data, hook)
     } else {
       if (defaultValue.nonEmpty) {
         hook

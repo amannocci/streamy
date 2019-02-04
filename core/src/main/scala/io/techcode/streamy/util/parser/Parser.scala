@@ -25,12 +25,11 @@ package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
 import com.google.common.base.CharMatcher
-import io.techcode.streamy.util.Binder
-import io.techcode.streamy.util.json.{JsObjectBuilder, Json}
 
+import scala.collection.mutable
 import scala.util.control.NoStackTrace
 
-trait Parser[In] {
+trait Parser[In, Out] {
 
   // Safe cursor position
   protected var _mark: Int = 0
@@ -44,8 +43,8 @@ trait Parser[In] {
   // Local access
   protected var data: In = null.asInstanceOf[In]
 
-  // Used to build json object directly
-  protected var builder: JsObjectBuilder = Json.objectBuilder()
+  // Stack
+  protected val stack: mutable.ArrayStack[Any] = mutable.ArrayStack[Any]()
 
   // Cache length of data
   protected var _length: Int = -1
@@ -55,7 +54,7 @@ trait Parser[In] {
     *
     * @return [[In]] object result of parsing.
     */
-  final def parse(raw: In): Either[ParseException, Json] =
+  final def parse(raw: In): Either[ParseException, Out] =
     try {
       data = raw
       Right(run())
@@ -70,13 +69,7 @@ trait Parser[In] {
     *
     * @return parsing result.
     */
-  def run(): Json = {
-    if (root()) {
-      builder.result()
-    } else {
-      throw ParseException(s"Unexpected input at index ${_cursor}")
-    }
-  }
+  def run(): Out
 
   /**
     * Cleanup parser context for next usage.
@@ -87,7 +80,9 @@ trait Parser[In] {
     _consumed = 0
     _length = -1
     data = null.asInstanceOf[In]
-    builder = Json.objectBuilder()
+    if (stack.nonEmpty) {
+      stack.clear()
+    }
   }
 
   /**
@@ -143,11 +138,12 @@ trait Parser[In] {
   /**
     * Runs the inner rule and capture a [[String]] if field is defined.
     *
-    * @param field field to populate if success.
-    * @param inner inner rule.
+    * @param optional define if capture is optional.
+    * @param inner    inner rule.
+    * @param field    field to populate if success.
     * @return true if parsing succeeded, otherwise false.
     */
-  def capture(field: Binder, optional: Boolean = false)(inner: => Boolean): Boolean
+  def capture(optional: Boolean = false)(inner: => Boolean, field: In => Boolean): Boolean
 
   /**
     * Except to match a single character.
@@ -363,17 +359,44 @@ trait Parser[In] {
     * @tparam T sub type parser.
     * @return true if sub parser succeeded, otherwise false.
     */
-  final def subParser[T <: Parser[In]](parser: T, action: T => Boolean): Boolean = {
+  final def subParser[T <: Parser[In, Out]](parser: T)(action: T => Boolean): Boolean = {
     parser.data = data
     if (action(parser)) {
-      _cursor = parser._cursor
-      builder.putAll(parser.builder)
+      merge(parser)
       true
     } else {
       false
     }
   }
 
+  /**
+    * Merge result of another parser.
+    *
+    * @param parser parser to result to merge.
+    * @tparam T sub type parser.
+    */
+  def merge[T <: Parser[In, Out]](parser: T): Unit = {
+    _cursor = parser._cursor
+    stack ++= parser.stack
+  }
+
 }
 
-case class ParseException(msg: String) extends RuntimeException(msg) with NoStackTrace
+/**
+  * Parse exception.
+  *
+  * @param msg reason of parse exception.
+  */
+class ParseException(msg: => String) extends RuntimeException(msg) with NoStackTrace {
+
+  def canEqual(a: Any): Boolean = a.isInstanceOf[ParseException]
+
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: ParseException => that.canEqual(this) && this.hashCode == that.hashCode
+      case _ => false
+    }
+
+  override def hashCode:Int = 31 + msg.hashCode
+
+}

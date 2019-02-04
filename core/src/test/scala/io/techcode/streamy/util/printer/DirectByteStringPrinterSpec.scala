@@ -51,7 +51,7 @@ class DirectByteStringPrinterSpec extends WordSpecLike with Matchers {
 
 }
 
-class DirectByteStringPrinterImpl(success: Boolean = true) extends DirectByteStringPrinter {
+class DirectByteStringPrinterImpl(success: Boolean = true) extends DirectByteStringPrinter[Json] {
   override def run(): ByteString = {
     if (!success) {
       throw new PrintException("Unexpected printing error occured")

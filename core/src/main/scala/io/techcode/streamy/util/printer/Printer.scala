@@ -23,31 +23,31 @@
  */
 package io.techcode.streamy.util.printer
 
-import io.techcode.streamy.util.json.{JsNull, Json}
+import io.techcode.streamy.util.json.Json
 
 import scala.util.control.NoStackTrace
 
 /**
-  * Represent an abstract printer that provide an efficient way to print [[Json]].
+  * Represent an abstract printer that provide an efficient way to print [[In]].
   */
-trait Printer[Out] {
+trait Printer[In, Out] {
 
   // Local access
-  protected var data: Json = JsNull
+  protected var data: In = null.asInstanceOf[In]
 
   /**
     * Attempt to print input [[Json]].
     *
     * @return [[Out]] object result of printing.
     */
-  final def print(doc: Json): Either[PrintException, Out] =
+  final def print(doc: In): Either[PrintException, Out] =
     try {
       data = doc
       Right(run())
     } catch {
       case ex: PrintException => Left(ex)
     } finally {
-      data = JsNull
+      data = null.asInstanceOf[In]
       cleanup()
     }
 
@@ -65,4 +65,21 @@ trait Printer[Out] {
 
 }
 
-class PrintException(msg: => String) extends RuntimeException(msg) with NoStackTrace
+/**
+  * Print exception.
+  *
+  * @param msg reason of print exception.
+  */
+class PrintException(msg: => String) extends RuntimeException(msg) with NoStackTrace {
+
+  def canEqual(a: Any): Boolean = a.isInstanceOf[PrintException]
+
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: PrintException => that.canEqual(this) && this.hashCode == that.hashCode
+      case _ => false
+    }
+
+  override def hashCode:Int = 31 + msg.hashCode
+
+}

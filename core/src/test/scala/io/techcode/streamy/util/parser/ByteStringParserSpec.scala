@@ -24,7 +24,7 @@
 package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
-import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.json.{JsObjectBuilder, Json}
 import io.techcode.streamy.util.{IntBinder, NoneBinder, StringBinder}
 import org.scalatest._
 
@@ -36,14 +36,14 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
 
   "ByteString parser" should {
     "compute correctly error message for input" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = false
       }
-      parser.parse(ByteString("foobar")) should equal(Left(ParseException("Unexpected input at index 0")))
+      parser.parse(ByteString("foobar")) should equal(Left(new ParseException("Unexpected input at index 0")))
     }
 
     "return current character based on cursor" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           mark()
           ch('f')
@@ -56,7 +56,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "return bytestring partition" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           mark()
           str("foo")
@@ -68,100 +68,104 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "return current cursor position" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = true
       }
       parser.cursor() should equal(0)
     }
 
     "detect end of input" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = eoi()
       }
       parser.parse(ByteString("")).isRight should equal(true)
     }
 
     "capture properly a value if present" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(StringBinder("test")) {
-            str("foo")
-          }
+          capture()(
+            str("foo"),
+            StringBinder("test")(_)
+          )
         }
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("test" -> "foo")))
     }
 
     "not capture a value if undefined" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(NoneBinder) {
-            str("foo")
-          }
+          capture()(
+            str("foo"),
+            NoneBinder(_),
+          )
         }
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj()))
     }
 
     "not capture properly an optional value if present" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(IntBinder("foobar"), optional = true) {
-            zeroOrMore(str("1"))
-          }
+          capture(optional = true)(
+            zeroOrMore(str("1")),
+            IntBinder("foobar")(_)
+          )
         }
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj()))
     }
 
     "not capture properly a value if absent" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(IntBinder("foobar")) {
-            zeroOrMore(str("1"))
-          }
+          capture()(
+            zeroOrMore(str("1")),
+            IntBinder("foobar")(_)
+          )
         }
       }
       parser.parse(ByteString("foobar")).toOption should equal(None)
     }
 
     "process a character if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = ch('f')
       }
       parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process a character if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = ch('c')
       }
       parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
     "process a characters sequence if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = str("foo")
       }
       parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process a characters sequence if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = str("foa")
       }
       parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
     "process a characters sequence by skipping if not enough characters are remaining" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = str("foobart")
       }
       parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
     "process an utf-8 characters sequence if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = utf8 {
           str("ABCDEFGHIJKLMNOPQRSTUVWXYZ /0123456789abcdefghijklmnopqrstuvwxyz £©µÀÆÖÞßéöÿ–—‘“”„†•…‰™œŠŸž€ ΑΒΓΔΩαβγδω АБВГДабвгд∀∂∈ℝ∧∪≡∞ ↑↗↨↻⇣ ┐┼╔╘░►☺♀ ﬁ�⑀₂ἠḂӥẄɐː⍎אԱა\uD841\uDF0E")
         }
@@ -170,7 +174,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process an utf-8 characters sequence if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = utf8 {
           str("�")
         }
@@ -179,7 +183,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a number of time a char matcher if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(1, CharMatchers.All)
         }
@@ -188,7 +192,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a number of time a char matcher if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(2, CharMatchers.Digit)
         }
@@ -197,7 +201,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a number of time a char matcher by skipping if not enough characters are remaining" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(4, CharMatchers.Digit)
         }
@@ -206,7 +210,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a number of time an inner rule if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(1) {
             str("foo")
@@ -217,7 +221,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a number of time an inner rule if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(2) {
             str("foo")
@@ -228,7 +232,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a minimum number of time a char matcher if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(1, 2, CharMatchers.LowerAlpha)
         }
@@ -237,7 +241,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a maximum number of time a char matcher if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(1, 2, CharMatchers.LowerAlpha)
         }
@@ -246,7 +250,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a number of time in a range a char matcher if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(1, 2, CharMatchers.LowerAlpha)
         }
@@ -255,7 +259,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process a number of time in a range a char matcher by skipping if there isn't enough remaining characters" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           times(1, 2, CharMatchers.LowerAlpha)
         }
@@ -264,7 +268,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process any character" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           any()
         }
@@ -273,7 +277,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process zero or more character using a char matcher if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           zeroOrMore(CharMatchers.LowerAlpha)
         }
@@ -282,7 +286,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process zero or more character using a char matcher if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           zeroOrMore(CharMatchers.Digit)
         }
@@ -291,7 +295,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process zero or more character using a inner rule if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           zeroOrMore {
             str("foo")
@@ -302,7 +306,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process zero or more character using an inner rule if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           zeroOrMore {
             str("123")
@@ -313,7 +317,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process one or more character using a char matcher if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           oneOrMore(CharMatchers.LowerAlpha)
         }
@@ -322,7 +326,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process one or more character using a char matcher if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           oneOrMore(CharMatchers.Digit)
         }
@@ -331,7 +335,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process one or more character using an inner rule if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           oneOrMore {
             str("foo")
@@ -342,7 +346,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process one or more character using an inner rule if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           oneOrMore {
             str("123")
@@ -353,7 +357,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process an optional inner rule if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           optional {
             str("foo")
@@ -364,7 +368,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process an optional inner rule if impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           optional {
             str("123")
@@ -375,7 +379,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process correctly first inner rule if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = or(
           str("foo"),
           str("123")
@@ -385,7 +389,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process correctly second inner rule if possible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = or(
           str("123"),
           str("foo")
@@ -395,7 +399,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process correctly when or rule is impossible" in {
-      val parser = new ByteStringParser() {
+      val parser = new ByteStringParserImpl() {
         override def root(): Boolean = or(
           str("123"),
           str("123")
@@ -405,40 +409,40 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     }
 
     "process correctly when using sub parser when possible" in {
-      val parser: ByteStringParser = new ByteStringParser() {
-        val subParsing: ByteStringParser {
+      val parser: ByteStringParserImpl = new ByteStringParserImpl() {
+        val subParsing: ByteStringParserImpl {
           def root(): Boolean
-        } = new ByteStringParser {
+        } = new ByteStringParserImpl {
           override def root(): Boolean = str("foo")
         }
 
-        override def root(): Boolean = subParser[ByteStringParser](subParsing, _.root()) && str("bar")
+        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && str("bar")
       }
       parser.parse(ByteString("foobar")).isRight should equal(true)
     }
 
     "process correctly when using sub parser when impossible" in {
-      val parser: ByteStringParser = new ByteStringParser() {
-        val subParsing: ByteStringParser {
+      val parser: ByteStringParserImpl = new ByteStringParserImpl() {
+        val subParsing: ByteStringParserImpl {
           def root(): Boolean
-        } = new ByteStringParser {
+        } = new ByteStringParserImpl {
           override def root(): Boolean = str("bar")
         }
 
-        override def root(): Boolean = subParser[ByteStringParser](subParsing, _.root()) && str("bar")
+        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && str("bar")
       }
       parser.parse(ByteString("foobar")).isRight should equal(false)
     }
 
     "process correctly when using sub parser and capture" in {
-      val parser: ByteStringParser = new ByteStringParser() {
-        val subParsing: ByteStringParser {
+      val parser: ByteStringParserImpl = new ByteStringParserImpl() {
+        val subParsing: ByteStringParserImpl {
           def root(): Boolean
-        } = new ByteStringParser {
-          override def root(): Boolean = capture(StringBinder("foo"))(str("foo"))
+        } = new ByteStringParserImpl {
+          override def root(): Boolean = capture()(str("foo"), StringBinder("foo")(_))
         }
 
-        override def root(): Boolean = subParser[ByteStringParser](subParsing, _.root()) && capture(StringBinder("bar"))(str("bar"))
+        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && capture()(str("bar"), StringBinder("bar")(_))
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("foo" -> "foo", "bar" -> "bar")))
     }
@@ -446,4 +450,31 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
   }
 
 }
+
 // scalastyle:on
+
+abstract class ByteStringParserImpl extends ByteStringParser[Json] {
+
+  implicit var builder: JsObjectBuilder = Json.objectBuilder()
+
+  def run(): Json = {
+    if (root()) {
+      builder.result()
+    } else {
+      throw new ParseException(s"Unexpected input at index ${cursor()}")
+    }
+  }
+
+  override def cleanup(): Unit = {
+    super.cleanup()
+    builder = Json.objectBuilder()
+  }
+
+  override def merge[T <: Parser[ByteString, Json]](parser: T): Unit = {
+    super.merge(parser)
+    parser match {
+      case p: ByteStringParserImpl => builder.putAll(p.builder)
+    }
+  }
+
+}

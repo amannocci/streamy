@@ -56,7 +56,7 @@ private object SyslogParserBench {
 
   val InputMalformed = ByteString("""4400672761""")
 
-  val Rfc5424Complete: ByteStringParser =
+  val Rfc5424Complete: ByteStringParser[Json] =
     SyslogParser.rfc5424(SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
       facility = StringBinder(SyslogTransformer.Rfc5424.Id.Facility, StandardCharsets.US_ASCII),
       severity = StringBinder(SyslogTransformer.Rfc5424.Id.Severity, StandardCharsets.US_ASCII),
@@ -70,12 +70,12 @@ private object SyslogParserBench {
     )))
 
 
-  val Rfc5424Message: ByteStringParser =
+  val Rfc5424Message: ByteStringParser[Json] =
     SyslogParser.rfc5424(SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding(
       message = BytesBinder(SyslogTransformer.Rfc5424.Id.Message)
     )))
 
-  val Rfc5424Failure: ByteStringParser =
+  val Rfc5424Failure: ByteStringParser[Json] =
     SyslogParser.rfc5424(SyslogTransformer.Rfc5424.Config(binding = SyslogTransformer.Rfc5424.Binding()))
 
 }

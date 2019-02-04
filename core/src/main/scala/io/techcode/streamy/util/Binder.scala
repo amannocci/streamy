@@ -47,7 +47,7 @@ trait Binder {
     * @param value   value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: JsObjectBuilder, value: Boolean): Boolean
+  def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean
 
   /**
     * Bind an [[Int]] value to [[JsObjectBuilder]]
@@ -56,7 +56,7 @@ trait Binder {
     * @param value   value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: JsObjectBuilder, value: Int): Boolean
+  def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean
 
   /**
     * Bind an [[Long]] value to [[JsObjectBuilder]]
@@ -65,7 +65,7 @@ trait Binder {
     * @param value   value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: JsObjectBuilder, value: Long): Boolean
+  def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean
 
   /**
     * Bind an [[Float]] value to [[JsObjectBuilder]]
@@ -74,7 +74,7 @@ trait Binder {
     * @param value   value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: JsObjectBuilder, value: Float): Boolean
+  def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean
 
   /**
     * Bind an [[Double]] value to [[JsObjectBuilder]]
@@ -83,7 +83,7 @@ trait Binder {
     * @param value   value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: JsObjectBuilder, value: Double): Boolean
+  def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean
 
   /**
     * Bind an [[String]] value to [[JsObjectBuilder]]
@@ -92,7 +92,7 @@ trait Binder {
     * @param value   value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: JsObjectBuilder, value: String): Boolean
+  def apply(value: String)(implicit builder: JsObjectBuilder): Boolean
 
   /**
     * Bind an [[ByteString]] value to [[JsObjectBuilder]]
@@ -101,7 +101,7 @@ trait Binder {
     * @param value   value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: JsObjectBuilder, value: ByteString): Boolean
+  def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean
 
   /**
     * Bind an [[Json]] value to [[ByteStringBuilder]]
@@ -109,7 +109,7 @@ trait Binder {
     * @param value value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean
+  def applyByteString(value: Json, hook: => Unit = () => ())(implicit builder: ByteStringBuilder): Boolean
 
   /**
     * Bind an [[Json]] value to [[JStringBuilder]]
@@ -117,7 +117,17 @@ trait Binder {
     * @param value value to bind.
     * @return whether binding succeded or failed.
     */
-  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean
+  def applyString(value: Json, hook: => Unit = () => ())(implicit builder: JStringBuilder): Boolean
+
+}
+
+/**
+  * Binder companion object.
+  */
+object Binder {
+
+  // No operation hook
+  val NoOp: () => Unit = () => ()
 
 }
 
@@ -129,23 +139,23 @@ case object NoneBinder extends Binder {
 
   def isDefined: Boolean = false
 
-  def bind(builder: JsObjectBuilder, value: Boolean): Boolean = false
+  def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = true
 
-  def bind(builder: JsObjectBuilder, value: Int): Boolean = false
+  def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = true
 
-  def bind(builder: JsObjectBuilder, value: Long): Boolean = false
+  def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = true
 
-  def bind(builder: JsObjectBuilder, value: Float): Boolean = false
+  def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = true
 
-  def bind(builder: JsObjectBuilder, value: Double): Boolean = false
+  def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = true
 
-  def bind(builder: JsObjectBuilder, value: String): Boolean = false
+  def apply(value: String)(implicit builder: JsObjectBuilder): Boolean = true
 
-  def bind(builder: JsObjectBuilder, value: ByteString): Boolean = false
+  def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean = true
 
-  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean = false
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean = true
 
-  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean = false
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean = true
 
 }
 
@@ -153,6 +163,8 @@ case object NoneBinder extends Binder {
   * Represent a binder able to convert a raw value to a Json value.
   */
 sealed abstract class SomeBinder(val key: String) extends Binder {
+
+  protected val path: JsonPointer = Root / key
 
   def isDefined: Boolean = true
 
@@ -166,43 +178,43 @@ sealed abstract class SomeBinder(val key: String) extends Binder {
   */
 case class StringBinder(override val key: String, charset: Charset = StandardCharsets.UTF_8) extends SomeBinder(key) {
 
-  def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
+  def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsString(value.toString))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Int): Boolean = {
+  def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsString(value.toString))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Long): Boolean = {
+  def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsString(value.toString))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Float): Boolean = {
+  def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsString(value.toString))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Double): Boolean = {
+  def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsString(value.toString))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: String): Boolean = {
+  def apply(value: String)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsString(value))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: ByteString): Boolean = {
+  def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsString(value.decodeString(charset)))
     true
   }
 
-  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsString =>
         hook
         builder ++= ByteString(v.value)
@@ -210,8 +222,8 @@ case class StringBinder(override val key: String, charset: Charset = StandardCha
       case _ => false // Nothing
     }
 
-  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsString =>
         hook
         builder.append(v.value)
@@ -228,43 +240,43 @@ case class StringBinder(override val key: String, charset: Charset = StandardCha
   */
 case class BytesBinder(override val key: String) extends SomeBinder(key) {
 
-  def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
+  def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsBytes(ByteString(value.toString)))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Int): Boolean = {
+  def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsBytes(ByteString(value.toString)))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Long): Boolean = {
+  def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsBytes(ByteString(value.toString)))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Float): Boolean = {
+  def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsBytes(ByteString(value.toString)))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Double): Boolean = {
+  def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsBytes(ByteString(value.toString)))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: String): Boolean = {
+  def apply(value: String)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsBytes(ByteString(value)))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: ByteString): Boolean = {
+  def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsBytes(value))
     true
   }
 
-  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsBytes =>
         hook
         builder ++= v.value
@@ -272,8 +284,8 @@ case class BytesBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsBytes =>
         hook
         builder.append(v.value.utf8String)
@@ -290,46 +302,46 @@ case class BytesBinder(override val key: String) extends SomeBinder(key) {
   */
 case class IntBinder(override val key: String) extends SomeBinder(key) {
 
-  def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
+  def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsInt(if (value) 1 else 0))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Int): Boolean = {
+  def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsInt(value))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Long): Boolean = {
+  def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsInt(value.toInt))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Float): Boolean = {
+  def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsInt(value.toInt))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Double): Boolean = {
+  def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsInt(value.toInt))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: String): Boolean = {
+  def apply(value: String)(implicit builder: JsObjectBuilder): Boolean = {
     Option(Ints.tryParse(value)).exists { v =>
       builder.put(key, JsInt(v))
       true
     }
   }
 
-  def bind(builder: JsObjectBuilder, value: ByteString): Boolean =
+  def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean =
     Option(Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII))).exists { v =>
       builder.put(key, JsInt(v))
       true
     }
 
-  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsInt =>
         hook
         builder ++= ByteString(v.value.toString)
@@ -337,8 +349,8 @@ case class IntBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsInt =>
         hook
         builder.append(v.value)
@@ -355,45 +367,45 @@ case class IntBinder(override val key: String) extends SomeBinder(key) {
   */
 case class LongBinder(override val key: String) extends SomeBinder(key) {
 
-  def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
+  def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsLong(if (value) 1 else 0))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Int): Boolean = {
+  def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsLong(value))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Long): Boolean = {
+  def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsLong(value))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Float): Boolean = {
+  def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsLong(value.toLong))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Double): Boolean = {
+  def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsLong(value.toLong))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: String): Boolean =
+  def apply(value: String)(implicit builder: JsObjectBuilder): Boolean =
     Option(Longs.tryParse(value)).exists { v =>
       builder.put(key, JsLong(v))
       true
     }
 
-  def bind(builder: JsObjectBuilder, value: ByteString): Boolean =
+  def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean =
     Option(Longs.tryParse(value.decodeString(StandardCharsets.US_ASCII))).exists { v =>
       builder.put(key, JsLong(v))
       true
     }
 
-  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsLong =>
         hook
         builder ++= ByteString(v.value.toString)
@@ -401,8 +413,8 @@ case class LongBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsLong =>
         hook
         builder.append(v.value)
@@ -419,45 +431,45 @@ case class LongBinder(override val key: String) extends SomeBinder(key) {
   */
 case class FloatBinder(override val key: String) extends SomeBinder(key) {
 
-  def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
+  def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsFloat(if (value) 1 else 0))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Int): Boolean = {
+  def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsFloat(value.toFloat))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Long): Boolean = {
+  def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsFloat(value.toFloat))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Float): Boolean = {
+  def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsFloat(value))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Double): Boolean = {
+  def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsFloat(value.toFloat))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: String): Boolean =
+  def apply(value: String)(implicit builder: JsObjectBuilder): Boolean =
     Option(Floats.tryParse(value)).exists { v =>
       builder.put(key, JsFloat(v))
       true
     }
 
-  def bind(builder: JsObjectBuilder, value: ByteString): Boolean =
+  def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean =
     Option(Floats.tryParse(value.decodeString(StandardCharsets.US_ASCII))).exists { v =>
       builder.put(key, JsFloat(v))
       true
     }
 
-  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsFloat =>
         hook
         builder ++= ByteString(v.value.toString)
@@ -465,8 +477,8 @@ case class FloatBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsFloat =>
         hook
         builder.append(v.value)
@@ -483,45 +495,45 @@ case class FloatBinder(override val key: String) extends SomeBinder(key) {
   */
 case class DoubleBinder(override val key: String) extends SomeBinder(key) {
 
-  def bind(builder: JsObjectBuilder, value: Boolean): Boolean = {
+  def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsDouble(if (value) 1 else 0))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Int): Boolean = {
+  def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsDouble(value.toDouble))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Long): Boolean = {
+  def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsDouble(value.toDouble))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Float): Boolean = {
+  def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsDouble(value))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: Double): Boolean = {
+  def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
     builder.put(key, JsDouble(value.toDouble))
     true
   }
 
-  def bind(builder: JsObjectBuilder, value: String): Boolean =
+  def apply(value: String)(implicit builder: JsObjectBuilder): Boolean =
     Option(Doubles.tryParse(value)).exists { v =>
       builder.put(key, JsDouble(v))
       true
     }
 
-  def bind(builder: JsObjectBuilder, value: ByteString): Boolean =
+  def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean =
     Option(Doubles.tryParse(value.decodeString(StandardCharsets.US_ASCII))).exists { v =>
       builder.put(key, JsDouble(v))
       true
     }
 
-  def bind(builder: ByteStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsDouble =>
         hook
         builder ++= ByteString(v.value.toString)
@@ -529,8 +541,8 @@ case class DoubleBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def bind(builder: JStringBuilder, value: Json)(hook: => Unit): Boolean =
-    value.evaluate(Root / key).getOrElse(JsNull) match {
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+    value.evaluate(path).getOrElse(JsNull) match {
       case v: JsDouble =>
         hook
         builder.append(v.value)
