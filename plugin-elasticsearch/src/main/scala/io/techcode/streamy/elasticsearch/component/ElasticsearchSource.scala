@@ -30,7 +30,7 @@ import akka.stream.stage.{GraphStage, GraphStageLogic, OutHandler, StageLogging}
 import akka.stream.{Attributes, Outlet, OverflowStrategy, SourceShape}
 import akka.util.ByteString
 import com.softwaremill.sttp._
-import io.techcode.streamy.elasticsearch.event.{ElasticsearchFailureEvent, ElasticsearchSuccessEvent}
+import io.techcode.streamy.elasticsearch.event.ElasticsearchEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
@@ -164,7 +164,7 @@ object ElasticsearchSource {
             // Retrieve hits
             val result = data.evaluate(Root / "hits" / "hits").asArray
             if (result.isDefined) {
-              system.eventStream.publish(ElasticsearchSuccessEvent(elapsed()))
+              system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
 
               // Check if we have at least one hit
               val it = result.get.toIterator
@@ -186,7 +186,7 @@ object ElasticsearchSource {
         * @param ex request exception.
         */
       def handleFailure(ex: Throwable): Unit = {
-        system.eventStream.publish(ElasticsearchFailureEvent(elapsed()))
+        system.eventStream.publish(ElasticsearchEvent.Failure(ex.getMessage, elapsed()))
         failStage(ex)
       }
 

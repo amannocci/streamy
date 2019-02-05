@@ -23,38 +23,47 @@
  */
 package io.techcode.streamy.elasticsearch.event
 
+import akka.actor.DeadLetterSuppression
 import io.techcode.streamy.util.json.Json
 
 /**
   * Elasticsearch event.
   */
-sealed trait ElasticsearchEvent
+object ElasticsearchEvent {
 
-/**
-  * This event is fire when elasticsearch response is a success.
-  *
-  * @param responseTime time elapsed between request and response.
-  */
-case class ElasticsearchSuccessEvent(responseTime: Long) extends ElasticsearchEvent
+  /**
+    * Represent an elasticsearch event.
+    */
+  trait All extends DeadLetterSuppression
 
-/**
-  * This event is fire when elasticsearch response is a partial success.
-  *
-  * @param responseTime time elapsed between request and response.
-  */
-case class ElasticsearchPartialEvent(responseTime: Long) extends ElasticsearchEvent
+  /**
+    * This event is fire when elasticsearch response is a success.
+    *
+    * @param responseTime time elapsed between request and response.
+    */
+  case class Success(responseTime: Long) extends All
 
-/**
-  * This event is fire when elasticsearch response is a failure.
-  *
-  * @param responseTime time elapsed between request and response.
-  */
-case class ElasticsearchFailureEvent(responseTime: Long) extends ElasticsearchEvent
+  /**
+    * This event is fire when elasticsearch response is a partial success.
+    *
+    * @param responseTime time elapsed between request and response.
+    */
+  case class Partial(responseTime: Long) extends All
 
-/**
-  * This event is fire when an element is drop due to policy.
-  *
-  * @param droppedElement droppeed element.
-  * @param cause          cause of drop from elasticsearch response.
-  */
-case class ElasticsearchDropEvent(droppedElement: Json, cause: Json) extends ElasticsearchEvent
+  /**
+    * This event is fire when elasticsearch response is a failure.
+    *
+    * @param exceptionMsg exception message.
+    * @param responseTime time elapsed between request and response.
+    */
+  case class Failure(exceptionMsg: String, responseTime: Long) extends All
+
+  /**
+    * This event is fire when an element is drop due to policy.
+    *
+    * @param droppedElement droppeed element.
+    * @param cause          cause of drop from elasticsearch response.
+    */
+  case class Drop(droppedElement: Json, cause: Json) extends All
+
+}

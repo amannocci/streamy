@@ -32,7 +32,8 @@ import akka.stream.scaladsl.{Balance, Flow, GraphDSL, Merge, Source}
 import akka.stream.stage._
 import akka.util.ByteString
 import com.softwaremill.sttp._
-import io.techcode.streamy.elasticsearch.event.{ElasticsearchDropEvent, ElasticsearchFailureEvent, ElasticsearchPartialEvent, ElasticsearchSuccessEvent}
+import io.techcode.streamy.elasticsearch.event._
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
 import scala.concurrent.duration._
@@ -189,7 +190,7 @@ object ElasticsearchFlow {
       })
 
       // Remove extra fields
-      val doc = pkt.patch(Bulk(Root, Seq(
+      val doc = pkt.patch(Bulk(ops = Seq(
         Remove(ElasticPath.Id, mustExist = false),
         Remove(ElasticPath.Type, mustExist = false),
         Remove(ElasticPath.Version, mustExist = false),
@@ -246,9 +247,7 @@ object ElasticsearchFlow {
         */
       def handleResponse(response: Response[Json]): Unit = {
         response.body match {
-          case Left(ex) =>
-            log.error(ex)
-            handleFailure(NotUsed)
+          case Left(ex) => handleFailure(new StreamException(ex))
           case Right(data) =>
             val errors = data.evaluate(ElasticPath.Errors).asBoolean
             if (errors.getOrElse(true)) {
@@ -262,15 +261,15 @@ object ElasticsearchFlow {
       /**
         * Handle request failure.
         *
-        * @param ex request exception.
+        * @param ex exception message.
         */
-      @inline def handleFailure(ex: Any): Unit = processFailure()
+      @inline def handleFailure(ex: Throwable): Unit = processFailure(ex.getMessage)
 
       /**
         * Process success elements.
         */
       def processSuccess(): Unit = {
-        system.eventStream.publish(ElasticsearchSuccessEvent(elapsed()))
+        system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
         val results = messages
         messages = Nil
         state = State.Idle
@@ -292,7 +291,7 @@ object ElasticsearchFlow {
 
             // We can't do anything in case of conflict or bad request or not found
             if (status == 409 || status == 400 || status == 404) {
-              system.eventStream.publish(ElasticsearchDropEvent(item, result))
+              system.eventStream.publish(ElasticsearchEvent.Drop(item, result))
               false
             } else {
               if (status == 429) backPressure = true
@@ -312,15 +311,17 @@ object ElasticsearchFlow {
         } else {
           state = State.Idle
         }
-        system.eventStream.publish(ElasticsearchPartialEvent(elapsed()))
+        system.eventStream.publish(ElasticsearchEvent.Partial(elapsed()))
         emitMultiple(out, results.getOrElse(0, Nil).map(_._1).toIterator, () => performRequest())
       }
 
       /**
         * Process failure elements.
+        *
+        * @param exceptionMsg exception message.
         */
-      def processFailure(): Unit = {
-        system.eventStream.publish(ElasticsearchFailureEvent(elapsed()))
+      def processFailure(exceptionMsg: String): Unit = {
+        system.eventStream.publish(ElasticsearchEvent.Failure(exceptionMsg, elapsed()))
         messages.foreach(buffer.push)
         messages = Nil
         scheduleOnce(NotUsed, config.retry)
