@@ -36,14 +36,19 @@ import io.techcode.streamy.util.{FloatBinder, LongBinder, StringBinder}
 class GraphiteTransformerSpec extends TestTransformer {
 
   "Graphite transformer" should {
-    "parser" should {
-      "handle correctly graphite packet" in {
-        except(
-          GraphiteTransformerSpec.Transformer.Parsing,
-          GraphiteTransformerSpec.Input.Parser,
-          GraphiteTransformerSpec.Output.Parser
-        )
-      }
+    "parser correctly graphite packet" in {
+      except(
+        GraphiteTransformerSpec.Transformer.Parsing,
+        GraphiteTransformerSpec.Input.Parser,
+        GraphiteTransformerSpec.Output.Parser
+      )
+    }
+
+    "fail on bad input" in {
+      exceptError(
+        GraphiteTransformerSpec.Transformer.Parsing,
+        GraphiteTransformerSpec.Input.Bad,
+      )
     }
   }
 
@@ -54,6 +59,8 @@ object GraphiteTransformerSpec {
   object Input {
 
     val Parser: ByteString = ByteString("gatling.basicsimulation.allRequests.ok.count 2 1518123202\n")
+
+    val Bad: ByteString = ByteString("   2 1518123202\n")
 
   }
 
