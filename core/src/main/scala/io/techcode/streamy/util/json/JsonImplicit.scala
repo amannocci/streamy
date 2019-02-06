@@ -124,4 +124,7 @@ trait JsonImplicit {
   // Json reader to support pureconfig
   implicit val jsonReader: ConfigReader[Json] = ConfigReader.fromString[Json](ConvertHelpers.tryF(Json.parse(_).toTry))
 
+  // Json pointer reader to support pureconfig
+  implicit val jsonPointerReader: ConfigReader[JsonPointer] = ConfigReader.fromString[JsonPointer](ConvertHelpers.tryF(JsonPointerParser.parse(_).toTry))
+
 }

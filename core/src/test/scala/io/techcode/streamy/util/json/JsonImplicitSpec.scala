@@ -37,10 +37,12 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
   "JsonImplicit" should {
     "support pureconfig integration" in {
       case class Test(
-        doc: Json
+        doc: Json,
+        pointer: JsonPointer
       )
-      val test = loadConfigOrThrow[Test](ConfigFactory.parseString("""{"doc":"{\"test\":\"test\"}"}"""))
+      val test = loadConfigOrThrow[Test](ConfigFactory.parseString("""{"doc":"{\"test\":\"test\"}", "pointer":"/key"}"""))
       test.doc should equal(Json.obj("test" -> "test"))
+      test.pointer should equal(Root / "key")
     }
 
     "provide a shortcut to convert json in string" in {

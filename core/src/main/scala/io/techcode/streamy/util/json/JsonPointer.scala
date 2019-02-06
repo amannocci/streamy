@@ -23,6 +23,13 @@
  */
 package io.techcode.streamy.util.json
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.base.CharMatcher
+import io.techcode.streamy.util.json.JsonConverter.{factory, mapper}
+import io.techcode.streamy.util.parser.{CharMatchers, ParseException, StringParser}
+
+import scala.util.control.NonFatal
+
 /**
   * Represent a json pointer.
   * Construction of json pointer can be slow because we compute only one time path.
@@ -98,6 +105,18 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
   }
 
   // scalastyle:on method.name
+
+  override def toString: String = {
+    "/" + underlying.map {
+      case JsonArrayAccessor(idx) => idx.toString
+      case JsonObjectAccessor(key) => key
+    }.mkString("/")
+  }
+
+  override def equals(o: Any): Boolean =  o match {
+    case obj: JsonPointer => underlying.deep == obj.underlying.deep
+    case _ => false
+  }
 
 }
 
@@ -198,6 +217,82 @@ private[json] case class JsonArrayAccessor(idx: Int) extends JsonAccessor {
         Some(x)
       }
     }
+  }
+
+}
+
+/**
+  * Json pointer parser companion.
+  */
+object JsonPointerParser {
+
+  val Unescaped: CharMatcher = CharMatcher.inRange(0x00.toChar, 0x2E.toChar)
+    .or(CharMatcher.inRange(0x30.toChar, 0x7D.toChar))
+    .or(CharMatcher.inRange(0x7F.toChar, 0x10FFFF.toChar))
+    .precomputed()
+
+  // Json pointer parser
+  private val parser = new JsonPointerParser()
+
+  /**
+    * Parses a string representing a Json pointer input, and returns it as a [[JsonPointer]].
+    *
+    * @param input the string to parse.
+    */
+  def parse(input: String): Either[Throwable, JsonPointer] = parser.parse(input)
+
+}
+
+/**
+  * Json pointer parser.
+  */
+class JsonPointerParser extends StringParser[JsonPointer] {
+
+  // Pointer builder
+  private var pointer = Root
+
+  /**
+    * Process parsing based on [[data]] and current context.
+    *
+    * @return parsing result.
+    */
+  override def run(): JsonPointer = {
+    if (root()) {
+      pointer
+    } else {
+      throw new ParseException(s"Unexpected input at index ${cursor()}")
+    }
+  }
+
+  override def root(): Boolean = zeroOrMore(
+    ch('/') &&
+      capture()(
+        refToken(),
+        rawToken => {
+          if (rawToken.isEmpty) {
+            false
+          } else {
+            val token = rawToken.replaceAll("~0", "~").replaceAll("~1", "/")
+            if (CharMatchers.Digit.matchesAllOf(token)) {
+              pointer = pointer / token.toInt
+            } else {
+              pointer = pointer / token
+            }
+            true
+          }
+        }
+      ))
+
+  private def refToken(): Boolean = zeroOrMore(or(
+    times(1, JsonPointerParser.Unescaped),
+    escaped()
+  ))
+
+  private def escaped(): Boolean = ch('~') && or(ch('0'), ch('1'))
+
+  override def cleanup(): Unit = {
+    super.cleanup()
+    pointer = Root
   }
 
 }

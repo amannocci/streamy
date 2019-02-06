@@ -76,6 +76,79 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
       val input = Json.arr("test", "foobar")
       input.evaluate(Root / "failed") should equal(None)
     }
+
+    "equal to the same root json pointer" in {
+      Root should equal(Root)
+    }
+
+    "equal to the same json pointer" in {
+      Root / "foobar" should equal(Root / "foobar")
+    }
+  }
+
+  "JsonObjectAccessor" should {
+    "be equal to the same accessor" in {
+      JsonObjectAccessor("foobar") should equal(JsonObjectAccessor("foobar"))
+    }
+
+    "be not equal to a different accessor" in {
+      JsonObjectAccessor("foobar") should not equal JsonObjectAccessor("foo")
+    }
+
+    "be not equal to an array accessor" in {
+      JsonObjectAccessor("foobar") should not equal JsonArrayAccessor(0)
+    }
+  }
+
+  "JsonArrayAccessor" should {
+    "be equal to the same accessor" in {
+      JsonArrayAccessor(0) should equal(JsonArrayAccessor(0))
+    }
+
+    "be not equal to a different accessor" in {
+      JsonArrayAccessor(0) should not equal JsonArrayAccessor(1)
+    }
+
+    "be not equal to an array accessor" in {
+      JsonArrayAccessor(0) should not equal JsonObjectAccessor("foobar")
+    }
+  }
+
+  "JsonPointer parser" should {
+    "parse correctly a root pointer" in {
+      val parser = new JsonPointerParser()
+      parser.parse("/") should equal(Right(Root))
+    }
+
+    "parse correctly a simple key pointer" in {
+      val parser = new JsonPointerParser()
+      parser.parse("/key") should equal(Right(Root / "key"))
+    }
+
+    "parse correctly a simple key pointer with escaped character" in {
+      val parser = new JsonPointerParser()
+      parser.parse("/key~0~1") should equal(Right(Root / "key~/"))
+    }
+
+    "parse correctly a simple indice pointer with character" in {
+      val parser = new JsonPointerParser()
+      parser.parse("/0") should equal(Right(Root / 0))
+    }
+
+    "parse correctly a simple indice pointer with escaped character" in {
+      val parser = new JsonPointerParser()
+      parser.parse("/0/~0~1") should equal(Right(Root / 0 / "~/"))
+    }
+
+    "parse correctly a complex pointer" in {
+      val parser = new JsonPointerParser()
+      parser.parse("/0/key/1") should equal(Right(Root / 0 / "key" / 1))
+    }
+
+    "parse correctly a complex pointer with escaped character" in {
+      val parser = new JsonPointerParser()
+      parser.parse("/0/key/1/~0~1") should equal(Right(Root / 0 / "key" / 1 / "~/"))
+    }
   }
 
 }

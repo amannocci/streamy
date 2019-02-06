@@ -38,7 +38,7 @@ trait Parser[In, Out] {
   protected var _cursor: Int = 0
 
   // Data consumed to retrieve a char
-  protected var _consumed: Byte = 0
+  protected var _consumed: Byte = 1
 
   // Local access
   protected var data: In = null.asInstanceOf[In]
