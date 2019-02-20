@@ -52,7 +52,7 @@ object Dependencies {
 
   import Compile._, Test._
 
-  val akka = libraryDependencies ++= Seq(akkaActor, akkaStream, akkaSlf4j).map(_ % "2.5.20")
+  val akka = libraryDependencies ++= Seq(akkaActor, akkaStream, akkaSlf4j).map(_ % "2.5.21")
   val jackson = libraryDependencies ++= Seq(jacksonCore, jacksonDatabind).map(_ % "2.9.8")
   val logback = libraryDependencies ++= Seq(logbackClassic % "1.2.3")
   val guava = libraryDependencies ++= Seq(googleGuava % "27.0.1-jre")
