@@ -27,7 +27,7 @@ import sbt._
 
 
 // Common settings
-ThisBuild / version := "0.2.1-SNAPSHOT"
+ThisBuild / version := "0.2.1"
 ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / organization := "io.techcode.streamy"
 ThisBuild / name := "streamy"
