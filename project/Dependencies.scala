@@ -56,12 +56,12 @@ object Dependencies {
   val jackson = libraryDependencies ++= Seq(jacksonCore, jacksonDatabind).map(_ % "2.9.8")
   val logback = libraryDependencies ++= Seq(logbackClassic % "1.2.3")
   val guava = libraryDependencies ++= Seq(googleGuava % "27.0.1-jre")
-  val config = libraryDependencies ++= Seq(pureConfig % "0.10.1")
+  val config = libraryDependencies ++= Seq(pureConfig % "0.10.2")
   val scala = libraryDependencies ++= Seq(scalaReflect.value)
   val metric = libraryDependencies ++= Seq(metricsJvm % "4.0.2")
   val sttp = libraryDependencies ++= Seq(sttpCore, sttpBackend).map(_ % "1.5.8")
 
-  private val akkaTesting = Seq(akkaTestkit, akkaStreamTestkit).map(_ % "2.5.20")
+  private val akkaTesting = Seq(akkaTestkit, akkaStreamTestkit).map(_ % "2.5.21")
   val akkaTest = libraryDependencies ++= akkaTesting.map(_ % "test")
   val akkaTestLib = libraryDependencies ++= akkaTesting
   val elasticTest = libraryDependencies ++= Seq(elastic).map(_ % "6.5.4" % "test")
