@@ -116,7 +116,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
     if (root()) {
       builder.result()
     } else {
-      throw new ParseException(s"Unexpected input at index ${_cursor}")
+      throw new ParseException(s"Unexpected input at index ${cursor()}:\n${data.utf8String}\n${" " * cursor()}^")
     }
   }
 
@@ -278,7 +278,7 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
     if (root()) {
       builder.result()
     } else {
-      throw new ParseException(s"Unexpected input at index ${_cursor}")
+      throw new ParseException(s"Unexpected input at index ${cursor()}:\n${data.utf8String}\n${" " * cursor()}^")
     }
   }
 
