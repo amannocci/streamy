@@ -84,6 +84,10 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
     "equal to the same json pointer" in {
       Root / "foobar" should equal(Root / "foobar")
     }
+
+    "be iterable" in {
+      (Root / "foobar" / 0).toSeq should equal(Seq(Left("foobar"), Right(0)))
+    }
   }
 
   "JsonObjectAccessor" should {

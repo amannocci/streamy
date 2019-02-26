@@ -23,12 +23,8 @@
  */
 package io.techcode.streamy.util.json
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.CharMatcher
-import io.techcode.streamy.util.json.JsonConverter.{factory, mapper}
 import io.techcode.streamy.util.parser.{CharMatchers, ParseException, StringParser}
-
-import scala.util.control.NonFatal
 
 /**
   * Represent a json pointer.
@@ -37,7 +33,7 @@ import scala.util.control.NonFatal
   *
   * @param underlying json pointer path.
   */
-case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array.empty) {
+case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array.empty) extends Iterable[Either[String, Int]] {
 
   /**
     * Apply json pointer to a json value.
@@ -113,9 +109,25 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
     }.mkString("/")
   }
 
-  override def equals(o: Any): Boolean =  o match {
+  override def equals(o: Any): Boolean = o match {
     case obj: JsonPointer => underlying.deep == obj.underlying.deep
     case _ => false
+  }
+
+  override def iterator: Iterator[Either[String, Int]] = new Iterator[Either[String, Int]] {
+    var index: Int = 0
+
+    override def hasNext: Boolean = index < underlying.length
+
+    override def next(): Either[String, Int] = {
+      val el = underlying(index)
+      index += 1
+      el match {
+        case JsonObjectAccessor(key) => Left(key)
+        case JsonArrayAccessor(idx) => Right(idx)
+      }
+    }
+
   }
 
 }
