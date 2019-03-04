@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (C) 2017-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -152,6 +152,12 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
     "parse correctly a complex pointer with escaped character" in {
       val parser = new JsonPointerParser()
       parser.parse("/0/key/1/~0~1") should equal(Right(Root / 0 / "key" / 1 / "~/"))
+    }
+
+    "parse correctly a multiples pointers" in {
+      val parser = new JsonPointerParser()
+      parser.parse("/key") should equal(Right(Root / "key"))
+      parser.parse("/foobar") should equal(Right(Root / "foobar"))
     }
   }
 

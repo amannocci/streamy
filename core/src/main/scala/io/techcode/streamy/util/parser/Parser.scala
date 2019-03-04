@@ -77,7 +77,7 @@ trait Parser[In, Out] {
   def cleanup(): Unit = {
     _mark = 0
     _cursor = 0
-    _consumed = 0
+    _consumed = 1
     _length = -1
     data = null.asInstanceOf[In]
     if (stack.nonEmpty) {

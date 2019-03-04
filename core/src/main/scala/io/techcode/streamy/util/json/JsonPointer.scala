@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (C) 2017-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -293,7 +293,7 @@ class JsonPointerParser extends StringParser[JsonPointer] {
             true
           }
         }
-      ))
+      )) && eoi()
 
   private def refToken(): Boolean = zeroOrMore(or(
     times(1, JsonPointerParser.Unescaped),

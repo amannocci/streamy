@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2018
+ * Copyright (C) 2017-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import sbt._
 
 
 // Common settings
-ThisBuild / version := "0.3.0"
+ThisBuild / version := "0.3.1-SNAPSHOT"
 ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / organization := "io.techcode.streamy"
 ThisBuild / name := "streamy"
