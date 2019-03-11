@@ -43,11 +43,13 @@ class JsonConverterBench {
 
   @Benchmark def parseString(): Json = JsonConverter.parse(JsonConverterBench.Sample.StringImpl).getOrElse(JsNull)
 
-  @Benchmark def print(): String = Json.print(JsonConverterBench.Sample.JsonObj).getOrElse(JsNull)
+  @Benchmark def print(): String = JsonConverterBench.Printer.print(JsonConverterBench.Sample.JsonObj).getOrElse(JsNull)
 
 }
 
 object JsonConverterBench {
+
+  val Printer = JsonPrinter()
 
   object Sample {
 

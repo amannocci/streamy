@@ -25,6 +25,7 @@ package io.techcode.streamy.util.json
 
 import java.util.Base64
 
+import io.techcode.streamy.util.math.{RyuDouble, RyuFloat}
 import io.techcode.streamy.util.printer.StringPrinter
 
 import scala.annotation.tailrec
@@ -114,8 +115,8 @@ private[json] class JsonPrinter extends StringPrinter[Json] {
     value match {
       case x: JsInt => builder.append(x.value)
       case x: JsLong => builder.append(x.value)
-      case x: JsFloat => builder.append(x.value)
-      case x: JsDouble => builder.append(x.value)
+      case x: JsFloat => builder.append(RyuFloat.floatToString(x.value))
+      case x: JsDouble => builder.append(RyuDouble.doubleToString(x.value))
       case x: JsBigDecimal => builder.append(x.value)
     }
   }
