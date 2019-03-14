@@ -37,7 +37,10 @@ abstract class Plugin(
   val data: PluginData
 ) extends Actor with DiagnosticActorLogging {
 
-  val decider: Supervision.Decider = { ex =>
+  implicit final val system: ActorSystem = context.system
+  implicit final val materializer: Materializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))(context)
+
+  def decider: Supervision.Decider = { ex =>
     ex match {
       case streamEx: StreamException =>
         log.mdc(if (streamEx.state.isDefined) {
@@ -55,9 +58,6 @@ abstract class Plugin(
     }
     Supervision.Resume
   }
-
-  implicit final val system: ActorSystem = context.system
-  implicit final val materializer: Materializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))(context)
 
   def receive: Receive = {
     case _ => log.info("Plugin can't handle anything")
