@@ -28,11 +28,6 @@ import org.openjdk.jmh.annotations.Benchmark
 
 /**
   * Json transformer bench.
-  *
-  * Benchmark                                         Mode  Cnt        Score      Error  Units
-  * JsonTransformerBench.benchSimpleFailure          thrpt   20  4892720,580 ± 6160,451  ops/s
-  * JsonTransformerBench.benchSimpleSource           thrpt   20   642601,605 ± 1092,502  ops/s
-  * JsonTransformerBench.benchSimpleSourceAndTarget  thrpt   20   559402,909 ± 1008,676  ops/s
   */
 class JsonTransformerBench {
 

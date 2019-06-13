@@ -195,7 +195,7 @@ object ElasticsearchSource {
         */
       def elapsed(): Long = System.currentTimeMillis() - started
 
-      val asJson: ResponseAs[Json, Nothing] = asByteArray.map(Json.parse(_).getOrElse(JsNull))
+      val asJson: ResponseAs[Json, Nothing] = asByteArray.map(Json.parseBytesUnsafe)
 
       override def onPull(): Unit = {
         {

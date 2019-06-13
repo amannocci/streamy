@@ -34,11 +34,6 @@ import org.openjdk.jmh.annotations._
 
 /**
   * Syslog parser bench.
-  *
-  * Benchmark                             Mode  Cnt        Score       Error  Units
-  * SyslogParserBench.rfc5424Complete    thrpt   20   726343.829 ±  1910.801  ops/s
-  * SyslogParserBench.rfc5424Failure     thrpt   20  3293783.939 ±  5453.224  ops/s
-  * SyslogParserBench.rfc5424Message     thrpt   20  2213072.618 ± 12809.339  ops/s
   */
 class SyslogParserBench {
 

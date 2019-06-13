@@ -40,11 +40,11 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
         Remove(Root / "test"),
         Test(Root / "foobar", "foobar")
       )))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "foobar" -> "foobar",
         "barfoo" -> "foobar"
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "bulk correctly a sequence of operations on json array" in {
@@ -56,8 +56,8 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
         Remove(Root / 0),
         Test(Root / 0, "test")
       )))
-      result should equal(Some(Json.arr("test", "foobar")))
-      Some(input) should not equal result
+      result should equal(Json.arr("test", "foobar"))
+      input should not equal result
     }
 
     "bulk correctly a sequence of operations on deep json object" in {
@@ -69,11 +69,11 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
         Remove(Root / "test"),
         Test(Root / "foobar", "foobar")
       )))
-      result should equal(Some(Json.obj("test" -> Json.obj(
+      result should equal(Json.obj("test" -> Json.obj(
         "foobar" -> "foobar",
         "barfoo" -> "foobar"
-      ))))
-      Some(input) should not equal result
+      )))
+      input should not equal result
     }
 
     "bulk correctly a sequence of operations on deep json array" in {
@@ -85,20 +85,20 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
         Remove(Root / 0),
         Test(Root / 0, "test")
       )))
-      result should equal(Some(Json.arr(Json.arr("test", "foobar"))))
-      Some(input) should not equal result
+      result should equal(Json.arr(Json.arr("test", "foobar")))
+      input should not equal result
     }
 
     "fail to bulk operation if one operation fail" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Bulk(Root / "test", Seq(Test(Root / "fail", "test"))))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to bulk operation if we fail to evaluate path" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Bulk(Root / "fail", Seq(Test(Root / "fail", "test"))))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
   }
 
@@ -106,112 +106,112 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "add correctly a field in json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Add(Root / "foobar", "test"))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "test" -> "test",
         "foobar" -> "test"
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "add correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Add(Root / "test" / 0 / "foobar", "test"))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "test" -> Json.arr(Json.obj(
           "test" -> "test",
           "foobar" -> "test"
         ))
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "add correctly a value in json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Add(Root / 1, "test"))
-      result should equal(Some(Json.arr("test", "test", "test")))
-      Some(input) should not equal result
+      result should equal(Json.arr("test", "test", "test"))
+      input should not equal result
     }
 
     "add correctly a value in deep json array" in {
       val input = Json.arr("test", Json.obj("test" -> Json.arr("test", "foobar")))
       val result = input.patch(Add(Root / 1 / "test" / 1, "test"))
-      result should equal(Some(Json.arr(
+      result should equal(Json.arr(
         "test",
         Json.obj("test" -> Json.arr(
           "test",
           "test",
           "foobar"
         ))
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "add correctly a value in json array at the end" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Add(Root / -1, "foobar"))
-      result should equal(Some(Json.arr("test", "test", "foobar")))
+      result should equal(Json.arr("test", "test", "foobar"))
     }
 
     "fail to add a value in json array if we point a json object" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Add(Root / "fail", "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to add a value in json array if we fail to evaluate path on json object" in {
       val input = Json.obj("test" -> Json.obj("missing" -> Json.arr("test", "test")))
       val result = input.patch(Add(Root / "test" / "fail" / 0, "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to add a value in json object if we point a json array" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Add(Root / 0, "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to add a value in json object if we fail to evaluate path on json array" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Add(Root / "test" / 1 / "test", "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to add a value in json array out of bounds" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Add(Root / 5, "foobar"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "switch correctly to root value" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Add(Root, Json.obj("test" -> "foobar")))
-      result should equal(Some(Json.obj("test" -> "foobar")))
+      result should equal(Json.obj("test" -> "foobar"))
     }
   }
 
   "Json test operation" should {
-    "return none on failure" in {
+    "return JsUndefined on failure" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Test(Root / "test", JsInt(0)))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "return current value on success" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Test(Root / "test", JsString("test")))
-      result should equal(Some(input))
+      result should equal(input)
     }
 
-    "return none on deep failure" in {
+    "return JsUndefined on deep failure" in {
       val input = Json.obj("test" -> Json.obj("test" -> "failure"))
       val result = input.patch(Test(Root / "test" / "test", JsInt(0)))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
-    "return none on missing" in {
+    "return JsUndefined on missing" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Test(Root / "failure", JsInt(0)))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
   }
 
@@ -219,83 +219,83 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "replace correctly a field in json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Replace(Root / "test", "foobar"))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "test" -> "foobar"
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "replace correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Replace(Root / "test" / 0 / "test", "foobar"))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "test" -> Json.arr(Json.obj(
           "test" -> "foobar"
         ))
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "replace correctly a value in json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Replace(Root / 1, "foobar"))
-      result should equal(Some(Json.arr("test", "foobar")))
-      Some(input) should not equal result
+      result should equal(Json.arr("test", "foobar"))
+      input should not equal result
     }
 
     "replace correctly a value in deep json array" in {
       val input = Json.arr("test", Json.obj("test" -> Json.arr("test", "test")))
       val result = input.patch(Replace(Root / 1 / "test" / 1, "foobar"))
-      result should equal(Some(Json.arr(
+      result should equal(Json.arr(
         "test",
         Json.obj("test" -> Json.arr(
           "test",
           "foobar",
         ))
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "fail to replace a value in json array if we point a json object" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Replace(Root / "fail", "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to replace a value in json array if we fail to evaluate path on json object" in {
       val input = Json.obj("test" -> Json.obj("missing" -> Json.arr("test", "test")))
       val result = input.patch(Replace(Root / "test" / "fail" / 0, "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to replace a value in json object if we point a json array" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Replace(Root / 0, "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to replace a value in json object if we fail to evaluate path on json array" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Replace(Root / "test" / 1 / "test", "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to replace a non existing field in json object" in {
       val input = Json.obj("missing" -> "test")
       val result = input.patch(Replace(Root / "test", "foobar"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to replace a non existing value in json array" in {
       val input = Json.arr("missing", "test")
       val result = input.patch(Replace(Root / 2, "foobar"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "switch correctly to root value" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Replace(Root, Json.obj("test" -> "foobar")))
-      result should equal(Some(Json.obj("test" -> "foobar")))
+      result should equal(Json.obj("test" -> "foobar"))
     }
   }
 
@@ -303,100 +303,100 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "remove correctly a field in json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Remove(Root / "test"))
-      result should equal(Some(Json.obj()))
-      Some(input) should not equal result
+      result should equal(Json.obj())
+      input should not equal result
     }
 
     "remove correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Remove(Root / "test" / 0 / "test"))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "test" -> Json.arr(Json.obj())
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "remove correctly a value in json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Remove(Root / 1))
-      result should equal(Some(Json.arr("test")))
-      Some(input) should not equal result
+      result should equal(Json.arr("test"))
+      input should not equal result
     }
 
     "remove correctly a value in deep json array" in {
       val input = Json.arr("test", Json.obj("test" -> Json.arr("test", "test")))
       val result = input.patch(Remove(Root / 1 / "test" / 1))
-      result should equal(Some(Json.arr(
+      result should equal(Json.arr(
         "test",
         Json.obj("test" -> Json.arr("test"))
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "remove correctly a json value at root" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Remove(Root))
-      result should equal(Some(input))
+      result should equal(input)
     }
 
     "fail to remove a value in json array if we point a json object" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Remove(Root / "fail"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to remove a value in json array if we fail to evaluate path on json object" in {
       val input = Json.obj("test" -> Json.obj("missing" -> Json.arr("test", "test")))
       val result = input.patch(Remove(Root / "test" / "fail" / 0))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to remove a value in json object if we point a json array" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Remove(Root / 0))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to remove a value in json object if we fail to evaluate path on json array" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Remove(Root / "test" / 1 / "test"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to remove a field in json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Remove(Root / "fail"))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to remove a field in json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Remove(Root / 2))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to remove silently a field in json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Remove(Root / "fail", mustExist = false))
-      result should equal(Some(Json.obj("test" -> "test")))
+      result should equal(Json.obj("test" -> "test"))
     }
 
     "fail to remove silently a field in deep json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Remove(Root / "test" / "test" / "fail", mustExist = false))
-      result should equal(Some(Json.obj("test" -> "test")))
+      result should equal(Json.obj("test" -> "test"))
     }
 
     "fail to remove silently a value in json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Remove(Root / 2, mustExist = false))
-      result should equal(Some(Json.arr("test", "test")))
+      result should equal(Json.arr("test", "test"))
     }
 
     "fail to remove silently a value in deep json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Remove(Root / 0 / 1 / 2, mustExist = false))
-      result should equal(Some(Json.arr("test", "test")))
+      result should equal(Json.arr("test", "test"))
     }
   }
 
@@ -404,72 +404,72 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "move correctly a field in json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Move(Root / "test", Root / "foobar"))
-      result should equal(Some(Json.obj("foobar" -> "test")))
-      Some(input) should not equal result
+      result should equal(Json.obj("foobar" -> "test"))
+      input should not equal result
     }
 
     "move correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Move(Root / "test" / 0 / "test", Root / "foobar"))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "test" -> Json.arr(Json.obj()),
         "foobar" -> "test"
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "move correctly a value in json array" in {
       val input = Json.arr("test01", "test02")
       val result = input.patch(Move(Root / 1, Root / 0))
-      result should equal(Some(Json.arr("test02", "test01")))
-      Some(input) should not equal result
+      result should equal(Json.arr("test02", "test01"))
+      input should not equal result
     }
 
     "move correctly a value in deep json array" in {
       val input = Json.arr("test", Json.obj("test" -> Json.arr("test", "foobar")))
       val result = input.patch(Move(Root / 1 / "test" / 1, Root / 0))
-      result should equal(Some(Json.arr(
+      result should equal(Json.arr(
         "foobar",
         "test",
         Json.obj("test" -> Json.arr("test"))
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "fail to move a value in json array if we point a json object" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Move(Root / "fail", Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to move a value in json array if we fail to evaluate path on json object" in {
       val input = Json.obj("test" -> Json.obj("missing" -> Json.arr("test", "test")))
       val result = input.patch(Move(Root / "test" / "fail" / 0, Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to move a value in json object if we point a json array" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Move(Root / 0, Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to move a value in json object if we fail to evaluate path on json array" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Move(Root / "test" / 1 / "test", Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to move a non existing field in json object" in {
       val input = Json.obj("missing" -> "test")
       val result = input.patch(Move(Root / "test", Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to replace a non existing value in json array" in {
       val input = Json.arr("missing", "test")
       val result = input.patch(Move(Root / 2, Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
   }
 
@@ -477,75 +477,75 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "copy correctly a field in json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Copy(Root / "test", Root / "foobar"))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "foobar" -> "test",
         "test" -> "test"
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "copy correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Copy(Root / "test" / 0 / "test", Root / "foobar"))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "test" -> Json.arr(Json.obj("test" -> "test")),
         "foobar" -> "test"
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "copy correctly a value in json array" in {
       val input = Json.arr("test01", "test02")
       val result = input.patch(Copy(Root / 1, Root / 0))
-      result should equal(Some(Json.arr("test02", "test01", "test02")))
-      Some(input) should not equal result
+      result should equal(Json.arr("test02", "test01", "test02"))
+      input should not equal result
     }
 
     "copy correctly a value in deep json array" in {
       val input = Json.arr("test", Json.obj("test" -> Json.arr("test", "foobar")))
       val result = input.patch(Copy(Root / 1 / "test" / 1, Root / 0))
-      result should equal(Some(Json.arr(
+      result should equal(Json.arr(
         "foobar",
         "test",
         Json.obj("test" -> Json.arr("test", "foobar"))
-      )))
-      Some(input) should not equal result
+      ))
+      input should not equal result
     }
 
     "fail to copy a value in json array if we point a json object" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Copy(Root / "fail", Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to copy a value in json array if we fail to evaluate path on json object" in {
       val input = Json.obj("test" -> Json.obj("missing" -> Json.arr("test", "test")))
       val result = input.patch(Copy(Root / "test" / "fail" / 0, Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to copy a value in json object if we point a json array" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Copy(Root / 0, Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to copy a value in json object if we fail to evaluate path on json array" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Copy(Root / "test" / 1 / "test", Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to copy a non existing field in json object" in {
       val input = Json.obj("missing" -> "test")
       val result = input.patch(Copy(Root / "test", Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
 
     "fail to copy a non existing value in json array" in {
       val input = Json.arr("missing", "test")
       val result = input.patch(Copy(Root / 2, Root))
-      result should equal(None)
+      result should equal(JsUndefined)
     }
   }
 

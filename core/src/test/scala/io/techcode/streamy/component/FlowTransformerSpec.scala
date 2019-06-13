@@ -37,11 +37,17 @@ import org.scalatest._
 class FlowTransformerSpec extends WordSpec with Matchers {
 
   class Impl(config: ImplConfig) extends FlowTransformer(config) {
-    override def transform(value: Json): Option[Json] = value.asString.map(v => s"${v}bar")
+    override def transform(value: Json): MaybeJson = value match {
+      case x: JsString => s"${x.value}bar"
+      case _ => JsUndefined
+    }
   }
 
   class ImplParent(config: ImplConfig) extends FlowTransformer(config) {
-    override def transform(value: Json, pkt: Json): Option[Json] = value.asString.map(v => s"${v}bar")
+    override def transform(value: Json, pkt: Json): MaybeJson = value match {
+      case x: JsString => s"${x.value}bar"
+      case _ => JsUndefined
+    }
   }
 
   // Component configuration
@@ -77,7 +83,7 @@ class FlowTransformerSpec extends WordSpec with Matchers {
     "transform correctly a packet inplace with parent transform" in {
       val input = Json.obj("message" -> "foo")
       val component = new ImplParent(ImplConfig(Root / "message"))
-      component.transform(JsNull) should equal(None)
+      component.transform(JsNull) should equal(JsUndefined)
       component.apply(input) should equal(Json.obj("message" -> "foobar"))
     }
 

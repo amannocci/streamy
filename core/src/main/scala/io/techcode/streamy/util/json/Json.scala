@@ -24,15 +24,25 @@
 package io.techcode.streamy.util.json
 
 import akka.util.ByteString
-import io.techcode.streamy.util.printer.PrintException
+import io.techcode.streamy.util.parser.{ByteStringParser, StringParser}
+import io.techcode.streamy.util.printer.{ByteStringPrinter, PrintException, StringPrinter}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 object Json {
 
-  // Thread safe printer
-  private val printer = ThreadLocal.withInitial[JsonPrinter](() => JsonPrinter())
+  // Thread safe bytestring printer
+  private val byteStringPrinter = ThreadLocal.withInitial[ByteStringPrinter[Json]](() => JsonPrinter.byteStringPrinter())
+
+  // Thread safe string printer
+  private val stringPrinter = ThreadLocal.withInitial[StringPrinter[Json]](() => JsonPrinter.stringPrinter())
+
+  // Thread safe bytestring parser
+  private val byteStringParser = ThreadLocal.withInitial[ByteStringParser[Json]](() => JsonParser.byteStringParser())
+
+  // Thread safe string parser
+  private val stringParser = ThreadLocal.withInitial[StringParser[Json]](() => JsonParser.stringParser())
 
   // Singleton json object
   private val jsonObjEmpty = JsObject(mutable.AnyRefMap())
@@ -79,35 +89,193 @@ object Json {
     *
     * @param data the bytestring to parse.
     */
-  @inline def parse(data: ByteString): Either[Throwable, Json] = JsonConverter.parse(data)
+  @inline def parseByteString(data: ByteString): Either[Throwable, Json] = byteStringParser.get().parse(data)
 
   /**
-    * Parses a string representing a Json input, and returns it as a [[Json]].
+    * Parses unsafely a bytestring representing a Json input, and returns it as a [[Json]].
+    *
+    * @param data the bytestring to parse.
+    */
+  @inline def parseByteStringUnsafe(data: ByteString): Json = parseByteString(data) match {
+    case Right(value) => value
+    case Left(ex) => throw ex
+  }
+
+  /**
+    * Parses a bytes array representing a Json input, and returns it as a [[Json]].
     *
     * @param data the string to parse.
     */
-  @inline def parse(data: Array[Byte]): Either[Throwable, Json] = JsonConverter.parse(data)
+  @inline def parseBytes(data: Array[Byte]): Either[Throwable, Json] = byteStringParser.get().parse(ByteString.fromArrayUnsafe(data))
+
+  /**
+    * Parses a bytes array representing a Json input, and returns it as a [[Json]].
+    *
+    * @param data the string to parse.
+    */
+  @inline def parseBytesUnsafe(data: Array[Byte]): Json = parseBytes(data) match {
+    case Right(value) => value
+    case Left(ex) => throw ex
+  }
 
   /**
     * Parses a string representing a Json input, and returns it as a [[Json]].
     *
     * @param input the string to parse.
     */
-  @inline def parse(input: String): Either[Throwable, Json] = JsonConverter.parse(input)
+  @inline def parseString(input: String): Either[Throwable, Json] = stringParser.get().parse(input)
 
   /**
-    * Converts a [[Json]] to its string representation.
+    * Parses unsafely a string representing a Json input, and returns it as a [[Json]].
+    *
+    * @param input the string to parse.
+    */
+  @inline def parseStringUnsafe(input: String): Json = parseString(input) match {
+    case Right(value) => value
+    case Left(ex) => throw ex
+  }
+
+  /**
+    * Prints a [[Json]] to its bytestring representation.
+    *
+    * @return a bytestring with the json representation.
+    */
+  @inline def printByteString(json: Json): Either[PrintException, ByteString] = byteStringPrinter.get().print(json)
+
+  /**
+    * Prints unsafely a [[Json]] to its bytestring representation.
+    *
+    * @return a bytestring with the json representation.
+    */
+  @inline def printByteStringUnsafe(json: Json): ByteString = printByteString(json) match {
+    case Right(value) => value
+    case Left(ex) => throw ex
+  }
+
+  /**
+    * Prints a [[Json]] to its string representation.
     *
     * @return a string with the json representation.
     */
-  @inline def print(json: Json): Either[PrintException, String] = printer.get().print(json)
+  @inline def printString(json: Json): Either[PrintException, String] = stringPrinter.get().print(json)
+
+  /**
+    * Prints unsafely a [[Json]] to its string representation.
+    *
+    * @return a string with the json representation.
+    */
+  @inline def printStringUnsafe(json: Json): String = printString(json) match {
+    case Right(value) => value
+    case Left(ex) => throw ex
+  }
+
+}
+
+/**
+  * Represents an optional json representation.
+  */
+trait MaybeJson {
+
+  /**
+    * Returns true if the option is $none, false otherwise.
+    */
+  def isEmpty: Boolean
+
+  /**
+    * Returns true if the option is an instance of $some, false otherwise.
+    */
+  def isDefined: Boolean = !isEmpty
+
+  /**
+    * Returns the option's value.
+    *
+    * @note The option must be nonEmpty.
+    * @throws NoSuchElementException if the option is empty.
+    */
+  def get: Json
+
+  /**
+    * Returns the option's value if the option is nonempty, otherwise
+    * return the result of evaluating `default`.
+    *
+    * @param default the default expression.
+    */
+  @inline final def getOrElse(default: => Json): Json =
+    if (isEmpty) default else this.get
+
+  /**
+    * Returns a $some containing the result of applying $f to this $option's
+    * value if this $option is nonempty.
+    * Otherwise return $none.
+    *
+    * @note This is similar to `flatMap` except here,
+    *       $f does not need to wrap its result in an $option.
+    * @param  f the function to apply
+    * @see flatMap
+    * @see foreach
+    */
+  @inline final def map(f: MaybeJson => MaybeJson): MaybeJson =
+    if (isEmpty) JsUndefined else f(this.get)
+
+  /**
+    * Returns the result of applying $f to this $option's value if
+    * this $option is nonempty.
+    * Returns $none if this $option is empty.
+    * Slightly different from `map` in that $f is expected to
+    * return an $option (which could be $none).
+    *
+    * @param  f the function to apply
+    * @see map
+    * @see foreach
+    */
+  @inline final def flatMap(f: Json => MaybeJson): MaybeJson =
+    if (isEmpty) JsUndefined else f(this.get)
+
+  /**
+    * Returns true if this option is nonempty '''and''' the predicate
+    * $p returns true when applied to this $option's value.
+    * Otherwise, returns false.
+    *
+    * @param  p the predicate to test
+    */
+  @inline final def exists(p: Json => Boolean): Boolean = !isEmpty && p(this.get)
+
+  /** Returns this $option if it is nonempty,
+    * otherwise return the result of evaluating `alternative`.
+    *
+    * @param alternative the alternative expression.
+    */
+  @inline final def orElse(alternative: => MaybeJson): MaybeJson =
+    if (isEmpty) alternative else this
+
+}
+
+/**
+  * Represents a defined json.
+  */
+class JsDefined extends MaybeJson {
+
+  def isEmpty: Boolean = false
+
+  def get: Json = this.asInstanceOf[Json]
+
+}
+
+/**
+  * Represents an defined json.
+  */
+object JsUndefined extends MaybeJson {
+
+  override def isEmpty: Boolean = true
+
+  override def get: Json = throw new NoSuchElementException("JsUndefined.get")
 
 }
 
 /**
   * Generic json value.
   */
-sealed trait Json {
+sealed trait Json extends JsDefined {
 
   /**
     * Evaluate the given path in the given json value.
@@ -115,7 +283,7 @@ sealed trait Json {
     * @param path path to used.
     * @return value if founded, otherwise [[None]].
     */
-  def evaluate(path: JsonPointer): Option[Json] = path(this)
+  def evaluate(path: JsonPointer): MaybeJson = path(this)
 
   /**
     * Patch given json value by applying all json operations in a transactionnal way.
@@ -124,8 +292,8 @@ sealed trait Json {
     * @param ops seq of operations to apply.
     * @return json value patched or original.
     */
-  def patch(op: JsonOperation, ops: JsonOperation*): Option[Json] = {
-    var result: Option[Json] = op(this)
+  def patch(op: JsonOperation, ops: JsonOperation*): MaybeJson = {
+    var result: MaybeJson = op(this)
     ops.takeWhile(_ => result.isDefined).foreach(op => result = op(result.get))
     result
   }
@@ -136,8 +304,8 @@ sealed trait Json {
     * @param ops seq of operations to apply.
     * @return json value patched or original.
     */
-  def patch(ops: Seq[JsonOperation]): Option[Json] = {
-    var result: Option[Json] = Some(this)
+  def patch(ops: Seq[JsonOperation]): MaybeJson = {
+    var result: MaybeJson = this
     ops.takeWhile(_ => result.isDefined).foreach(op => result = op(result.get))
     result
   }
@@ -240,10 +408,7 @@ sealed trait Json {
     */
   def sizeHint(): Int = toString.length
 
-  override def toString: String = Json.print(this) match {
-    case Left(ex) => throw ex
-    case Right(result) => result
-  }
+  override def toString: String = Json.printStringUnsafe(this)
 
 }
 
@@ -252,7 +417,7 @@ sealed trait Json {
   */
 case object JsNull extends Json {
 
-  override val asNull: Option[Unit] = Some(())
+  override val asNull: Option[Unit] = Some()
 
   override val copy: Json = this
 
@@ -537,7 +702,6 @@ case class JsBigDecimal(value: BigDecimal) extends JsNumber {
   * Represent a json string value.
   *
   * @param value underlying value.
-  *
   */
 case class JsString(value: String) extends Json {
 
@@ -577,11 +741,11 @@ case class JsArray private[json](
     * @param idx index to use.
     * @return element at given index.
     */
-  def apply(idx: Int): Option[Json] = {
+  def apply(idx: Int): MaybeJson = {
     if (idx >= 0 && idx < underlying.length) {
-      Some(underlying(idx))
+      underlying(idx)
     } else {
-      None
+      JsUndefined
     }
   }
 
@@ -590,11 +754,11 @@ case class JsArray private[json](
     *
     * @return head element of this json array.
     */
-  def head(): Option[Json] = {
+  def head(): MaybeJson = {
     if (underlying.nonEmpty) {
-      Some(underlying(0))
+      underlying(0)
     } else {
-      None
+      JsUndefined
     }
   }
 
@@ -603,11 +767,11 @@ case class JsArray private[json](
     *
     * @return last element of this json array.
     */
-  def last(): Option[Json] = {
+  def last(): MaybeJson = {
     if (underlying.nonEmpty) {
-      Some(underlying(underlying.length - 1))
+      underlying(underlying.length - 1)
     } else {
-      None
+      JsUndefined
     }
   }
 
@@ -789,15 +953,14 @@ case class JsObject private[json](
     * @param key key whose associated value is to be returned.
     * @return the value to which the specified key is mapped, or JsUndefined.
     */
-  def apply(key: String): Option[Json] = underlying.get(key)
+  def apply(key: String): MaybeJson = underlying.getOrElse(key, JsUndefined)
 
   /**
     * Merge this object with another one.
     *
     * @return new json object merged.
     */
-  def merge(other: JsObject): JsObject =
-    JsObject(underlying ++ other.underlying)
+  def merge(other: JsObject): JsObject = JsObject(underlying ++ other.underlying)
 
   /**
     * Deep merge this object with another one.
@@ -846,8 +1009,7 @@ case class JsObject private[json](
     * @param field key and value to be associated.
     * @return new json object.
     */
-  def put(field: (String, Json)): JsObject =
-    JsObject(underlying + field)
+  def put(field: (String, Json)): JsObject = JsObject(underlying + field)
 
   /**
     * Convert a json value to dot notation.

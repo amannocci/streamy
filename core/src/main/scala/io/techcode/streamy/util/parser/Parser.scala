@@ -37,9 +37,6 @@ trait Parser[In, Out] {
   // Current cursor position
   protected var _cursor: Int = 0
 
-  // Data consumed to retrieve a char
-  protected var _consumed: Byte = 1
-
   // Local access
   protected var data: In = null.asInstanceOf[In]
 
@@ -54,7 +51,7 @@ trait Parser[In, Out] {
     *
     * @return [[In]] object result of parsing.
     */
-  final def parse(raw: In): Either[ParseException, Out] =
+  def parse(raw: In): Either[ParseException, Out] =
     try {
       data = raw
       Right(run())
@@ -77,7 +74,6 @@ trait Parser[In, Out] {
   def cleanup(): Unit = {
     _mark = 0
     _cursor = 0
-    _consumed = 1
     _length = -1
     data = null.asInstanceOf[In]
     if (stack.nonEmpty) {
@@ -104,7 +100,7 @@ trait Parser[In, Out] {
     *
     * @return length of the input data.
     */
-  def length: Int
+  final def length: Int = _length
 
   /**
     * The index of the next (yet unmatched) character.
@@ -126,7 +122,10 @@ trait Parser[In, Out] {
   /**
     * Advance cursor by n where n is consumed data.
     */
-  final def advance(): Unit = _cursor += _consumed
+  def advance(): Boolean = {
+    _cursor += 1
+    true
+  }
 
   /**
     * Except to match end of input.
@@ -138,12 +137,12 @@ trait Parser[In, Out] {
   /**
     * Runs the inner rule and capture a [[String]] if field is defined.
     *
-    * @param optional define if capture is optional.
     * @param inner    inner rule.
     * @param field    field to populate if success.
+    * @param optional define if capture is optional.
     * @return true if parsing succeeded, otherwise false.
     */
-  def capture(optional: Boolean = false)(inner: => Boolean, field: In => Boolean): Boolean
+  def capture(inner: => Boolean, field: In => Boolean, optional: Boolean = false): Boolean
 
   /**
     * Except to match a single character.
@@ -151,14 +150,7 @@ trait Parser[In, Out] {
     * @param ch character excepted.
     * @return true if parsing succeeded, otherwise false.
     */
-  final def ch(ch: Char): Boolean = {
-    if (_cursor < length && ch == current()) {
-      advance()
-      true
-    } else {
-      false
-    }
-  }
+  final def ch(ch: Char): Boolean = (_cursor < length && ch == current()) && advance()
 
   /**
     * Except to match a sequence of characters.
@@ -360,6 +352,8 @@ trait Parser[In, Out] {
     * @return true if sub parser succeeded, otherwise false.
     */
   final def subParser[T <: Parser[In, Out]](parser: T)(action: T => Boolean): Boolean = {
+    parser._cursor = _cursor
+    parser._length = _length
     parser.data = data
     if (action(parser)) {
       merge(parser)
@@ -397,6 +391,6 @@ class ParseException(msg: => String) extends RuntimeException(msg) with NoStackT
       case _ => false
     }
 
-  override def hashCode:Int = 31 + msg.hashCode
+  override def hashCode: Int = 31 + msg.hashCode
 
 }

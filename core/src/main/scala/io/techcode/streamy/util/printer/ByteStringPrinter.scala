@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2018-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,9 @@
  */
 package io.techcode.streamy.util.printer
 
-import java.lang.{StringBuilder => JStringBuilder}
-
 import akka.util.{ByteString, ByteStringBuilder}
 import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.lang.CharBuilder
 
 /**
   * Represent a [[ByteString]] printer that provide an efficient way to print [[In]].
@@ -46,13 +45,13 @@ trait DirectByteStringPrinter[In] extends ByteStringPrinter[In] {
 }
 
 /**
-  * Represent a derived [[ByteString]] printer based on [[JStringBuilder]] that provide an efficient way to print [[Json]].
+  * Represent a derived [[ByteString]] printer based on [[CharBuilder]] that provide an efficient way to print [[Json]].
   */
 trait DerivedByteStringPrinter[In] extends ByteStringPrinter[In] {
 
   // Used to build bytestring indirectly
-  protected implicit var builder: JStringBuilder = new JStringBuilder(256)
+  protected implicit var builder: CharBuilder = new CharBuilder()
 
-  override def cleanup(): Unit = builder.setLength(0)
+  override def cleanup(): Unit = builder.reset()
 
 }

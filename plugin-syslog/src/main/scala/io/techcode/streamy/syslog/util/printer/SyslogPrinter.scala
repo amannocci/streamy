@@ -23,13 +23,13 @@
  */
 package io.techcode.streamy.syslog.util.printer
 
-import java.lang.{StringBuilder => JStringBuilder}
 import java.net.InetAddress
 
 import akka.util.ByteString
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.component.SyslogTransformer._
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.lang.CharBuilder
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter}
 import io.techcode.streamy.util.{Binder, SomeBinder}
 
@@ -133,7 +133,7 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
 
     // Handle start of framing
     if (framing == Framing.Count) {
-      val count = new JStringBuilder
+      val count = new CharBuilder
       count.append(builder.length())
       count.append(SyslogPrinter.Space)
       count.append(builder)

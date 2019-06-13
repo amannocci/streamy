@@ -92,59 +92,59 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
 
   "JsonBridge" should {
     "provide a shortcut to convert optional json in optional json object" in {
-      JsonBridge(Some(Json.obj())).asObject should equal(Some(Json.obj()))
+      JsonBridge(Json.obj()).asObject should equal(Some(Json.obj()))
     }
 
     "provide a shortcut to convert optional json in optional json array" in {
-      JsonBridge(Some(Json.arr())).asArray should equal(Some(Json.arr()))
+      JsonBridge(Json.arr()).asArray should equal(Some(Json.arr()))
     }
 
     "provide a shortcut to convert optional json in optional string" in {
-      JsonBridge(Some(JsString("foobar"))).asString should equal(Some("foobar"))
+      JsonBridge(JsString("foobar")).asString should equal(Some("foobar"))
     }
 
     "provide a shortcut to convert optional json in optional float" in {
-      JsonBridge(Some(JsFloat(2.0F))).asFloat should equal(Some(2.0F))
+      JsonBridge(JsFloat(2.0F)).asFloat should equal(Some(2.0F))
     }
 
     "provide a shortcut to convert optional json in optional double" in {
-      JsonBridge(Some(JsDouble(2.0D))).asDouble should equal(Some(2.0D))
+      JsonBridge(JsDouble(2.0D)).asDouble should equal(Some(2.0D))
     }
 
     "provide a shortcut to convert optional json in optional number" in {
-      JsonBridge(Some(JsDouble(2.0D))).asNumber should equal(Some(JsDouble(2.0D)))
+      JsonBridge(JsDouble(2.0D)).asNumber should equal(Some(JsDouble(2.0D)))
     }
 
     "provide a shortcut to convert optional json in optional byte" in {
-      JsonBridge(Some(JsInt(2))).asInt should equal(Some(2))
+      JsonBridge(JsInt(2)).asInt should equal(Some(2))
     }
 
     "provide a shortcut to convert optional json in optional short" in {
-      JsonBridge(Some(JsInt(2))).asInt should equal(Some(2))
+      JsonBridge(JsInt(2)).asInt should equal(Some(2))
     }
 
     "provide a shortcut to convert optional json in optional int" in {
-      JsonBridge(Some(JsInt(2))).asInt should equal(Some(2))
+      JsonBridge(JsInt(2)).asInt should equal(Some(2))
     }
 
     "provide a shortcut to convert optional json in optional long" in {
-      JsonBridge(Some(JsLong(2L))).asLong should equal(Some(2L))
+      JsonBridge(JsLong(2L)).asLong should equal(Some(2L))
     }
 
     "provide a shortcut to convert optional json in optional boolean" in {
-      JsonBridge(Some(JsTrue)).asBoolean should equal(Some(true))
+      JsonBridge(JsTrue).asBoolean should equal(Some(true))
     }
 
     "provide a shortcut to convert optional json in optional byte string" in {
-      JsonBridge(Some(JsBytes(ByteString.empty))).asBytes should equal(Some(ByteString.empty))
+      JsonBridge(JsBytes(ByteString.empty)).asBytes should equal(Some(ByteString.empty))
     }
 
     "provide a shortcut to convert optional json in optional big decimal" in {
-      JsonBridge(Some(JsBigDecimal(BigDecimal.valueOf(0)))).asBigDecimal should equal(Some(BigDecimal.valueOf(0)))
+      JsonBridge(JsBigDecimal(BigDecimal.valueOf(0))).asBigDecimal should equal(Some(BigDecimal.valueOf(0)))
     }
 
     "provide a shortcut to convert optional json in optional none" in {
-      JsonBridge(Some(JsNull)).asNull should equal(Some(()))
+      JsonBridge(JsNull).asNull should equal(Some(()))
     }
   }
 

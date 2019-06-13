@@ -88,7 +88,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
   def lifetime(): Boolean =
     optional(
       plus() &&
-        capture()(
+        capture(
           duration() && optional(durationUnit()),
           binding.lifetime(_)
         )
@@ -103,7 +103,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
       slash() &&
         oneOrMore(CharMatchers.LowerAlpha) &&
         colon() &&
-        capture()(
+        capture(
           oneOrMore(XymonParser.GroupNameMatcher),
           binding.group(_)
         )
@@ -113,19 +113,19 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
     host && dot() && service()
 
   def host(): Boolean =
-    capture()(
+    capture(
       oneOrMore(XymonParser.HostNameMatcher),
       binding.host(_)
     )
 
   def service(): Boolean =
-    capture()(
+    capture(
       oneOrMore(XymonParser.TestNameMatcher),
       binding.service(_)
     )
 
   def color(): Boolean =
-    capture()(
+    capture(
       oneOrMore(CharMatchers.LowerAlpha),
       binding.color(_)
     )
@@ -133,7 +133,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
   def additionalText(): Boolean =
     optional(
       sp() &&
-      capture()(
+      capture(
         any(),
         binding.message(_)
       )
