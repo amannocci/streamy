@@ -30,20 +30,14 @@ package io.techcode.streamy.util.lang
   * additional String or Char data to be added to its buffer.
   */
 final class CharBuilder {
+
+  // Initial size
   @inline val InitialSize = 32
 
+  // Internal stuff
   private var buf = new Array[Char](InitialSize)
   private var capacity = InitialSize
   private var len = 0
-
-  def reset(): CharBuilder = {
-    len = 0
-    this
-  }
-
-  def length(): Int = len
-
-  override def toString: String = new String(buf, 0, len)
 
   private def resizeIfNecessary(goal: Int): Unit = {
     if (goal > capacity) {
@@ -60,6 +54,29 @@ final class CharBuilder {
     }
   }
 
+  /**
+    * Reset char builder.
+    *
+    * @return this object for chaining.
+    */
+  def reset(): CharBuilder = {
+    len = 0
+    this
+  }
+
+  /**
+    * Returns the length (character count).
+    *
+    * @return the length of the sequence of characters.
+    */
+  def length(): Int = len
+
+  /**
+    * Appends a sequence.
+    *
+    * @param seq sequence.
+    * @return this object for chaining.
+    */
   def append(seq: CharSequence): CharBuilder = {
     val totalLen = len + seq.length
     resizeIfNecessary(totalLen)
@@ -74,6 +91,12 @@ final class CharBuilder {
     this
   }
 
+  /**
+    * Appends the string representation of the char.
+    *
+    * @param ch a character.
+    * @return this object for chaining.
+    */
   def append(ch: Char): CharBuilder = {
     val tlen = len + 1
     resizeIfNecessary(tlen)
@@ -82,14 +105,28 @@ final class CharBuilder {
     this
   }
 
+  /**
+    * Appends the string representation of the value arguments.
+    *
+    * @param value any object.
+    * @return this object for chaining.
+    */
   def append(value: Any): CharBuilder = append(value.toString)
 
+  /**
+    * Appends the specified char builder to this sequence.
+    *
+    * @param builder char builder.
+    * @return this object for chaining.
+    */
   def append(builder: CharBuilder): CharBuilder = {
-    val tlen = len + builder.len
-    resizeIfNecessary(tlen)
+    val totalLen = len + builder.len
+    resizeIfNecessary(totalLen)
     System.arraycopy(builder.buf, 0, buf, len, builder.len)
-    len = tlen
+    len = totalLen
     this
   }
+
+  override def toString: String = new String(buf, 0, len)
 
 }
