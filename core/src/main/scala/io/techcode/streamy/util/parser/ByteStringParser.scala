@@ -58,8 +58,7 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
         if (_cursor < data.length) {
           decode(data(_cursor), remainingBytes - 1)
         } else {
-          unmark()
-          ByteStringParser.ErrorChar
+          fail()
         }
       } else {
         byteBuffer.flip()
@@ -68,8 +67,7 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
         val result = if (coderResult.isUnderflow & charBuffer.hasRemaining) {
           charBuffer.get()
         } else {
-          unmark()
-          ByteStringParser.ErrorChar
+          fail()
         }
         byteBuffer.clear()
         if (!charBuffer.hasRemaining) charBuffer.clear()
@@ -92,10 +90,15 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
         } else if ((byte & 0xF8) == 0xF0) {
           decode(byte, 3) // 4-byte UTF-8 sequence
         } else {
-          unmark()
-          ByteStringParser.ErrorChar
+          fail()
         }
     }
+  }
+
+  // Return error char and reset mark
+  private def fail(): Char = {
+    unmark()
+    ByteStringParser.ErrorChar
   }
 
   // Decode mode
