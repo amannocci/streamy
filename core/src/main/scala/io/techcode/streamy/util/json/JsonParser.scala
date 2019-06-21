@@ -43,7 +43,7 @@ object JsonParser {
     *
     * @return new json parser Rfc4627 compliant.
     */
-  def byteStringParser(): ByteStringParser[Json] = new ByteStringJsonParser()
+  def byteStringParser(config: JsonParserConfig = JsonParserConfig.Default): ByteStringParser[Json] = new ByteStringJsonParser(config)
 
   /**
     * Create a json parser that transform incoming [[String]] to [[Json]].
@@ -51,7 +51,25 @@ object JsonParser {
     *
     * @return new json parser Rfc4627 compliant.
     */
-  def stringParser(): StringParser[Json] = new StringJsonParser()
+  def stringParser(config: JsonParserConfig = JsonParserConfig.Default): StringParser[Json] = new StringJsonParser(config)
+
+}
+
+// Json parser configuration
+case class JsonParserConfig(
+  maxDepth: Int = JsonParserConfig.DefaultMaxDepth
+)
+
+/**
+  * Json parser config companion.
+  */
+object JsonParserConfig {
+
+  // Default values
+  private val DefaultMaxDepth: Int = 1000
+
+  // Default configuration
+  val Default = JsonParserConfig(DefaultMaxDepth)
 
 }
 
@@ -64,14 +82,29 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
 
   protected val builder = new CharBuilder
 
-  protected var jsValue: Json = _
+  protected var jsValue: Json = null.asInstanceOf[Json]
+
+  private var depth = config.maxDepth
+
+  def config: JsonParserConfig
 
   def run(): Json = {
     if (root()) {
       jsValue
     } else {
-      throw new ParseException(s"Unexpected input at index ${cursor()}:\n$data\n${" " * cursor()}^")
+      if (depth == 0) {
+        throw new ParseException(s"JSON input was nested more deeply than the configured limit of maxNesting = ${config.maxDepth}")
+      } else {
+        throw new ParseException(s"Unexpected input at index ${cursor()}")
+      }
     }
+  }
+
+  override def cleanup(): Unit = {
+    super.cleanup()
+    depth = config.maxDepth
+    builder.reset()
+    jsValue = null.asInstanceOf[Json]
   }
 
   override def root(): Boolean = `value`() && eoi()
@@ -92,28 +125,36 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
     }
 
   // https://tools.ietf.org/html/rfc4627#section-2.1
-  protected def `value`(): Boolean = ws() && times(1) {
-    (current(): @switch) match {
-      case 'f' => simpleValue(`false`(), JsFalse)
-      case 'n' => simpleValue(`null`(), JsNull)
-      case 't' => simpleValue(`true`(), JsTrue)
-      case '{' => advance(); `object`()
-      case '[' => advance(); `array`()
-      case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '-' => `number`()
-      case '"' => `string`()
-      case _ => false
+  protected def `value`(): Boolean = ws() && {
+    if (depth != 0) {
+      depth -= 1
+      times(1) {
+        (current(): @switch) match {
+          case 'f' => simpleValue(`false`(), JsFalse)
+          case 'n' => simpleValue(`null`(), JsNull)
+          case 't' => simpleValue(`true`(), JsTrue)
+          case '{' => advance(); `object`()
+          case '[' => advance(); `array`()
+          case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '-' => `number`()
+          case '"' => `string`()
+          case _ => false
+        }
+      }
+    } else {
+      false
     }
   } && ws()
 
   // https://tools.ietf.org/html/rfc4627#section-2.2
-  protected def `object`(): Boolean =
+  protected def `object`(): Boolean = {
     if (current() != '}') {
       val obj = Json.objectBuilder()
 
       @tailrec def members(): Boolean = {
         var key: String = ""
-        `string`() &&
-          ch(':') && {
+        ws() &&
+          `string`() &&
+          ws() && ch(':') && {
           key = builder.toString
           `value`()
         } && {
@@ -132,10 +173,11 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
       jsValue = Json.obj()
       advance()
     }
+  }
 
 
   // https://tools.ietf.org/html/rfc4627#section-2.3
-  protected def `array`(): Boolean =
+  protected def `array`(): Boolean = {
     if (current() != ']') {
       val arr = Json.arrayBuilder()
 
@@ -156,6 +198,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
       jsValue = Json.arr()
       advance()
     }
+  }
 
   // https://tools.ietf.org/html/rfc4627#section-2.4
   protected def `number`(): Boolean
@@ -221,7 +264,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
   }
 
   // Fast test whether cursorChar is one of " \n\r\t"
-  protected def ws(): Boolean = zeroOrMore {
+  def ws(): Boolean = zeroOrMore {
     val cursorChar = current()
     if (((1L << cursorChar) & ((cursorChar - 64) >> 31) & 0x100002600L) != 0L) {
       advance()
@@ -241,7 +284,9 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
   * Json parser that transform incoming [[ByteString]] to [[Json]].
   * This parser is Rfc4627 compliant.
   */
-private class ByteStringJsonParser extends ByteStringParser[Json] with AbstractJsonParser[ByteString] {
+private class ByteStringJsonParser(conf: JsonParserConfig) extends ByteStringParser[Json] with AbstractJsonParser[ByteString] {
+
+  def config: JsonParserConfig = conf
 
   // https://tools.ietf.org/html/rfc4627#section-2.4
   protected def `number`(): Boolean = {
@@ -299,7 +344,9 @@ private class ByteStringJsonParser extends ByteStringParser[Json] with AbstractJ
   * Json parser that transform incoming [[String]] to [[Json]].
   * This parser is Rfc4627 compliant.
   */
-private class StringJsonParser extends StringParser[Json] with AbstractJsonParser[String] {
+private class StringJsonParser(conf: JsonParserConfig) extends StringParser[Json] with AbstractJsonParser[String] {
+
+  def config: JsonParserConfig = conf
 
   // https://tools.ietf.org/html/rfc4627#section-2.4
   protected def `number`(): Boolean = {
