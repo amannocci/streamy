@@ -44,7 +44,7 @@ class PrinterSpec extends WordSpecLike with Matchers {
   "Print exception" should {
     "implement correctly equality" in {
       new PrintException("foobar") should equal(new PrintException("foobar"))
-      new PrintException("foobar") should equal(new ParseException("foobar"))
+      new PrintException("foobar") should not equal(new ParseException("foobar"))
     }
   }
 

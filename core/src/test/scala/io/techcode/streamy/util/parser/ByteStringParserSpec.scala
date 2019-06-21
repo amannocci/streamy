@@ -454,7 +454,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
   "Parser exception" should {
     "implement correctly equality" in {
       new ParseException("foobar") should equal(new ParseException("foobar"))
-      new ParseException("foobar") should equal(new PrintException("foobar"))
+      new ParseException("foobar") should not equal(new PrintException("foobar"))
     }
   }
 

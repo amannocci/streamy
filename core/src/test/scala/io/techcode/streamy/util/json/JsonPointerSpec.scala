@@ -90,7 +90,7 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
     }
 
     "not equal to the same json pointer" in {
-      Root / "foobar" should equal("foobar")
+      Root / "foobar" should not equal("foobar")
     }
 
     "be iterable" in {
