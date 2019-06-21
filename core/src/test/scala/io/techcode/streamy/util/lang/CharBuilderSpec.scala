@@ -71,6 +71,15 @@ class CharBuilderSpec extends StreamyTestSystem {
       builder.append(other)
       builder.toString should equal("foobar")
     }
+
+    "be able to grow until error" in {
+      val builder = new CharBuilder
+      assertThrows[OutOfMemoryError] {
+        for (i <- 0 until Int.MaxValue) {
+          builder.append('a')
+        }
+      }
+    }
   }
 
 }

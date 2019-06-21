@@ -48,9 +48,7 @@ final class CharBuilder {
         System.arraycopy(buf, 0, newBuf, 0, capacity)
         buf = newBuf
         capacity = cap
-      } else if (cap < capacity) {
-        sys.error("Maximum string size exceeded")
-      }
+      } else if (cap < capacity) throw new OutOfMemoryError
     }
   }
 
