@@ -112,6 +112,12 @@ class FingerprintTransformerSpec extends TestTransformer {
       val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64"))
       component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"b2b585aa3d381777"}"""))
     }
+
+    "handle correctly unexpected input" in {
+      val input = Json.parseStringUnsafe("""{"message":10}""")
+      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64"))
+      component.apply(input) should equal(input)
+    }
   }
 
 }
