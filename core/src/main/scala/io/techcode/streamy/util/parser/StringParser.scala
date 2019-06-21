@@ -30,20 +30,18 @@ import scala.language.implicitConversions
   */
 trait StringParser[Out] extends Parser[String, Out] {
 
-  final def length: Int = {
-    if (_length == -1) {
-      _length = data.length
-    }
-    _length
+  override def parse(raw: String): Either[ParseException, Out] = {
+    _length = raw.length
+    super.parse(raw)
   }
 
   final def current(): Char = data.charAt(_cursor)
 
-  final def capture(optional: Boolean = false)(inner: => Boolean, field: String => Boolean): Boolean = {
-    mark()
+  final def capture(inner: => Boolean, field: String => Boolean, optional: Boolean = false): Boolean = {
+    val marker = _cursor
     var state = inner
     if (state) {
-      val binding = field(data.slice(_mark, _cursor))
+      val binding = field(data.slice(marker, _cursor))
       if (!binding) {
         state = optional
       }

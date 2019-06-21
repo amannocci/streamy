@@ -161,6 +161,22 @@ class JsonTransformerSpec extends TestTransformer {
         JsonTransformerSpec.Output.SerializeRootToExistingTarget
       )
     }
+
+    "handle correctly unexpected input when expected string" in {
+      except(
+        JsonTransformerSpec.Transformer.WrongTypeString,
+        JsonTransformerSpec.Input.WrongType,
+        JsonTransformerSpec.Input.WrongType
+      )
+    }
+
+    "handle correctly unexpected input when expected bytes" in {
+      except(
+        JsonTransformerSpec.Transformer.WrongTypeBytes,
+        JsonTransformerSpec.Input.WrongType,
+        JsonTransformerSpec.Input.WrongType
+      )
+    }
   }
 
 }
@@ -200,6 +216,8 @@ object JsonTransformerSpec {
 
     val SerializeRootToExistingTarget: JsObject = Json.obj("test" -> "foobar")
 
+    val WrongType: JsObject = Json.obj("test" -> 10)
+
   }
 
   object Transformer {
@@ -223,6 +241,10 @@ object JsonTransformerSpec {
     val SerializeRootToTarget = JsonTransformer(Config(Root, Some(Root / "message"), mode = Mode.Serialize))
 
     val SerializeRootToExistingTarget = JsonTransformer(Config(Root, Some(Root / "test"), mode = Mode.Serialize))
+
+    val WrongTypeString = JsonTransformer(Config(Root, Some(Root / "test"), mode = Mode.Deserialize))
+
+    val WrongTypeBytes = JsonTransformer(Config(Root, Some(Root / "test"), mode = Mode.Deserialize, bind = Bind.Bytes))
 
   }
 

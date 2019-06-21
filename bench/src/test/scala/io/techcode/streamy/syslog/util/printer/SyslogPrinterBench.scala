@@ -34,12 +34,6 @@ import org.openjdk.jmh.annotations.Benchmark
 
 /**
   * Syslog printer bench.
-  *
-  * Benchmark                            Mode  Cnt        Score       Error  Units
-  * SyslogPrinterBench.rfc3164Complete  thrpt   20  4196441.218 ± 29329.289  ops/s
-  * SyslogPrinterBench.rfc3164Message   thrpt   20  8677507.063 ± 59764.102  ops/s
-  * SyslogPrinterBench.rfc5424Complete  thrpt   20  3209117.437 ± 10910.541  ops/s
-  * SyslogPrinterBench.rfc5424Message   thrpt   20  7042156.596 ± 45987.404  ops/s
   */
 class SyslogPrinterBench {
 

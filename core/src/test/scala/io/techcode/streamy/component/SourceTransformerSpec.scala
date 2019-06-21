@@ -25,10 +25,12 @@ package io.techcode.streamy.component
 
 import akka.stream.scaladsl.{Flow, Source}
 import akka.stream.testkit.scaladsl.TestSink
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.util.ByteString
 import io.techcode.streamy.StreamyTestSystem
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.parser.ByteStringParser
+import io.techcode.streamy.util.parser.{ByteStringParser, ParseException}
 
 /**
   * Source transformer spec.
@@ -36,7 +38,7 @@ import io.techcode.streamy.util.parser.ByteStringParser
 class SourceTransformerSpec extends StreamyTestSystem {
 
   "Source transformer" should {
-    "parse correctly a bytestring when success" in {
+    "handle correctly a bytestring" in {
       val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser[Json] {
         override def run(): Json = Json.obj()
 
@@ -46,6 +48,42 @@ class SourceTransformerSpec extends StreamyTestSystem {
         .via(source)
         .runWith(TestSink.probe[Json])
         .requestNext() should equal(Json.obj())
+    }
+
+    "handle correctly a bytestring with skipped error" in {
+      val decider: Supervision.Decider = _ => Supervision.Resume
+
+      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+
+      val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser[Json] {
+        override def run() = throw new ParseException("Error")
+
+        override def root(): Boolean = false
+      }))
+
+      Source.single(ByteString.empty)
+        .via(source)
+        .runWith(TestSink.probe[Json])
+        .request(1)
+        .expectComplete()
+    }
+
+    "handle correctly a bytestring with error" in {
+      val decider: Supervision.Decider = _ => Supervision.Stop
+
+      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+
+      val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser[Json] {
+        override def run() = throw new ParseException("Error")
+
+        override def root(): Boolean = false
+      }))
+
+      Source.single(ByteString.empty)
+        .via(source)
+        .runWith(TestSink.probe[Json])
+        .request(1)
+        .expectError() should equal(new StreamException("Error", Some(ByteString.empty), Some(new ParseException("Error"))))
     }
   }
 

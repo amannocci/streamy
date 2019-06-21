@@ -43,8 +43,10 @@ private[component] class FingerprintTransformer(config: FingerprintTransformer.C
   // Choose right transform function
   private val hashFunc: HashFunction = FingerprintTransformer.Hashings(config.hashing)
 
-  override def transform(value: Json): Option[Json] =
-    value.asString.map(hashFunc.hashString(_, StandardCharsets.UTF_8).toString)
+  override def transform(value: Json): MaybeJson = value match {
+    case x: JsString => hashFunc.hashString(x.value, StandardCharsets.UTF_8).toString
+    case _ => JsUndefined
+  }
 
 }
 

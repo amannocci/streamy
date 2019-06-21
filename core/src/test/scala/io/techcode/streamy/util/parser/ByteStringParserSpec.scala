@@ -25,6 +25,7 @@ package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
 import io.techcode.streamy.util.json.{JsObjectBuilder, Json}
+import io.techcode.streamy.util.printer.PrintException
 import io.techcode.streamy.util.{IntBinder, NoneBinder, StringBinder}
 import org.scalatest._
 
@@ -84,7 +85,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "capture properly a value if present" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture()(
+          capture(
             str("foo"),
             StringBinder("test")(_)
           )
@@ -96,7 +97,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture a value if undefined" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture()(
+          capture(
             str("foo"),
             NoneBinder(_),
           )
@@ -108,9 +109,10 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture properly an optional value if present" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(optional = true)(
+          capture(
             zeroOrMore(str("1")),
-            IntBinder("foobar")(_)
+            IntBinder("foobar")(_),
+            optional = true
           )
         }
       }
@@ -120,7 +122,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture properly a value if absent" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture()(
+          capture(
             zeroOrMore(str("1")),
             IntBinder("foobar")(_)
           )
@@ -439,14 +441,21 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
         val subParsing: ByteStringParserImpl {
           def root(): Boolean
         } = new ByteStringParserImpl {
-          override def root(): Boolean = capture()(str("foo"), StringBinder("foo")(_))
+          override def root(): Boolean = capture(str("foo"), StringBinder("foo")(_))
         }
 
-        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && capture()(str("bar"), StringBinder("bar")(_))
+        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && capture(str("bar"), StringBinder("bar")(_))
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("foo" -> "foo", "bar" -> "bar")))
     }
 
+  }
+
+  "Parser exception" should {
+    "implement correctly equality" in {
+      new ParseException("foobar") should equal(new ParseException("foobar"))
+      new ParseException("foobar") should not equal(new PrintException("foobar"))
+    }
   }
 
 }

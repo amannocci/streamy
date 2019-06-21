@@ -23,9 +23,7 @@
  */
 package io.techcode.streamy.util.printer
 
-import java.lang.{StringBuilder => JStringBuilder}
-
-import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.lang.CharBuilder
 
 /**
   * Represent a [[String]] printer that provide an efficient way to print [[In]].
@@ -33,8 +31,8 @@ import io.techcode.streamy.util.json._
 trait StringPrinter[In] extends Printer[In, String] {
 
   // Used to build string directly
-  protected implicit var builder: JStringBuilder = new JStringBuilder(256)
+  protected implicit var builder: CharBuilder = new CharBuilder()
 
-  override def cleanup(): Unit = builder.setLength(0)
+  override def cleanup(): Unit = builder.reset()
 
 }

@@ -33,48 +33,52 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
   "JsonPointer" should {
     "return same json value for root pointer" in {
       val input = Json.obj("test" -> "foobar")
-      input.evaluate(Root) should equal(Some(input))
+      input.evaluate(Root) should equal(input)
     }
 
     "return a value if possible when evaluate on json object" in {
       val input = Json.obj("test" -> "foobar")
-      input.evaluate(Root / "test") should equal(Some(JsString("foobar")))
+      input.evaluate(Root / "test") should equal(JsString("foobar"))
     }
 
     "return a value if possible when evaluate on deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "foobar")))
-      input.evaluate(Root / "test" / 0 / "test") should equal(Some(JsString("foobar")))
+      input.evaluate(Root / "test" / 0 / "test") should equal(JsString("foobar"))
     }
 
     "return a none when evaluate on json object is failed" in {
       val input = Json.obj("test" -> "foobar")
-      input.evaluate(Root / "failed") should equal(None)
+      input.evaluate(Root / "failed") should equal(JsUndefined)
     }
 
     "return a none when evaluate on json object and excepting a json array" in {
       val input = Json.obj("test" -> "foobar")
-      input.evaluate(Root / 0) should equal(None)
+      input.evaluate(Root / 0) should equal(JsUndefined)
     }
 
     "return a value if possible when evaluate on json array" in {
       val input = Json.arr("test", "foobar")
-      input.evaluate(Root / 0) should equal(Some(JsString("test")))
-      input.evaluate(Root / 1) should equal(Some(JsString("foobar")))
+      input.evaluate(Root / 0) should equal(JsString("test"))
+      input.evaluate(Root / 1) should equal(JsString("foobar"))
     }
 
     "return a value if possible when evaluate on deep json array" in {
       val input = Json.obj("test" -> Json.obj("test" -> Json.arr("foobar")))
-      input.evaluate(Root / "test" / "test" / 0) should equal(Some(JsString("foobar")))
+      input.evaluate(Root / "test" / "test" / 0) should equal(JsString("foobar"))
     }
 
     "return a none when evaluate on json array is failed" in {
       val input = Json.arr()
-      input.evaluate(Root / 0) should equal(None)
+      input.evaluate(Root / 0) should equal(JsUndefined)
     }
 
     "return a none when evaluate on json array and excepting a json object" in {
       val input = Json.arr("test", "foobar")
-      input.evaluate(Root / "failed") should equal(None)
+      input.evaluate(Root / "failed") should equal(JsUndefined)
+    }
+
+    "return a string representation" in {
+      (Root / "failed").toString should equal("/failed")
     }
 
     "equal to the same root json pointer" in {
@@ -83,6 +87,10 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
 
     "equal to the same json pointer" in {
       Root / "foobar" should equal(Root / "foobar")
+    }
+
+    "not equal to the same json pointer" in {
+      Root / "foobar" should not equal("foobar")
     }
 
     "be iterable" in {
@@ -158,6 +166,11 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
       val parser = new JsonPointerParser()
       parser.parse("/key") should equal(Right(Root / "key"))
       parser.parse("/foobar") should equal(Right(Root / "foobar"))
+    }
+
+    "fail correctly for an invalid json pointer" in {
+      val parser = new JsonPointerParser()
+      parser.parse("key").isLeft should equal(true)
     }
   }
 

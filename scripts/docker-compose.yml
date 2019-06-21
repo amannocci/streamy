@@ -1,0 +1,27 @@
+version: '2'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
+    container_name: elasticsearch
+    environment:
+      - "xpack.security.enabled=false"
+      - "xpack.monitoring.enabled=false"
+      - "xpack.ml.enabled=false"
+      - "xpack.graph.enabled=false"
+      - "xpack.watcher.enabled=false"
+      - "cluster.name=testing"
+      - "bootstrap.memory_lock=false"
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+  tcp:
+    image: appropriate/nc:latest
+    container_name: tcp
+    command: 'nc -lk 500'
+    ports:
+      - "500:500"

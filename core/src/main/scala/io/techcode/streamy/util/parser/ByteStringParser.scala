@@ -45,25 +45,30 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
   private val decoder = UTF8.newDecoder()
 
   // Ascii reader
-  private val asciiReader: () => Char = () => {
-    _consumed = 1
-    (data(_cursor) & 0xFF).toChar
-  }
+  private val asciiReader: () => Char = () => (data(_cursor) & 0xFF).toChar
 
   // Utf-8 reader
   private val utf8Reader: () => Char = () => {
-    var marker = _cursor
+    mark()
 
     @tailrec def decode(byte: Byte, remainingBytes: Int): Char = {
       byteBuffer.put(byte)
       if (remainingBytes > 0) {
-        marker += 1
-        if (marker < data.length) decode(data(marker), remainingBytes - 1) else ByteStringParser.ErrorChar
+        advance()
+        if (_cursor < data.length) {
+          decode(data(_cursor), remainingBytes - 1)
+        } else {
+          fail()
+        }
       } else {
         byteBuffer.flip()
         val coderResult = decoder.decode(byteBuffer, charBuffer, false)
         charBuffer.flip()
-        val result = if (coderResult.isUnderflow & charBuffer.hasRemaining) charBuffer.get() else ByteStringParser.ErrorChar
+        val result = if (coderResult.isUnderflow & charBuffer.hasRemaining) {
+          charBuffer.get()
+        } else {
+          fail()
+        }
         byteBuffer.clear()
         if (!charBuffer.hasRemaining) charBuffer.clear()
         result
@@ -75,33 +80,33 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
       charBuffer.clear()
       result
     } else {
-      val byte = data(marker)
-      if (byte >= 0) {
-        _consumed = 1
-        byte.toChar // 7-Bit ASCII
-      } else if ((byte & 0xE0) == 0xC0) {
-        _consumed = 2
-        decode(byte, 1) // 2-byte UTF-8 sequence
-      } else if ((byte & 0xF0) == 0xE0) {
-        _consumed = 3
-        decode(byte, 2) // 3-byte UTF-8 sequence
-      } else if ((byte & 0xF8) == 0xF0) {
-        _consumed = 4
-        decode(byte, 3) // 4-byte UTF-8 sequence
-      } else {
-        ByteStringParser.ErrorChar
-      }
+        val byte = data(_cursor)
+        if (byte >= 0) {
+          byte.toChar // 7-Bit ASCII
+        } else if ((byte & 0xE0) == 0xC0) {
+          decode(byte, 1) // 2-byte UTF-8 sequence
+        } else if ((byte & 0xF0) == 0xE0) {
+          decode(byte, 2) // 3-byte UTF-8 sequence
+        } else if ((byte & 0xF8) == 0xF0) {
+          decode(byte, 3) // 4-byte UTF-8 sequence
+        } else {
+          fail()
+        }
     }
+  }
+
+  // Return error char and reset mark
+  private def fail(): Char = {
+    unmark()
+    ByteStringParser.ErrorChar
   }
 
   // Decode mode
   private var reader: () => Char = asciiReader
 
-  final def length: Int = {
-    if (_length == -1) {
-      _length = data.length
-    }
-    _length
+  override def parse(raw: ByteString): Either[ParseException, Out] = {
+    _length = raw.length
+    super.parse(raw)
   }
 
   @inline final def current(): Char = reader()
@@ -115,11 +120,19 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
     }
   }
 
-  final def capture(optional: Boolean = false)(inner: => Boolean, field: ByteString => Boolean): Boolean = {
-    mark()
+  /**
+    * Advance cursor by n where n is consumed data.
+    */
+  override final def advance(): Boolean = {
+    if (charBuffer.position() == 0) _cursor += 1
+    true
+  }
+
+  final def capture(inner: => Boolean, field: ByteString => Boolean, optional: Boolean = false): Boolean = {
+    val marker = _cursor
     var state = inner
     if (state) {
-      val binding = field(data.slice(_mark, _cursor))
+      val binding = field(data.slice(marker, _cursor))
       if (!binding) {
         state = optional
       }

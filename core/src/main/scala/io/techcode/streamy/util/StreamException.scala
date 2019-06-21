@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.util
 
+import com.google.common.base.Objects
 import io.techcode.streamy.util.json._
 
 import scala.util.control.NoStackTrace
@@ -35,4 +36,16 @@ import scala.util.control.NoStackTrace
   * @param ex    parent exception raised.
   */
 class StreamException(val msg: String, val state: Option[Json] = None, val ex: Option[Throwable] = None)
-  extends RuntimeException(msg) with NoStackTrace
+  extends RuntimeException(msg) with NoStackTrace {
+
+  def canEqual(a: Any): Boolean = a.isInstanceOf[StreamException]
+
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: StreamException => that.canEqual(this) && this.hashCode == that.hashCode
+      case _ => false
+    }
+
+  override def hashCode: Int = Objects.hashCode(msg, state, ex)
+
+}

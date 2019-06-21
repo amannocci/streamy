@@ -85,10 +85,10 @@ object JsonTransformer {
   */
 private class SerializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
 
-  @inline override def transform(value: Json): Option[Json] = {
+  @inline override def transform(value: Json): MaybeJson = {
     config.bind match {
-      case Bind.String => Some(value.toString)
-      case Bind.Bytes => Some(ByteString(value.toString))
+      case Bind.String => value.toString
+      case Bind.Bytes => ByteString(value.toString)
     }
   }
 
@@ -101,25 +101,19 @@ private class SerializerTransformer(config: JsonTransformer.Config) extends Flow
   */
 private class DeserializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
 
-  @inline override def transform(value: Json): Option[Json] = {
+  private val byteStringJsonParser = JsonParser.byteStringParser()
+  private val stringJsonParser = JsonParser.stringParser()
+
+  @inline override def transform(value: Json): MaybeJson = {
+    // Try to avoid parsing of wrong json
     config.bind match {
-      case Bind.String => value.asString.map { field =>
-        // Try to avoid parsing of wrong json
-        if (field.nonEmpty && field.charAt(0) == '{') {
-          // Try to parse
-          handle(value, Json.parse(field))
-        } else {
-          onError(state = value)
-        }
+      case Bind.String => value match {
+        case field: JsString => handle(value, stringJsonParser.parse(field.value))
+        case _ => JsUndefined
       }
-      case Bind.Bytes => value.asBytes.map { field =>
-        // Try to avoid parsing of wrong json
-        if (field.nonEmpty && (field(0) & 0xFF).toChar == '{') {
-          // Try to parse
-          handle(value, Json.parse(field))
-        } else {
-          onError(state = value)
-        }
+      case Bind.Bytes => value match {
+        case field: JsBytes => handle(value, byteStringJsonParser.parse(field.value))
+        case _ => JsUndefined
       }
     }
   }

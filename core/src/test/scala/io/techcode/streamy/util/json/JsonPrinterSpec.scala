@@ -33,55 +33,55 @@ class JsonPrinterSpec extends WordSpecLike with Matchers {
 
   "Json printer" should {
     "print an json boolean set to false correctly" in {
-      JsonPrinter().print(JsFalse).getOrElse("") should equal("false")
+      Json.printStringUnsafe(JsFalse) should equal("false")
     }
 
     "print an json boolean set to true correctly" in {
-      JsonPrinter().print(JsTrue).getOrElse("") should equal("true")
+      Json.printStringUnsafe(JsTrue) should equal("true")
     }
 
     "print an json null correctly" in {
-      JsonPrinter().print(JsNull).getOrElse("") should equal("null")
+      Json.printStringUnsafe(JsNull) should equal("null")
     }
 
     "print an json int correctly" in {
-      JsonPrinter().print(JsInt(Int.MinValue)).getOrElse("") should equal(Int.MinValue.toString)
+      Json.printStringUnsafe(JsInt(Int.MinValue)) should equal(Int.MinValue.toString)
     }
 
     "print an json long correctly" in {
-      JsonPrinter().print(JsLong(Long.MinValue)).getOrElse("") should equal(Long.MinValue.toString)
+      Json.printStringUnsafe(JsLong(Long.MinValue)) should equal(Long.MinValue.toString)
     }
 
     "print an json float correctly" in {
-      JsonPrinter().print(JsFloat(Float.MinValue)).getOrElse("") should equal(Float.MinValue.toString)
+      Json.printStringUnsafe(JsFloat(Float.MinValue)) should equal(Float.MinValue.toString)
     }
 
     "print an json double correctly" in {
-      JsonPrinter().print(JsDouble(Double.MinValue)).getOrElse("") should equal(Double.MinValue.toString)
+      Json.printStringUnsafe(JsDouble(Double.MinValue)) should equal(Double.MinValue.toString)
     }
 
     "print an json big decimal correctly" in {
-      JsonPrinter().print(JsBigDecimal(BigDecimal("1e20"))).getOrElse("") should equal("1E+20")
+      Json.printStringUnsafe(JsBigDecimal(BigDecimal("1e20"))) should equal("1E+20")
     }
 
     "print an json bytes correctly" in {
-      JsonPrinter().print(JsBytes(ByteString("foobar"))).getOrElse("") should equal("\"Zm9vYmFy\"")
+      Json.printStringUnsafe(JsBytes(ByteString("foobar"))) should equal("\"Zm9vYmFy\"")
     }
 
     "print an json string without unicode char correctly" in {
-      JsonPrinter().print(JsString("foobar")).getOrElse("") should equal("\"foobar\"")
+      Json.printStringUnsafe(JsString("foobar")) should equal("\"foobar\"")
     }
 
     "print an json string with \" char correctly" in {
-      JsonPrinter().print(JsString("foob\"ar")).getOrElse("") should equal(""""foob\"ar"""")
+      Json.printStringUnsafe(JsString("foob\"ar")) should equal(""""foob\"ar"""")
     }
 
     "print an json string with \\ char correctly" in {
-      JsonPrinter().print(JsString("foob\\\\ar")).getOrElse("") should equal(""""foob\\\\ar"""")
+      Json.printStringUnsafe(JsString("foob\\\\ar")) should equal(""""foob\\\\ar"""")
     }
 
     "print an json string with control chars correctly" in {
-      JsonPrinter().print(JsString("\b\f\n\r\t")).getOrElse("") should equal(""""\b\f\n\r\t"""")
+      Json.printStringUnsafe(JsString("\b\f\n\r\t")) should equal(""""\b\f\n\r\t"""")
     }
 
   }

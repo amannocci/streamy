@@ -24,6 +24,7 @@
 package io.techcode.streamy.util.printer
 
 import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.parser.ParseException
 import org.scalatest._
 
 /**
@@ -37,6 +38,13 @@ class PrinterSpec extends WordSpecLike with Matchers {
         def run(): Boolean = false
       }
       printer.print(Json.obj("foo" -> "bar")).isRight should equal(true)
+    }
+  }
+
+  "Print exception" should {
+    "implement correctly equality" in {
+      new PrintException("foobar") should equal(new PrintException("foobar"))
+      new PrintException("foobar") should not equal(new ParseException("foobar"))
     }
   }
 

@@ -53,16 +53,16 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
         pkt.evaluate(config.source)
           .flatMap(transform(_, pkt))
           .flatMap { v =>
-            val operated: Option[Json] = {
+            val operated: MaybeJson = {
               if (config.target.get == Root) {
                 {
                   for {
                     x <- pkt.asObject
                     y <- v.asObject
                   } yield (x, y)
-                }.map(r => r._1.merge(r._2))
+                }.map(r => r._1.merge(r._2)).getOrElse(JsUndefined)
               } else {
-                Some(pkt)
+                pkt
               }
             }
 
@@ -109,7 +109,7 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
     * @param pkt   original packet.
     * @return json structure.
     */
-  @inline def transform(value: Json, pkt: Json): Option[Json] =
+  @inline def transform(value: Json, pkt: Json): MaybeJson =
     transform(value)
 
   /**
@@ -118,7 +118,7 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
     * @param value value to transform.
     * @return json structure.
     */
-  def transform(value: Json): Option[Json] = None
+  def transform(value: Json): MaybeJson = JsUndefined
 
   /**
     * Apply transform component on packet.

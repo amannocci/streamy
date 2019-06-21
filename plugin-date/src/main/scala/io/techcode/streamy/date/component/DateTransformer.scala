@@ -39,8 +39,10 @@ import io.techcode.streamy.util.json._
   */
 private[component] class DateTransformer(config: DateTransformer.Config) extends FlowTransformer(config) {
 
-  override def transform(value: Json): Option[Json] =
-    value.asString.map(v => config.outputFormatter.format(config.inputFormatter.parse(v)))
+  override def transform(value: Json): MaybeJson = value match {
+    case x: JsString => config.outputFormatter.format(config.inputFormatter.parse(x.value))
+    case _ => JsUndefined
+  }
 
 }
 

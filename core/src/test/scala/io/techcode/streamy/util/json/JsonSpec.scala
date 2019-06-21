@@ -254,12 +254,12 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return value if present" in {
       val input = Json.obj("test" -> "foobar")
-      input("test") should equal(Some(JsString("foobar")))
+      input("test") should equal(JsString("foobar"))
     }
 
-    "return none if absent" in {
+    "return undefined if absent" in {
       val input = Json.obj("test" -> "foobar")
-      input("missing") should equal(None)
+      input("missing") should equal(JsUndefined)
     }
 
     "not fail to deep merge when the objects are empty" in {
@@ -411,12 +411,12 @@ class JsonSpec extends WordSpecLike with Matchers {
   "Json array" should {
     "return value if present" in {
       val input = Json.arr("test", "foobar")
-      input(1) should equal(Some(JsString("foobar")))
+      input(1) should equal(JsString("foobar"))
     }
 
-    "return none if absent" in {
+    "return undefined if absent" in {
       val input = Json.arr("test", "foobar")
-      input(2) should equal(None)
+      input(2) should equal(JsUndefined)
     }
 
     "be create from builder" in {
@@ -438,22 +438,22 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return head of json array if present" in {
       val input = Json.arr("test", "foobar")
-      input.head() should equal(Some(JsString("test")))
+      input.head() should equal(JsString("test"))
     }
 
     "return head of json array if not present" in {
       val input = Json.arr()
-      input.head() should equal(None)
+      input.head() should equal(JsUndefined)
     }
 
     "return last of json array if present" in {
       val input = Json.arr("test", "foobar")
-      input.last() should equal(Some(JsString("foobar")))
+      input.last() should equal(JsString("foobar"))
     }
 
     "return last of json array if not present" in {
       val input = Json.arr()
-      input.last() should equal(None)
+      input.last() should equal(JsUndefined)
     }
 
     "append json array correctly" in {
@@ -555,88 +555,102 @@ class JsonSpec extends WordSpecLike with Matchers {
       input.toString should equal("""["123",123,2E+128]""")
     }
 
+    "be mapped correctly" in {
+      val input = Json.parseStringUnsafe("1330950829160")
+      input.map(_ => JsNull) should equal(JsNull)
+    }
+
+    "be mapped to undefined correctly" in {
+      JsUndefined.map(_ => JsNull) should equal(JsUndefined)
+    }
+
+    "be used with a predicate for validation" in {
+      val input = Json.parseStringUnsafe("1330950829160")
+      input.exists(v => v.isDefined) should equal(true)
+    }
+
     "parse long integers correctly" in {
-      val input = Json.parse("1330950829160").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("1330950829160")
       input should equal(JsLong(1330950829160L))
     }
 
     "parse short integers correctly" in {
-      val input = Json.parse("1234").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("1234")
       input should equal(JsInt(1234))
     }
 
     "parse byte integers correctly" in {
-      val input = Json.parse("123").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("123")
       input should equal(JsInt(123))
     }
 
     "parse big decimal correctly" in {
-      val input = Json.parse("12345678901234567890.42").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("12345678901234567890.42")
       input should equal(JsBigDecimal(BigDecimal("12345678901234567890.42")))
     }
 
     "parse big decimal with large exponents in scientific notation correctly" in {
-      val input = Json.parse("1.2e1000").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("1.2e1000")
       input should equal(JsBigDecimal(BigDecimal("1.2e1000")))
     }
 
     "parse big decimal with large negative exponents in scientific notation correctly" in {
-      val input = Json.parse("6.75e-1000").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("6.75e-1000")
       input should equal(JsBigDecimal(BigDecimal("6.75e-1000")))
     }
 
     "parse big decimal with small exponents in scientific notation correctly" in {
-      val input = Json.parse("1.234e3").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("1.234e3")
       input should equal(JsBigDecimal(BigDecimal("1.234e3")))
     }
 
     "parse big decimal with small negative exponents in scientific notation correctly" in {
-      val input = Json.parse("1.234e-3").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("1.234e-3")
       input should equal(JsBigDecimal(BigDecimal("1.234e-3")))
     }
 
     "parse big decimal with integer base correctly" in {
-      val input = Json.parse("2e128").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("2e128")
       input should equal(JsBigDecimal(BigDecimal("2e128")))
     }
 
     "parse list correctly" in {
-      val input = Json.parse("""["123",123,2E+128]""").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("""["123",123,2E+128]""")
       input should equal(Json.arr("123", 123, BigDecimal("2e128")))
     }
 
     "parse null values in object" in {
-      val input = Json.parse("""{"foo": null}""").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("""{"foo": null}""")
       input should equal(Json.obj("foo" -> JsNull))
     }
 
     "parse null values in array" in {
-      val input = Json.parse("""[null]""").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("""[null]""")
       input should equal(Json.arr(JsNull))
     }
 
     "parse null as JsNull" in {
-      val input = Json.parse("""null""").getOrElse(JsNull)
+      val input = Json.parseStringUnsafe("""null""")
       input should equal(JsNull)
     }
 
     "parse json object from bytes" in {
-      val input = Json.parse("""{"test":"test"}""".getBytes).getOrElse(JsNull)
+      val input = Json.parseBytesUnsafe("""{"test":"test"}""".getBytes)
       input should equal(Json.obj("test" -> "test"))
     }
 
     "handle parsing failure from bytes" in {
-      val input = Json.parse("""test:"test"""".getBytes).getOrElse(JsNull)
-      input should equal(JsNull)
+      val input = Json.parseBytes("""test:"test"""".getBytes).getOrElse(JsUndefined)
+      input should equal(JsUndefined)
     }
 
     "parse json object from bytestring" in {
-      val input = Json.parse(ByteString("""{"test":"test"}""")).getOrElse(JsNull)
+      val input = Json.parseByteStringUnsafe(ByteString("""{"test":"test"}"""))
       input should equal(Json.obj("test" -> "test"))
     }
 
     "handle parsing failure from bytestring" in {
-      val input = Json.parse(ByteString("""test:"test"""")).getOrElse(JsNull)
+      val input = Json.parseByteString(ByteString("""test:"test"""")).getOrElse(JsNull)
       input should equal(JsNull)
     }
 
@@ -907,10 +921,10 @@ class JsonSpec extends WordSpecLike with Matchers {
         Add(Root / "foobar", "foobar"),
         Add(Root / "test", "test")
       )
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "foobar" -> "foobar",
         "test" -> "test"
-      )))
+      ))
     }
 
     "handle patch with seq operations" in {
@@ -919,9 +933,9 @@ class JsonSpec extends WordSpecLike with Matchers {
         Remove(Root / "foobar" / "test" / "test", mustExist = false),
         Replace(Root / "foobar", "test")
       ))
-      result should equal(Some(Json.obj(
+      result should equal(Json.obj(
         "foobar" -> "test"
-      )))
+      ))
     }
   }
 

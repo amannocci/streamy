@@ -142,7 +142,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def hostname(): Boolean =
     sp() && or(
       nilValue(),
-      capture()(
+      capture(
         times(1, mode.hostname, CharMatchers.PrintUsAscii),
         binding.hostname(_)
       )
@@ -151,7 +151,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def appName(): Boolean =
     sp() && or(
       nilValue(),
-      capture()(
+      capture(
         times(1, mode.appName, CharMatchers.PrintUsAscii),
         binding.appName(_)
       )
@@ -160,7 +160,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def procId(): Boolean =
     sp() && or(
       nilValue(),
-      capture()(
+      capture(
         times(1, mode.procId, CharMatchers.PrintUsAscii),
         binding.procId(_)
       )
@@ -169,7 +169,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def msgId(): Boolean =
     sp() && or(
       nilValue(),
-      capture()(
+      capture(
         times(1, mode.msgId, CharMatchers.PrintUsAscii),
         binding.msgId(_)
       )
@@ -178,7 +178,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def timestamp(): Boolean =
     sp() && or(
       nilValue(),
-      capture()(
+      capture(
         fullDate() && ch('T') && fullTime(),
         binding.timestamp(_)
       )
@@ -216,7 +216,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
 
   def structuredData(): Boolean = or(
     nilValue(),
-    capture()(
+    capture(
       sdElement(),
       binding.structData(_)
     )
@@ -233,7 +233,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def sdName(): Boolean = times(1, 32, SyslogParser.SdNameMatcher)
 
   def msg(): Boolean =
-    sp() && capture()(
+    sp() && capture(
       any(),
       binding.message(_)
     )
@@ -298,27 +298,27 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
   def priVal(): Boolean = times(1, 3, CharMatchers.Digit)
 
   def hostname(): Boolean =
-    capture()(
+    capture(
       times(1, mode.hostname, CharMatchers.PrintUsAscii),
       binding.hostname(_)
     )
 
   def appName(): Boolean =
-    capture()(
+    capture(
       times(1, mode.appName, SyslogParser.AppNameMatcher),
       binding.appName(_)
     )
 
   def procId(): Boolean =
     openBracket() &&
-      capture()(
+      capture(
         times(1, mode.procId, SyslogParser.ProcIdMatcher),
         binding.procId(_)
       ) &&
       closeBracket()
 
   def timestamp(): Boolean =
-    capture()(
+    capture(
       fullDate(),
       binding.timestamp(_)
     )
@@ -339,7 +339,7 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
   def timeSecond(): Boolean = times(2, CharMatchers.Digit)
 
   def msg(): Boolean =
-    sp() && capture()(
+    sp() && capture(
       any(),
       binding.message(_)
     )

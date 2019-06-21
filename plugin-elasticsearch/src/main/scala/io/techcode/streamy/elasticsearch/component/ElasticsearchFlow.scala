@@ -200,7 +200,7 @@ object ElasticsearchFlow {
     }
 
     // Handle response as json
-    private val asJson: ResponseAs[Json, Nothing] = asByteArray.map(Json.parse(_).getOrElse(JsNull))
+    private val asJson: ResponseAs[Json, Nothing] = asByteArray.map(Json.parseBytesUnsafe)
 
     /**
       * Elasticsearch flow logic.

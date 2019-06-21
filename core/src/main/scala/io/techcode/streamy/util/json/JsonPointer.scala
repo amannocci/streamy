@@ -41,13 +41,13 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
     * @param json json value to evaluate.
     * @return optional json value.
     */
-  private[json] def apply(json: Json): Option[Json] = {
+  private[json] def apply(json: Json): MaybeJson = {
     if (underlying.isEmpty) {
-      Some(json)
+      json
     } else {
       // Current computation
       var idx = 0
-      var result: Option[Json] = Some(json)
+      var result: MaybeJson = json
 
       // Iterate over path accessor
       while (idx < underlying.length) {
@@ -61,7 +61,7 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
           result = access
         } else {
           idx = underlying.length
-          result = None
+          result = JsUndefined
         }
       }
 
@@ -137,15 +137,15 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
   */
 private[json] trait JsonAccessor {
 
-  def evaluate(json: Json): Option[Json]
+  def evaluate(json: Json): MaybeJson
 
-  def set(json: Json, value: Json): Option[Json]
+  def set(json: Json, value: Json): MaybeJson
 
-  def add(json: Json, value: Json): Option[Json]
+  def add(json: Json, value: Json): MaybeJson
 
-  def replace(json: Json, value: Json): Option[Json]
+  def replace(json: Json, value: Json): MaybeJson
 
-  def remove(json: Json, mustExist: Boolean = true): Option[Json]
+  def remove(json: Json, mustExist: Boolean = true): MaybeJson
 
 }
 
@@ -154,36 +154,45 @@ private[json] trait JsonAccessor {
   */
 private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
 
-  def evaluate(json: Json): Option[Json] = json.asObject.flatMap(_ (key))
-
-  @inline def set(json: Json, value: Json): Option[Json] = add(json, value)
-
-  def add(json: Json, value: Json): Option[Json] = json.asObject.map { x =>
-    x.underlying.update(key, value)
-    x
+  def evaluate(json: Json): MaybeJson = json match {
+    case x: JsObject => x(key).orElse(JsUndefined)
+    case _ => JsUndefined
   }
 
-  def replace(json: Json, value: Json): Option[Json] = json.asObject.flatMap { x =>
-    if (x.underlying.contains(key)) {
+  @inline def set(json: Json, value: Json): MaybeJson = add(json, value)
+
+  def add(json: Json, value: Json): MaybeJson = json match {
+    case x: JsObject =>
       x.underlying.update(key, value)
-      Some(x)
-    } else {
-      None
-    }
+      x
+    case _ => JsUndefined
   }
 
-  def remove(json: Json, mustExist: Boolean = true): Option[Json] = json.asObject.flatMap { x =>
-    if (mustExist) {
+  def replace(json: Json, value: Json): MaybeJson = json match {
+    case x: JsObject =>
       if (x.underlying.contains(key)) {
-        x.underlying.remove(key)
-        Some(x)
+        x.underlying.update(key, value)
+        x
       } else {
-        None
+        JsUndefined
       }
-    } else {
-      x.underlying.remove(key)
-      Some(x)
-    }
+    case _ => JsUndefined
+  }
+
+  def remove(json: Json, mustExist: Boolean = true): MaybeJson = json match {
+    case x: JsObject =>
+      if (mustExist) {
+        if (x.underlying.contains(key)) {
+          x.underlying.remove(key)
+          x
+        } else {
+          JsUndefined
+        }
+      } else {
+        x.underlying.remove(key)
+        x
+      }
+    case _ => JsUndefined
   }
 
 }
@@ -193,42 +202,51 @@ private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
   */
 private[json] case class JsonArrayAccessor(idx: Int) extends JsonAccessor {
 
-  def evaluate(json: Json): Option[Json] = json.asArray.flatMap(_ (idx))
-
-  @inline def set(json: Json, value: Json): Option[Json] = replace(json, value)
-
-  def add(json: Json, value: Json): Option[Json] = json.asArray.flatMap { x =>
-    if (idx > -1 && idx < x.underlying.length) {
-      x.underlying.insert(idx, value)
-      Some(x)
-    } else if (idx == -1) {
-      x.underlying.append(value)
-      Some(x)
-    } else {
-      None
-    }
+  def evaluate(json: Json): MaybeJson = json match {
+    case x: JsArray => x(idx)
+    case _ => JsUndefined
   }
 
-  def replace(json: Json, value: Json): Option[Json] = json.asArray.flatMap { x =>
-    if (idx > -1 && idx < x.underlying.length) {
-      x.underlying.update(idx, value)
-      Some(x)
-    } else {
-      None
-    }
-  }
+  @inline def set(json: Json, value: Json): MaybeJson = replace(json, value)
 
-  def remove(json: Json, mustExist: Boolean = true): Option[Json] = json.asArray.flatMap { x =>
-    if (idx > -1 && idx < x.underlying.length) {
-      x.underlying.remove(idx)
-      Some(x)
-    } else {
-      if (mustExist) {
-        None
+  def add(json: Json, value: Json): MaybeJson = json match {
+    case x: JsArray =>
+      if (idx > -1 && idx < x.underlying.length) {
+        x.underlying.insert(idx, value)
+        x
+      } else if (idx == -1) {
+        x.underlying.append(value)
+        x
       } else {
-        Some(x)
+        JsUndefined
       }
-    }
+    case _ => JsUndefined
+  }
+
+  def replace(json: Json, value: Json): MaybeJson = json match {
+    case x: JsArray =>
+      if (idx > -1 && idx < x.underlying.length) {
+        x.underlying.update(idx, value)
+        x
+      } else {
+        JsUndefined
+      }
+    case _ => JsUndefined
+  }
+
+  def remove(json: Json, mustExist: Boolean = true): MaybeJson = json match {
+    case x: JsArray =>
+      if (idx > -1 && idx < x.underlying.length) {
+        x.underlying.remove(idx)
+        x
+      } else {
+        if (mustExist) {
+          JsUndefined
+        } else {
+          x
+        }
+      }
+    case _ => JsUndefined
   }
 
 }
@@ -252,6 +270,16 @@ object JsonPointerParser {
     * @param input the string to parse.
     */
   def parse(input: String): Either[Throwable, JsonPointer] = parser.parse(input)
+
+  /**
+    * Parses unsafely a string representing a Json pointer input, and returns it as a [[JsonPointer]].
+    *
+    * @param input the string to parse.
+    */
+  def parseUnsafe(input: String): JsonPointer = parse(input) match {
+    case Right(value) => value
+    case Left(ex) => throw ex
+  }
 
 }
 
@@ -278,7 +306,7 @@ class JsonPointerParser extends StringParser[JsonPointer] {
 
   override def root(): Boolean = zeroOrMore(
     ch('/') &&
-      capture()(
+      capture(
         refToken(),
         rawToken => {
           if (rawToken.isEmpty) {

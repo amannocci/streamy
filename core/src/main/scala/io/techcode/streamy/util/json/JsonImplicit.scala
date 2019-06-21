@@ -122,7 +122,7 @@ trait JsonImplicit {
   implicit def bigDecimalToJson(value: BigDecimal): Json = JsBigDecimal(value)
 
   // Json reader to support pureconfig
-  implicit val jsonReader: ConfigReader[Json] = ConfigReader.fromString[Json](ConvertHelpers.tryF(Json.parse(_).toTry))
+  implicit val jsonReader: ConfigReader[Json] = ConfigReader.fromString[Json](ConvertHelpers.tryF(Json.parseString(_).toTry))
 
   // Json pointer reader to support pureconfig
   implicit val jsonPointerReader: ConfigReader[JsonPointer] = ConfigReader.fromString[JsonPointer](ConvertHelpers.tryF(JsonPointerParser.parse(_).toTry))

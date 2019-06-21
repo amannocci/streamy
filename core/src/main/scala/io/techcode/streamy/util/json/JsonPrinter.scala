@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2018-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,22 +25,57 @@ package io.techcode.streamy.util.json
 
 import java.util.Base64
 
+import akka.util.ByteString
+import io.techcode.streamy.util.lang.CharBuilder
 import io.techcode.streamy.util.math.{RyuDouble, RyuFloat}
-import io.techcode.streamy.util.printer.StringPrinter
+import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter, Printer, StringPrinter}
 
 import scala.annotation.tailrec
 
 /**
-  * A JsonPrinter serializes a JSON AST to a String.
+  * Json printer companion.
+  */
+object JsonPrinter {
+
+  // Constants
+  val Null: String = "null"
+  val True: String = "true"
+  val False: String = "false"
+  val Quote: Char = '"'
+  val Colon: Char = ':'
+  val OpenBrace: Char = '{'
+  val CloseBrace: Char = '}'
+  val OpenBracket: Char = '['
+  val CloseBracket: Char = ']'
+  val Comma: Char = ','
+
+  /**
+    * Create a json printer that transform incoming [[Json]] to [[akka.util.ByteString]].
+    * This printer is Rfc4627 compliant.
+    *
+    * @return new json printer Rfc4627 compliant.
+    */
+  def byteStringPrinter(): ByteStringPrinter[Json] = new ByteStringJsonPrinter()
+
+  /**
+    * Create a json printer that transform incoming [[Json]] to [[String]].
+    * This printer is Rfc4627 compliant.
+    *
+    * @return new json printer Rfc4627 compliant.
+    */
+  def stringPrinter(): StringPrinter[Json] = new StringJsonPrinter()
+
+}
+
+/**
+  * A JsonPrinter serializes a JSON AST to an [[Out]].
   * It's an adaptation of the amazing spray-json project.
   * All credits goes to it's initial contributor.
   */
-private[json] class JsonPrinter extends StringPrinter[Json] {
+private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
 
-  override def run(): String = {
-    printValue(data)
-    builder.toString
-  }
+  // Used to build bytestring indirectly
+  protected implicit var builder: CharBuilder
 
   /**
     * Print an arbitrary json value.
@@ -113,11 +148,11 @@ private[json] class JsonPrinter extends StringPrinter[Json] {
     */
   private def printNumber(value: JsNumber): Unit = {
     value match {
-      case x: JsInt => builder.append(x.value)
-      case x: JsLong => builder.append(x.value)
+      case x: JsInt => builder.append(x.value.toString)
+      case x: JsLong => builder.append(x.value.toString)
       case x: JsFloat => builder.append(RyuFloat.floatToString(x.value))
       case x: JsDouble => builder.append(RyuDouble.doubleToString(x.value))
-      case x: JsBigDecimal => builder.append(x.value)
+      case x: JsBigDecimal => builder.append(x.value.toString())
     }
   }
 
@@ -145,7 +180,7 @@ private[json] class JsonPrinter extends StringPrinter[Json] {
     firstToBeEncoded() match {
       case -1 ⇒ builder.append(value)
       case first ⇒
-        builder.append(value, 0, first)
+        builder.append(value.substring(0, first))
 
         @tailrec def append(ix: Int): Unit =
           if (ix < value.length) {
@@ -184,25 +219,27 @@ private[json] class JsonPrinter extends StringPrinter[Json] {
 }
 
 /**
-  * Json printer companion.
+  * Json printer that transform incoming [[Json]] to [[ByteString]].
+  * This printer is Rfc4627 compliant.
   */
-object JsonPrinter {
+private class ByteStringJsonPrinter extends DerivedByteStringPrinter[Json] with AbstractJsonPrinter[ByteString] {
 
-  // Constants
-  val Null: String = "null"
-  val True: String = "true"
-  val False: String = "false"
-  val Quote: Char = '"'
-  val Colon: Char = ':'
-  val OpenBrace: Char = '{'
-  val CloseBrace: Char = '}'
-  val OpenBracket: Char = '['
-  val CloseBracket: Char = ']'
-  val Comma: Char = ','
+  override def run(): ByteString = {
+    printValue(data)
+    ByteString(builder.toString)
+  }
 
-  /**
-    * Create a new json printer.
-    */
-  def apply(): JsonPrinter = new JsonPrinter()
+}
+
+/**
+  * Json printer that transform incoming [[Json]] to [[String]].
+  * This printer is Rfc4627 compliant.
+  */
+private class StringJsonPrinter extends StringPrinter[Json] with AbstractJsonPrinter[String] {
+
+  override def run(): String = {
+    printValue(data)
+    builder.toString
+  }
 
 }

@@ -30,11 +30,6 @@ import org.openjdk.jmh.annotations.Benchmark
 
 /**
   * Date transformer bench.
-  *
-  * Benchmark                              Mode  Cnt        Score      Error  Units
-  * DateTransformerBench.fromCustomToIso  thrpt   20  1130483.695 ± 4606.799  ops/s
-  * DateTransformerBench.fromIsoToCustom  thrpt   20  1198713.552 ± 3952.319  ops/s
-  * DateTransformerBench.idempotent       thrpt   20  1359561.435 ± 2540.553  ops/s
   */
 class DateTransformerBench {
 
@@ -50,9 +45,9 @@ object DateTransformerBench {
 
   object Sample {
 
-    val Iso8601: Json = Json.parse("""{"date":"2018-10-01T15:10:30Z"}""").getOrElse(JsNull)
+    val Iso8601: Json = Json.parseStringUnsafe("""{"date":"2018-10-01T15:10:30Z"}""")
 
-    val Custom: Json = Json.parse("""{"date":"Wed Oct 11 14:32:52 2000"}""").getOrElse(JsNull)
+    val Custom: Json = Json.parseStringUnsafe("""{"date":"Wed Oct 11 14:32:52 2000"}""")
 
   }
 

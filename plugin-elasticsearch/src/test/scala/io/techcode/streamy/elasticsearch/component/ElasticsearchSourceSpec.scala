@@ -29,6 +29,7 @@ import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.parser.ParseException
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.support.WriteRequest
 import org.elasticsearch.common.xcontent.XContentType
@@ -58,7 +59,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
         Seq(s"http://$elasticHost:$elasticPort"),
         index,
         docType,
-        Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull),
+        Json.parseStringUnsafe("""{"query":{"match_all":{}}}"""),
         bulk = 1
       )).runWith(TestSink.probe[Json])
 
@@ -80,28 +81,13 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
         Seq(s"http://$elasticHost:$elasticPort"),
         index,
         docType,
-        Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull)
+        Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
       )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
 
       // Check
       whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
         x should not equal ByteString.empty
       }
-    }
-
-    "fail on wrong request from single source" in {
-      // Prepare for test
-      val index = randomIndex()
-
-      // Result of query
-      val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq(s"http://$elasticHost:$elasticPort"),
-        index,
-        docType,
-        Json.parse("""{"query":{"match_all"}""").getOrElse(JsNull)
-      )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
-
-      assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
     }
 
     "fail on index not found from single source" in {
@@ -113,7 +99,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
         Seq(s"http://$elasticHost:$elasticPort"),
         index,
         docType,
-        Json.parse("""{"query":{"match_all":{}}}""").getOrElse(JsNull)
+        Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
       )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
 
       assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])

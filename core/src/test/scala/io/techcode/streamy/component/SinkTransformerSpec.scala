@@ -25,9 +25,12 @@ package io.techcode.streamy.component
 
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.util.ByteString
 import io.techcode.streamy.StreamyTestSystem
+import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.printer.PrintException
 
 /**
   * Sink transformer spec.
@@ -35,13 +38,41 @@ import io.techcode.streamy.util.json._
 class SinkTransformerSpec extends StreamyTestSystem {
 
   "Sink transformer" should {
-    "print correctly a json value when success" in {
+    "handle correctly a json value" in {
       val sink = SinkTransformer(() => () => ByteString.empty)
 
       Source.single(Json.obj("foo" -> "bar"))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .requestNext() should equal(ByteString.empty)
+    }
+
+    "handle correctly a json value with skipped error" in {
+      val decider: Supervision.Decider = _ => Supervision.Resume
+
+      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+
+      val sink = SinkTransformer(() => () => throw new PrintException("Error"))
+
+      Source.single(Json.obj("foo" -> "bar"))
+        .via(sink)
+        .runWith(TestSink.probe[ByteString])
+        .request(1)
+        .expectComplete()
+    }
+
+    "handle correctly a json value with error" in {
+      val decider: Supervision.Decider = _ => Supervision.Stop
+
+      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+
+      val sink = SinkTransformer(() => () => throw new PrintException("Error"))
+
+      Source.single(Json.obj("foo" -> "bar"))
+        .via(sink)
+        .runWith(TestSink.probe[ByteString])
+        .request(1)
+        .expectError() should equal(new StreamException("Error", Some(Json.obj("foo" -> "bar")), Some(new PrintException("Error"))))
     }
   }
 

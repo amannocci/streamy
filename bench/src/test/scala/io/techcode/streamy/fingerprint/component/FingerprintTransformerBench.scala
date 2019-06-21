@@ -28,20 +28,6 @@ import org.openjdk.jmh.annotations.Benchmark
 
 /**
   * Fingerprint transformer bench.
-  *
-  * Benchmark                                 Mode  Cnt        Score       Error  Units
-  * FingerprintTransformerBench.alder32      thrpt   20  4686576.959 ± 13602.988  ops/s
-  * FingerprintTransformerBench.crc32        thrpt   20  5485118.562 ± 10160.267  ops/s
-  * FingerprintTransformerBench.crc32c       thrpt   20  5866767.950 ± 14128.656  ops/s
-  * FingerprintTransformerBench.farmHash     thrpt   20  5412289.991 ± 17282.797  ops/s
-  * FingerprintTransformerBench.md5          thrpt   20  2548109.185 ±  3993.488  ops/s
-  * FingerprintTransformerBench.murmur3_128  thrpt   20  4076691.529 ± 13666.090  ops/s
-  * FingerprintTransformerBench.murmur3_32   thrpt   20  7490568.120 ± 27839.105  ops/s
-  * FingerprintTransformerBench.sha1         thrpt   20  2046655.977 ±  6422.633  ops/s
-  * FingerprintTransformerBench.sha256       thrpt   20  1618330.819 ±  4246.589  ops/s
-  * FingerprintTransformerBench.sha384       thrpt   20  1187285.739 ±  3253.281  ops/s
-  * FingerprintTransformerBench.sha512       thrpt   20  1182532.462 ±  2985.362  ops/s
-  * FingerprintTransformerBench.sipHash24    thrpt   20  4450924.230 ±  8829.009  ops/s
   */
 class FingerprintTransformerBench {
 
@@ -75,7 +61,7 @@ object FingerprintTransformerBench {
 
   object Sample {
 
-    val Simple: Json = Json.parse("""{"message":"test"}""").getOrElse(JsNull)
+    val Simple: Json = Json.parseStringUnsafe("""{"message":"test"}""")
 
   }
 

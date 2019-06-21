@@ -29,6 +29,7 @@ import java.nio.charset.{Charset, StandardCharsets}
 import akka.util.{ByteString, ByteStringBuilder}
 import com.google.common.primitives.{Doubles, Floats, Ints, Longs}
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.lang.CharBuilder
 
 /**
   * Common trait binder.
@@ -109,7 +110,7 @@ trait Binder {
     * @param value value to bind.
     * @return whether binding succeded or failed.
     */
-  def applyByteString(value: Json, hook: => Unit = () => ())(implicit builder: ByteStringBuilder): Boolean
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean
 
   /**
     * Bind an [[Json]] value to [[JStringBuilder]]
@@ -117,7 +118,7 @@ trait Binder {
     * @param value value to bind.
     * @return whether binding succeded or failed.
     */
-  def applyString(value: Json, hook: => Unit = () => ())(implicit builder: JStringBuilder): Boolean
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean
 
 }
 
@@ -127,7 +128,7 @@ trait Binder {
 object Binder {
 
   // No operation hook
-  val NoOp: () => Unit = () => ()
+  val NoOp: Unit = ()
 
 }
 
@@ -155,7 +156,7 @@ case object NoneBinder extends Binder {
 
   def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean = true
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean = true
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean = true
 
 }
 
@@ -222,7 +223,7 @@ case class StringBinder(override val key: String, charset: Charset = StandardCha
       case _ => false // Nothing
     }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
     value.evaluate(path).getOrElse(JsNull) match {
       case v: JsString =>
         hook
@@ -284,7 +285,7 @@ case class BytesBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
     value.evaluate(path).getOrElse(JsNull) match {
       case v: JsBytes =>
         hook
@@ -349,7 +350,7 @@ case class IntBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
     value.evaluate(path).getOrElse(JsNull) match {
       case v: JsInt =>
         hook
@@ -413,7 +414,7 @@ case class LongBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
     value.evaluate(path).getOrElse(JsNull) match {
       case v: JsLong =>
         hook
@@ -477,7 +478,7 @@ case class FloatBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
     value.evaluate(path).getOrElse(JsNull) match {
       case v: JsFloat =>
         hook
@@ -541,7 +542,7 @@ case class DoubleBinder(override val key: String) extends SomeBinder(key) {
       case _ => false // Nothing
     }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: JStringBuilder): Boolean =
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
     value.evaluate(path).getOrElse(JsNull) match {
       case v: JsDouble =>
         hook

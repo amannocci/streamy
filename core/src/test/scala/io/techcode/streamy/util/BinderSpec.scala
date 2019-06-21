@@ -25,8 +25,8 @@ package io.techcode.streamy.util
 
 import akka.util.ByteString
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.lang.CharBuilder
 import org.scalatest._
-import java.lang.{StringBuilder => JStringBuilder}
 
 /**
   * Binder spec.
@@ -36,7 +36,7 @@ class BinderSpec extends WordSpecLike with Matchers {
   "String binder" should {
     "convert correctly a boolean in mapping" in {
       implicit val builder: JsObjectBuilder = Json.objectBuilder()
-      StringBinder("foobar")(value = true)
+      StringBinder("foobar")(true)
       builder.result() should equal(Json.obj("foobar" -> JsString("true")))
     }
 
@@ -89,13 +89,13 @@ class BinderSpec extends WordSpecLike with Matchers {
     }
 
     "convert correctly a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       StringBinder("foobar").applyString(Json.obj("foobar" -> "test"))
       builder.toString should equal("test")
     }
 
     "fail to convert a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       StringBinder("foobar").applyString(Json.obj("foobar" -> 1))
       builder.toString should equal("")
     }
@@ -104,7 +104,7 @@ class BinderSpec extends WordSpecLike with Matchers {
   "Int binder" should {
     "convert correctly a boolean in mapping" in {
       implicit val builder: JsObjectBuilder = Json.objectBuilder()
-      IntBinder("foobar")(value = true)
+      IntBinder("foobar")(true)
       builder.result() should equal(Json.obj("foobar" -> JsInt(1)))
     }
 
@@ -169,13 +169,13 @@ class BinderSpec extends WordSpecLike with Matchers {
     }
 
     "convert correctly a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       IntBinder("foobar").applyString(Json.obj("foobar" -> JsInt(1)))
       builder.toString should equal("1")
     }
 
     "fail to convert a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       IntBinder("foobar").applyString(Json.obj("foobar" -> "1"))
       builder.toString should equal("")
     }
@@ -185,7 +185,7 @@ class BinderSpec extends WordSpecLike with Matchers {
   "Long binder" should {
     "convert correctly a boolean in mapping" in {
       implicit val builder: JsObjectBuilder = Json.objectBuilder()
-      LongBinder("foobar")(value = true)
+      LongBinder("foobar")(true)
       builder.result() should equal(Json.obj("foobar" -> JsLong(1)))
     }
 
@@ -250,13 +250,13 @@ class BinderSpec extends WordSpecLike with Matchers {
     }
 
     "convert correctly a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       LongBinder("foobar").applyString(Json.obj("foobar" -> JsLong(1)))
       builder.toString should equal("1")
     }
 
     "fail to convert a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       LongBinder("foobar").applyString(Json.obj("foobar" -> "1"))
       builder.toString should equal("")
     }
@@ -266,7 +266,7 @@ class BinderSpec extends WordSpecLike with Matchers {
   "Float binder" should {
     "convert correctly a boolean in mapping" in {
       implicit val builder: JsObjectBuilder = Json.objectBuilder()
-      FloatBinder("foobar")(value = true)
+      FloatBinder("foobar")(true)
       builder.result() should equal(Json.obj("foobar" -> JsFloat(1)))
     }
 
@@ -331,13 +331,13 @@ class BinderSpec extends WordSpecLike with Matchers {
     }
 
     "convert correctly a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       FloatBinder("foobar").applyString(Json.obj("foobar" -> JsFloat(1)))
       builder.toString should equal("1.0")
     }
 
     "fail to convert a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       FloatBinder("foobar").applyString(Json.obj("foobar" -> "1"))
       builder.toString should equal("")
     }
@@ -347,7 +347,7 @@ class BinderSpec extends WordSpecLike with Matchers {
   "Double binder" should {
     "convert correctly a boolean in mapping" in {
       implicit val builder: JsObjectBuilder = Json.objectBuilder()
-      DoubleBinder("foobar")(value = true)
+      DoubleBinder("foobar")(true)
       builder.result() should equal(Json.obj("foobar" -> JsDouble(1)))
     }
 
@@ -412,13 +412,13 @@ class BinderSpec extends WordSpecLike with Matchers {
     }
 
     "convert correctly a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       DoubleBinder("foobar").applyString(Json.obj("foobar" -> JsDouble(1)))
       builder.toString should equal("1.0")
     }
 
     "fail to convert a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       DoubleBinder("foobar").applyString(Json.obj("foobar" -> "1"))
       builder.toString should equal("")
     }
@@ -428,7 +428,7 @@ class BinderSpec extends WordSpecLike with Matchers {
   "Bytes binder" should {
     "convert correctly a boolean in mapping" in {
       implicit val builder: JsObjectBuilder = Json.objectBuilder()
-      BytesBinder("foobar")(value = true)
+      BytesBinder("foobar")(true)
       builder.result() should equal(Json.obj("foobar" -> JsBytes(ByteString("true"))))
     }
 
@@ -481,13 +481,13 @@ class BinderSpec extends WordSpecLike with Matchers {
     }
 
     "convert correctly a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       BytesBinder("foobar").applyString(Json.obj("foobar" -> JsBytes(ByteString("test"))))
       builder.toString should equal("test")
     }
 
     "fail to convert a json value in string" in {
-      implicit val builder = new JStringBuilder
+      implicit val builder = new CharBuilder
       BytesBinder("foobar").applyString(Json.obj("foobar" -> "1"))
       builder.toString should equal("")
     }
