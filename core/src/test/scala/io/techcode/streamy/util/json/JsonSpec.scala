@@ -555,6 +555,20 @@ class JsonSpec extends WordSpecLike with Matchers {
       input.toString should equal("""["123",123,2E+128]""")
     }
 
+    "be mapped correctly" in {
+      val input = Json.parseStringUnsafe("1330950829160")
+      input.map(_ => JsNull) should equal(JsNull)
+    }
+
+    "be mapped to undefined correctly" in {
+      JsUndefined.map(_ => JsNull) should equal(JsUndefined)
+    }
+
+    "be used with a predicate for validation" in {
+      val input = Json.parseStringUnsafe("1330950829160")
+      input.exists(v => v.isDefined) should equal(true)
+    }
+
     "parse long integers correctly" in {
       val input = Json.parseStringUnsafe("1330950829160")
       input should equal(JsLong(1330950829160L))

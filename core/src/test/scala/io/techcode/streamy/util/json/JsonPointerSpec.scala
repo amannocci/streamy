@@ -77,12 +77,20 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
       input.evaluate(Root / "failed") should equal(JsUndefined)
     }
 
+    "return a string representation" in {
+      (Root / "failed").toString should equal("/failed")
+    }
+
     "equal to the same root json pointer" in {
       Root should equal(Root)
     }
 
     "equal to the same json pointer" in {
       Root / "foobar" should equal(Root / "foobar")
+    }
+
+    "not equal to the same json pointer" in {
+      Root / "foobar" should equal("foobar")
     }
 
     "be iterable" in {
@@ -158,6 +166,11 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
       val parser = new JsonPointerParser()
       parser.parse("/key") should equal(Right(Root / "key"))
       parser.parse("/foobar") should equal(Right(Root / "foobar"))
+    }
+
+    "fail correctly for an invalid json pointer" in {
+      val parser = new JsonPointerParser()
+      parser.parse("key").isLeft should equal(true)
     }
   }
 

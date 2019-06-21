@@ -96,10 +96,7 @@ object Json {
     *
     * @param data the bytestring to parse.
     */
-  @inline def parseByteStringUnsafe(data: ByteString): Json = parseByteString(data) match {
-    case Right(value) => value
-    case Left(ex) => throw ex
-  }
+  @inline def parseByteStringUnsafe(data: ByteString): Json = eitherToValue(parseByteString(data))
 
   /**
     * Parses a bytes array representing a Json input, and returns it as a [[Json]].
@@ -113,10 +110,7 @@ object Json {
     *
     * @param data the string to parse.
     */
-  @inline def parseBytesUnsafe(data: Array[Byte]): Json = parseBytes(data) match {
-    case Right(value) => value
-    case Left(ex) => throw ex
-  }
+  @inline def parseBytesUnsafe(data: Array[Byte]): Json = eitherToValue(parseBytes(data))
 
   /**
     * Parses a string representing a Json input, and returns it as a [[Json]].
@@ -130,10 +124,7 @@ object Json {
     *
     * @param input the string to parse.
     */
-  @inline def parseStringUnsafe(input: String): Json = parseString(input) match {
-    case Right(value) => value
-    case Left(ex) => throw ex
-  }
+  @inline def parseStringUnsafe(input: String): Json = eitherToValue(parseString(input))
 
   /**
     * Prints a [[Json]] to its bytestring representation.
@@ -147,10 +138,7 @@ object Json {
     *
     * @return a bytestring with the json representation.
     */
-  @inline def printByteStringUnsafe(json: Json): ByteString = printByteString(json) match {
-    case Right(value) => value
-    case Left(ex) => throw ex
-  }
+  @inline def printByteStringUnsafe(json: Json): ByteString = eitherToValue(printByteString(json))
 
   /**
     * Prints a [[Json]] to its string representation.
@@ -164,7 +152,17 @@ object Json {
     *
     * @return a string with the json representation.
     */
-  @inline def printStringUnsafe(json: Json): String = printString(json) match {
+  @inline def printStringUnsafe(json: Json): String = eitherToValue(printString(json))
+
+  /**
+    * Extract value from either and throw exception if needed.
+    *
+    * @param e either.
+    * @tparam Error error to throw in case.
+    * @tparam Value real value.
+    * @return value in best case.
+    */
+  private def eitherToValue[Error <: Throwable, Value](e: Either[Error, Value]) = e match {
     case Right(value) => value
     case Left(ex) => throw ex
   }

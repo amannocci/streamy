@@ -25,6 +25,7 @@ package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
 import io.techcode.streamy.util.json.{JsObjectBuilder, Json}
+import io.techcode.streamy.util.printer.PrintException
 import io.techcode.streamy.util.{IntBinder, NoneBinder, StringBinder}
 import org.scalatest._
 
@@ -448,6 +449,13 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("foo" -> "foo", "bar" -> "bar")))
     }
 
+  }
+
+  "Parser exception" should {
+    "implement correctly equality" in {
+      new ParseException("foobar") should equal(new ParseException("foobar"))
+      new ParseException("foobar") should equal(new PrintException("foobar"))
+    }
   }
 
 }

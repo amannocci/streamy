@@ -95,52 +95,104 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
       JsonBridge(Json.obj()).asObject should equal(Some(Json.obj()))
     }
 
+    "provide a shortcut to convert optional json in optional json object decimal when not valid" in {
+      JsonBridge(JsNull).asObject should equal(None)
+    }
+
     "provide a shortcut to convert optional json in optional json array" in {
       JsonBridge(Json.arr()).asArray should equal(Some(Json.arr()))
+    }
+
+    "provide a shortcut to convert optional json in optional json array when not valid" in {
+      JsonBridge(JsNull).asArray should equal(None)
     }
 
     "provide a shortcut to convert optional json in optional string" in {
       JsonBridge(JsString("foobar")).asString should equal(Some("foobar"))
     }
 
+    "provide a shortcut to convert optional json in optional string when not valid" in {
+      JsonBridge(JsNull).asString should equal(None)
+    }
+
     "provide a shortcut to convert optional json in optional float" in {
       JsonBridge(JsFloat(2.0F)).asFloat should equal(Some(2.0F))
+    }
+
+    "provide a shortcut to convert optional json in optional float when not valid" in {
+      JsonBridge(JsNull).asFloat should equal(None)
     }
 
     "provide a shortcut to convert optional json in optional double" in {
       JsonBridge(JsDouble(2.0D)).asDouble should equal(Some(2.0D))
     }
 
+    "provide a shortcut to convert optional json in optional double when not valid" in {
+      JsonBridge(JsNull).asDouble should equal(None)
+    }
+
     "provide a shortcut to convert optional json in optional number" in {
       JsonBridge(JsDouble(2.0D)).asNumber should equal(Some(JsDouble(2.0D)))
+    }
+
+    "provide a shortcut to convert optional json in optional number when not valid" in {
+      JsonBridge(JsNull).asNumber should equal(None)
     }
 
     "provide a shortcut to convert optional json in optional byte" in {
       JsonBridge(JsInt(2)).asInt should equal(Some(2))
     }
 
+    "provide a shortcut to convert optional json in optional byte when not valid" in {
+      JsonBridge(JsNull).asBigDecimal should equal(None)
+    }
+
     "provide a shortcut to convert optional json in optional short" in {
       JsonBridge(JsInt(2)).asInt should equal(Some(2))
+    }
+
+    "provide a shortcut to convert optional json in optional short when not valid" in {
+      JsonBridge(JsNull).asBigDecimal should equal(None)
     }
 
     "provide a shortcut to convert optional json in optional int" in {
       JsonBridge(JsInt(2)).asInt should equal(Some(2))
     }
 
+    "provide a shortcut to convert optional json in optional int when not valid" in {
+      JsonBridge(JsNull).asBigDecimal should equal(None)
+    }
+
     "provide a shortcut to convert optional json in optional long" in {
       JsonBridge(JsLong(2L)).asLong should equal(Some(2L))
+    }
+
+    "provide a shortcut to convert optional json in optional long when not valid" in {
+      JsonBridge(JsNull).asBigDecimal should equal(None)
     }
 
     "provide a shortcut to convert optional json in optional boolean" in {
       JsonBridge(JsTrue).asBoolean should equal(Some(true))
     }
 
+    "provide a shortcut to convert optional json in optional boolean when not valid" in {
+      JsonBridge(JsNull).asBigDecimal should equal(None)
+    }
+
     "provide a shortcut to convert optional json in optional byte string" in {
       JsonBridge(JsBytes(ByteString.empty)).asBytes should equal(Some(ByteString.empty))
     }
 
+    "provide a shortcut to convert optional json in optional byte string when not valid" in {
+      JsonBridge(JsNull).asBigDecimal should equal(None)
+    }
+
     "provide a shortcut to convert optional json in optional big decimal" in {
       JsonBridge(JsBigDecimal(BigDecimal.valueOf(0))).asBigDecimal should equal(Some(BigDecimal.valueOf(0)))
+    }
+
+    "provide a shortcut to convert optional json in optional big decimal when not valid" in {
+      JsonBridge(JsNull).asBigDecimal should equal(None)
     }
 
     "provide a shortcut to convert optional json in optional none" in {
