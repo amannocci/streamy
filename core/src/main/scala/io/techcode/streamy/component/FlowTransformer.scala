@@ -57,8 +57,8 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
               if (config.target.get == Root) {
                 {
                   for {
-                    x <- pkt.asObject
-                    y <- v.asObject
+                    x <- pkt.asOptObject
+                    y <- v.asOptObject
                   } yield (x, y)
                 }.map(r => r._1.merge(r._2)).getOrElse(JsUndefined)
               } else {

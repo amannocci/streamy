@@ -175,12 +175,12 @@ object Json {
 trait MaybeJson {
 
   /**
-    * Returns true if the option is $none, false otherwise.
+    * Returns true if the json is JsUndefined, false otherwise.
     */
   def isEmpty: Boolean
 
   /**
-    * Returns true if the option is an instance of $some, false otherwise.
+    * Returns true if the option is an instance of JsDefined, false otherwise.
     */
   def isDefined: Boolean = !isEmpty
 
@@ -191,6 +191,46 @@ trait MaybeJson {
     * @throws NoSuchElementException if the option is empty.
     */
   def get: Json
+
+  /**
+    * Returns this JsDefined if it is nonempty '''and''' applying the predicate $p to
+    * this JsDefined value returns true. Otherwise, return JsUndefined.
+    *
+    * @param  p the predicate used for testing.
+    */
+  @inline final def filter(p: Json => Boolean): MaybeJson =
+    if (isEmpty || p(this.get)) this else JsUndefined
+
+  /**
+    * Returns this JsDefined if it is nonempty '''and''' applying the predicate $p to
+    * this JsDefined value returns false. Otherwise, return JsUndefined.
+    *
+    * @param  p the predicate used for testing.
+    */
+  @inline final def filterNot(p: Json => Boolean): MaybeJson =
+    if (isEmpty || !p(this.get)) this else JsUndefined
+
+  /**
+    * Apply the given procedure $f to the option's value,
+    * if it is nonempty. Otherwise, do nothing.
+    *
+    * @param  f the procedure to apply.
+    * @see map
+    */
+  @inline final def ifExists[T](f: Json => T): Unit = {
+    if (!isEmpty) f(this.get)
+  }
+
+  /**
+    * Returns the result of applying $f to this $option's
+    * value if the $option is nonempty.  Otherwise, evaluates
+    * expression `ifEmpty`.
+    *
+    * @param  ifEmpty the expression to evaluate if empty.
+    * @param  f       the function to apply if nonempty.
+    */
+  @inline final def fold(ifEmpty: => Json)(f: Json => Json): Json =
+    if (isEmpty) ifEmpty else f(this.get)
 
   /**
     * Returns the option's value if the option is nonempty, otherwise
@@ -209,10 +249,8 @@ trait MaybeJson {
     * @note This is similar to `flatMap` except here,
     *       $f does not need to wrap its result in an $option.
     * @param  f the function to apply
-    * @see flatMap
-    * @see foreach
     */
-  @inline final def map(f: MaybeJson => MaybeJson): MaybeJson =
+  @inline final def map(f: Json => Json): MaybeJson =
     if (isEmpty) JsUndefined else f(this.get)
 
   /**
@@ -270,6 +308,7 @@ object JsUndefined extends MaybeJson {
 
 }
 
+// scalastyle:off
 /**
   * Generic json value.
   */
@@ -309,88 +348,256 @@ sealed trait Json extends JsDefined {
   }
 
   /**
-    * Returns current json value as json object.
+    * Returns current json value as an optional json object.
     *
     * @return current json value as json object if possible, otherwise [[None]].
     */
-  def asObject: Option[JsObject] = None
+  def asOptObject: Option[JsObject] = None
 
   /**
-    * Returns current json value as json array.
+    * Returns true if the current json value is a json object.
+    *
+    * @return true if the current json value is a json object, otherwise false.
+    */
+  def isObject: Boolean = false
+
+  /**
+    * Returns the current json value as a json object.
+    *
+    * @return current json value as json object if possible.
+    */
+  def asObject: JsObject = this.asInstanceOf[JsObject]
+
+  /**
+    * Returns current json value as an optional json array.
     *
     * @return current json value as json array if possible, otherwise [[None]].
     */
-  def asArray: Option[JsArray] = None
+  def asOptArray: Option[JsArray] = None
 
   /**
-    * Returns current json value as json number.
+    * Returns true if the current json value is a json array.
+    *
+    * @return true if the current json value is a json array, otherwise false.
+    */
+  def isArray: Boolean = false
+
+  /**
+    * Returns the current json value as a json array.
+    *
+    * @return current json value as json array if possible.
+    */
+  def asArray: JsArray = this.asInstanceOf[JsArray]
+
+  /**
+    * Returns current json value as an optional json number.
     *
     * @return current json value as json number if possible, otherwise [[None]].
     */
-  def asNumber: Option[JsNumber] = None
+  def asOptNumber: Option[JsNumber] = None
 
   /**
-    * Returns current json value as byte string.
+    * Returns true if the current json value is a json number.
+    *
+    * @return true if the current json value is a json number, otherwise false.
+    */
+  def isNumber: Boolean = false
+
+  /**
+    * Returns the current json value as a json number.
+    *
+    * @return current json value as json number if possible.
+    */
+  def asNumber: JsNumber = this.asInstanceOf[JsNumber]
+
+  /**
+    * Returns current json value as an optional byte string.
     *
     * @return current json value as byte string if possible, otherwise [[None]].
     */
-  def asBytes: Option[ByteString] = None
+  def asOptBytes: Option[ByteString] = None
 
   /**
-    * Returns current json value as json boolean.
+    * Returns true if the current json value is a byte string.
     *
-    * @return current json value as json boolean if possible, otherwise [[None]].
+    * @return true if the current json value is a byte string, otherwise false.
     */
-  def asBoolean: Option[Boolean] = None
+  def isBytes: Boolean = false
 
   /**
-    * Returns current json value as json string.
+    * Returns the current json value as byte string.
     *
-    * @return current json value as json string if possible, otherwise [[None]].
+    * @return current json value as byte string if possible.
     */
-  def asString: Option[String] = None
+  def asBytes: ByteString = this.asInstanceOf[JsBytes].value
 
   /**
-    * Returns current json value as json big decimal.
+    * Returns current json value as an optional boolean.
     *
-    * @return current json value as json big decimal if possible, otherwise [[None]].
+    * @return current json value as boolean if possible, otherwise [[None]].
     */
-  def asBigDecimal: Option[BigDecimal] = None
+  def asOptBoolean: Option[Boolean] = None
 
   /**
-    * Returns current json value as json null.
+    * Returns true if the current json value is a boolean.
     *
-    * @return current json value as json null if possible, otherwise [[None]].
+    * @return true if the current json value is a boolean, otherwise false.
     */
-  def asNull: Option[Unit] = None
+  def isBoolean: Boolean = false
 
   /**
-    * Returns current json value as json int.
+    * Returns the current json value as a boolean.
     *
-    * @return current json value as json int if possible, otherwise [[None]].
+    * @return current json value as boolean if possible.
     */
-  def asInt: Option[Int] = None
+  def asBoolean: JsBoolean = this.asInstanceOf[JsBoolean]
 
   /**
-    * Returns current json value as json long.
+    * Returns current json value as an optional string.
     *
-    * @return current json value as json long if possible, otherwise [[None]].
+    * @return current json value as string if possible, otherwise [[None]].
     */
-  def asLong: Option[Long] = None
+  def asOptString: Option[String] = None
 
   /**
-    * Returns current json value as json double.
+    * Returns true if the current json value is a string.
     *
-    * @return current json value as json double if possible, otherwise [[None]].
+    * @return true if the current json value is a string, otherwise false.
     */
-  def asDouble: Option[Double] = None
+  def isString: Boolean = false
 
   /**
-    * Returns current json value as json float.
+    * Returns the current json value as a string.
     *
-    * @return current json value as json float if possible, otherwise [[None]].
+    * @return current json value as string if possible.
     */
-  def asFloat: Option[Float] = None
+  def asString: String = this.asInstanceOf[JsString].value
+
+  /**
+    * Returns current json value as an optional big decimal.
+    *
+    * @return current json value as big decimal if possible, otherwise [[None]].
+    */
+  def asOptBigDecimal: Option[BigDecimal] = None
+
+  /**
+    * Returns true if the current json value is a big decimal.
+    *
+    * @return true if the current json value is a big decimal, otherwise false.
+    */
+  def isBigDecimal: Boolean = false
+
+  /**
+    * Returns the current json value as a big decimal.
+    *
+    * @return current json value as big decimal if possible.
+    */
+  def asBigDecimal: BigDecimal = this.asInstanceOf[JsBigDecimal].value
+
+  /**
+    * Returns current json value as an optional null.
+    *
+    * @return current json value as null if possible, otherwise [[None]].
+    */
+  def asOptNull: Option[Unit] = None
+
+  /**
+    * Returns true if the current json value is a null.
+    *
+    * @return true if the current json value is a null, otherwise false.
+    */
+  def isNull: Boolean = false
+
+  /**
+    * Returns the current json value as a null.
+    *
+    * @return current json value as null if possible.
+    */
+  def asNull(): Unit = ()
+
+  /**
+    * Returns current json value as an optional int.
+    *
+    * @return current json value as int if possible, otherwise [[None]].
+    */
+  def asOptInt: Option[Int] = None
+
+  /**
+    * Returns true if the current json value is an int.
+    *
+    * @return true if the current json value is an int, otherwise false.
+    */
+  def isInt: Boolean = false
+
+  /**
+    * Returns the current json value as an int.
+    *
+    * @return current json value as an int if possible.
+    */
+  def asInt: Int = this.asInstanceOf[JsInt].value
+
+  /**
+    * Returns current json value as an optional long.
+    *
+    * @return current json value as long if possible, otherwise [[None]].
+    */
+  def asOptLong: Option[Long] = None
+
+  /**
+    * Returns true if the current json value is a long.
+    *
+    * @return true if the current json value is a long, otherwise false.
+    */
+  def isLong: Boolean = false
+
+  /**
+    * Returns the current json value as a long.
+    *
+    * @return current json value as a long if possible.
+    */
+  def asLong: Long = this.asInstanceOf[JsLong].value
+
+  /**
+    * Returns current json value as an optional double.
+    *
+    * @return current json value as double if possible, otherwise [[None]].
+    */
+  def asOptDouble: Option[Double] = None
+
+  /**
+    * Returns true if the current json value is a double.
+    *
+    * @return true if the current json value is a double, otherwise false.
+    */
+  def isDouble: Boolean = false
+
+  /**
+    * Returns the current json value as a double.
+    *
+    * @return current json value as an double if possible.
+    */
+  def asDouble: Double = this.asInstanceOf[JsDouble].value
+
+  /**
+    * Returns current json value as an optional float.
+    *
+    * @return current json value a float if possible, otherwise [[None]].
+    */
+  def asOptFloat: Option[Float] = None
+
+  /**
+    * Returns true if the current json value is a float.
+    *
+    * @return true if the current json value is a float, otherwise false.
+    */
+  def isFloat: Boolean = false
+
+  /**
+    * Returns the current json value is an float.
+    *
+    * @return current json value as an float if possible.
+    */
+  def asFloat: Float = this.asInstanceOf[JsFloat].value
 
   /**
     * Returns a copy of current json value.
@@ -410,12 +617,16 @@ sealed trait Json extends JsDefined {
 
 }
 
+// scalastyle:on
+
 /**
   * Represent a json null value.
   */
 case object JsNull extends Json {
 
-  override val asNull: Option[Unit] = Some()
+  override val asOptNull: Option[Unit] = Some()
+
+  override val isNull: Boolean = true
 
   override val copy: Json = this
 
@@ -430,7 +641,9 @@ case object JsNull extends Json {
   */
 sealed abstract class JsBoolean(value: Boolean) extends Json {
 
-  override val asBoolean: Option[Boolean] = Some(value)
+  override val asOptBoolean: Option[Boolean] = Some(value)
+
+  override val isBoolean: Boolean = true
 
   override val copy: Json = this
 
@@ -459,7 +672,9 @@ case object JsFalse extends JsBoolean(false) {
   */
 trait JsNumber extends Json {
 
-  override def asNumber: Option[JsNumber] = Some(this)
+  override def asOptNumber: Option[JsNumber] = Some(this)
+
+  override val isNumber: Boolean = true
 
   /**
     * Returns the value of json number as an Int.
@@ -495,7 +710,9 @@ trait JsNumber extends Json {
   */
 case class JsInt(value: Int) extends JsNumber {
 
-  override def asInt: Option[Int] = Some(value)
+  override def asOptInt: Option[Int] = Some(value)
+
+  override val isInt: Boolean = true
 
   override def toInt: Int = value
 
@@ -574,7 +791,9 @@ case class JsInt(value: Int) extends JsNumber {
   */
 case class JsLong(value: Long) extends JsNumber {
 
-  override def asLong: Option[Long] = Some(value)
+  override def asOptLong: Option[Long] = Some(value)
+
+  override val isLong: Boolean = true
 
   override def toInt: Int = value.toInt
 
@@ -634,7 +853,9 @@ case class JsLong(value: Long) extends JsNumber {
   */
 case class JsFloat(value: Float) extends JsNumber {
 
-  override def asFloat: Option[Float] = Some(value)
+  override def asOptFloat: Option[Float] = Some(value)
+
+  override val isFloat: Boolean = true
 
   override def toInt: Int = value.toInt
 
@@ -657,7 +878,9 @@ case class JsFloat(value: Float) extends JsNumber {
   */
 case class JsDouble(value: Double) extends JsNumber {
 
-  override def asDouble: Option[Double] = Some(value)
+  override def asOptDouble: Option[Double] = Some(value)
+
+  override val isDouble: Boolean = true
 
   override def toInt: Int = value.toInt
 
@@ -680,7 +903,9 @@ case class JsDouble(value: Double) extends JsNumber {
   */
 case class JsBigDecimal(value: BigDecimal) extends JsNumber {
 
-  override def asBigDecimal: Option[BigDecimal] = Some(value)
+  override def asOptBigDecimal: Option[BigDecimal] = Some(value)
+
+  override val isBigDecimal: Boolean = true
 
   override def toInt: Int = value.toInt
 
@@ -703,7 +928,9 @@ case class JsBigDecimal(value: BigDecimal) extends JsNumber {
   */
 case class JsString(value: String) extends Json {
 
-  override def asString: Option[String] = Some(value)
+  override def asOptString: Option[String] = Some(value)
+
+  override val isString: Boolean = true
 
   override def copy(): Json = this
 
@@ -718,7 +945,9 @@ case class JsString(value: String) extends Json {
   */
 case class JsBytes(value: ByteString) extends Json {
 
-  override def asBytes: Option[ByteString] = Some(value)
+  override def asOptBytes: Option[ByteString] = Some(value)
+
+  override val isBytes: Boolean = true
 
   override def copy(): Json = this
 
@@ -839,7 +1068,9 @@ case class JsArray private[json](
     */
   def toSeq: Seq[Json] = underlying.view
 
-  override def asArray: Option[JsArray] = Some(this)
+  override def asOptArray: Option[JsArray] = Some(this)
+
+  override val isArray: Boolean = true
 
   def copy(): Json = JsArray(underlying.clone())
 
@@ -1042,7 +1273,9 @@ case class JsObject private[json](
       }
   }
 
-  override def asObject: Option[JsObject] = Some(this)
+  override def asOptObject: Option[JsObject] = Some(this)
+
+  override val isObject: Boolean = true
 
   def copy(): Json = JsObject(underlying.clone())
 

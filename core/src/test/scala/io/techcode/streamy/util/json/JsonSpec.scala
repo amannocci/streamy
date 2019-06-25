@@ -406,6 +406,28 @@ class JsonSpec extends WordSpecLike with Matchers {
     "return correct size" in {
       Json.obj("test" -> "test").sizeHint should equal(15)
     }
+
+    "be identified as object" in {
+      Json.obj().isObject should equal(true)
+    }
+
+    "be filter" in {
+      Json.obj("test" -> "test").filter(v => v.isObject) should equal(Json.obj("test" -> "test"))
+      Json.obj("test" -> "test").filter(v => v.isArray) should equal(JsUndefined)
+      Json.obj("test" -> "test").filterNot(v => v.isObject) should equal(JsUndefined)
+      Json.obj("test" -> "test").filterNot(v => v.isArray) should equal(Json.obj("test" -> "test"))
+    }
+
+    "be execute function if exists" in {
+      var value = false
+      Json.obj("test" -> "test").ifExists { v => value = v.isObject }
+      value should equal(true)
+    }
+
+    "be fold" in {
+      Json.obj("test" -> "test").fold(JsNull) { v => v } should equal(Json.obj("test" -> "test"))
+      JsUndefined.fold(JsNull) { v => v } should equal(JsNull)
+    }
   }
 
   "Json array" should {
@@ -417,6 +439,10 @@ class JsonSpec extends WordSpecLike with Matchers {
     "return undefined if absent" in {
       val input = Json.arr("test", "foobar")
       input(2) should equal(JsUndefined)
+    }
+
+    "be identified as array" in {
+      Json.arr().isArray should equal(true)
     }
 
     "be create from builder" in {
@@ -655,11 +681,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to json object when possible" in {
-      Json.obj().asObject should equal(Some(Json.obj()))
+      Json.obj().asOptObject should equal(Some(Json.obj()))
     }
 
     "fail to be convert to json object when not possible" in {
-      JsString("10").asObject should equal(None)
+      JsString("10").asOptObject should equal(None)
     }
 
     "can be convert to iterator" in {
@@ -671,19 +697,19 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to json array when possible" in {
-      Json.arr().asArray should equal(Some(Json.arr()))
+      Json.arr().asOptArray should equal(Some(Json.arr()))
     }
 
     "fail to be convert to json array when not possible" in {
-      JsString("10").asArray should equal(None)
+      JsString("10").asOptArray should equal(None)
     }
 
     "be convert to boolean when possible" in {
-      JsTrue.asBoolean should equal(Some(true))
+      JsTrue.asOptBoolean should equal(Some(true))
     }
 
     "fail to be convert to boolean when not possible" in {
-      JsString("10").asBoolean should equal(None)
+      JsString("10").asOptBoolean should equal(None)
     }
 
     "return correct size for boolean" in {
@@ -692,11 +718,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to string when possible" in {
-      JsString("10").asString should equal(Some("10"))
+      JsString("10").asOptString should equal(Some("10"))
     }
 
     "fail to be convert to string when not possible" in {
-      JsTrue.asString should equal(None)
+      JsTrue.asOptString should equal(None)
     }
 
     "return correct size for string" in {
@@ -704,11 +730,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to big decimal when possible" in {
-      JsBigDecimal(BigDecimal("1e20")).asBigDecimal should equal(Some(BigDecimal("1e20")))
+      JsBigDecimal(BigDecimal("1e20")).asOptBigDecimal should equal(Some(BigDecimal("1e20")))
     }
 
     "fail to be convert to big decimal when not possible" in {
-      JsTrue.asBigDecimal should equal(None)
+      JsTrue.asOptBigDecimal should equal(None)
     }
 
     "return correct size for big decimal" in {
@@ -736,11 +762,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to null when possible" in {
-      JsNull.asNull should equal(Some(()))
+      JsNull.asOptNull should equal(Some(()))
     }
 
     "fail to be convert to null when not possible" in {
-      JsTrue.asNull should equal(None)
+      JsTrue.asOptNull should equal(None)
     }
 
     "return correct size for null" in {
@@ -748,11 +774,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to int when possible" in {
-      JsInt(1).asInt should equal(Some(1))
+      JsInt(1).asOptInt should equal(Some(1))
     }
 
     "fail to be convert to int when not possible" in {
-      JsTrue.asInt should equal(None)
+      JsTrue.asOptInt should equal(None)
     }
 
     "return correct size for int" in {
@@ -792,11 +818,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to long when possible" in {
-      JsLong(1).asLong should equal(Some(1))
+      JsLong(1).asOptLong should equal(Some(1))
     }
 
     "fail to be convert to long when not possible" in {
-      JsTrue.asLong should equal(None)
+      JsTrue.asOptLong should equal(None)
     }
 
     "return correct size for long" in {
@@ -836,11 +862,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to float when possible" in {
-      JsFloat(1.0F).asFloat should equal(Some(1.0F))
+      JsFloat(1.0F).asOptFloat should equal(Some(1.0F))
     }
 
     "fail to be convert to float when not possible" in {
-      JsTrue.asFloat should equal(None)
+      JsTrue.asOptFloat should equal(None)
     }
 
     "return correct size for float" in {
@@ -868,11 +894,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to double when possible" in {
-      JsDouble(1.0D).asDouble should equal(Some(1.0D))
+      JsDouble(1.0D).asOptDouble should equal(Some(1.0D))
     }
 
     "fail to be convert to double when not possible" in {
-      JsTrue.asDouble should equal(None)
+      JsTrue.asOptDouble should equal(None)
     }
 
     "return correct size for double" in {
@@ -900,19 +926,59 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be convert to number when possible" in {
-      JsDouble(1.0D).asNumber should equal(Some(JsDouble(1.0D)))
+      JsDouble(1.0D).asOptNumber should equal(Some(JsDouble(1.0D)))
     }
 
     "fail to be convert to number when not possible" in {
-      JsTrue.asNumber should equal(None)
+      JsTrue.asOptNumber should equal(None)
     }
 
     "be convert to bytes when possible" in {
-      JsBytes(ByteString("test")).asBytes should equal(Some(ByteString("test")))
+      JsBytes(ByteString("test")).asOptBytes should equal(Some(ByteString("test")))
     }
 
     "fail to be convert to bytes when not possible" in {
-      JsTrue.asBytes should equal(None)
+      JsTrue.asOptBytes should equal(None)
+    }
+
+    "be identified as number" in {
+      JsInt(0).isNumber should equal(true)
+    }
+
+    "be identified as bytes" in {
+      JsBytes(ByteString.empty).isBytes should equal(true)
+    }
+
+    "be identified as boolean" in {
+      JsTrue.isBoolean should equal(true)
+    }
+
+    "be identified as string" in {
+      JsString("").isString should equal(true)
+    }
+
+    "be identified as big decimal" in {
+      JsBigDecimal(BigDecimal(0F)).isBigDecimal should equal(true)
+    }
+
+    "be identified as null" in {
+      JsNull.isNull should equal(true)
+    }
+
+    "be identified as int" in {
+      JsInt(0).isInt should equal(true)
+    }
+
+    "be identified as long" in {
+      JsLong(0).isLong should equal(true)
+    }
+
+    "be identified as double" in {
+      JsDouble(0D).isDouble should equal(true)
+    }
+
+    "be identified as float" in {
+      JsFloat(0F).isFloat should equal(true)
     }
 
     "handle patch with operations" in {
