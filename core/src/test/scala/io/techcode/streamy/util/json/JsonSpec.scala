@@ -581,13 +581,97 @@ class JsonSpec extends WordSpecLike with Matchers {
       input.toString should equal("""["123",123,2E+128]""")
     }
 
-    "be mapped correctly" in {
+    "map json correctly" in {
       val input = Json.parseStringUnsafe("1330950829160")
       input.map[Json](_ => JsNull) should equal(JsNull)
     }
 
-    "be mapped to undefined correctly" in {
+    "map json array correctly" in {
+      Json.arr().map[JsArray](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json object correctly" in {
+      Json.obj().map[JsObject](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json boolean correctly" in {
+      JsTrue.map[Boolean](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json int correctly" in {
+      JsInt(10).map[Int](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json long correctly" in {
+      JsLong(10L).map[Long](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json float correctly" in {
+      JsFloat(10F).map[Float](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json double correctly" in {
+      JsDouble(10D).map[Double](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json big decimal correctly" in {
+      JsBigDecimal(BigDecimal(10D)).map[BigDecimal](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json string correctly" in {
+      JsString("test").map[String](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json byte string correctly" in {
+      JsBytes(ByteString("test")).map[ByteString](_ => JsNull) should equal(JsNull)
+    }
+
+    "map json undefined correctly" in {
       JsUndefined.map[Json](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "process if exists json array correctly" in {
+      Json.arr().ifExists[JsArray](_ => JsNull)
+    }
+
+    "process if exists json object correctly" in {
+      Json.obj().ifExists[JsObject](_ => JsNull)
+    }
+
+    "process if exists json boolean correctly" in {
+      JsTrue.ifExists[Boolean](_ => JsNull)
+    }
+
+    "process if exists json int correctly" in {
+      JsInt(10).ifExists[Int](_ => JsNull)
+    }
+
+    "process if exists json long correctly" in {
+      JsLong(10L).ifExists[Long](_ => JsNull)
+    }
+
+    "process if exists json float correctly" in {
+      JsFloat(10F).ifExists[Float](_ => JsNull)
+    }
+
+    "process if exists json double correctly" in {
+      JsDouble(10D).ifExists[Double](_ => JsNull)
+    }
+
+    "process if exists json big decimal correctly" in {
+      JsBigDecimal(BigDecimal(10D)).ifExists[BigDecimal](_ => JsNull)
+    }
+
+    "process if exists json string correctly" in {
+      JsString("test").ifExists[String](_ => JsNull)
+    }
+
+    "process if exists json byte string correctly" in {
+      JsBytes(ByteString("test")).ifExists[ByteString](_ => JsNull)
+    }
+
+    "process if exists json undefined correctly" in {
+      JsUndefined.ifExists[Json](_ => JsNull)
     }
 
     "be used with a predicate for validation" in {
