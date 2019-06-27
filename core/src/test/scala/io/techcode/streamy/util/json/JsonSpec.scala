@@ -584,50 +584,121 @@ class JsonSpec extends WordSpecLike with Matchers {
     "map json correctly" in {
       val input = Json.parseStringUnsafe("1330950829160")
       input.map[Json](_ => JsNull) should equal(JsNull)
+      input.map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json array correctly" in {
       Json.arr().map[JsArray](_ => JsNull) should equal(JsNull)
+      Json.arr().map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json object correctly" in {
       Json.obj().map[JsObject](_ => JsNull) should equal(JsNull)
+      Json.obj().map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json boolean correctly" in {
       JsTrue.map[Boolean](_ => JsNull) should equal(JsNull)
+      JsTrue.map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json int correctly" in {
       JsInt(10).map[Int](_ => JsNull) should equal(JsNull)
+      JsInt(10).map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json long correctly" in {
       JsLong(10L).map[Long](_ => JsNull) should equal(JsNull)
+      JsLong(10L).map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json float correctly" in {
       JsFloat(10F).map[Float](_ => JsNull) should equal(JsNull)
+      JsFloat(10F).map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json double correctly" in {
       JsDouble(10D).map[Double](_ => JsNull) should equal(JsNull)
+      JsDouble(10D).map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json big decimal correctly" in {
       JsBigDecimal(BigDecimal(10D)).map[BigDecimal](_ => JsNull) should equal(JsNull)
+      JsBigDecimal(BigDecimal(10D)).map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json string correctly" in {
       JsString("test").map[String](_ => JsNull) should equal(JsNull)
+      JsString("test").map[Int](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json byte string correctly" in {
       JsBytes(ByteString("test")).map[ByteString](_ => JsNull) should equal(JsNull)
+      JsBytes(ByteString("test")).map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json undefined correctly" in {
       JsUndefined.map[Json](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json correctly" in {
+      val input = Json.parseStringUnsafe("1330950829160")
+      input.flatMap[Json](_ => JsNull) should equal(JsNull)
+      input.flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json array correctly" in {
+      Json.arr().flatMap[JsArray](_ => JsNull) should equal(JsNull)
+      Json.arr().flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json object correctly" in {
+      Json.obj().flatMap[JsObject](_ => JsNull) should equal(JsNull)
+      Json.obj().flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json boolean correctly" in {
+      JsTrue.flatMap[Boolean](_ => JsNull) should equal(JsNull)
+      JsTrue.flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json int correctly" in {
+      JsInt(10).flatMap[Int](_ => JsNull) should equal(JsNull)
+      JsInt(10).flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json long correctly" in {
+      JsLong(10L).flatMap[Long](_ => JsNull) should equal(JsNull)
+      JsLong(10L).flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json float correctly" in {
+      JsFloat(10F).flatMap[Float](_ => JsNull) should equal(JsNull)
+      JsFloat(10F).flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json double correctly" in {
+      JsDouble(10D).flatMap[Double](_ => JsNull) should equal(JsNull)
+      JsDouble(10D).flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json big decimal correctly" in {
+      JsBigDecimal(BigDecimal(10D)).flatMap[BigDecimal](_ => JsNull) should equal(JsNull)
+      JsBigDecimal(BigDecimal(10D)).flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json string correctly" in {
+      JsString("test").flatMap[String](_ => JsNull) should equal(JsNull)
+      JsString("test").flatMap[Int](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json byte string correctly" in {
+      JsBytes(ByteString("test")).flatMap[ByteString](_ => JsNull) should equal(JsNull)
+      JsBytes(ByteString("test")).flatMap[String](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json undefined correctly" in {
+      JsUndefined.flatMap[Json](_ => JsNull) should equal(JsUndefined)
     }
 
     "process if exists json array correctly" in {
