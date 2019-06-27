@@ -114,27 +114,27 @@ object RiemannTransformer {
     override def apply(pkt: Json): Proto.Msg = {
       val builder = Proto.Msg.newBuilder()
 
-      pkt.evaluate(binding.ok).asBoolean.foreach(builder.setOk)
-      pkt.evaluate(binding.error).asString.foreach(builder.setError)
-      pkt.evaluate(binding.events).asArray.foreach { evts =>
-        val it = evts.toIterator
+      pkt.evaluate(binding.ok).ifExists[Boolean](builder.setOk)
+      pkt.evaluate(binding.error).ifExists[String](builder.setError)
+      pkt.evaluate(binding.events).ifExists[JsArray] { x =>
+        val it = x.toIterator
         while (it.hasNext) {
           val event = Proto.Event.newBuilder()
-          it.next().asObject.foreach { evt =>
-            evt.evaluate(eventBinding.time).asLong.foreach(event.setTime)
-            evt.evaluate(eventBinding.state).asString.foreach(event.setState)
-            evt.evaluate(eventBinding.service).asString.foreach(event.setService)
-            evt.evaluate(eventBinding.host).asString.foreach(event.setHost)
-            evt.evaluate(eventBinding.description).asString.foreach(event.setDescription)
-            evt.evaluate(eventBinding.tags).asArray.foreach { el =>
+          it.next().ifExists[JsObject] { evt =>
+            evt.evaluate(eventBinding.time).ifExists[JsNumber](x => event.setTime(x.toLong))
+            evt.evaluate(eventBinding.state).ifExists[String](event.setState)
+            evt.evaluate(eventBinding.service).ifExists[String](event.setService)
+            evt.evaluate(eventBinding.host).ifExists[String](event.setHost)
+            evt.evaluate(eventBinding.description).ifExists[String](event.setDescription)
+            evt.evaluate(eventBinding.tags).ifExists[JsArray] { el =>
               val tagIt = el.toIterator
               while (tagIt.hasNext) {
-                tagIt.next().asString.foreach(event.addTags)
+                tagIt.next().ifExists[String](event.addTags)
               }
-              el.asString.foreach(event.addTags)
+              el.ifExists[String](event.addTags)
             }
-            evt.evaluate(eventBinding.ttl).asFloat.foreach(event.setTtl)
-            evt.evaluate(eventBinding.attributes).asObject.foreach { el =>
+            evt.evaluate(eventBinding.ttl).ifExists[Float](event.setTtl)
+            evt.evaluate(eventBinding.attributes).ifExists[JsObject] { el =>
               el.foreach { pair =>
                 pair._2 match {
                   case JsString(value) =>
@@ -144,14 +144,15 @@ object RiemannTransformer {
                 }
               }
             }
-            evt.evaluate(eventBinding.timeMicros).asLong.foreach(event.setTimeMicros)
-            evt.evaluate(eventBinding.metricSint64).asLong.foreach(event.setMetricSint64)
-            evt.evaluate(eventBinding.metricD).asDouble.foreach(event.setMetricD)
-            evt.evaluate(eventBinding.metricF).asFloat.foreach(event.setMetricF)
+            evt.evaluate(eventBinding.timeMicros).ifExists[Long](event.setTimeMicros)
+            evt.evaluate(eventBinding.metricSint64).ifExists[Long](event.setMetricSint64)
+            evt.evaluate(eventBinding.metricD).ifExists[Double](event.setMetricD)
+            evt.evaluate(eventBinding.metricF).ifExists[Float](event.setMetricF)
           }
           builder.addEvents(event)
         }
       }
+
       builder.build()
     }
 

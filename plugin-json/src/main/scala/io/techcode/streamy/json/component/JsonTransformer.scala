@@ -107,14 +107,8 @@ private class DeserializerTransformer(config: JsonTransformer.Config) extends Fl
   @inline override def transform(value: Json): MaybeJson = {
     // Try to avoid parsing of wrong json
     config.bind match {
-      case Bind.String => value match {
-        case field: JsString => handle(value, stringJsonParser.parse(field.value))
-        case _ => JsUndefined
-      }
-      case Bind.Bytes => value match {
-        case field: JsBytes => handle(value, byteStringJsonParser.parse(field.value))
-        case _ => JsUndefined
-      }
+      case Bind.String => value.map[String](x => handle(value, stringJsonParser.parse(x)))
+      case Bind.Bytes => value.map[ByteString](x => handle(value, byteStringJsonParser.parse(x)))
     }
   }
 

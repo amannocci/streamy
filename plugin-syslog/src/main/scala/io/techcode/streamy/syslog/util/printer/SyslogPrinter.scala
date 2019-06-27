@@ -109,13 +109,13 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
     var prival: Int = 0
     severityConf match {
       case binder: SomeBinder =>
-        prival = data.evaluate(Root / binder.key).asInt.getOrElse(SyslogPrinter.Severity)
+        prival = data.evaluate(Root / binder.key).filter(_.isInt).getOrElse(SyslogPrinter.Severity).asInt
       case _ =>
         prival = SyslogPrinter.Severity
     }
     facilityConf match {
       case binder: SomeBinder =>
-        prival += data.evaluate(Root / binder.key).asInt.getOrElse(SyslogPrinter.Facility) << 3
+        prival += data.evaluate(Root / binder.key).filter(_.isInt).getOrElse(SyslogPrinter.Facility).asInt << 3
       case _ =>
         prival += SyslogPrinter.Facility << 3
     }

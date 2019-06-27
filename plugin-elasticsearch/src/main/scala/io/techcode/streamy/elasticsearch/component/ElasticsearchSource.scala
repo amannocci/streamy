@@ -162,14 +162,14 @@ object ElasticsearchSource {
           case Left(ex) => handleFailure(new StreamException(ex))
           case Right(data) =>
             // Retrieve hits
-            val result = data.evaluate(Root / "hits" / "hits").asArray
+            val result = data.evaluate(Root / "hits" / "hits")
             if (result.isDefined) {
               system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
 
               // Check if we have at least one hit
-              val it = result.get.toIterator
+              val it = result.get.asArray.toIterator
               if (it.hasNext) {
-                scrollId = data.evaluate(Root / "_scroll_id").asString
+                scrollId = data.evaluate(Root / "_scroll_id").get.asOptString
                 emitMultiple(out, it)
               } else {
                 completeStage()

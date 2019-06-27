@@ -27,7 +27,6 @@ import akka.util.ByteString
 import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter}
-import java.lang.{StringBuilder => JStringBuilder}
 import io.techcode.streamy.xymon.component.XymonTransformer
 
 

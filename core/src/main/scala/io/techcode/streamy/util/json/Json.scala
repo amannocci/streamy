@@ -217,9 +217,8 @@ trait MaybeJson {
     * @param  f the procedure to apply.
     * @see map
     */
-  @inline final def ifExists[T](f: Json => T): Unit = {
-    if (!isEmpty) f(this.get)
-  }
+  @inline final def ifExists[T](f: T => Unit)(implicit c: JsTyped[T]): Unit =
+    if (!isEmpty) c.ifExists(this.get, f)
 
   /**
     * Returns the result of applying $f to this $option's
@@ -250,8 +249,8 @@ trait MaybeJson {
     *       $f does not need to wrap its result in an $option.
     * @param  f the function to apply
     */
-  @inline final def map(f: Json => Json): MaybeJson =
-    if (isEmpty) JsUndefined else f(this.get)
+  @inline final def map[T](f: T => Json)(implicit c: JsTyped[T]): MaybeJson =
+    if (isEmpty) JsUndefined else c.map(this.get, f)
 
   /**
     * Returns the result of applying $f to this $option's value if
@@ -264,8 +263,8 @@ trait MaybeJson {
     * @see map
     * @see foreach
     */
-  @inline final def flatMap(f: Json => MaybeJson): MaybeJson =
-    if (isEmpty) JsUndefined else f(this.get)
+  @inline final def flatMap[T](f: T => MaybeJson)(implicit c: JsTyped[T]): MaybeJson =
+    if (isEmpty) JsUndefined else c.flatMap(this.get, f)
 
   /**
     * Returns true if this option is nonempty '''and''' the predicate
@@ -450,7 +449,10 @@ sealed trait Json extends JsDefined {
     *
     * @return current json value as boolean if possible.
     */
-  def asBoolean: JsBoolean = this.asInstanceOf[JsBoolean]
+  def asBoolean: Boolean = this.asInstanceOf[JsBoolean] match {
+    case JsTrue => true
+    case JsFalse => false
+  }
 
   /**
     * Returns current json value as an optional string.

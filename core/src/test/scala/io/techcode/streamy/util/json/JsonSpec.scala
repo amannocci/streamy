@@ -420,7 +420,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "be execute function if exists" in {
       var value = false
-      Json.obj("test" -> "test").ifExists { v => value = v.isObject }
+      Json.obj("test" -> "test").ifExists[JsObject] { v => value = v.isObject }
       value should equal(true)
     }
 
@@ -583,11 +583,11 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "be mapped correctly" in {
       val input = Json.parseStringUnsafe("1330950829160")
-      input.map(_ => JsNull) should equal(JsNull)
+      input.map[Json](_ => JsNull) should equal(JsNull)
     }
 
     "be mapped to undefined correctly" in {
-      JsUndefined.map(_ => JsNull) should equal(JsUndefined)
+      JsUndefined.map[Json](_ => JsNull) should equal(JsUndefined)
     }
 
     "be used with a predicate for validation" in {

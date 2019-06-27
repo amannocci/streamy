@@ -100,7 +100,7 @@ object ProtobufTransformerSpec {
       val Simple: Flow[Json, ByteString, NotUsed] =
         ProtobufTransformer.printer(ProtobufTransformer.Printer.Config(
           proto = Data.Pkts.getDefaultInstance,
-          encoder = (doc: Json) => Pkts.newBuilder().addPkt(Pkt.newBuilder().putAttrs("test", doc.evaluate(Root / "test").asString.get)).build()
+          encoder = (doc: Json) => Pkts.newBuilder().addPkt(Pkt.newBuilder().putAttrs("test", doc.evaluate(Root / "test").get.asString)).build()
         )).via(Framing.simpleFramingProtocolDecoder(Int.MaxValue - 4))
     }
 

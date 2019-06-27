@@ -224,7 +224,7 @@ case class Move(from: JsonPointer, to: JsonPointer) extends JsonOperation {
 
   def apply(json: Json): MaybeJson =
     json.evaluate(from)
-      .flatMap(r => Remove(from)(json).flatMap(Add(to, r)(_)))
+      .flatMap[Json](r => Remove(from)(json).flatMap[Json](Add(to, r)(_)))
 
 }
 
@@ -236,7 +236,7 @@ case class Move(from: JsonPointer, to: JsonPointer) extends JsonOperation {
   */
 case class Copy(from: JsonPointer, to: JsonPointer) extends JsonOperation {
 
-  def apply(json: Json): MaybeJson = json.evaluate(from).flatMap(Add(to, _)(json))
+  def apply(json: Json): MaybeJson = json.evaluate(from).flatMap[Json](Add(to, _)(json))
 
 }
 
@@ -248,7 +248,7 @@ case class Copy(from: JsonPointer, to: JsonPointer) extends JsonOperation {
   */
 case class Test(path: JsonPointer, value: Json) extends JsonOperation {
 
-  def apply(json: Json): MaybeJson = path(json).flatMap { x =>
+  def apply(json: Json): MaybeJson = path(json).flatMap[Json] { x =>
     if (x.equals(value)) {
       json
     } else {

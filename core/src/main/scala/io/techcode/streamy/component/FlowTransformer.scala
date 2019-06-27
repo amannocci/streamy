@@ -44,15 +44,15 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
       // Transform inplace and report error if needed
       pkt: Json =>
         pkt.evaluate(config.source)
-          .flatMap(transform(_, pkt))
-          .flatMap(x => pkt.patch(Replace(config.source, x)))
+          .flatMap[Json](transform(_, pkt))
+          .flatMap[Json](x => pkt.patch(Replace(config.source, x)))
           .getOrElse(onError(Transformer.GenericErrorMsg, pkt))
     } else {
       // Transform inplace and then copy to target
       pkt: Json =>
         pkt.evaluate(config.source)
-          .flatMap(transform(_, pkt))
-          .flatMap { v =>
+          .flatMap[Json](transform(_, pkt))
+          .flatMap[Json] { v =>
             val operated: MaybeJson = {
               if (config.target.get == Root) {
                 {
@@ -79,7 +79,7 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
             if (operations.isEmpty) {
               operated
             } else {
-              operated.flatMap(_.patch(operations))
+              operated.flatMap[Json](_.patch(operations))
             }
           }.getOrElse(onError(Transformer.GenericErrorMsg, pkt))
     }
@@ -109,8 +109,7 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
     * @param pkt   original packet.
     * @return json structure.
     */
-  @inline def transform(value: Json, pkt: Json): MaybeJson =
-    transform(value)
+  @inline def transform(value: Json, pkt: Json): MaybeJson = transform(value)
 
   /**
     * Transform only value of given packet.
