@@ -12,7 +12,8 @@ It is fully free and fully open source. The license is MIT, meaning you are pret
 * [Contact](mailto:adrien.mannocci@gmail.com)
 
 ## Prerequisites
-* [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+* [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) for build
+* [Java 11](http://www.oracle.com/technetwork/java/javase/downloads/index.html) for runtime
 * [Sbt](http://www.scala-sbt.org/)
 * [Bats](https://github.com/sstephenson/bats)
 
