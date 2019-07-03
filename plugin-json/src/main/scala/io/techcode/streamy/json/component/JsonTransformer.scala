@@ -69,11 +69,26 @@ object JsonTransformer {
     * @param conf flow configuration.
     * @return new json flow.
     */
-  def apply(conf: Config): Flow[Json, Json, NotUsed] = {
-    conf.mode match {
-      case Mode.Serialize => Flow.fromFunction(new SerializerTransformer(conf))
-      case Mode.Deserialize => Flow.fromFunction(new DeserializerTransformer(conf))
+  def apply(conf: Config): Flow[Json, Json, NotUsed] = conf.mode match {
+    case Mode.Serialize => Flow.fromFunction(new SerializerTransformer(conf))
+    case Mode.Deserialize => Flow.fromFunction(new DeserializerTransformer(conf))
+  }
+
+}
+
+/**
+  * Either hanlder for safe conversion.
+  */
+private trait EitherHandler {
+  this: FlowTransformer =>
+
+  def handleEither[A <: Throwable, B](data: Json, result: Either[A, B]): Json = result match {
+    case Right(succ) => succ match {
+      case v: String => stringToJson(v)
+      case v: ByteString => byteStringToJson(v)
+      case v: Json => v
     }
+    case Left(ex) => onError(state = data, ex = Some(ex))
   }
 
 }
@@ -83,13 +98,11 @@ object JsonTransformer {
   *
   * @param config json transformer configuration.
   */
-private class SerializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
+private class SerializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) with EitherHandler {
 
-  @inline override def transform(value: Json): MaybeJson = {
-    config.bind match {
-      case Bind.String => value.toString
-      case Bind.Bytes => ByteString(value.toString)
-    }
+  @inline override def transform(value: Json): MaybeJson = config.bind match {
+    case Bind.String => handleEither(value, Json.printString(value))
+    case Bind.Bytes => handleEither(value, Json.printByteString(value))
   }
 
 }
@@ -99,22 +112,14 @@ private class SerializerTransformer(config: JsonTransformer.Config) extends Flow
   *
   * @param config json transformer configuration.
   */
-private class DeserializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) {
+private class DeserializerTransformer(config: JsonTransformer.Config) extends FlowTransformer(config) with EitherHandler {
 
   private val byteStringJsonParser = JsonParser.byteStringParser()
   private val stringJsonParser = JsonParser.stringParser()
 
-  @inline override def transform(value: Json): MaybeJson = {
-    // Try to avoid parsing of wrong json
-    config.bind match {
-      case Bind.String => value.map[String](x => handle(value, stringJsonParser.parse(x)))
-      case Bind.Bytes => value.map[ByteString](x => handle(value, byteStringJsonParser.parse(x)))
-    }
-  }
-
-  private def handle(data: Json, result: Either[Throwable, Json]): Json = result match {
-    case Right(succ) => succ
-    case Left(ex) => onError(state = data, ex = Some(ex))
+  @inline override def transform(value: Json): MaybeJson = config.bind match {
+    case Bind.String => value.map[String](x => handleEither(value, stringJsonParser.parse(x)))
+    case Bind.Bytes => value.map[ByteString](x => handleEither(value, byteStringJsonParser.parse(x)))
   }
 
 }
