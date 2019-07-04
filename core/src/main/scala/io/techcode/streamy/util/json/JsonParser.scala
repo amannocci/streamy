@@ -84,7 +84,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
 
   protected var jsValue: Json = null.asInstanceOf[Json]
 
-  private var depth = config.maxDepth
+  private var hasReachMaxNesting = false
 
   def config: JsonParserConfig
 
@@ -92,7 +92,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
     if (root()) {
       jsValue
     } else {
-      if (depth == 0) {
+      if (hasReachMaxNesting) {
         throw new ParseException(s"JSON input was nested more deeply than the configured limit of maxNesting = ${config.maxDepth}")
       } else {
         throw new ParseException(s"Unexpected input at index ${cursor()}")
@@ -102,12 +102,12 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
 
   override def cleanup(): Unit = {
     super.cleanup()
-    depth = config.maxDepth
+    hasReachMaxNesting = false
     builder.reset()
     jsValue = null.asInstanceOf[Json]
   }
 
-  override def root(): Boolean = `value`() && eoi()
+  override def root(): Boolean = `value`(config.maxDepth) && eoi()
 
   // scalastyle:off method.name
   protected def `false`(): Boolean = str("false")
@@ -125,28 +125,28 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
     }
 
   // https://tools.ietf.org/html/rfc4627#section-2.1
-  protected def `value`(): Boolean = ws() && {
-    if (depth != 0) {
-      depth -= 1
+  protected def `value`(remainingNesting: Int): Boolean = ws() && {
+    if (remainingNesting != 0) {
       times(1) {
         (current(): @switch) match {
           case 'f' => simpleValue(`false`(), JsFalse)
           case 'n' => simpleValue(`null`(), JsNull)
           case 't' => simpleValue(`true`(), JsTrue)
-          case '{' => advance(); `object`()
-          case '[' => advance(); `array`()
+          case '{' => advance(); `object`(remainingNesting - 1)
+          case '[' => advance(); `array`(remainingNesting - 1)
           case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '-' => `number`()
           case '"' => `string`()
           case _ => false
         }
       }
     } else {
+      hasReachMaxNesting = true
       false
     }
   } && ws()
 
   // https://tools.ietf.org/html/rfc4627#section-2.2
-  protected def `object`(): Boolean = {
+  protected def `object`(remainingNesting: Int): Boolean = {
     if (current() != '}') {
       val obj = Json.objectBuilder()
 
@@ -156,7 +156,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
           `string`() &&
           ws() && ch(':') && {
           key = builder.toString
-          `value`()
+          `value`(remainingNesting)
         } && {
           obj.put(key -> jsValue)
           if (current() == ',') {
@@ -177,12 +177,12 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
 
 
   // https://tools.ietf.org/html/rfc4627#section-2.3
-  protected def `array`(): Boolean = {
+  protected def `array`(remainingNesting: Int): Boolean = {
     if (current() != ']') {
       val arr = Json.arrayBuilder()
 
       @tailrec def values(): Boolean = {
-        `value`() && {
+        `value`(remainingNesting) && {
           arr.add(jsValue)
           if (current() == ',') {
             advance()
