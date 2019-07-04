@@ -29,7 +29,6 @@ import akka.util.ByteString
 import io.techcode.streamy.component.SourceTransformer
 import io.techcode.streamy.graphite.util.parser.GraphiteParser
 import io.techcode.streamy.util.json.Json
-import io.techcode.streamy.util.parser.ByteStringParser
 import io.techcode.streamy.util.{Binder, NoneBinder}
 
 /**
