@@ -63,15 +63,15 @@ private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOp
       current
     } else if (idx == underlying.length - 1) {
       // Always exist
-      val ref = current.get
+      val ref = current.get[Json]
 
       // We are in final state
       operate(underlying(idx), ref.copy())
     } else {
       // Recursive call until final state
-      val result = apply(path, idx + 1, underlying(idx).evaluate(current.get))
+      val result = apply(path, idx + 1, underlying(idx).evaluate(current.get[Json]))
       if (result.isDefined) {
-        underlying(idx).set(current.get.copy(), result.get)
+        underlying(idx).set(current.get[Json].copy(), result.get[Json])
       } else {
         result
       }
@@ -108,7 +108,7 @@ case class Bulk(path: JsonPointer = Root, ops: Seq[JsonOperation]) extends Abstr
   def operate(accessor: JsonAccessor, current: Json): MaybeJson = {
     val result = process(accessor.evaluate(current))
     if (result.isDefined) {
-      accessor.set(current, result.get)
+      accessor.set(current, result.get[Json])
     } else {
       result
     }
@@ -129,7 +129,7 @@ case class Bulk(path: JsonPointer = Root, ops: Seq[JsonOperation]) extends Abstr
       // Iterate over operations
       while (idx < ops.length) {
         // Result of sub operation
-        val subResult = ops(idx)(result.get)
+        val subResult = ops(idx)(result.get[Json])
         if (subResult.isDefined) {
           idx += 1
           result = subResult

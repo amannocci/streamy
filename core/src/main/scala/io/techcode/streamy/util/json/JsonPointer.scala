@@ -55,7 +55,7 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
         val accessor = underlying(idx)
 
         // Result of access
-        val access = accessor.evaluate(result.get)
+        val access = accessor.evaluate(result.get[Json])
         if (access.isDefined) {
           idx += 1
           result = access

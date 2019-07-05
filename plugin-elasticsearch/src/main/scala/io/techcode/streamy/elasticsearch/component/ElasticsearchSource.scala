@@ -135,7 +135,7 @@ object ElasticsearchSource {
     private class ElasticsearchPaginateSourceLogic extends GraphStageLogic(shape) with OutHandler with StageLogging {
 
       // Current scroll id context
-      private var scrollId: Option[String] = None
+      private var scrollId: MaybeJson = JsUndefined
 
       // Set handler
       setHandler(out, this)
@@ -167,9 +167,9 @@ object ElasticsearchSource {
               system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
 
               // Check if we have at least one hit
-              val it = result.get.asArray.toIterator
+              val it = result.get[JsArray].toIterator
               if (it.hasNext) {
-                scrollId = data.evaluate(Root / "_scroll_id").get.asOptString
+                scrollId = data.evaluate(Root / "_scroll_id")
                 emitMultiple(out, it)
               } else {
                 completeStage()
@@ -214,11 +214,11 @@ object ElasticsearchSource {
 
           // Add request body
           request = if (scrollId.isEmpty) {
-            request.body(config.query.patch(Add(Root / "size", config.bulk)).get.toString)
+            request.body(config.query.patch(Add(Root / "size", config.bulk)).get[Json].toString)
           } else {
             request.body(Json.obj(
               "scroll" -> "5m",
-              "scroll_id" -> scrollId.get
+              "scroll_id" -> scrollId.get[Json]
             ).toString)
           }
 

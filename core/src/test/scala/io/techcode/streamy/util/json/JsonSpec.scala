@@ -431,6 +431,24 @@ class JsonSpec extends WordSpecLike with Matchers {
   }
 
   "Json array" should {
+    "stringify list correctly" in {
+      val input = Json.arr("123", 123, BigDecimal("2e128"))
+      input.toString should equal("""["123",123,2E+128]""")
+    }
+
+    "be converted to iterator" in {
+      Json.arr("foobar").toIterator.next() should equal(JsString("foobar"))
+    }
+
+    "be converted to seq" in {
+      Json.arr("foobar").toSeq.head should equal(JsString("foobar"))
+    }
+
+    "map json array correctly" in {
+      Json.arr().map[JsArray](_ => JsNull) should equal(JsNull)
+      JsNull.map[JsArray](_ => JsNull) should equal(JsUndefined)
+    }
+
     "return value if present" in {
       val input = Json.arr("test", "foobar")
       input(1) should equal(JsString("foobar"))
@@ -507,16 +525,269 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
   }
 
-  "Json" should {
+  "Json float" should {
+    "stringify float correctly" in {
+      JsFloat(1.0F).toString should equal("1.0")
+    }
+
+    "map json float correctly" in {
+      JsFloat(10F).map[Float](_ => JsNull) should equal(JsNull)
+      JsNull.map[Float](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "map json double correctly" in {
+      JsDouble(10D).map[Double](_ => JsNull) should equal(JsNull)
+      JsNull.map[Double](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "return float conversion for big decimal" in {
+      JsBigDecimal(BigDecimal(6.0F)).toFloat should equal(6.0F)
+    }
+
+    "return int conversion for float" in {
+      JsFloat(2.0F).toInt should equal(2)
+    }
+
+    "return long conversion for float" in {
+      JsFloat(2.0F).toLong should equal(2L)
+    }
+
+    "return float conversion for float" in {
+      JsFloat(2.0F).toFloat should equal(2.0F)
+    }
+
+    "return double conversion for float" in {
+      JsFloat(2.0F).toDouble should equal(2.0D)
+    }
+
+    "return big decimal conversion for float" in {
+      JsFloat(2.0F).toBigDecimal should equal(BigDecimal(2.0F))
+    }
+
+    "return correct size for float" in {
+      JsFloat(2.0F).sizeHint should equal(3)
+    }
+
+    "be identified as number" in {
+      JsFloat(0F).isNumber should equal(true)
+    }
+
+    "be identified as float" in {
+      JsFloat(0F).isFloat should equal(true)
+    }
+  }
+
+  "Json double" should {
+    "stringify double correctly" in {
+      JsDouble(1.0D).toString should equal("1.0")
+    }
+
+    "return correct size for double" in {
+      JsDouble(2.0D).sizeHint should equal(3)
+    }
+
+    "return int conversion for double" in {
+      JsDouble(2.0D).toInt should equal(2)
+    }
+
+    "return long conversion for double" in {
+      JsDouble(2.0D).toLong should equal(2L)
+    }
+
+    "return float conversion for double" in {
+      JsDouble(2.0D).toFloat should equal(2.0F)
+    }
+
+    "return double conversion for double" in {
+      JsDouble(2.0D).toDouble should equal(2.0D)
+    }
+
+    "return big decimal conversion for double" in {
+      JsDouble(2.0D).toBigDecimal should equal(BigDecimal(2.0D))
+    }
+
+    "be identified as number" in {
+      JsDouble(0D).isNumber should equal(true)
+    }
+
+    "be identified as double" in {
+      JsDouble(0D).isDouble should equal(true)
+    }
+  }
+
+  "Json int" should {
+    "stringify int correctly" in {
+      JsInt(0).toString should equal("0")
+    }
+
+    "return correct size for int" in {
+      // Positive cases
+      var size = 1
+      for (i <- 0 until String.valueOf(Int.MaxValue).length) {
+        JsInt(1 * IntMath.pow(10, i)).sizeHint should equal(size)
+        size += 1
+      }
+
+      // Negative cases
+      size = 2
+      for (i <- 0 until String.valueOf(Int.MaxValue).length) {
+        JsInt(-1 * IntMath.pow(10, i)).sizeHint should equal(size)
+        size += 1
+      }
+    }
+
+    "return int conversion for int" in {
+      JsInt(1).toInt should equal(1)
+    }
+
+    "return long conversion for int" in {
+      JsInt(1).toLong should equal(1L)
+    }
+
+    "return float conversion for int" in {
+      JsInt(1).toFloat should equal(1.0F)
+    }
+
+    "return double conversion for int" in {
+      JsInt(1).toDouble should equal(1.0D)
+    }
+
+    "return big decimal conversion for int" in {
+      JsInt(1).toBigDecimal should equal(BigDecimal(1))
+    }
+
+    "be identified as number" in {
+      JsInt(0).isNumber should equal(true)
+    }
+
+    "be identified as int" in {
+      JsInt(0).isInt should equal(true)
+    }
+  }
+
+  "Json long" should {
     "stringify long integers correctly" in {
       val input = Json.obj("l" -> 1330950829160L)
       input.toString should equal("""{"l":1330950829160}""")
     }
 
+    "return correct size for long" in {
+      // Positive cases
+      var size = 1
+      for (i <- 0 until String.valueOf(Long.MaxValue).length) {
+        JsLong(1 * LongMath.pow(10, i)).sizeHint should equal(size)
+        size += 1
+      }
+
+      // Negative cases
+      size = 2
+      for (i <- 0 until String.valueOf(Long.MaxValue).length) {
+        JsLong(-1 * LongMath.pow(10, i)).sizeHint should equal(size)
+        size += 1
+      }
+    }
+
+    "return int conversion for long" in {
+      JsLong(1L).toInt should equal(1)
+    }
+
+    "return long conversion for long" in {
+      JsLong(1L).toLong should equal(1L)
+    }
+
+    "return float conversion for long" in {
+      JsLong(1L).toFloat should equal(1.0F)
+    }
+
+    "return double conversion for long" in {
+      JsLong(1L).toDouble should equal(1.0D)
+    }
+
+    "return big decimal conversion for long" in {
+      JsLong(1L).toBigDecimal should equal(BigDecimal(1))
+    }
+
+    "be identified as number" in {
+      JsLong(0).isNumber should equal(true)
+    }
+
+    "be identified as long" in {
+      JsLong(0).isLong should equal(true)
+    }
+  }
+
+  "Json big decimal" should {
+    "return correct size for big decimal" in {
+      JsBigDecimal(BigDecimal("2e128")).sizeHint should equal(6)
+    }
+
+    "return int conversion for big decimal" in {
+      JsBigDecimal(BigDecimal(6)).toInt should equal(6)
+    }
+
+    "return long conversion for big decimal" in {
+      JsBigDecimal(BigDecimal(6L)).toLong should equal(6L)
+    }
+
+    "return double conversion for big decimal" in {
+      JsBigDecimal(BigDecimal(6.0D)).toDouble should equal(6.0D)
+    }
+
+    "return big decimal conversion for big decimal" in {
+      JsBigDecimal(BigDecimal("2e128")).toBigDecimal should equal(BigDecimal("2e128"))
+    }
+
+    "be identified as big decimal" in {
+      JsBigDecimal(BigDecimal(0F)).isBigDecimal should equal(true)
+    }
+  }
+
+  "Json string" should {
+    "return correct size for string" in {
+      JsString("test").sizeHint should equal(6) // "test"
+    }
+
+    "be identified as string" in {
+      JsString("").isString should equal(true)
+    }
+  }
+
+  "Json bytes" should {
+    "stringify bytestring correctly" in {
+      JsBytes(ByteString("test")).toString should equal("\"dGVzdA==\"")
+    }
+
+    "be identified as bytes" in {
+      JsBytes(ByteString.empty).isBytes should equal(true)
+    }
+  }
+
+  "Json null" should {
+    "return correct size for null" in {
+      JsNull.sizeHint should equal(4)
+    }
+
+    "be identified as null" in {
+      JsNull.isNull should equal(true)
+    }
+  }
+
+  "Json boolean" should {
+    "return correct size for boolean" in {
+      JsTrue.sizeHint should equal(4)
+      JsFalse.sizeHint should equal(5)
+    }
+
+    "be identified as boolean" in {
+      JsTrue.isBoolean should equal(true)
+    }
+  }
+
+  "Json" should {
     "stringify short integers correctly" in {
       val s: Short = 1234
       val input = Json.obj("s" -> s)
-      input.toString should equal("""{"s":1234}""")
+      Json.printStringUnsafe(input) should equal("""{"s":1234}""")
     }
 
     "stringify byte integers correctly" in {
@@ -529,20 +800,8 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsTrue.toString should equal("true")
     }
 
-    "stringify float correctly" in {
-      JsFloat(1.0F).toString should equal("1.0")
-    }
-
-    "stringify double correctly" in {
-      JsDouble(1.0D).toString should equal("1.0")
-    }
-
     "stringify null correctly" in {
       JsNull.toString should equal("null")
-    }
-
-    "stringify bytestring correctly" in {
-      JsBytes(ByteString("test")).toString should equal("\"dGVzdA==\"")
     }
 
     "stringify big decimal correctly" in {
@@ -576,20 +835,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       input.toString should equal("""{"bd":2E+128}""")
     }
 
-    "stringify list correctly" in {
-      val input = Json.arr("123", 123, BigDecimal("2e128"))
-      input.toString should equal("""["123",123,2E+128]""")
-    }
-
     "map json correctly" in {
       val input = Json.parseStringUnsafe("1330950829160")
       input.map[Json](_ => JsNull) should equal(JsNull)
       JsUndefined.map[Json](_ => JsNull) should equal(JsUndefined)
-    }
-
-    "map json array correctly" in {
-      Json.arr().map[JsArray](_ => JsNull) should equal(JsNull)
-      JsNull.map[JsArray](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json object correctly" in {
@@ -600,26 +849,6 @@ class JsonSpec extends WordSpecLike with Matchers {
     "map json boolean correctly" in {
       JsTrue.map[Boolean](_ => JsNull) should equal(JsNull)
       JsNull.map[Boolean](_ => JsNull) should equal(JsUndefined)
-    }
-
-    "map json int correctly" in {
-      JsInt(10).map[Int](_ => JsNull) should equal(JsNull)
-      JsNull.map[Int](_ => JsNull) should equal(JsUndefined)
-    }
-
-    "map json long correctly" in {
-      JsLong(10L).map[Long](_ => JsNull) should equal(JsNull)
-      JsNull.map[Long](_ => JsNull) should equal(JsUndefined)
-    }
-
-    "map json float correctly" in {
-      JsFloat(10F).map[Float](_ => JsNull) should equal(JsNull)
-      JsNull.map[Float](_ => JsNull) should equal(JsUndefined)
-    }
-
-    "map json double correctly" in {
-      JsDouble(10D).map[Double](_ => JsNull) should equal(JsNull)
-      JsNull.map[Double](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json big decimal correctly" in {
@@ -833,307 +1062,6 @@ class JsonSpec extends WordSpecLike with Matchers {
     "handle parsing failure from bytestring" in {
       val input = Json.parseByteString(ByteString("""test:"test"""")).getOrElse(JsNull)
       input should equal(JsNull)
-    }
-
-    "be convert to json object when possible" in {
-      Json.obj().asOptObject should equal(Some(Json.obj()))
-    }
-
-    "fail to be convert to json object when not possible" in {
-      JsString("10").asOptObject should equal(None)
-    }
-
-    "can be convert to iterator" in {
-      Json.arr("foobar").toIterator.next() should equal(JsString("foobar"))
-    }
-
-    "can be convert to seq" in {
-      Json.arr("foobar").toSeq.head should equal(JsString("foobar"))
-    }
-
-    "be convert to json array when possible" in {
-      Json.arr().asOptArray should equal(Some(Json.arr()))
-    }
-
-    "fail to be convert to json array when not possible" in {
-      JsString("10").asOptArray should equal(None)
-    }
-
-    "be convert to boolean when possible" in {
-      JsTrue.asOptBoolean should equal(Some(true))
-    }
-
-    "fail to be convert to boolean when not possible" in {
-      JsString("10").asOptBoolean should equal(None)
-    }
-
-    "return correct size for boolean" in {
-      JsTrue.sizeHint should equal(4)
-      JsFalse.sizeHint should equal(5)
-    }
-
-    "be convert to string when possible" in {
-      JsString("10").asOptString should equal(Some("10"))
-    }
-
-    "fail to be convert to string when not possible" in {
-      JsTrue.asOptString should equal(None)
-    }
-
-    "return correct size for string" in {
-      JsString("test").sizeHint should equal(6) // "test"
-    }
-
-    "be convert to big decimal when possible" in {
-      JsBigDecimal(BigDecimal("1e20")).asOptBigDecimal should equal(Some(BigDecimal("1e20")))
-    }
-
-    "fail to be convert to big decimal when not possible" in {
-      JsTrue.asOptBigDecimal should equal(None)
-    }
-
-    "return correct size for big decimal" in {
-      JsBigDecimal(BigDecimal("2e128")).sizeHint should equal(6)
-    }
-
-    "return int conversion for big decimal" in {
-      JsBigDecimal(BigDecimal(6)).toInt should equal(6)
-    }
-
-    "return long conversion for big decimal" in {
-      JsBigDecimal(BigDecimal(6L)).toLong should equal(6L)
-    }
-
-    "return float conversion for big decimal" in {
-      JsBigDecimal(BigDecimal(6.0F)).toFloat should equal(6.0F)
-    }
-
-    "return double conversion for big decimal" in {
-      JsBigDecimal(BigDecimal(6.0D)).toDouble should equal(6.0D)
-    }
-
-    "return big decimal conversion for big decimal" in {
-      JsBigDecimal(BigDecimal("2e128")).toBigDecimal should equal(BigDecimal("2e128"))
-    }
-
-    "be convert to null when possible" in {
-      JsNull.asOptNull should equal(Some(()))
-    }
-
-    "fail to be convert to null when not possible" in {
-      JsTrue.asOptNull should equal(None)
-    }
-
-    "return correct size for null" in {
-      JsNull.sizeHint should equal(4)
-    }
-
-    "be convert to int when possible" in {
-      JsInt(1).asOptInt should equal(Some(1))
-    }
-
-    "fail to be convert to int when not possible" in {
-      JsTrue.asOptInt should equal(None)
-    }
-
-    "return correct size for int" in {
-      // Positive cases
-      var size = 1
-      for (i <- 0 until String.valueOf(Int.MaxValue).length) {
-        JsInt(1 * IntMath.pow(10, i)).sizeHint should equal(size)
-        size += 1
-      }
-
-      // Negative cases
-      size = 2
-      for (i <- 0 until String.valueOf(Int.MaxValue).length) {
-        JsInt(-1 * IntMath.pow(10, i)).sizeHint should equal(size)
-        size += 1
-      }
-    }
-
-    "return int conversion for int" in {
-      JsInt(1).toInt should equal(1)
-    }
-
-    "return long conversion for int" in {
-      JsInt(1).toLong should equal(1L)
-    }
-
-    "return float conversion for int" in {
-      JsInt(1).toFloat should equal(1.0F)
-    }
-
-    "return double conversion for int" in {
-      JsInt(1).toDouble should equal(1.0D)
-    }
-
-    "return big decimal conversion for int" in {
-      JsInt(1).toBigDecimal should equal(BigDecimal(1))
-    }
-
-    "be convert to long when possible" in {
-      JsLong(1).asOptLong should equal(Some(1))
-    }
-
-    "fail to be convert to long when not possible" in {
-      JsTrue.asOptLong should equal(None)
-    }
-
-    "return correct size for long" in {
-      // Positive cases
-      var size = 1
-      for (i <- 0 until String.valueOf(Long.MaxValue).length) {
-        JsLong(1 * LongMath.pow(10, i)).sizeHint should equal(size)
-        size += 1
-      }
-
-      // Negative cases
-      size = 2
-      for (i <- 0 until String.valueOf(Long.MaxValue).length) {
-        JsLong(-1 * LongMath.pow(10, i)).sizeHint should equal(size)
-        size += 1
-      }
-    }
-
-    "return int conversion for long" in {
-      JsLong(1L).toInt should equal(1)
-    }
-
-    "return long conversion for long" in {
-      JsLong(1L).toLong should equal(1L)
-    }
-
-    "return float conversion for long" in {
-      JsLong(1L).toFloat should equal(1.0F)
-    }
-
-    "return double conversion for long" in {
-      JsLong(1L).toDouble should equal(1.0D)
-    }
-
-    "return big decimal conversion for long" in {
-      JsLong(1L).toBigDecimal should equal(BigDecimal(1))
-    }
-
-    "be convert to float when possible" in {
-      JsFloat(1.0F).asOptFloat should equal(Some(1.0F))
-    }
-
-    "fail to be convert to float when not possible" in {
-      JsTrue.asOptFloat should equal(None)
-    }
-
-    "return correct size for float" in {
-      JsFloat(2.0F).sizeHint should equal(3)
-    }
-
-    "return int conversion for float" in {
-      JsFloat(2.0F).toInt should equal(2)
-    }
-
-    "return long conversion for float" in {
-      JsFloat(2.0F).toLong should equal(2L)
-    }
-
-    "return float conversion for float" in {
-      JsFloat(2.0F).toFloat should equal(2.0F)
-    }
-
-    "return double conversion for float" in {
-      JsFloat(2.0F).toDouble should equal(2.0D)
-    }
-
-    "return big decimal conversion for float" in {
-      JsFloat(2.0F).toBigDecimal should equal(BigDecimal(2.0F))
-    }
-
-    "be convert to double when possible" in {
-      JsDouble(1.0D).asOptDouble should equal(Some(1.0D))
-    }
-
-    "fail to be convert to double when not possible" in {
-      JsTrue.asOptDouble should equal(None)
-    }
-
-    "return correct size for double" in {
-      JsDouble(2.0D).sizeHint should equal(3)
-    }
-
-    "return int conversion for double" in {
-      JsDouble(2.0D).toInt should equal(2)
-    }
-
-    "return long conversion for double" in {
-      JsDouble(2.0D).toLong should equal(2L)
-    }
-
-    "return float conversion for double" in {
-      JsDouble(2.0D).toFloat should equal(2.0F)
-    }
-
-    "return double conversion for double" in {
-      JsDouble(2.0D).toDouble should equal(2.0D)
-    }
-
-    "return big decimal conversion for double" in {
-      JsDouble(2.0D).toBigDecimal should equal(BigDecimal(2.0D))
-    }
-
-    "be convert to number when possible" in {
-      JsDouble(1.0D).asOptNumber should equal(Some(JsDouble(1.0D)))
-    }
-
-    "fail to be convert to number when not possible" in {
-      JsTrue.asOptNumber should equal(None)
-    }
-
-    "be convert to bytes when possible" in {
-      JsBytes(ByteString("test")).asOptBytes should equal(Some(ByteString("test")))
-    }
-
-    "fail to be convert to bytes when not possible" in {
-      JsTrue.asOptBytes should equal(None)
-    }
-
-    "be identified as number" in {
-      JsInt(0).isNumber should equal(true)
-    }
-
-    "be identified as bytes" in {
-      JsBytes(ByteString.empty).isBytes should equal(true)
-    }
-
-    "be identified as boolean" in {
-      JsTrue.isBoolean should equal(true)
-    }
-
-    "be identified as string" in {
-      JsString("").isString should equal(true)
-    }
-
-    "be identified as big decimal" in {
-      JsBigDecimal(BigDecimal(0F)).isBigDecimal should equal(true)
-    }
-
-    "be identified as null" in {
-      JsNull.isNull should equal(true)
-    }
-
-    "be identified as int" in {
-      JsInt(0).isInt should equal(true)
-    }
-
-    "be identified as long" in {
-      JsLong(0).isLong should equal(true)
-    }
-
-    "be identified as double" in {
-      JsDouble(0D).isDouble should equal(true)
-    }
-
-    "be identified as float" in {
-      JsFloat(0F).isFloat should equal(true)
     }
 
     "handle patch with operations" in {

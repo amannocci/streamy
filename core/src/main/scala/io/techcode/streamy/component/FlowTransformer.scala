@@ -55,12 +55,11 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
           .flatMap[Json] { v =>
             val operated: MaybeJson = {
               if (config.target.get == Root) {
-                {
-                  for {
-                    x <- pkt.asOptObject
-                    y <- v.asOptObject
-                  } yield (x, y)
-                }.map(r => r._1.merge(r._2)).getOrElse(JsUndefined)
+                pkt.flatMap[JsObject] { x =>
+                  v.map[JsObject] { y =>
+                    x.merge(y)
+                  }
+                }
               } else {
                 pkt
               }

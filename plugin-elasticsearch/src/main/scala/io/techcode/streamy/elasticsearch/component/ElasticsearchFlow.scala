@@ -195,7 +195,7 @@ object ElasticsearchFlow {
         Remove(ElasticPath.Type, mustExist = false),
         Remove(ElasticPath.Version, mustExist = false),
         Remove(ElasticPath.VersionType, mustExist = false)
-      ))).get
+      ))).get[Json]
       ByteString(header.toString()) ++ NewLineDelimiter ++ ByteString(doc.toString()) ++ NewLineDelimiter
     }
 
@@ -250,7 +250,7 @@ object ElasticsearchFlow {
           case Left(ex) => handleFailure(new StreamException(ex))
           case Right(data) =>
             val errors = data.evaluate(ElasticPath.Errors)
-            if (errors.getOrElse(true).asBoolean) {
+            if (errors.getOrElse[Boolean](true)) {
               processPartial(data)
             } else {
               processSuccess()
@@ -281,13 +281,13 @@ object ElasticsearchFlow {
         */
       def processPartial(data: Json): Unit = {
         // Handle failed items
-        val items = data.evaluate(ElasticPath.Items).get.asArray
+        val items = data.evaluate(ElasticPath.Items).get[JsArray]
 
         var backPressure = false
         val results = messages.zip(items.toSeq)
-          .map(x => (x._1.asObject, x._2.asObject))
+          .map(x => (x._1.get[JsObject], x._2.get[JsObject]))
           .filter { case (item, result) =>
-            val status = result.evaluate(statusPath).get.asInt
+            val status = result.evaluate(statusPath).get[Int]
 
             // We can't do anything in case of conflict or bad request or not found
             if (status == 409 || status == 400 || status == 404) {
@@ -299,7 +299,7 @@ object ElasticsearchFlow {
             }
           }
           .groupBy { case (_, result) =>
-            val status = result.evaluate(statusPath).get.asInt
+            val status = result.evaluate(statusPath).get[Int]
             if (status < 300) 0 else 1
           }
 

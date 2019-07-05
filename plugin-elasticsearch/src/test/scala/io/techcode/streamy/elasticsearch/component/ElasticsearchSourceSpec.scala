@@ -64,8 +64,8 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       )).runWith(TestSink.probe[Json])
 
       // Check
-      stream.requestNext().evaluate(Root / "_source").get should equal(Json.obj("foo" -> "bar"))
-      stream.requestNext().evaluate(Root / "_source").get should equal(Json.obj("foo" -> "bar"))
+      stream.requestNext().evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
+      stream.requestNext().evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
       stream.expectComplete()
     }
 

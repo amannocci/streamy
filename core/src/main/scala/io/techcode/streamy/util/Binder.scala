@@ -214,23 +214,27 @@ case class StringBinder(override val key: String, charset: Charset = StandardCha
     true
   }
 
-  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsString =>
-        hook
-        builder ++= ByteString(v.value)
-        true
-      case _ => false // Nothing
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isString) {
+      hook
+      builder ++= ByteString(result.get[String])
+      true
+    } else {
+      false
     }
+  }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsString =>
-        hook
-        builder.append(v.value)
-        true
-      case _ => false // Nothing
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isString) {
+      hook
+      builder.append(result.get[String])
+      true
+    } else {
+      false
     }
+  }
 
 }
 
@@ -276,23 +280,27 @@ case class BytesBinder(override val key: String) extends SomeBinder(key) {
     true
   }
 
-  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsBytes =>
-        hook
-        builder ++= v.value
-        true
-      case _ => false // Nothing
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isBytes) {
+      hook
+      builder ++= result.get[ByteString]
+      true
+    } else {
+      false
     }
+  }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsBytes =>
-        hook
-        builder.append(v.value.utf8String)
-        true
-      case _ => false // Nothing
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isBytes) {
+      hook
+      builder.append(result.get[ByteString].utf8String)
+      true
+    } else {
+      false
     }
+  }
 
 }
 
@@ -341,23 +349,27 @@ case class IntBinder(override val key: String) extends SomeBinder(key) {
       true
     }
 
-  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsInt =>
-        hook
-        builder ++= ByteString(v.value.toString)
-        true
-      case _ => false // Nothing
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isInt) {
+      hook
+      builder ++= ByteString(result.get[Int].toString)
+      true
+    } else {
+      false
     }
+  }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsInt =>
-        hook
-        builder.append(v.value)
-        true
-      case _ => false // Nothing
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isInt) {
+      hook
+      builder.append(result.get[Int])
+      true
+    } else {
+      false
     }
+  }
 
 }
 
@@ -405,23 +417,27 @@ case class LongBinder(override val key: String) extends SomeBinder(key) {
       true
     }
 
-  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsLong =>
-        hook
-        builder ++= ByteString(v.value.toString)
-        true
-      case _ => false // Nothing
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isLong) {
+      hook
+      builder ++= ByteString(result.get[Long].toString)
+      true
+    } else {
+      false
     }
+  }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsLong =>
-        hook
-        builder.append(v.value)
-        true
-      case _ => false // Nothing
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isLong) {
+      hook
+      builder.append(result.get[Long])
+      true
+    } else {
+      false
     }
+  }
 
 }
 
@@ -469,23 +485,27 @@ case class FloatBinder(override val key: String) extends SomeBinder(key) {
       true
     }
 
-  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsFloat =>
-        hook
-        builder ++= ByteString(v.value.toString)
-        true
-      case _ => false // Nothing
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isFloat) {
+      hook
+      builder ++= ByteString(result.toString)
+      true
+    } else {
+      false
     }
+  }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsFloat =>
-        hook
-        builder.append(v.value)
-        true
-      case _ => false // Nothing
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isFloat) {
+      hook
+      builder.append(result)
+      true
+    } else {
+      false
     }
+  }
 
 }
 
@@ -533,22 +553,26 @@ case class DoubleBinder(override val key: String) extends SomeBinder(key) {
       true
     }
 
-  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsDouble =>
-        hook
-        builder ++= ByteString(v.value.toString)
-        true
-      case _ => false // Nothing
+  def applyByteString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: ByteStringBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isDouble) {
+      hook
+      builder ++= ByteString(result.toString)
+      true
+    } else {
+      false
     }
+  }
 
-  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean =
-    value.evaluate(path).getOrElse(JsNull) match {
-      case v: JsDouble =>
-        hook
-        builder.append(v.value)
-        true
-      case _ => false // Nothing
+  def applyString(value: Json, hook: => Unit = Binder.NoOp)(implicit builder: CharBuilder): Boolean = {
+    val result = value.evaluate(path)
+    if (result.isDouble) {
+      hook
+      builder.append(result)
+      true
+    } else {
+      false
     }
+  }
 
 }
