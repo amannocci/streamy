@@ -278,7 +278,7 @@ package object json extends JsonImplicit {
     def get(self: Json): ByteString = self.asInstanceOf[JsBytes].value
 
     def getOrElse(self: MaybeJson, default: ByteString): ByteString =
-      if (self.isBoolean) {
+      if (self.isBytes) {
         self.get(this)
       } else {
         default
