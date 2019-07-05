@@ -943,6 +943,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       Json.obj().get[JsObject] should equal(Json.obj())
     }
 
+    "get json number correctly" in {
+      JsInt(10).get[JsNumber] should equal(JsInt(10))
+    }
+
     "get boolean correctly" in {
       JsTrue.get[Boolean] should equal(true)
       JsFalse.get[Boolean] should equal(false)
@@ -984,62 +988,71 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "getOrElse json correctly" in {
       JsLong(1330950829160L).getOrElse[Json](JsNull) should equal(JsLong(1330950829160L))
-      JsUndefined.getOrElse[Json](JsNull) should equal(JsNull)
+      JsNull.getOrElse[Json](JsNull) should equal(JsNull)
     }
 
     "getOrElse json array correctly" in {
       Json.arr().getOrElse[JsArray](Json.arr("foobar")) should equal(Json.arr())
-      JsUndefined.getOrElse[JsArray](Json.arr("foobar")) should equal(Json.arr("foobar"))
+      JsNull.getOrElse[JsArray](Json.arr("foobar")) should equal(Json.arr("foobar"))
     }
 
     "getOrElse json object correctly" in {
       Json.obj().getOrElse[JsObject](Json.obj("foo" -> "bar")) should equal(Json.obj())
-      JsUndefined.getOrElse[JsObject](Json.obj("foo" -> "bar")) should equal(Json.obj("foo" -> "bar"))
+      JsNull.getOrElse[JsObject](Json.obj("foo" -> "bar")) should equal(Json.obj("foo" -> "bar"))
+    }
+
+    "getOrElse json number correctly" in {
+      JsInt(10).getOrElse[JsNumber](JsInt(0)) should equal(JsInt(10))
+      JsNull.getOrElse[JsNumber](JsInt(0)) should equal(JsInt(0))
     }
 
     "getOrElse boolean correctly" in {
       JsTrue.getOrElse[Boolean](false) should equal(true)
       JsFalse.getOrElse[Boolean](true) should equal(false)
-      JsUndefined.getOrElse[Boolean](true) should equal(true)
+      JsNull.getOrElse[Boolean](true) should equal(true)
     }
 
     "getOrElse int correctly" in {
       JsInt(10).getOrElse[Int](0) should equal(10)
-      JsUndefined.getOrElse[Int](0) should equal(0)
+      JsNull.getOrElse[Int](0) should equal(0)
     }
 
     "getOrElse long correctly" in {
       JsLong(10L).getOrElse[Long](0) should equal(10)
-      JsUndefined.getOrElse[Long](0) should equal(0)
+      JsNull.getOrElse[Long](0) should equal(0)
     }
 
     "getOrElse float correctly" in {
       JsFloat(10F).getOrElse[Float](0F) should equal(10F)
-      JsUndefined.getOrElse[Float](0F) should equal(0F)
+      JsNull.getOrElse[Float](0F) should equal(0F)
     }
 
     "getOrElse double correctly" in {
       JsDouble(10D).getOrElse[Double](0D) should equal(10D)
-      JsUndefined.getOrElse[Double](0D) should equal(0D)
+      JsNull.getOrElse[Double](0D) should equal(0D)
     }
 
     "getOrElse big decimal correctly" in {
       JsBigDecimal(BigDecimal(10D)).getOrElse[BigDecimal](BigDecimal(0)) should equal(BigDecimal(10D))
-      JsUndefined.getOrElse[BigDecimal](0) should equal(BigDecimal(0))
+      JsNull.getOrElse[BigDecimal](0) should equal(BigDecimal(0))
     }
 
     "getOrElse string correctly" in {
       JsString("test").getOrElse[String]("") should equal("test")
-      JsUndefined.getOrElse[String]("") should equal("")
+      JsNull.getOrElse[String]("") should equal("")
     }
 
     "getOrElse byte string correctly" in {
       JsBytes(ByteString("test")).getOrElse[ByteString](ByteString.empty) should equal(ByteString("test"))
-      JsUndefined.getOrElse[ByteString](ByteString.empty) should equal(ByteString.empty)
+      JsNull.getOrElse[ByteString](ByteString.empty) should equal(ByteString.empty)
     }
 
     "getOrElse json undefined correctly" in {
-      JsUndefined.getOrElse[Json](JsNull) should equal(JsNull)
+      JsNull.getOrElse[Json](JsNull) should equal(JsNull)
+    }
+
+    "process if exists json correctly" in {
+      Json.obj().ifExists[Json](_ => JsNull)
     }
 
     "process if exists json array correctly" in {
