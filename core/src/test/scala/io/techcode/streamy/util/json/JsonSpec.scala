@@ -525,6 +525,35 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
   }
 
+  "Json number" should {
+    "stringify float correctly" in {
+      JsFloat(1.0F).toString should equal("1.0")
+    }
+
+    "map json number correctly" in {
+      JsFloat(10F).map[JsNumber](_ => JsNull) should equal(JsNull)
+      JsNull.map[Float](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "flatMap json number correctly" in {
+      JsFloat(10F).flatMap[JsNumber](_ => JsNull) should equal(JsNull)
+      JsNull.flatMap[Float](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "get json number correctly" in {
+      JsFloat(10F).get[JsNumber] should equal(JsFloat(10F))
+    }
+
+    "getOrElse json number correctly" in {
+      JsFloat(10F).getOrElse[JsNumber](JsFloat(0F)) should equal(JsFloat(10F))
+      JsNull.getOrElse[JsNumber](JsFloat(0F)) should equal(JsFloat(0F))
+    }
+
+    "be identified as number" in {
+      JsFloat(0F).isNumber should equal(true)
+    }
+  }
+
   "Json float" should {
     "stringify float correctly" in {
       JsFloat(1.0F).toString should equal("1.0")
@@ -533,11 +562,6 @@ class JsonSpec extends WordSpecLike with Matchers {
     "map json float correctly" in {
       JsFloat(10F).map[Float](_ => JsNull) should equal(JsNull)
       JsNull.map[Float](_ => JsNull) should equal(JsUndefined)
-    }
-
-    "map json double correctly" in {
-      JsDouble(10D).map[Double](_ => JsNull) should equal(JsNull)
-      JsNull.map[Double](_ => JsNull) should equal(JsUndefined)
     }
 
     "return float conversion for big decimal" in {
@@ -580,6 +604,11 @@ class JsonSpec extends WordSpecLike with Matchers {
   "Json double" should {
     "stringify double correctly" in {
       JsDouble(1.0D).toString should equal("1.0")
+    }
+
+    "map json double correctly" in {
+      JsDouble(10D).map[Double](_ => JsNull) should equal(JsNull)
+      JsNull.map[Double](_ => JsNull) should equal(JsUndefined)
     }
 
     "return correct size for double" in {
@@ -773,6 +802,14 @@ class JsonSpec extends WordSpecLike with Matchers {
   }
 
   "Json boolean" should {
+    "get boolean correctly" in {
+      JsTrue.get[Boolean] should equal(true)
+      JsFalse.get[Boolean] should equal(false)
+      assertThrows[ClassCastException] {
+        JsNull.get[Boolean]
+      }
+    }
+
     "return correct size for boolean" in {
       JsTrue.sizeHint should equal(4)
       JsFalse.sizeHint should equal(5)
@@ -988,7 +1025,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "getOrElse json correctly" in {
       JsLong(1330950829160L).getOrElse[Json](JsNull) should equal(JsLong(1330950829160L))
-      JsNull.getOrElse[Json](JsNull) should equal(JsNull)
+      JsUndefined.getOrElse[Json](JsNull) should equal(JsNull)
     }
 
     "getOrElse json array correctly" in {
