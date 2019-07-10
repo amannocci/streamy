@@ -537,7 +537,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "flatMap json number correctly" in {
       JsFloat(10F).flatMap[JsNumber](_ => JsNull) should equal(JsNull)
-      JsNull.flatMap[Float](_ => JsNull) should equal(JsUndefined)
+      JsNull.flatMap[JsNumber](_ => JsNull) should equal(JsUndefined)
     }
 
     "get json number correctly" in {
@@ -551,6 +551,10 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "be identified as number" in {
       JsFloat(0F).isNumber should equal(true)
+    }
+
+    "be identified as not null" in {
+      JsFloat(0F).isNull should equal(false)
     }
   }
 
@@ -798,6 +802,17 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "be identified as null" in {
       JsNull.isNull should equal(true)
+    }
+  }
+
+  "Json undefined" should {
+    "be used with a predicate for validation" in {
+      JsUndefined.exists(v => v.isDefined) should equal(false)
+    }
+
+    "be identified as undefined" in {
+      JsUndefined.isDefined should equal(false)
+      JsUndefined.isEmpty should equal(true)
     }
   }
 

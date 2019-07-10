@@ -34,7 +34,7 @@ package object json extends JsonImplicit {
   sealed trait JsTyped[A] {
     def get(self: Json): A
 
-    def getOrElse(self: MaybeJson, default: A): A
+    def getOrElse(self: MaybeJson, default: => A): A
 
     def ifExists(self: MaybeJson, f: A => Unit): Unit
 
@@ -47,12 +47,8 @@ package object json extends JsonImplicit {
   implicit case object JsIdentityTyped extends JsTyped[Json] {
     def get(self: Json): Json = self
 
-    def getOrElse(self: MaybeJson, default: Json): Json =
-      if (self.isDefined) {
-        self.get(this)
-      } else {
-        default
-      }
+    // Directly call self, it's safe because we override JsUndefined to avoid border case
+    def getOrElse(self: MaybeJson, default: => Json): Json = self.get(this)
 
     def ifExists(self: MaybeJson, f: Json => Unit): Unit = f(self.get(this))
 
@@ -63,7 +59,7 @@ package object json extends JsonImplicit {
   implicit case object JsObjectTyped extends JsTyped[JsObject] {
     def get(self: Json): JsObject = self.asInstanceOf[JsObject]
 
-    def getOrElse(self: MaybeJson, default: JsObject): JsObject =
+    def getOrElse(self: MaybeJson, default: => JsObject): JsObject =
       if (self.isObject) {
         self.get(this)
       } else {
@@ -84,7 +80,7 @@ package object json extends JsonImplicit {
   implicit case object JsArrayTyped extends JsTyped[JsArray] {
     def get(self: Json): JsArray = self.asInstanceOf[JsArray]
 
-    def getOrElse(self: MaybeJson, default: JsArray): JsArray =
+    def getOrElse(self: MaybeJson, default: => JsArray): JsArray =
       if (self.isArray) {
         self.get(this)
       } else {
@@ -109,7 +105,7 @@ package object json extends JsonImplicit {
       case _ => throw new ClassCastException
     }
 
-    def getOrElse(self: MaybeJson, default: Boolean): Boolean =
+    def getOrElse(self: MaybeJson, default: => Boolean): Boolean =
       if (self.isBoolean) {
         self.get(this)
       } else {
@@ -130,7 +126,7 @@ package object json extends JsonImplicit {
   implicit case object JsNumberTyped extends JsTyped[JsNumber] {
     def get(self: Json): JsNumber = self.asInstanceOf[JsNumber]
 
-    def getOrElse(self: MaybeJson, default: JsNumber): JsNumber =
+    def getOrElse(self: MaybeJson, default: => JsNumber): JsNumber =
       if (self.isNumber) {
         self.get(this)
       } else {
@@ -151,7 +147,7 @@ package object json extends JsonImplicit {
   implicit case object JsIntTyped extends JsTyped[Int] {
     def get(self: Json): Int = self.asInstanceOf[JsInt].value
 
-    def getOrElse(self: MaybeJson, default: Int): Int =
+    def getOrElse(self: MaybeJson, default: => Int): Int =
       if (self.isInt) {
         self.get(this)
       } else {
@@ -172,7 +168,7 @@ package object json extends JsonImplicit {
   implicit case object JsLongTyped extends JsTyped[Long] {
     def get(self: Json): Long = self.asInstanceOf[JsLong].value
 
-    def getOrElse(self: MaybeJson, default: Long): Long =
+    def getOrElse(self: MaybeJson, default: => Long): Long =
       if (self.isLong) {
         self.get(this)
       } else {
@@ -193,7 +189,7 @@ package object json extends JsonImplicit {
   implicit case object JsFloatTyped extends JsTyped[Float] {
     def get(self: Json): Float = self.asInstanceOf[JsFloat].value
 
-    def getOrElse(self: MaybeJson, default: Float): Float =
+    def getOrElse(self: MaybeJson, default: => Float): Float =
       if (self.isFloat) {
         self.get(this)
       } else {
@@ -214,7 +210,7 @@ package object json extends JsonImplicit {
   implicit case object JsDoubleTyped extends JsTyped[Double] {
     def get(self: Json): Double = self.asInstanceOf[JsDouble].value
 
-    def getOrElse(self: MaybeJson, default: Double): Double =
+    def getOrElse(self: MaybeJson, default: => Double): Double =
       if (self.isDouble) {
         self.get(this)
       } else {
@@ -235,7 +231,7 @@ package object json extends JsonImplicit {
   implicit case object JsBigDecimalTyped extends JsTyped[BigDecimal] {
     def get(self: Json): BigDecimal = self.asInstanceOf[JsBigDecimal].value
 
-    def getOrElse(self: MaybeJson, default: BigDecimal): BigDecimal =
+    def getOrElse(self: MaybeJson, default: => BigDecimal): BigDecimal =
       if (self.isBigDecimal) {
         self.get(this)
       } else {
@@ -256,7 +252,7 @@ package object json extends JsonImplicit {
   implicit case object JsStringTyped extends JsTyped[String] {
     def get(self: Json): String = self.asInstanceOf[JsString].value
 
-    def getOrElse(self: MaybeJson, default: String): String =
+    def getOrElse(self: MaybeJson, default: => String): String =
       if (self.isString) {
         self.get(this)
       } else {
@@ -277,7 +273,7 @@ package object json extends JsonImplicit {
   implicit case object JsBytesTyped extends JsTyped[ByteString] {
     def get(self: Json): ByteString = self.asInstanceOf[JsBytes].value
 
-    def getOrElse(self: MaybeJson, default: ByteString): ByteString =
+    def getOrElse(self: MaybeJson, default: => ByteString): ByteString =
       if (self.isBytes) {
         self.get(this)
       } else {
