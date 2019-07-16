@@ -2,6 +2,7 @@
 [![CircleCI](https://circleci.com/gh/amannocci/streamy/tree/master.svg?style=svg)](https://circleci.com/gh/amannocci/streamy/tree/master)
 [![codecov](https://codecov.io/gh/amannocci/streamy/branch/master/graph/badge.svg)](https://codecov.io/gh/amannocci/streamy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Famannocci%2Fstreamy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Famannocci%2Fstreamy?ref=badge_shield)
 
 **Currently not stable and under heavy development!**  
 *Streamy is a tool for managing events and logs. You can use it to collect logs, parse them, and store them for later use.
@@ -25,3 +26,7 @@ The following steps will ensure your project is cloned properly.
 
 ## Features
 * Coming soon
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Famannocci%2Fstreamy.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Famannocci%2Fstreamy?ref=badge_large)
