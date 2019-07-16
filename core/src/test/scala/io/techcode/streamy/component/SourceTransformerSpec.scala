@@ -83,7 +83,7 @@ class SourceTransformerSpec extends StreamyTestSystem {
         .via(source)
         .runWith(TestSink.probe[Json])
         .request(1)
-        .expectError() should equal(new StreamException("Error", Some(ByteString.empty), Some(new ParseException("Error"))))
+        .expectError() should equal(new StreamException("Error", ByteString.empty))
     }
   }
 

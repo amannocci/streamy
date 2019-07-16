@@ -31,21 +31,20 @@ import scala.util.control.NoStackTrace
 /**
   * A stream exception raised when an error occured in a stream.
   *
-  * @param msg   error message.
+  * @param msg   message error cause.
   * @param state current pkt state.
-  * @param ex    parent exception raised.
+  * @param meta  meta data.
   */
-class StreamException(val msg: String, val state: Option[Json] = None, val ex: Option[Throwable] = None)
-  extends RuntimeException(msg) with NoStackTrace {
+class StreamException(val msg: String, val state: Json = JsNull, val meta: Map[String, String] = Map.empty[String, String])
+  extends RuntimeException with NoStackTrace {
 
   def canEqual(a: Any): Boolean = a.isInstanceOf[StreamException]
 
-  override def equals(that: Any): Boolean =
-    that match {
-      case that: StreamException => that.canEqual(this) && this.hashCode == that.hashCode
-      case _ => false
-    }
+  override def equals(that: Any): Boolean = that match {
+    case that: StreamException => that.canEqual(this) && this.hashCode == that.hashCode
+    case _ => false
+  }
 
-  override def hashCode: Int = Objects.hashCode(msg, state, ex)
+  override def hashCode: Int = Objects.hashCode(msg, state, meta)
 
 }

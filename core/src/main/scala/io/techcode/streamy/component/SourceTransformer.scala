@@ -60,7 +60,7 @@ final case class SourceTransformer(factory: () ⇒ ByteStringParser[Json]) exten
         val pkt = grab(in)
         parser.parse(pkt) match {
           case Right(result) => push(out, result)
-          case Left(ex) => throw new StreamException(ex.getMessage, Some(pkt), Some(ex))
+          case Left(ex) => throw new StreamException(ex.getMessage, pkt, Map.empty)
         }
       } catch {
         case NonFatal(ex) ⇒ decider(ex) match {

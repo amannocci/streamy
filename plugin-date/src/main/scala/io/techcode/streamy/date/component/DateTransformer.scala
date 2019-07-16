@@ -41,6 +41,7 @@ private[component] class DateTransformer(config: DateTransformer.Config) extends
 
   override def transform(value: Json): MaybeJson = value
     .map[String](x => config.outputFormatter.format(config.inputFormatter.parse(x)))
+    .orElse(error("Can't transform date", value))
 
 }
 

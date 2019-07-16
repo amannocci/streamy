@@ -45,6 +45,7 @@ private[component] class FingerprintTransformer(config: FingerprintTransformer.C
 
   override def transform(value: Json): MaybeJson = value
     .map[String](x => hashFunc.hashString(x, StandardCharsets.UTF_8).toString)
+    .orElse(error("Can't generate fingerprint", value))
 
 }
 

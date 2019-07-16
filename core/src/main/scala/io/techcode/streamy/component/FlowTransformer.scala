@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.component
 
+import com.google.common.base.Throwables
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.{Config, SuccessBehaviour}
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
@@ -46,59 +47,90 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
         pkt.evaluate(config.source)
           .flatMap[Json](transform(_, pkt))
           .flatMap[Json](x => pkt.patch(Replace(config.source, x)))
-          .getOrElse(onError(Transformer.GenericErrorMsg, pkt))
+          .getOrElse[Json](error(Transformer.GenericErrorMsg, pkt))
     } else {
       // Transform inplace and then copy to target
       pkt: Json =>
         pkt.evaluate(config.source)
           .flatMap[Json](transform(_, pkt))
           .flatMap[Json] { v =>
-            val operated: MaybeJson = {
-              if (config.target.get == Root) {
-                pkt.flatMap[JsObject] { x =>
-                  v.map[JsObject] { y =>
-                    x.merge(y)
-                  }
+          val operated: MaybeJson = {
+            if (config.target.get == Root) {
+              pkt.flatMap[JsObject] { x =>
+                v.map[JsObject] { y =>
+                  x.merge(y)
                 }
-              } else {
-                pkt
               }
-            }
-
-            // Combine operations if needed
-            var operations = List[JsonOperation]()
-            if (config.target.get != Root) {
-              operations = operations :+ Add(config.target.get, v)
-            }
-            if (config.onSuccess == SuccessBehaviour.Remove) {
-              operations = operations :+ Remove(config.source)
-            }
-
-            // Perform operations if needed
-            if (operations.isEmpty) {
-              operated
             } else {
-              operated.flatMap[Json](_.patch(operations))
+              pkt
             }
-          }.getOrElse(onError(Transformer.GenericErrorMsg, pkt))
+          }
+
+          // Combine operations if needed
+          var operations = List[JsonOperation]()
+          if (config.target.get != Root) {
+            operations = operations :+ Add(config.target.get, v)
+          }
+          if (config.onSuccess == SuccessBehaviour.Remove) {
+            operations = operations :+ Remove(config.source)
+          }
+
+          // Perform operations if needed
+          if (operations.isEmpty) {
+            operated
+          } else {
+            operated.flatMap[Json](_.patch(operations))
+          }
+        }.getOrElse[Json](error(Transformer.GenericErrorMsg, pkt))
     }
   }
 
   /**
     * Handle parsing error by discarding or wrapping or skipping.
     *
+    * @param cause exception raised.
     * @param state value of field when error is raised.
-    * @param ex    exception if one is raised.
     * @return result json value.
     */
-  def onError[T <: Json](msg: String = Transformer.GenericErrorMsg, state: T, ex: Option[Throwable] = None): T = {
-    config.onError match {
-      case ErrorBehaviour.Discard =>
-        throw new StreamException(msg, state = Some(state))
-      case ErrorBehaviour.DiscardAndReport =>
-        throw new StreamException(msg, state = Some(state), ex)
-      case ErrorBehaviour.Skip => state
-    }
+  def error(cause: Throwable, state: Json): Json = error(cause, state, Map.empty[String, String])
+
+  /**
+    * Handle parsing error by discarding or wrapping or skipping.
+    *
+    * @param cause exception raised.
+    * @param state value of field when error is raised.
+    * @param meta  extra meta data.
+    * @return result json value.
+    */
+  def error(cause: Throwable, state: Json, meta: Map[String, String]): Json = config.onError match {
+    case ErrorBehaviour.Discard =>
+      throw new StreamException(cause.getMessage, state, meta)
+    case ErrorBehaviour.DiscardAndReport =>
+      throw new StreamException(cause.getMessage, state, meta + ("stacktrace" -> Throwables.getStackTraceAsString(cause)))
+    case ErrorBehaviour.Skip => state
+  }
+
+  /**
+    * Handle parsing error by discarding or wrapping or skipping.
+    *
+    * @param msg   message exception raised.
+    * @param state value of field when error is raised.
+    * @return result json value.
+    */
+  def error(msg: String, state: Json): Json = error(msg, state, Map.empty[String, String])
+
+  /**
+    * Handle parsing error by discarding or wrapping or skipping.
+    *
+    * @param msg   message exception raised.
+    * @param state value of field when error is raised.
+    * @param meta  extra meta data.
+    * @return result json value.
+    */
+  def error(msg: String, state: Json, meta: Map[String, String]): Json = config.onError match {
+    case ErrorBehaviour.Discard | ErrorBehaviour.DiscardAndReport =>
+      throw new StreamException(msg, state, meta)
+    case ErrorBehaviour.Skip => state
   }
 
   /**

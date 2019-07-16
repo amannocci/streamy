@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2018-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,9 @@ package io.techcode.streamy.xymon.component
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
-import io.techcode.streamy.util.{Binder, NoneBinder}
 import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.{Binder, NoneBinder}
 import io.techcode.streamy.xymon.util.parser.XymonParser
 import io.techcode.streamy.xymon.util.printer.XymonPrinter
 
@@ -36,11 +36,20 @@ import io.techcode.streamy.xymon.util.printer.XymonPrinter
   * Xymon transformer companion.
   */
 object XymonTransformer {
-  // Create a xymon flow that transforms incoming [[ByteString]] to [[Json]]
+
+  /**
+    * Create a xymon flow that transform incoming [[ByteString]] to [[Json]].
+    *
+    * @param conf flow configuration.
+    */
   def parser(conf: Parser.Config): Flow[ByteString, Json, NotUsed] =
     Flow.fromGraph(SourceTransformer(() => XymonParser.parser(conf)))
 
-  // Create a xymon flow that transforms incoming [[Json]] to [[ByteString]]
+  /**
+    * Create a xymon flow that transform incoming [[Json]] to [[ByteString]].
+    *
+    * @param conf flow configuration.
+    */
   def printer(conf: Printer.Config): Flow[Json, ByteString, NotUsed] =
     Flow.fromGraph(SinkTransformer(() => XymonPrinter.printer(conf)))
 
@@ -55,6 +64,7 @@ object XymonTransformer {
   }
 
   object Parser {
+
     case class Binding(
       lifetime: Binder = NoneBinder,
       group: Binder = NoneBinder,
@@ -67,9 +77,11 @@ object XymonTransformer {
     case class Config(
       binding: Binding = Binding()
     )
+
   }
 
   object Printer {
+
     case class Binding(
       lifetime: Binder = NoneBinder,
       group: Binder = NoneBinder,
@@ -82,5 +94,7 @@ object XymonTransformer {
     case class Config(
       binding: Binding = Binding()
     )
+
   }
+
 }

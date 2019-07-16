@@ -88,7 +88,7 @@ private trait EitherHandler {
       case v: ByteString => byteStringToJson(v)
       case v: Json => v
     }
-    case Left(ex) => onError(state = data, ex = Some(ex))
+    case Left(ex) => error(ex, data)
   }
 
 }

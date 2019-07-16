@@ -76,7 +76,7 @@ trait Parser[In, Out] {
     _cursor = 0
     _length = -1
     data = null.asInstanceOf[In]
-    if (stack.nonEmpty) {
+    if (stack.nonEmpty) { // Avoid uneeded new array allocation
       stack.clear()
     }
   }

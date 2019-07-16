@@ -43,17 +43,8 @@ abstract class Plugin(
   def decider: Supervision.Decider = { ex =>
     ex match {
       case streamEx: StreamException =>
-        log.mdc(if (streamEx.state.isDefined) {
-          Map("state" -> streamEx.state.get.toString)
-        } else {
-          Map.empty[String, String]
-        })
-
-        if (streamEx.ex.isDefined) {
-          log.error(streamEx.ex.get, streamEx.msg)
-        } else {
-          log.error(streamEx.msg)
-        }
+        log.mdc(streamEx.meta + ("state" -> streamEx.state.toString))
+        log.error(streamEx.msg)
       case _ => log.error(ex, "An error occured")
     }
     Supervision.Resume

@@ -47,6 +47,13 @@ object ElasticsearchSource {
   // Default values
   val DefaultBulk = 500
 
+  // Precomputed path
+  private object ElasticPath {
+    val Hits: JsonPointer = Root / "hits" / "hits"
+    val ScrollId: JsonPointer = Root / "_scroll_id"
+    val Size: JsonPointer = Root / "size"
+  }
+
   // Component configuration
   case class Config(
     hosts: Seq[String],
@@ -75,7 +82,7 @@ object ElasticsearchSource {
     var request = sttp.post(uri)
       .header("Content-Type", "application/json")
       .readTimeout(5 seconds)
-      .body(config.query.toString())
+      .body(Json.printStringUnsafe(config.query))
       .response(asStream[Source[ByteString, NotUsed]])
 
     // Add basic auth
@@ -162,14 +169,14 @@ object ElasticsearchSource {
           case Left(ex) => handleFailure(new StreamException(ex))
           case Right(data) =>
             // Retrieve hits
-            val result = data.evaluate(Root / "hits" / "hits")
+            val result = data.evaluate(ElasticPath.Hits)
             if (result.isDefined) {
               system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
 
               // Check if we have at least one hit
               val it = result.get[JsArray].toIterator
               if (it.hasNext) {
-                scrollId = data.evaluate(Root / "_scroll_id")
+                scrollId = data.evaluate(ElasticPath.ScrollId)
                 emitMultiple(out, it)
               } else {
                 completeStage()
@@ -214,12 +221,12 @@ object ElasticsearchSource {
 
           // Add request body
           request = if (scrollId.isEmpty) {
-            request.body(config.query.patch(Add(Root / "size", config.bulk)).get[Json].toString)
+            request.body(Json.printStringUnsafe(config.query.patch(Add(ElasticPath.Size, config.bulk)).get[Json]))
           } else {
-            request.body(Json.obj(
+            request.body(Json.printStringUnsafe(Json.obj(
               "scroll" -> "5m",
               "scroll_id" -> scrollId.get[Json]
-            ).toString)
+            )))
           }
 
           // Mark begin of request

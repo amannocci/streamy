@@ -72,7 +72,7 @@ class SinkTransformerSpec extends StreamyTestSystem {
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .request(1)
-        .expectError() should equal(new StreamException("Error", Some(Json.obj("foo" -> "bar")), Some(new PrintException("Error"))))
+        .expectError() should equal(new StreamException("Error", Json.obj("foo" -> "bar")))
     }
   }
 

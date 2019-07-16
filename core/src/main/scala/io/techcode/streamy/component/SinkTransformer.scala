@@ -60,7 +60,7 @@ final case class SinkTransformer(factory: () ⇒ ByteStringPrinter[Json]) extend
         val pkt = grab(in)
         printer.print(pkt) match {
           case Right(result) => push(out, result)
-          case Left(ex) => throw new StreamException(ex.getMessage, Some(pkt), Some(ex))
+          case Left(ex) => throw new StreamException(ex.getMessage, pkt, Map.empty)
         }
       } catch {
         case NonFatal(ex) ⇒ decider(ex) match {
