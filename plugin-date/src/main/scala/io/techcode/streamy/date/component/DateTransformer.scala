@@ -27,7 +27,7 @@ import java.time.format.DateTimeFormatter
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
-import io.techcode.streamy.component.FlowTransformer
+import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
@@ -37,7 +37,7 @@ import io.techcode.streamy.util.json._
 /**
   * Date transformer implementation.
   */
-private[component] class DateTransformer(config: DateTransformer.Config) extends FlowTransformer(config) {
+private[component] class DateTransformerLogic(config: DateTransformer.Config) extends FlowTransformerLogic(config) {
 
   override def transform(value: Json): MaybeJson = value
     .map[String](x => config.outputFormatter.format(config.inputFormatter.parse(x)))
@@ -70,6 +70,6 @@ object DateTransformer {
     * @return new date flow.
     */
   def apply(conf: Config): Flow[Json, Json, NotUsed] =
-    Flow.fromFunction(new DateTransformer(conf))
+    Flow.fromGraph(FlowTransformer(() => new DateTransformerLogic(conf)))
 
 }

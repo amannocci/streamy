@@ -23,6 +23,9 @@
  */
 package io.techcode.streamy.component
 
+import akka.stream.ActorAttributes.SupervisionStrategy
+import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
+import akka.stream._
 import com.google.common.base.Throwables
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.{Config, SuccessBehaviour}
@@ -32,12 +35,13 @@ import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
 import scala.language.postfixOps
+import scala.util.control.NonFatal
 
 /**
-  * Flow transformer abstract implementation that provide
+  * Flow transformer logic abstract implementation that provide
   * a convenient way to process an update on [[Json]].
   */
-abstract class FlowTransformer(config: Config) extends (Json => Json) {
+abstract class FlowTransformerLogic(config: Config) extends (Json => Json) {
 
   // Choose right transform function
   private val function: Json => Json = {
@@ -157,6 +161,45 @@ abstract class FlowTransformer(config: Config) extends (Json => Json) {
     * @return packet transformed.
     */
   @inline def apply(pkt: Json): Json = function(pkt)
+
+}
+
+/**
+  * Flow transformer abstract implementation that provide
+  * a convenient way to process an update on [[Json]].
+  */
+final case class FlowTransformer(factory: () ⇒ FlowTransformerLogic) extends GraphStage[FlowShape[Json, Json]] {
+
+  val in: Inlet[Json] = Inlet[Json]("flowTransformer.in")
+
+  val out: Outlet[Json] = Outlet[Json]("flowTransformer.out")
+
+  override val shape = FlowShape(in, out)
+
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
+
+    // Set handler
+    setHandlers(in, out, this)
+
+    private val logic = factory()
+
+    private def decider = inheritedAttributes.mandatoryAttribute[SupervisionStrategy].decider
+
+    override def onPush(): Unit = {
+      try {
+        push(out, logic(grab(in)))
+      } catch {
+        case NonFatal(ex) =>
+          decider(ex) match {
+            case Supervision.Stop => failStage(ex)
+            case _ => pull(in)
+          }
+      }
+    }
+
+    override def onPull(): Unit = pull(in)
+
+  }
 
 }
 

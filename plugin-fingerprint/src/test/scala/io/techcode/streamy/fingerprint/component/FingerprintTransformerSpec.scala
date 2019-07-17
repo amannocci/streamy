@@ -42,81 +42,107 @@ class FingerprintTransformerSpec extends TestTransformer {
     }
 
     "transform correctly a packet inplace with md5 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "md5"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"098f6bcd4621d373cade4e832627b4f6"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "md5")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"098f6bcd4621d373cade4e832627b4f6"}""")
+      )
     }
 
     "transform correctly a packet inplace with sha1 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "sha1"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "sha1")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"}""")
+      )
     }
 
     "transform correctly a packet inplace with sha256 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "sha256"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "sha256")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}""")
+      )
     }
 
     "transform correctly a packet inplace with sha384 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "sha384"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"768412320f7b0aa5812fce428dc4706b3cae50e02a64caa16a782249bfe8efc4b7ef1ccb126255d196047dfedf17a0a9"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "sha384")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"768412320f7b0aa5812fce428dc4706b3cae50e02a64caa16a782249bfe8efc4b7ef1ccb126255d196047dfedf17a0a9"}""")
+      )
     }
 
     "transform correctly a packet inplace with sha512 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "sha512"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "sha512")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"}""")
+      )
     }
 
     "transform correctly a packet inplace with alder32 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "alder32"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"c1015d04"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "alder32")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"c1015d04"}""")
+      )
     }
 
     "transform correctly a packet inplace with crc32 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "crc32"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"0c7e7fd8"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "crc32")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"0c7e7fd8"}""")
+      )
     }
 
     "transform correctly a packet inplace with crc32c hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "crc32c"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"c072a086"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "crc32c")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"c072a086"}""")
+      )
     }
 
     "transform correctly a packet inplace with murmur3_32 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "murmur3_32"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"13d26bba"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "murmur3_32")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"13d26bba"}""")
+      )
     }
 
     "transform correctly a packet inplace with murmur3_128 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "murmur3_128"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"9de1bd74cc287dac824dbdf93182129a"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "murmur3_128")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"9de1bd74cc287dac824dbdf93182129a"}""")
+      )
     }
 
     "transform correctly a packet inplace with sipHash24 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "sipHash24"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"9a72565c525e7626"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "sipHash24")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"9a72565c525e7626"}""")
+      )
     }
 
     "transform correctly a packet inplace with farmHashFingerprint64 hashing" in {
-      val input = Json.parseStringUnsafe("""{"message":"test"}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64"))
-      component.apply(input) should equal(Json.parseStringUnsafe("""{"message":"b2b585aa3d381777"}"""))
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64")),
+        Json.parseStringUnsafe("""{"message":"test"}"""),
+        Json.parseStringUnsafe("""{"message":"b2b585aa3d381777"}""")
+      )
     }
 
     "handle correctly unexpected input" in {
-      val input = Json.parseStringUnsafe("""{"message":10}""")
-      val component = new FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64"))
-      component.apply(input) should equal(input)
+      except(
+        FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64")),
+        Json.parseStringUnsafe("""{"message":10}"""),
+        Json.parseStringUnsafe("""{"message":10}""")
+      )
     }
   }
 
