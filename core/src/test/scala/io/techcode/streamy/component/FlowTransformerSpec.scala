@@ -23,27 +23,30 @@
  */
 package io.techcode.streamy.component
 
+import akka.stream.scaladsl.Source
+import akka.stream.testkit.scaladsl.TestSink
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
+import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
-import org.scalatest._
 
 /**
   * Flow transformer spec.
   */
-class FlowTransformerSpec extends WordSpec with Matchers {
+class FlowTransformerSpec extends StreamyTestSystem {
 
-  class Impl(config: ImplConfig) extends FlowTransformer(config) {
+  class Impl(config: ImplConfig) extends FlowTransformerLogic(config) {
     override def transform(value: Json): MaybeJson = value match {
       case x: JsString => s"${x.value}bar"
       case _ => JsUndefined
     }
   }
 
-  class ImplParent(config: ImplConfig) extends FlowTransformer(config) {
+  class ImplParent(config: ImplConfig) extends FlowTransformerLogic(config) {
     override def transform(value: Json, pkt: Json): MaybeJson = value match {
       case x: JsString => s"${x.value}bar"
       case _ => JsUndefined
@@ -60,15 +63,29 @@ class FlowTransformerSpec extends WordSpec with Matchers {
 
   "Flow transformer" should {
     "transform correctly a packet inplace" in {
-      val input = Json.obj("message" -> "foo")
-      val component = new Impl(ImplConfig(Root / "message"))
-      component.apply(input) should equal(Json.obj("message" -> "foobar"))
+      val decider: Supervision.Decider = _ => Supervision.Resume
+
+      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+
+      val transformer = FlowTransformer(() => new Impl(ImplConfig(Root / "message")))
+
+      Source.single(Json.obj("message" -> "foo"))
+        .via(transformer)
+        .runWith(TestSink.probe[Json])
+        .requestNext() should equal(Json.obj("message" -> "foobar"))
     }
 
     "transform correctly a packet with a specific target" in {
-      val input = Json.obj("message" -> "foo")
-      val component = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
-      component.apply(input) should equal(Json.obj(
+      val decider: Supervision.Decider = _ => Supervision.Resume
+
+      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+
+      val transformer = FlowTransformer(() => new Impl(ImplConfig(Root / "message", Some(Root / "target"))))
+
+      Source.single(Json.obj("message" -> "foo"))
+        .via(transformer)
+        .runWith(TestSink.probe[Json])
+        .requestNext() should equal(Json.obj(
         "message" -> "foo",
         "target" -> "foobar"
       ))

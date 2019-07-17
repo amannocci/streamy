@@ -53,19 +53,19 @@ object DateTransformerBench {
 
   object Transformer {
 
-    val Idempotent: DateTransformer = new DateTransformer(DateTransformer.Config(
+    val Idempotent: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTransformer.Iso8601
     ))
 
-    val FromIsoToCustom: DateTransformer = new DateTransformer(DateTransformer.Config(
+    val FromIsoToCustom: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy")
     ))
 
-    val FromCustomToIso: DateTransformer = new DateTransformer(DateTransformer.Config(
+    val FromCustomToIso: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy"),
       outputFormatter = DateTransformer.Iso8601

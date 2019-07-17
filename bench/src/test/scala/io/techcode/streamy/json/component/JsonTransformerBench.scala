@@ -47,10 +47,10 @@ class JsonTransformerBench {
   */
 private object JsonTransformerBench {
 
-  val Source = new DeserializerTransformer(JsonTransformer.Config(source = Root / "message"))
+  val Source = new DeserializerTransformerLogic(JsonTransformer.Config(source = Root / "message"))
 
-  val SourceAndTarget = new DeserializerTransformer(JsonTransformer.Config(source = Root / "message", target = Some(Root / "target")))
+  val SourceAndTarget = new DeserializerTransformerLogic(JsonTransformer.Config(source = Root / "message", target = Some(Root / "target")))
 
-  val Failure = new DeserializerTransformer(JsonTransformer.Config(source = Root / "message"))
+  val Failure = new DeserializerTransformerLogic(JsonTransformer.Config(source = Root / "message"))
 
 }
