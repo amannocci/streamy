@@ -70,8 +70,8 @@ object JsonTransformer {
     * @return new json flow.
     */
   def apply(conf: Config): Flow[Json, Json, NotUsed] = conf.mode match {
-    case Mode.Serialize => Flow.fromFunction(new SerializerTransformerLogic(conf))
-    case Mode.Deserialize => Flow.fromFunction(new DeserializerTransformerLogic(conf))
+    case Mode.Serialize => Flow.fromGraph(FlowTransformer(() => new SerializerTransformerLogic(conf)))
+    case Mode.Deserialize => Flow.fromGraph(FlowTransformer(() => new DeserializerTransformerLogic(conf)))
   }
 
 }
