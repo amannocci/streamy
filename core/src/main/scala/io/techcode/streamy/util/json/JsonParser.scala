@@ -37,13 +37,19 @@ import scala.annotation.{switch, tailrec}
   */
 object JsonParser {
 
+  // Default values
+  private val DefaultMaxDepth: Int = 1000
+
+  // Default configuration
+  val DefaultConfig = Config(DefaultMaxDepth)
+
   /**
     * Create a json parser that transform incoming [[ByteString]] to [[Json]].
     * This parser is Rfc4627 compliant.
     *
     * @return new json parser Rfc4627 compliant.
     */
-  def byteStringParser(config: JsonParserConfig = JsonParserConfig.Default): ByteStringParser[Json] = new ByteStringJsonParser(config)
+  def byteStringParser(config: JsonParser.Config = DefaultConfig): ByteStringParser[Json] = new ByteStringJsonParser(config)
 
   /**
     * Create a json parser that transform incoming [[String]] to [[Json]].
@@ -51,25 +57,12 @@ object JsonParser {
     *
     * @return new json parser Rfc4627 compliant.
     */
-  def stringParser(config: JsonParserConfig = JsonParserConfig.Default): StringParser[Json] = new StringJsonParser(config)
+  def stringParser(config: JsonParser.Config = DefaultConfig): StringParser[Json] = new StringJsonParser(config)
 
-}
-
-// Json parser configuration
-case class JsonParserConfig(
-  maxDepth: Int = JsonParserConfig.DefaultMaxDepth
-)
-
-/**
-  * Json parser config companion.
-  */
-object JsonParserConfig {
-
-  // Default values
-  private val DefaultMaxDepth: Int = 1000
-
-  // Default configuration
-  val Default = JsonParserConfig(DefaultMaxDepth)
+  // Json parser configuration
+  case class Config(
+    maxDepth: Int = DefaultMaxDepth
+  )
 
 }
 
@@ -86,7 +79,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
 
   private var hasReachMaxNesting = false
 
-  def config: JsonParserConfig
+  def config: JsonParser.Config
 
   def run(): Json = {
     if (root()) {
@@ -284,9 +277,9 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
   * Json parser that transform incoming [[ByteString]] to [[Json]].
   * This parser is Rfc4627 compliant.
   */
-private class ByteStringJsonParser(conf: JsonParserConfig) extends ByteStringParser[Json] with AbstractJsonParser[ByteString] {
+private class ByteStringJsonParser(conf: JsonParser.Config) extends ByteStringParser[Json] with AbstractJsonParser[ByteString] {
 
-  def config: JsonParserConfig = conf
+  def config: JsonParser.Config = conf
 
   // https://tools.ietf.org/html/rfc4627#section-2.4
   protected def `number`(): Boolean = {
@@ -344,9 +337,9 @@ private class ByteStringJsonParser(conf: JsonParserConfig) extends ByteStringPar
   * Json parser that transform incoming [[String]] to [[Json]].
   * This parser is Rfc4627 compliant.
   */
-private class StringJsonParser(conf: JsonParserConfig) extends StringParser[Json] with AbstractJsonParser[String] {
+private class StringJsonParser(conf: JsonParser.Config) extends StringParser[Json] with AbstractJsonParser[String] {
 
-  def config: JsonParserConfig = conf
+  def config: JsonParser.Config = conf
 
   // https://tools.ietf.org/html/rfc4627#section-2.4
   protected def `number`(): Boolean = {

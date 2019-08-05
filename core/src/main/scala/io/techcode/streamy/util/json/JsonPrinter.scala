@@ -26,6 +26,7 @@ package io.techcode.streamy.util.json
 import java.util.Base64
 
 import akka.util.ByteString
+import com.google.common.io.BaseEncoding
 import io.techcode.streamy.util.lang.CharBuilder
 import io.techcode.streamy.util.math.{RyuDouble, RyuFloat}
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter, Printer, StringPrinter}
@@ -163,7 +164,7 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     */
   private def printBytes(value: JsBytes): Unit = {
     builder.append(JsonPrinter.Quote)
-      .append(Base64.getMimeEncoder.encodeToString(value.value.toArray[Byte]))
+      .append(BaseEncoding.base64().encode(value.value.toArray[Byte]))
       .append(JsonPrinter.Quote)
   }
 
