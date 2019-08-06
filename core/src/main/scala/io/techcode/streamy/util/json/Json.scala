@@ -372,15 +372,15 @@ abstract class JsDefined extends MaybeJson {
 
   def filterNot(p: Json => Boolean): MaybeJson = if (!p(this.get[Json])) this else JsUndefined
 
-  def ifExists[T](f: T => Unit)(implicit c: JsTyped[T]): Unit = c.ifExists(this.get[Json], f)
+  def ifExists[T](f: T => Unit)(implicit c: JsTyped[T]): Unit = c.ifExists(this, f)
 
   def fold(ifEmpty: => Json)(f: Json => Json): Json = f(this.get[Json])
 
   def getOrElse[T](default: => T)(implicit c: JsTyped[T]): T = c.getOrElse(this, default)
 
-  def map[T](f: T => Json)(implicit c: JsTyped[T]): MaybeJson = c.map(this.get[Json], f)
+  def map[T](f: T => Json)(implicit c: JsTyped[T]): MaybeJson = c.map(this, f)
 
-  def flatMap[T](f: T => MaybeJson)(implicit c: JsTyped[T]): MaybeJson = c.flatMap(this.get[Json], f)
+  def flatMap[T](f: T => MaybeJson)(implicit c: JsTyped[T]): MaybeJson = c.flatMap(this, f)
 
   def exists(p: Json => Boolean): Boolean = p(this.get[Json])
 
