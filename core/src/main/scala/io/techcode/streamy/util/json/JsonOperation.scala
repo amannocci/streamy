@@ -46,6 +46,9 @@ sealed trait JsonOperation {
   */
 private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOperation {
 
+  // Shortcut to underlying data structure
+  val underlying: Array[JsonAccessor] = path.underlying
+
   /**
     * Apply operation recursively.
     *
@@ -55,9 +58,6 @@ private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOp
     * @return json value modified or [[None]].
     */
   private[json] def apply(path: JsonPointer, idx: Int, current: MaybeJson): MaybeJson = {
-    // Shortcut to underlying data structure
-    lazy val underlying = path.underlying
-
     if (current.isEmpty) {
       // We fail to evaluate path
       current
@@ -155,7 +155,7 @@ case class Bulk(path: JsonPointer = Root, ops: Seq[JsonOperation]) extends Abstr
 case class Add(path: JsonPointer, value: Json) extends AbstractOperation(path) {
 
   override def apply(json: Json): MaybeJson = {
-    if (path.underlying.isEmpty) {
+    if (path.isEmpty) {
       value
     } else {
       apply(path, 0, json)
@@ -176,7 +176,7 @@ case class Add(path: JsonPointer, value: Json) extends AbstractOperation(path) {
 case class Replace(path: JsonPointer, value: Json) extends AbstractOperation(path) {
 
   override def apply(json: Json): MaybeJson = {
-    if (path.underlying.isEmpty) {
+    if (path.isEmpty) {
       value
     } else {
       apply(path, 0, json)
@@ -197,7 +197,7 @@ case class Replace(path: JsonPointer, value: Json) extends AbstractOperation(pat
 case class Remove(path: JsonPointer, mustExist: Boolean = true) extends AbstractOperation(path) {
 
   override def apply(json: Json): MaybeJson = {
-    if (path.underlying.isEmpty) {
+    if (path.isEmpty) {
       json
     } else {
       val result = apply(path, 0, json)

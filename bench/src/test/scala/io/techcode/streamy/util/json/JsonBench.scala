@@ -77,7 +77,9 @@ class JsonBench {
     Sample.JsonObj.remove("double")
   }
 
-  @Benchmark def flatten(): JsObject = JsonBench.Sample.JsonObjToFlatten.flatten()
+  @Benchmark def jsFlatten(): JsObject = JsonBench.Sample.JsonObjToFlatten.flatten()
+
+  @Benchmark def jsEvaluate(): MaybeJson = JsonBench.Sample.JsonObj.evaluate(JsonBench.Pointer.Access)
 
 }
 
@@ -115,6 +117,10 @@ object JsonBench {
       )
     )
 
+  }
+
+  object Pointer {
+    val Access: JsonPointer = Root / "string"
   }
 
 }

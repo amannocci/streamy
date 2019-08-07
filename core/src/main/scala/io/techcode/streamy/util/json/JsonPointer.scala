@@ -36,6 +36,11 @@ import io.techcode.streamy.util.parser.{CharMatchers, ParseException, StringPars
 case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array.empty) extends Iterable[Either[String, Int]] {
 
   /**
+    * Returns true if the json pointer is the root json pointer.
+    */
+  def isRoot: Boolean = underlying.isEmpty
+
+  /**
     * Apply json pointer to a json value.
     *
     * @param json json value to evaluate.
@@ -102,12 +107,7 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
 
   // scalastyle:on method.name
 
-  override def toString: String = {
-    "/" + underlying.map {
-      case JsonArrayAccessor(idx) => idx.toString
-      case JsonObjectAccessor(key) => key
-    }.mkString("/")
-  }
+  override def toString: String = "/" + underlying.map(_.repr).mkString("/")
 
   override def equals(o: Any): Boolean = o match {
     case obj: JsonPointer => underlying.deep == obj.underlying.deep
@@ -147,6 +147,8 @@ private[json] trait JsonAccessor {
 
   def remove(json: Json, mustExist: Boolean = true): MaybeJson
 
+  def repr: String
+
 }
 
 /**
@@ -155,7 +157,7 @@ private[json] trait JsonAccessor {
 private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
 
   def evaluate(json: Json): MaybeJson = json match {
-    case x: JsObject => x(key).orElse(JsUndefined)
+    case x: JsObject => x(key)
     case _ => JsUndefined
   }
 
@@ -194,6 +196,8 @@ private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
       }
     case _ => JsUndefined
   }
+
+  def repr: String = key
 
 }
 
@@ -248,6 +252,8 @@ private[json] case class JsonArrayAccessor(idx: Int) extends JsonAccessor {
       }
     case _ => JsUndefined
   }
+
+  def repr: String = idx.toString
 
 }
 
