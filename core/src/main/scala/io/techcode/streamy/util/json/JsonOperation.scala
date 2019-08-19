@@ -47,7 +47,7 @@ sealed trait JsonOperation {
 private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOperation {
 
   // Shortcut to underlying data structure
-  val underlying: Array[JsonAccessor] = path.underlying
+  val underlying: Array[JsAccessor] = path.underlying
 
   /**
     * Apply operation recursively.
@@ -85,7 +85,7 @@ private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOp
     * @param current  curren json value.
     * @return json value modified or [[None]].
     */
-  def operate(accessor: JsonAccessor, current: Json): MaybeJson
+  def operate(accessor: JsAccessor, current: Json): MaybeJson
 
 }
 
@@ -105,7 +105,7 @@ case class Bulk(path: JsonPointer = Root, ops: Seq[JsonOperation]) extends Abstr
     }
   }
 
-  def operate(accessor: JsonAccessor, current: Json): MaybeJson = {
+  def operate(accessor: JsAccessor, current: Json): MaybeJson = {
     val result = process(accessor.evaluate(current))
     if (result.isDefined) {
       accessor.set(current, result.get[Json])
@@ -125,7 +125,7 @@ case class Bulk(path: JsonPointer = Root, ops: Seq[JsonOperation]) extends Abstr
     var idx = 0
     var result: MaybeJson = current
 
-    if (result.isDefined) {
+    result.ifExists[Json] { rs =>
       // Iterate over operations
       while (idx < ops.length) {
         // Result of sub operation
@@ -162,7 +162,7 @@ case class Add(path: JsonPointer, value: Json) extends AbstractOperation(path) {
     }
   }
 
-  def operate(accessor: JsonAccessor, current: Json): MaybeJson =
+  def operate(accessor: JsAccessor, current: Json): MaybeJson =
     accessor.add(current, value)
 
 }
@@ -183,7 +183,7 @@ case class Replace(path: JsonPointer, value: Json) extends AbstractOperation(pat
     }
   }
 
-  def operate(accessor: JsonAccessor, current: Json): MaybeJson =
+  def operate(accessor: JsAccessor, current: Json): MaybeJson =
     accessor.replace(current, value)
 
 }
@@ -209,7 +209,7 @@ case class Remove(path: JsonPointer, mustExist: Boolean = true) extends Abstract
     }
   }
 
-  def operate(accessor: JsonAccessor, current: Json): MaybeJson =
+  def operate(accessor: JsAccessor, current: Json): MaybeJson =
     accessor.remove(current, mustExist)
 
 }

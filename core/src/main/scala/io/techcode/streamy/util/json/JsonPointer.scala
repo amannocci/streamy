@@ -33,7 +33,7 @@ import io.techcode.streamy.util.parser.{CharMatchers, ParseException, StringPars
   *
   * @param underlying json pointer path.
   */
-case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array.empty) extends Iterable[Either[String, Int]] {
+case class JsonPointer(private[json] val underlying: Array[JsAccessor] = Array.empty) extends Iterable[Either[String, Int]] {
 
   /**
     * Returns true if the json pointer is the root json pointer.
@@ -83,9 +83,9 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
     * @return new json pointer.
     */
   def /(key: String): JsonPointer = {
-    val newPath = new Array[JsonAccessor](underlying.length + 1)
+    val newPath = new Array[JsAccessor](underlying.length + 1)
     Array.copy(underlying, 0, newPath, 0, underlying.length)
-    newPath.update(underlying.length, JsonObjectAccessor(key))
+    newPath.update(underlying.length, JsObjectAccessor(key))
     copy(newPath)
   }
 
@@ -99,9 +99,9 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
     * @return new json pointer.
     */
   def /(idx: Int): JsonPointer = {
-    val newPath = new Array[JsonAccessor](underlying.length + 1)
+    val newPath = new Array[JsAccessor](underlying.length + 1)
     Array.copy(underlying, 0, newPath, 0, underlying.length)
-    newPath.update(underlying.length, JsonArrayAccessor(idx))
+    newPath.update(underlying.length, JsArrayAccessor(idx))
     copy(newPath)
   }
 
@@ -123,8 +123,8 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
       val el = underlying(index)
       index += 1
       el match {
-        case JsonObjectAccessor(key) => Left(key)
-        case JsonArrayAccessor(idx) => Right(idx)
+        case JsObjectAccessor(key) => Left(key)
+        case JsArrayAccessor(idx) => Right(idx)
       }
     }
 
@@ -135,7 +135,7 @@ case class JsonPointer(private[json] val underlying: Array[JsonAccessor] = Array
 /**
   * Represent an abstract json accessor.
   */
-private[json] trait JsonAccessor {
+private[json] trait JsAccessor {
 
   def evaluate(json: Json): MaybeJson
 
@@ -154,7 +154,7 @@ private[json] trait JsonAccessor {
 /**
   * Represent an object accessor.
   */
-private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
+private[json] case class JsObjectAccessor(key: String) extends JsAccessor {
 
   def evaluate(json: Json): MaybeJson = json match {
     case x: JsObject => x(key)
@@ -204,7 +204,7 @@ private[json] case class JsonObjectAccessor(key: String) extends JsonAccessor {
 /**
   * Represent an array accessor.
   */
-private[json] case class JsonArrayAccessor(idx: Int) extends JsonAccessor {
+private[json] case class JsArrayAccessor(idx: Int) extends JsAccessor {
 
   def evaluate(json: Json): MaybeJson = json match {
     case x: JsArray => x(idx)

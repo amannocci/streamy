@@ -80,18 +80,18 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
       charBuffer.clear()
       result
     } else {
-        val byte = data(_cursor)
-        if (byte >= 0) {
-          byte.toChar // 7-Bit ASCII
-        } else if ((byte & 0xE0) == 0xC0) {
-          decode(byte, 1) // 2-byte UTF-8 sequence
-        } else if ((byte & 0xF0) == 0xE0) {
-          decode(byte, 2) // 3-byte UTF-8 sequence
-        } else if ((byte & 0xF8) == 0xF0) {
-          decode(byte, 3) // 4-byte UTF-8 sequence
-        } else {
-          fail()
-        }
+      val byte = data(_cursor)
+      if (byte >= 0) {
+        byte.toChar // 7-Bit ASCII
+      } else if ((byte & 0xE0) == 0xC0) {
+        decode(byte, 1) // 2-byte UTF-8 sequence
+      } else if ((byte & 0xF0) == 0xE0) {
+        decode(byte, 2) // 3-byte UTF-8 sequence
+      } else if ((byte & 0xF8) == 0xF0) {
+        decode(byte, 3) // 4-byte UTF-8 sequence
+      } else {
+        fail()
+      }
     }
   }
 
