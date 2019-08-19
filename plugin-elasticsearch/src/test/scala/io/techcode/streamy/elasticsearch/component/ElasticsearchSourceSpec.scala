@@ -32,6 +32,7 @@ import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.ParseException
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.support.WriteRequest
+import org.elasticsearch.client.RequestOptions
 import org.elasticsearch.common.xcontent.XContentType
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -49,10 +50,10 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       val index = randomIndex()
       restClient.index(new IndexRequest(index, docType)
         .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
       restClient.index(new IndexRequest(index, docType)
         .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
 
       // Stream to test
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
@@ -74,7 +75,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       val index = randomIndex()
       restClient.index(new IndexRequest(index, docType)
         .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE))
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
 
       // Result of query
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
