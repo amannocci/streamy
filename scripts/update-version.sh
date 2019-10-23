@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Load common
-# # shellcheck disable=SC1090
+# shellcheck disable=SC1090
 source "${PWD}/scripts/common.sh"
 
 # Extract current version
