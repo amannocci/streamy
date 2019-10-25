@@ -33,6 +33,7 @@ jobs:
         # fallback to using the latest cache if no exact match is found
         - v1-dependencies-
     # Install bats & nmap's ncat
+    - run: sudo apt-get update > /dev/null
     - run: sudo apt-get install -qq bats gawk protobuf-compiler nmap
 
     # Run logic
