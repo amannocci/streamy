@@ -64,11 +64,20 @@ object ElasticsearchFlow {
     val Items: JsonPointer = Root / "items"
   }
 
+  // Precomputed operations
+  private object ElasticOp {
+    val RemoveExtraFields: JsonOperation = Bulk(ops = Seq(
+      Remove(ElasticPath.Id, mustExist = false),
+      Remove(ElasticPath.Type, mustExist = false),
+      Remove(ElasticPath.Version, mustExist = false),
+      Remove(ElasticPath.VersionType, mustExist = false)
+    ))
+  }
+
   // Component configuration
   case class Config(
     hosts: Seq[String],
     indexName: String,
-    typeName: String,
     action: String,
     bulk: Int = DefaultBulk,
     worker: Int = DefaultWorker,
@@ -162,40 +171,35 @@ object ElasticsearchFlow {
     private def marshalMessage(pkt: Json): ByteString = {
       // Retrive header information
       val id = pkt.evaluate(ElasticPath.Id)
-      val `type` = pkt.evaluate(ElasticPath.Type).filter(_.isString).getOrElse(config.typeName)
+      val `type` = pkt.evaluate(ElasticPath.Type).getOrElse[String]("doc")
       val version = pkt.evaluate(ElasticPath.Version)
       val versionType = pkt.evaluate(ElasticPath.VersionType)
 
       // Build header
       val header = Json.obj(config.action -> {
         val builder = Json.objectBuilder()
-          .put("_index" -> config.indexName)
-          .put("_type" -> `type`)
+          .+=("_index" -> config.indexName)
+          .+=("_type" -> `type`)
 
         // Add version if present
         version.ifExists[Long] { x =>
-          builder.put("_version" -> x)
+          builder += ("_version" -> x)
         }
 
         // Add version type if present
         versionType.ifExists[String] { x =>
-          builder.put("_version_type" -> x)
+          builder += ("_version_type" -> x)
         }
 
         // Add id if present
         id.ifExists[String] { x =>
-          builder.put("_id" -> x)
+          builder += ("_id" -> x)
         }
         builder.result()
       })
 
       // Remove extra fields
-      val doc = pkt.patch(Bulk(ops = Seq(
-        Remove(ElasticPath.Id, mustExist = false),
-        Remove(ElasticPath.Type, mustExist = false),
-        Remove(ElasticPath.Version, mustExist = false),
-        Remove(ElasticPath.VersionType, mustExist = false)
-      ))).get[Json]
+      val doc = pkt.patch(ElasticOp.RemoveExtraFields).get[Json]
       ByteString(header.toString()) ++ NewLineDelimiter ++ ByteString(doc.toString()) ++ NewLineDelimiter
     }
 
@@ -235,7 +239,7 @@ object ElasticsearchFlow {
       }
 
       // List of hosts to use
-      private val hosts: Iterator[String] = Stream.continually(config.hosts.toStream).flatten.toIterator
+      private val hosts: Iterator[String] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
       // Current processing message
       private var messages: Seq[Json] = Nil
@@ -273,7 +277,7 @@ object ElasticsearchFlow {
         val results = messages
         messages = Nil
         state = State.Idle
-        emitMultiple(out, results.toIterator, () => performRequest())
+        emitMultiple(out, results.iterator, () => performRequest())
       }
 
       /**
@@ -312,7 +316,7 @@ object ElasticsearchFlow {
           state = State.Idle
         }
         system.eventStream.publish(ElasticsearchEvent.Partial(elapsed()))
-        emitMultiple(out, results.getOrElse(0, Nil).map(_._1).toIterator, () => performRequest())
+        emitMultiple(out, results.getOrElse(0, Nil).map(_._1).iterator, () => performRequest())
       }
 
       /**

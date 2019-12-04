@@ -41,7 +41,7 @@ object JsonParser {
   private val DefaultMaxDepth: Int = 1000
 
   // Default configuration
-  val DefaultConfig = Config(DefaultMaxDepth)
+  val DefaultConfig: Config = Config(DefaultMaxDepth)
 
   /**
     * Create a json parser that transform incoming [[ByteString]] to [[Json]].
@@ -151,7 +151,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
           key = builder.toString
           `value`(remainingNesting)
         } && {
-          obj.put(key -> jsValue)
+          obj += (key -> jsValue)
           if (current() == ',') {
             advance()
             members()
@@ -176,7 +176,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
 
       @tailrec def values(): Boolean = {
         `value`(remainingNesting) && {
-          arr.add(jsValue)
+          arr += jsValue
           if (current() == ',') {
             advance()
             values()

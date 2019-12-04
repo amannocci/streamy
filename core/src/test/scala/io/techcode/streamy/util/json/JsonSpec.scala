@@ -73,21 +73,6 @@ class JsonSpec extends WordSpecLike with Matchers {
         "field1" -> 123)
     }
 
-    "be create from builder" in {
-      val builder = Json.objectBuilder()
-      builder.put("test" -> "test")
-      builder.remove("test")
-      builder.put("foobar" -> "test")
-      builder.putAll(Json.objectBuilder().put("foobar" -> "test"))
-      builder.result()
-      builder.put("foobar" -> "notModified")
-      builder.putAll(Json.objectBuilder().put("foobar" -> "notModified"))
-      builder.result() should equal(Json.obj("foobar" -> "test"))
-      builder.contains("foobar") should equal(true)
-      builder.contains("notPresent") should equal(false)
-      builder.get("foobar") should equal(Some(JsString("test")))
-    }
-
     "be create empty" in {
       Json.obj().eq(Json.obj()) should equal(true)
     }
@@ -117,72 +102,6 @@ class JsonSpec extends WordSpecLike with Matchers {
         "foobar" -> 0,
         "test.test" -> "foobar",
         "test.foobar.test" -> 0
-      ))
-    }
-
-    "convert correctly a map to json object" in {
-      val map: mutable.Map[String, Any] = mutable.AnyRefMap()
-      map.put("string", "string")
-      map.put("boolean", true)
-      map.put("int", 10)
-      map.put("long", 10L)
-      map.put("float", 1.0F)
-      map.put("double", 1.0D)
-      map.put("bigDecimal", BigDecimal(1))
-      map.put("byteString", ByteString("test"))
-      JsObject.fromRawMap(map) should equal(Json.obj(
-        "string" -> "string",
-        "boolean" -> true,
-        "int" -> 10,
-        "long" -> 10L,
-        "float" -> 1.0F,
-        "double" -> 1.0D,
-        "bigDecimal" -> BigDecimal(1),
-        "byteString" -> ByteString("test")
-      ))
-    }
-
-    "convert correctly a raw map to json object" in {
-      val map: mutable.Map[String, Any] = mutable.AnyRefMap()
-      map.put("string", "string")
-      map.put("boolean", true)
-      map.put("int", 10)
-      map.put("long", 10L)
-      map.put("float", 1.0F)
-      map.put("double", 1.0D)
-      map.put("bigDecimal", BigDecimal(1))
-      map.put("byteString", ByteString("test"))
-      JsObject.fromRawMap(map) should equal(Json.obj(
-        "string" -> "string",
-        "boolean" -> true,
-        "int" -> 10,
-        "long" -> 10L,
-        "float" -> 1.0F,
-        "double" -> 1.0D,
-        "bigDecimal" -> BigDecimal(1),
-        "byteString" -> ByteString("test")
-      ))
-    }
-
-    "convert correctly a json map to json object" in {
-      val map: mutable.Map[String, Json] = new mutable.LinkedHashMap()
-      map.put("string", "string")
-      map.put("boolean", true)
-      map.put("int", 10)
-      map.put("long", 10L)
-      map.put("float", 1.0F)
-      map.put("double", 1.0D)
-      map.put("bigDecimal", BigDecimal(1))
-      map.put("byteString", ByteString("test"))
-      JsObject.fromJsonMap(map) should equal(Json.obj(
-        "string" -> "string",
-        "boolean" -> true,
-        "int" -> 10,
-        "long" -> 10L,
-        "float" -> 1.0F,
-        "double" -> 1.0D,
-        "bigDecimal" -> BigDecimal(1),
-        "byteString" -> ByteString("test")
       ))
     }
 
@@ -437,7 +356,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be converted to iterator" in {
-      Json.arr("foobar").toIterator.next() should equal(JsString("foobar"))
+      Json.arr("foobar").iterator.next() should equal(JsString("foobar"))
     }
 
     "be converted to seq" in {
@@ -461,19 +380,6 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "be identified as array" in {
       Json.arr().isArray should equal(true)
-    }
-
-    "be create from builder" in {
-      val builder = Json.arrayBuilder()
-      builder.add("test")
-      builder.remove()
-      builder.add("foobar")
-      builder.addAll(Json.arrayBuilder().add("foobar"))
-      builder.result()
-      builder.remove()
-      builder.add("notModified")
-      builder.addAll(Json.arrayBuilder().add("notModified"))
-      builder.result() should equal(Json.arr("foobar", "foobar"))
     }
 
     "be create empty" in {

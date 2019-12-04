@@ -482,7 +482,7 @@ abstract class ByteStringParserImpl extends ByteStringParser[Json] {
   override def merge[T <: Parser[ByteString, Json]](parser: T): Unit = {
     super.merge(parser)
     parser match {
-      case p: ByteStringParserImpl => builder.putAll(p.builder)
+      case p: ByteStringParserImpl => builder ++= p.builder.result().fields
     }
   }
 

@@ -25,6 +25,7 @@ package io.techcode.streamy.metric
 
 import java.lang.management.ManagementFactory
 
+import akka.util.ByteString
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.jvm.{BufferPoolMetricSet, GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
 import io.techcode.streamy.metric.event.MetricEvent
@@ -33,7 +34,6 @@ import io.techcode.streamy.util.json._
 import pureconfig._
 import pureconfig.generic.auto._
 
-import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
 /**
@@ -44,7 +44,7 @@ class MetricPlugin(
 ) extends Plugin(data) {
 
   // Retrieve configuration
-  private val conf: Config = loadConfigOrThrow[Config](data.conf)
+  private val conf: Config = ConfigSource.fromConfig(data.conf).loadOrThrow[Config]
 
   // Metrics registry
   private val Registry = new MetricRegistry()
@@ -63,13 +63,24 @@ class MetricPlugin(
       val jvmConf = conf.jvm.get
       system.scheduler.schedule(jvmConf.initialDelay, jvmConf.interval) {
         // Create a new entry
-        val entry: mutable.Map[String, Any] = mutable.AnyRefMap[String, Any]()
+        val entry: JsObjectBuilder = Json.objectBuilder()
 
         // Add all gauges (we have actually only gauges)
-        Registry.getGauges.forEach((key, value) => entry.put(key, value.getValue))
+        Registry.getGauges.forEach {
+          case (key, value) => value.getValue match {
+            case x: Int => entry += (key -> x)
+            case x: Long => entry += (key -> x)
+            case x: Float => entry += (key -> x)
+            case x: Double => entry += (key -> x)
+            case x: BigDecimal => entry += (key -> x)
+            case x: Boolean => entry += (key -> x)
+            case x: ByteString => entry += (key -> x)
+            case x: Any => entry += (key -> x.toString)
+          }
+        }
 
         // Emit event
-        val evt = JsObject.fromRawMap(entry)
+        val evt = entry.result()
         system.eventStream.publish(MetricEvent.Jvm(evt))
 
         // If embedded log

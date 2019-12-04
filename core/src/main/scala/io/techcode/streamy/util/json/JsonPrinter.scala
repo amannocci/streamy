@@ -23,8 +23,6 @@
  */
 package io.techcode.streamy.util.json
 
-import java.util.Base64
-
 import akka.util.ByteString
 import com.google.common.io.BaseEncoding
 import io.techcode.streamy.util.lang.CharBuilder

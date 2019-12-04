@@ -52,8 +52,8 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
   private var pluginClassLoader: ClassLoader = _
 
   // Configuration
-  private val lifecycleConfig = loadConfigOrThrow[LifecycleConfig](conf, "lifecycle")
-  private val folderConfig = loadConfigOrThrow[FolderConfig](conf, "folder")
+  private val lifecycleConfig = ConfigSource.fromConfig(conf).at("lifecycle").loadOrThrow[LifecycleConfig]
+  private val folderConfig = ConfigSource.fromConfig(conf).at("folder").loadOrThrow[FolderConfig]
 
   // Common mdc
   private val commonMdc = Map("type" -> "application")
@@ -101,10 +101,9 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
           ref = pluginRef
         ))
       } catch {
-        case ex: Exception => {
+        case ex: Exception =>
           log.mdc(commonMdc)
           log.error(ex, "Can't load '{}' plugin", pluginDescription.name)
-        }
       }
     })
   }
@@ -124,10 +123,9 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
       // All plugins are stopped
     } catch {
       // the actor wasn't stopped within 5 seconds
-      case ex: akka.pattern.AskTimeoutException => {
+      case ex: akka.pattern.AskTimeoutException =>
         log.mdc(commonMdc)
         log.error(ex, "Failed to graceful shutdown")
-      }
     }
 
     // Unregister listener
@@ -169,7 +167,7 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
 
       // Attempt to convert configuration to plugin description
       try {
-        val description = loadConfigOrThrow[PluginDescription](conf).copy(file = Some(jar.toURL))
+        val description = ConfigSource.fromConfig(conf).loadOrThrow[PluginDescription].copy(file = Some(jar.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
         case _: ConfigReaderException[_] =>

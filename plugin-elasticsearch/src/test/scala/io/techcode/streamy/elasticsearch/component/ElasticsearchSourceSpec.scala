@@ -29,7 +29,6 @@ import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.parser.ParseException
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.support.WriteRequest
 import org.elasticsearch.client.RequestOptions
@@ -48,10 +47,10 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
     "retrieve data from paginate source" in {
       // Prepare for test
       val index = randomIndex()
-      restClient.index(new IndexRequest(index, docType)
+      restClient.index(new IndexRequest(index)
         .source("""{"foo": "bar"}""", XContentType.JSON)
         .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
-      restClient.index(new IndexRequest(index, docType)
+      restClient.index(new IndexRequest(index)
         .source("""{"foo": "bar"}""", XContentType.JSON)
         .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
 
@@ -59,7 +58,6 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
         Seq(s"http://$elasticHost:$elasticPort"),
         index,
-        docType,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}"""),
         bulk = 1
       )).runWith(TestSink.probe[Json])
@@ -73,7 +71,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
     "retrieve data from single source" in {
       // Prepare for test
       val index = randomIndex()
-      restClient.index(new IndexRequest(index, docType)
+      restClient.index(new IndexRequest(index)
         .source("""{"foo": "bar"}""", XContentType.JSON)
         .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
 
@@ -81,7 +79,6 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
         Seq(s"http://$elasticHost:$elasticPort"),
         index,
-        docType,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
       )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
 
@@ -99,7 +96,6 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
         Seq(s"http://$elasticHost:$elasticPort"),
         index,
-        docType,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
       )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
 

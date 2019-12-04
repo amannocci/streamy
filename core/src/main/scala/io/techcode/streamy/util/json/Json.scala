@@ -45,7 +45,7 @@ object Json {
   private val stringParser = ThreadLocal.withInitial[StringParser[Json]](() => JsonParser.stringParser())
 
   // Singleton json object
-  private val jsonObjEmpty = JsObject(mutable.AnyRefMap())
+  private val jsonObjEmpty = JsObject(mutable.HashMap())
 
   // Singleton json array
   private val jsonArrayEmpty = JsArray(mutable.ArrayBuffer())
@@ -57,7 +57,7 @@ object Json {
     if (fields.isEmpty) {
       jsonObjEmpty
     } else {
-      JsObject(mutable.AnyRefMap(fields: _*))
+      JsObject(mutable.HashMap(fields: _*))
     }
 
   /**
@@ -75,14 +75,52 @@ object Json {
     *
     * @return json object builder.
     */
-  def objectBuilder(): JsObjectBuilder = JsObjectBuilder()
+  def objectBuilder(): JsObjectBuilder =
+    new mutable.GrowableBuilder[(String, Json), JsObject](Json.obj()) {
+      var underlying: mutable.HashMap[String, Json] = mutable.HashMap[String, Json]()
+
+      override def clear(): Unit = underlying = mutable.HashMap[String, Json]()
+
+      override def result(): JsObject = JsObject(underlying)
+
+      override def addOne(elem: (String, Json)): this.type = {
+        underlying += elem
+        this
+      }
+
+      override def addAll(xs: IterableOnce[(String, Json)]): this.type = {
+        underlying.addAll(xs)
+        this
+      }
+
+      override def knownSize: Int = underlying.knownSize
+    }
 
   /**
     * Create a new json array builder.
     *
     * @return json array builder.
     */
-  def arrayBuilder(): JsArrayBuilder = JsArrayBuilder()
+  def arrayBuilder(): JsArrayBuilder =
+    new mutable.GrowableBuilder[Json, JsArray](Json.arr()) {
+      var underlying: mutable.ArrayBuffer[Json] = mutable.ArrayBuffer[Json]()
+
+      override def clear(): Unit = underlying = mutable.ArrayBuffer[Json]()
+
+      override def result(): JsArray = JsArray(underlying)
+
+      override def addOne(elem: Json): this.type = {
+        underlying += elem
+        this
+      }
+
+      override def addAll(xs: IterableOnce[Json]): this.type = {
+        underlying.addAll(xs)
+        this
+      }
+
+      override def knownSize: Int = underlying.knownSize
+    }
 
   /**
     * Parses a bytestring representing a Json input, and returns it as a [[Json]].
@@ -799,7 +837,7 @@ case class JsBytes(value: ByteString) extends Json {
   */
 case class JsArray private[json](
   private[json] val underlying: ArrayBuffer[Json]
-) extends Json {
+) extends Json with mutable.Growable[Json] {
 
   /**
     * Get element at a given index.
@@ -898,14 +936,14 @@ case class JsArray private[json](
     *
     * @return an Iterator containing all elements of this JsArray.
     */
-  def toIterator: Iterator[Json] = underlying.view.toIterator
+  def iterator: Iterator[Json] = underlying.view.iterator
 
   /**
     * Returns a Seq containing all elements in this JsArray.
     *
     * @return a Seq containing all elements of this JsArray.
     */
-  def toSeq: Seq[Json] = underlying.view
+  def toSeq: Seq[Json] = underlying.toSeq
 
   override val isArray: Boolean = true
 
@@ -913,66 +951,11 @@ case class JsArray private[json](
 
   override lazy val sizeHint: Int = underlying.map(_.sizeHint()).sum + 1 + underlying.size
 
-}
+  // Support Growable interface for JsArray builder
+  def addOne(elem: Json): JsArray.this.type = throw new NotImplementedError("`addOne` on JsArray isn't supported")
 
-/**
-  * Json array builder that allow zero copy json array creation.
-  *
-  * @param modifiable guard modification after result.
-  * @param underlying underlying data structure.
-  */
-case class JsArrayBuilder private(
-  private var modifiable: Boolean = true,
-  private val underlying: mutable.ArrayBuffer[Json] = new mutable.ArrayBuffer[Json]
-) {
-
-  /**
-    * Removes the last element from this [[JsArrayBuilder]].
-    *
-    * @return json array builder.
-    */
-  def remove(): JsArrayBuilder = {
-    if (modifiable) {
-      underlying.remove(underlying.length - 1)
-    }
-    this
-  }
-
-  /**
-    * Add the specified value in this [[JsArrayBuilder]].
-    *
-    * @param el value to add.
-    * @return json array builder.
-    */
-  def add(el: Json): JsArrayBuilder = {
-    if (modifiable) {
-      underlying += el
-    }
-    this
-  }
-
-  /**
-    * Add the specified value in this [[JsArrayBuilder]].
-    *
-    * @param other all values to add from other [[JsArrayBuilder]].
-    * @return json array builder.
-    */
-  def addAll(other: JsArrayBuilder): JsArrayBuilder = {
-    if (modifiable) {
-      underlying ++= other.underlying
-    }
-    this
-  }
-
-  /**
-    * Create a new [[JsArray]].
-    *
-    * @return new json array.
-    */
-  def result(): JsArray = {
-    modifiable = false
-    JsArray(underlying)
-  }
+  // Support Growable interface for JsArray builder
+  def clear(): Unit = throw new NotImplementedError("`clear` on JsArray isn't supported")
 
 }
 
@@ -982,8 +965,8 @@ case class JsArrayBuilder private(
   * @param underlying underlying structure.
   */
 case class JsObject private[json](
-  private[json] val underlying: mutable.Map[String, Json]
-) extends Json {
+  private[json] val underlying: mutable.HashMap[String, Json]
+) extends Json with mutable.Growable[(String, Json)] {
 
   /**
     * Applies a function f to all elements of this json object.
@@ -1064,7 +1047,7 @@ case class JsObject private[json](
     */
   def remove(key: String): JsObject =
     if (underlying.contains(key)) {
-      JsObject(underlying - key)
+      JsObject(underlying.clone() -= key)
     } else {
       this
     }
@@ -1075,7 +1058,7 @@ case class JsObject private[json](
     * @param field key and value to be associated.
     * @return new json object.
     */
-  def put(field: (String, Json)): JsObject = JsObject(underlying + field)
+  def put(field: (String, Json)): JsObject = JsObject(underlying.clone() += field)
 
   /**
     * Convert a json value to dot notation.
@@ -1117,124 +1100,10 @@ case class JsObject private[json](
   override lazy val sizeHint: Int =
     1 + underlying.keys.map(_.length + 2).sum + underlying.values.map(_.sizeHint()).sum + (underlying.values.size * 2)
 
-}
+  // Support Growable interface for JsObject builder
+  def addOne(elem: (String, Json)): JsObject.this.type = throw new NotImplementedError("`addOne` on JsObject isn't supported")
 
-/**
-  * Json object companion.
-  */
-object JsObject {
-
-  /**
-    * Convert a map to json.
-    *
-    * @param map map with any values.
-    * @return json object.
-    */
-  def fromJsonMap(map: mutable.Map[String, Json]): JsObject = {
-    val builder = Json.objectBuilder()
-    map.foreach {
-      case (key: String, value: Json) => builder.put(key, value)
-    }
-    builder.result()
-  }
-
-  /**
-    * Convert a map to json.
-    *
-    * @param map map with any values.
-    * @return json object.
-    */
-  def fromRawMap(map: mutable.Map[String, Any]): JsObject = {
-    val builder = Json.objectBuilder()
-    map.foreach {
-      case (key: String, value: Int) => builder.put(key, intToJson(value))
-      case (key: String, value: Long) => builder.put(key, longToJson(value))
-      case (key: String, value: Double) => builder.put(key, doubleToJson(value))
-      case (key: String, value: Float) => builder.put(key, floatToJson(value))
-      case (key: String, value: BigDecimal) => builder.put(key, bigDecimalToJson(value))
-      case (key: String, value: Boolean) => builder.put(key, booleanToJson(value))
-      case (key: String, value: ByteString) => builder.put(key, byteStringToJson(value))
-      case (key: String, value: Any) => builder.put(key, stringToJson(value.toString))
-    }
-    builder.result()
-  }
-
-}
-
-/**
-  * Json object builder that allow zero copy json object creation.
-  *
-  * @param modifiable guard modification after result.
-  * @param underlying underlying data structure.
-  */
-case class JsObjectBuilder private(
-  private var modifiable: Boolean = true,
-  private val underlying: mutable.Map[String, Json] = new mutable.AnyRefMap[String, Json]
-) {
-
-  /**
-    * Returns the value to which the specified key is mapped.
-    *
-    * @param key the key whose associated value is to be returned.
-    * @return the value to which the specified key is mapped, or [[None]] if this map contains no mapping for the key.
-    */
-  def get(key: String): Option[Json] = underlying.get(key)
-
-  /**
-    * Returns true if this map contains a mappping for the specified key.
-    *
-    * @param key key whose presence in this map is to be tested.
-    * @return true if this map contains a mapping for the specified key.
-    */
-  @inline def contains(key: String): Boolean = underlying.contains(key)
-
-  /**
-    * Removes the specified key from this map if present.
-    *
-    * @param key key whose mapping is to be removed from the [[JsObjectBuilder]].
-    * @return json object builder.
-    */
-  def remove(key: String): JsObjectBuilder = {
-    if (modifiable) {
-      underlying -= key
-    }
-    this
-  }
-
-  /**
-    * Put the specified value with the specified key in this [[JsObjectBuilder]].
-    *
-    * @param field key and value to be associated.
-    * @return json object builder.
-    */
-  def put(field: (String, Json)): JsObjectBuilder = {
-    if (modifiable) {
-      underlying += field
-    }
-    this
-  }
-
-  /**
-    * Put all values in this [[JsObjectBuilder]].
-    *
-    * @param other other json object builder to merge with.
-    * @return json object builder.
-    */
-  def putAll(other: JsObjectBuilder): JsObjectBuilder = {
-    if (modifiable) {
-      underlying ++= other.underlying
-    }
-    this
-  }
-
-  /**
-    * Create a new [[JsObject]].
-    *
-    * @return new json object.
-    */
-  def result(): JsObject = {
-    modifiable = false
-    JsObject(underlying)
-  }
+  // Support Growable interface for JsObject builder
+  def clear(): Unit = throw new NotImplementedError("`clear` on JsObject isn't supported")
 
 }

@@ -43,7 +43,6 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(s"http://$elasticHost:9200"),
           randomIndex(),
-          docType,
           "index",
           bulk = 1
         )))
@@ -58,7 +57,6 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(s"http://$elasticHost:9200"),
           randomIndex(),
-          docType,
           "index",
           bulk = 1,
           worker = 2
@@ -74,7 +72,6 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(s"http://$elasticHost:9200"),
           randomIndex(),
-          docType,
           "index",
           bulk = 1
         )))

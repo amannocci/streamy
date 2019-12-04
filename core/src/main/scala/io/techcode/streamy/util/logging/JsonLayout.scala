@@ -53,13 +53,13 @@ class JsonLayout extends LayoutBase[ILoggingEvent] {
 
   override def doLayout(event: ILoggingEvent): String = {
     val log: JsObjectBuilder = Json.objectBuilder()
-    event.getMDCPropertyMap.forEach((key: String, value: String) => log.put(key, value))
-    log.put(level, JsonLayout.levelToString(event.getLevel))
-    log.put(thread, event.getThreadName)
-    log.put(timestamp, Instant.ofEpochMilli(event.getTimeStamp).toString)
-    log.put(message, event.getFormattedMessage)
+    event.getMDCPropertyMap.forEach((key: String, value: String) => log += (key -> value))
+    log += (level -> JsonLayout.levelToString(event.getLevel))
+    log += (thread -> event.getThreadName)
+    log += (timestamp -> Instant.ofEpochMilli(event.getTimeStamp).toString)
+    log += (message -> event.getFormattedMessage)
     val th: IThrowableProxy = event.getThrowableProxy
-    if (th != null) log.put(stacktrace, ThrowableProxyUtil.asString(th))
+    if (th != null) log += (stacktrace -> ThrowableProxyUtil.asString(th))
     log.result().toString + CoreConstants.LINE_SEPARATOR
   }
 
@@ -71,11 +71,11 @@ object JsonLayout {
     * All level convertions.
     */
   private object JsLevel {
-    val Debug = JsString("debug")
-    val Trace = JsString("trace")
-    val Info = JsString("info")
-    val Warning = JsString("warning")
-    val Error = JsString("error")
+    val Debug: Json = "debug"
+    val Trace: Json = "trace"
+    val Info: Json = "info"
+    val Warning: Json = "warning"
+    val Error: Json = "error"
   }
 
   /**

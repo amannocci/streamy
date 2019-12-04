@@ -24,8 +24,8 @@
 package io.techcode.streamy.component
 
 import akka.stream.ActorAttributes.SupervisionStrategy
-import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.stream._
+import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import com.google.common.base.Throwables
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.{Config, SuccessBehaviour}
@@ -58,34 +58,34 @@ abstract class FlowTransformerLogic(config: Config) extends (Json => Json) {
         pkt.evaluate(config.source)
           .flatMap[Json](transform(_, pkt))
           .flatMap[Json] { v =>
-          val operated: MaybeJson = {
-            if (config.target.get == Root) {
-              pkt.flatMap[JsObject] { x =>
-                v.map[JsObject] { y =>
-                  x.merge(y)
+            val operated: MaybeJson = {
+              if (config.target.get == Root) {
+                pkt.flatMap[JsObject] { x =>
+                  v.map[JsObject] { y =>
+                    x.merge(y)
+                  }
                 }
+              } else {
+                pkt
               }
-            } else {
-              pkt
             }
-          }
 
-          // Combine operations if needed
-          var operations = List[JsonOperation]()
-          if (config.target.get != Root) {
-            operations = operations :+ Add(config.target.get, v)
-          }
-          if (config.onSuccess == SuccessBehaviour.Remove) {
-            operations = operations :+ Remove(config.source)
-          }
+            // Combine operations if needed
+            var operations = List[JsonOperation]()
+            if (config.target.get != Root) {
+              operations = operations :+ Add(config.target.get, v)
+            }
+            if (config.onSuccess == SuccessBehaviour.Remove) {
+              operations = operations :+ Remove(config.source)
+            }
 
-          // Perform operations if needed
-          if (operations.isEmpty) {
-            operated
-          } else {
-            operated.flatMap[Json](_.patch(operations))
-          }
-        }.getOrElse[Json](error(Transformer.GenericErrorMsg, pkt))
+            // Perform operations if needed
+            if (operations.isEmpty) {
+              operated
+            } else {
+              operated.flatMap[Json](_.patch(operations))
+            }
+          }.getOrElse[Json](error(Transformer.GenericErrorMsg, pkt))
     }
   }
 
@@ -168,13 +168,13 @@ abstract class FlowTransformerLogic(config: Config) extends (Json => Json) {
   * Flow transformer abstract implementation that provide
   * a convenient way to process an update on [[Json]].
   */
-final case class FlowTransformer(factory: () ⇒ FlowTransformerLogic) extends GraphStage[FlowShape[Json, Json]] {
+final case class FlowTransformer(factory: () => FlowTransformerLogic) extends GraphStage[FlowShape[Json, Json]] {
 
   val in: Inlet[Json] = Inlet[Json]("flowTransformer.in")
 
   val out: Outlet[Json] = Outlet[Json]("flowTransformer.out")
 
-  override val shape = FlowShape(in, out)
+  override val shape: FlowShape[Json, Json] = FlowShape(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
 

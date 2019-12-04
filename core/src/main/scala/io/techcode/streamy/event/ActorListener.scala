@@ -44,7 +44,7 @@ import akka.event.EventStream
   * }}}
   */
 trait ActorListener {
-  this: Actor ⇒
+  this: Actor =>
 
   val eventStream: EventStream = context.system.eventStream
 

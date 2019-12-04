@@ -51,7 +51,7 @@ object TcpFlow {
       idleTimeout: Duration = Duration.Inf,
       connectTimeout: Duration = Duration.Inf,
       reconnect: Option[ReconnectConfig] = None,
-      options: immutable.Traversable[SocketOption] = Nil
+      options: immutable.Iterable[SocketOption] = Nil
     )
 
     // Reconnect component configuration

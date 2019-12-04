@@ -28,7 +28,7 @@ import org.scalatest._
 /**
   * JsonPointer spec.
   */
-class JsonPointerSpec extends WordSpecLike with Matchers {
+class JsPointerSpec extends WordSpecLike with Matchers {
 
   "JsonPointer" should {
     "return same json value for root pointer" in {

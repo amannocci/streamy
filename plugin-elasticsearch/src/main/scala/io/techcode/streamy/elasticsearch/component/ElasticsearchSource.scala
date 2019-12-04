@@ -58,7 +58,6 @@ object ElasticsearchSource {
   case class Config(
     hosts: Seq[String],
     indexName: String,
-    typeName: String,
     query: Json,
     bulk: Int = DefaultBulk
   )
@@ -73,10 +72,10 @@ object ElasticsearchSource {
     system: ActorSystem,
     executionContext: ExecutionContext
   ): Source[ByteString, Future[NotUsed]] = {
-    val hosts = Stream.continually(config.hosts.toStream).flatten.toIterator
+    val hosts = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
     // Retrieve uri based on scroll id
-    val uri = uri"${hosts.next()}/${config.indexName}/${config.typeName}/_search"
+    val uri = uri"${hosts.next()}/${config.indexName}/_search"
 
     // Prepare request
     var request = sttp.post(uri)
@@ -154,7 +153,7 @@ object ElasticsearchSource {
       private val failureHandler = getAsyncCallback[Throwable](handleFailure)
 
       // List of hosts to use
-      private val hosts: Iterator[String] = Stream.continually(config.hosts.toStream).flatten.toIterator
+      private val hosts: Iterator[String] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
       // Start request time
       private var started: Long = System.currentTimeMillis()
@@ -174,7 +173,7 @@ object ElasticsearchSource {
               system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
 
               // Check if we have at least one hit
-              val it = result.get[JsArray].toIterator
+              val it = result.get[JsArray].iterator
               if (it.hasNext) {
                 scrollId = data.evaluate(ElasticPath.ScrollId)
                 emitMultiple(out, it)
@@ -208,7 +207,7 @@ object ElasticsearchSource {
         {
           // Retrieve uri based on scroll id
           val uri = if (scrollId.isEmpty) {
-            uri"${hosts.next()}/${config.indexName}/${config.typeName}/_search?scroll=5m&sort=_doc"
+            uri"${hosts.next()}/${config.indexName}/_search?scroll=5m&sort=_doc"
           } else {
             uri"${hosts.next()}/_search/scroll"
           }
@@ -219,7 +218,7 @@ object ElasticsearchSource {
             .readTimeout(5 seconds)
             .response(asJson)
 
-          // Add request body
+
           request = if (scrollId.isEmpty) {
             request.body(Json.printStringUnsafe(config.query.patch(Add(ElasticPath.Size, config.bulk)).get[Json]))
           } else {
@@ -229,17 +228,17 @@ object ElasticsearchSource {
             )))
           }
 
-          // Mark begin of request
+
           started = System.currentTimeMillis()
 
-          // Add basic auth
+
           if (uri.userInfo.isDefined) {
             val userInfo = uri.userInfo.get
             request.auth.basic(userInfo.username, userInfo.password.get).send()
           } else {
             request.send()
           }
-        }.onComplete {
+          }.onComplete {
           case Success(response) => successHandler.invoke(response)
           case Failure(ex) => failureHandler.invoke(ex)
         }

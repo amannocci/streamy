@@ -38,13 +38,13 @@ import scala.util.control.NonFatal
   * Sink transformer abstract implementation that provide
   * a convenient way to process a convertion from [[Json]] to [[ByteString]].
   */
-final case class SinkTransformer(factory: () ⇒ ByteStringPrinter[Json]) extends GraphStage[FlowShape[Json, ByteString]] {
+final case class SinkTransformer(factory: () => ByteStringPrinter[Json]) extends GraphStage[FlowShape[Json, ByteString]] {
 
   val in: Inlet[Json] = Inlet[Json]("sinkTransformer.in")
 
   val out: Outlet[ByteString] = Outlet[ByteString]("sinkTransformer.out")
 
-  override val shape = FlowShape(in, out)
+  override val shape: FlowShape[Json, ByteString] = FlowShape(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
 
@@ -63,9 +63,9 @@ final case class SinkTransformer(factory: () ⇒ ByteStringPrinter[Json]) extend
           case Left(ex) => throw new StreamException(ex.getMessage, pkt, Map.empty)
         }
       } catch {
-        case NonFatal(ex) ⇒ decider(ex) match {
-          case Supervision.Stop ⇒ failStage(ex)
-          case _ ⇒ pull(in)
+        case NonFatal(ex) => decider(ex) match {
+          case Supervision.Stop => failStage(ex)
+          case _ => pull(in)
         }
       }
     }

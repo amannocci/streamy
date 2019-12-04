@@ -136,6 +136,19 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
 
   def priVal(): Boolean = times(1, 3, CharMatchers.Digit)
 
+  private def capturePrival(rule: => Boolean): Boolean = {
+    mark()
+    val state = rule
+    if (binding.facility.isDefined || binding.severity.isDefined) {
+      val prival = partition().asDigit()
+
+      // Read severity or facility
+      binding.facility(prival >> 3)
+      binding.severity(prival & 7)
+    }
+    state
+  }
+
   def version(): Boolean =
     times(1, CharMatchers.Digit19) && optional(times(1, 2, CharMatchers.Digit))
 
@@ -198,10 +211,6 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def partialTime(): Boolean =
     timeHour() && colon() && timeMinute() && colon() && timeSecond() && optional(timeSecFrac())
 
-  def timeHour(): Boolean = times(2, CharMatchers.Digit)
-
-  def timeMinute(): Boolean = times(2, CharMatchers.Digit)
-
   def timeSecond(): Boolean = times(2, CharMatchers.Digit)
 
   def timeSecFrac(): Boolean = point() && times(1, 6, CharMatchers.Digit)
@@ -213,6 +222,10 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
 
   def timeNumOffset(): Boolean =
     or(ch('+'), ch('-')) && timeHour() && colon() && timeMinute()
+
+  def timeHour(): Boolean = times(2, CharMatchers.Digit)
+
+  def timeMinute(): Boolean = times(2, CharMatchers.Digit)
 
   def structuredData(): Boolean = or(
     nilValue(),
@@ -237,19 +250,6 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
       any(),
       binding.message(_)
     )
-
-  private def capturePrival(rule: => Boolean): Boolean = {
-    mark()
-    val state = rule
-    if (binding.facility.isDefined || binding.severity.isDefined) {
-      val prival = partition().asDigit()
-
-      // Read severity or facility
-      binding.facility(prival >> 3)
-      binding.severity(prival & 7)
-    }
-    state
-  }
 
   override def cleanup(): Unit = {
     super.cleanup()
@@ -297,6 +297,19 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
 
   def priVal(): Boolean = times(1, 3, CharMatchers.Digit)
 
+  private def capturePrival(rule: => Boolean): Boolean = {
+    mark()
+    val state = rule
+    if (binding.facility.isDefined || binding.severity.isDefined) {
+      val prival = partition().asDigit()
+
+      // Read severity or facility
+      binding.facility(prival >> 3)
+      binding.severity(prival & 7)
+    }
+    state
+  }
+
   def hostname(): Boolean =
     capture(
       times(1, mode.hostname, CharMatchers.PrintUsAscii),
@@ -343,19 +356,6 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
       any(),
       binding.message(_)
     )
-
-  private def capturePrival(rule: => Boolean): Boolean = {
-    mark()
-    val state = rule
-    if (binding.facility.isDefined || binding.severity.isDefined) {
-      val prival = partition().asDigit()
-
-      // Read severity or facility
-      binding.facility(prival >> 3)
-      binding.severity(prival & 7)
-    }
-    state
-  }
 
   override def cleanup(): Unit = {
     super.cleanup()

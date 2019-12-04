@@ -44,8 +44,6 @@ trait ElasticsearchSpec extends TestSystem {
   val elasticHost: String = sys.props.getOrElse("elasticsearch.host", "127.0.0.1")
   val elasticPort: Int = sys.props.getOrElse("elasticsearch.port", "9200").toInt
 
-  val docType = "doc"
-
   protected implicit val httpClient: SttpBackend[Future, Source[ByteString, Any]] = {
     AkkaHttpBackend.usingActorSystem(system)
   }

@@ -68,36 +68,36 @@ object RiemannTransformer {
     // scalastyle:off cyclomatic.complexity
     override def apply(pkt: Proto.Msg): Json = {
       val builder = Json.objectBuilder()
-      if (pkt.hasOk) builder.put(binding.ok, pkt.getOk)
-      if (pkt.hasError) builder.put(binding.error, pkt.getError)
+      if (pkt.hasOk) builder += (binding.ok -> pkt.getOk)
+      if (pkt.hasError) builder += (binding.error -> pkt.getError)
       if (pkt.getEventsCount > 0) {
         val events = Json.arrayBuilder()
         for (i <- 0 until pkt.getEventsCount) {
           val el = pkt.getEvents(i)
           val evt = Json.objectBuilder()
-          if (el.hasTime) evt.put(eventBinding.time, el.getTime)
-          if (el.hasState) evt.put(eventBinding.state, el.getState)
-          if (el.hasService) evt.put(eventBinding.service, el.getService)
-          if (el.hasHost) evt.put(eventBinding.host, el.getHost)
-          if (el.hasDescription) evt.put(eventBinding.description, el.getDescription)
+          if (el.hasTime) evt += (eventBinding.time -> el.getTime)
+          if (el.hasState) evt += (eventBinding.state -> el.getState)
+          if (el.hasService) evt += (eventBinding.service -> el.getService)
+          if (el.hasHost) evt += (eventBinding.host -> el.getHost)
+          if (el.hasDescription) evt += (eventBinding.description -> el.getDescription)
           if (el.getTagsCount > 0) {
             val tags = Json.arrayBuilder()
-            el.getTagsList.forEach(x => tags.add(x))
-            evt.put(eventBinding.tags, tags.result())
+            el.getTagsList.forEach(x => tags += x)
+            evt += (eventBinding.tags -> tags.result())
           }
-          if (el.hasTtl) evt.put(eventBinding.ttl, el.getTtl)
+          if (el.hasTtl) evt += (eventBinding.ttl -> el.getTtl)
           if (el.getAttributesCount > 0) {
             val attrs = Json.objectBuilder()
-            el.getAttributesList.forEach(a => attrs.put(a.getKey, a.getValue))
-            evt.put(eventBinding.attributes, attrs.result())
+            el.getAttributesList.forEach(a => attrs += (a.getKey -> a.getValue))
+            evt += (eventBinding.attributes -> attrs.result())
           }
-          if (el.hasTimeMicros) evt.put(eventBinding.timeMicros, el.getTimeMicros)
-          if (el.hasMetricSint64) evt.put(eventBinding.metricSint64, el.getMetricSint64)
-          if (el.hasMetricD) evt.put(eventBinding.metricD, el.getMetricD)
-          if (el.hasMetricF) evt.put(eventBinding.metricF, el.getMetricF)
-          events.add(evt.result())
+          if (el.hasTimeMicros) evt += (eventBinding.timeMicros -> el.getTimeMicros)
+          if (el.hasMetricSint64) evt += (eventBinding.metricSint64 -> el.getMetricSint64)
+          if (el.hasMetricD) evt += (eventBinding.metricD -> el.getMetricD)
+          if (el.hasMetricF) evt += (eventBinding.metricF -> el.getMetricF)
+          events += evt.result()
         }
-        builder.put(binding.events, events.result())
+        builder += (binding.events -> events.result())
       }
       builder.result()
     }
@@ -117,7 +117,7 @@ object RiemannTransformer {
       pkt.evaluate(binding.ok).ifExists[Boolean](builder.setOk)
       pkt.evaluate(binding.error).ifExists[String](builder.setError)
       pkt.evaluate(binding.events).ifExists[JsArray] { x =>
-        val it = x.toIterator
+        val it = x.iterator
         while (it.hasNext) {
           val event = Proto.Event.newBuilder()
           it.next().ifExists[JsObject] { evt =>
@@ -127,7 +127,7 @@ object RiemannTransformer {
             evt.evaluate(eventBinding.host).ifExists[String](event.setHost)
             evt.evaluate(eventBinding.description).ifExists[String](event.setDescription)
             evt.evaluate(eventBinding.tags).ifExists[JsArray] { el =>
-              val tagIt = el.toIterator
+              val tagIt = el.iterator
               while (tagIt.hasNext) {
                 tagIt.next().ifExists[String](event.addTags)
               }

@@ -38,13 +38,13 @@ import scala.util.control.NonFatal
   * Source transformer abstract implementation that provide
   * a convenient way to process a conversion from [[ByteString]] to [[Json]].
   */
-final case class SourceTransformer(factory: () ⇒ ByteStringParser[Json]) extends GraphStage[FlowShape[ByteString, Json]] {
+final case class SourceTransformer(factory: () => ByteStringParser[Json]) extends GraphStage[FlowShape[ByteString, Json]] {
 
   val in: Inlet[ByteString] = Inlet[ByteString]("sourceTransformer.in")
 
   val out: Outlet[Json] = Outlet[Json]("sourceTransformer.out")
 
-  override val shape = FlowShape(in, out)
+  override val shape: FlowShape[ByteString, Json] = FlowShape(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
 
@@ -63,9 +63,9 @@ final case class SourceTransformer(factory: () ⇒ ByteStringParser[Json]) exten
           case Left(ex) => throw new StreamException(ex.getMessage, pkt, Map.empty)
         }
       } catch {
-        case NonFatal(ex) ⇒ decider(ex) match {
-          case Supervision.Stop ⇒ failStage(ex)
-          case _ ⇒ pull(in)
+        case NonFatal(ex) => decider(ex) match {
+          case Supervision.Stop => failStage(ex)
+          case _ => pull(in)
         }
       }
     }

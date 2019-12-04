@@ -110,7 +110,7 @@ case class JsonPointer(private[json] val underlying: Array[JsAccessor] = Array.e
   override def toString: String = "/" + underlying.map(_.repr).mkString("/")
 
   override def equals(o: Any): Boolean = o match {
-    case obj: JsonPointer => underlying.deep == obj.underlying.deep
+    case obj: JsonPointer => underlying.sameElements(obj.underlying)
     case _ => false
   }
 

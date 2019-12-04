@@ -54,7 +54,7 @@ object TcpSource {
       secured: Boolean = false,
       idleTimeout: Duration = Duration.Inf,
       backlog: Int = DefaultBacklog,
-      options: immutable.Traversable[SocketOption] = Nil
+      options: immutable.Iterable[SocketOption] = Nil
     )
 
   }
