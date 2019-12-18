@@ -25,19 +25,19 @@ package io.techcode.streamy.elasticsearch.component
 
 import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
+import akka.stream._
 import akka.stream.scaladsl.Source
 import akka.stream.stage.{GraphStage, GraphStageLogic, OutHandler, StageLogging}
-import akka.stream.{Attributes, Outlet, OverflowStrategy, SourceShape}
 import akka.util.ByteString
-import com.softwaremill.sttp._
 import io.techcode.streamy.elasticsearch.event.ElasticsearchEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
-import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
 /**
   * Elasticsearch source companion.
@@ -56,11 +56,25 @@ object ElasticsearchSource {
 
   // Component configuration
   case class Config(
-    hosts: Seq[String],
+    hosts: Seq[HostConfig],
     indexName: String,
     query: Json,
     bulk: Int = DefaultBulk
   )
+
+  case class HostConfig(
+    scheme: String,
+    host: String,
+    port: Int,
+    auth: Option[AuthConfig] = None
+  )
+
+  trait AuthConfig
+
+  case class BasicAuthConfig(
+    username: String,
+    password: String
+  ) extends AuthConfig
 
   /**
     * Create a new elasticsearch single source.
@@ -68,36 +82,46 @@ object ElasticsearchSource {
     * @param config source configuration.
     */
   def single(config: Config)(
-    implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
+    implicit materializer: Materializer,
     system: ActorSystem,
     executionContext: ExecutionContext
-  ): Source[ByteString, Future[NotUsed]] = {
+  ): Source[Json, NotUsed] = {
     val hosts = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
     // Retrieve uri based on scroll id
-    val uri = uri"${hosts.next()}/${config.indexName}/_search"
+    val hostConf = hosts.next()
+    val uri = s"${hostConf.scheme}://${hostConf.host}:${hostConf.port}/${config.indexName}/_search"
 
     // Prepare request
-    var request = sttp.post(uri)
-      .header("Content-Type", "application/json")
-      .readTimeout(5 seconds)
-      .body(Json.printStringUnsafe(config.query))
-      .response(asStream[Source[ByteString, NotUsed]])
+    var request = HttpRequest()
+      .withMethod(HttpMethods.POST)
+      .withUri(uri)
+      .withEntity(ContentTypes.`application/json`, Json.printStringUnsafe(config.query))
 
     // Add basic auth
-    request = if (uri.userInfo.isDefined) {
-      val userInfo = uri.userInfo.get
-      request.auth.basic(userInfo.username, userInfo.password.get)
+    request = if (hostConf.auth.isDefined) {
+      hostConf.auth.get match {
+        case BasicAuthConfig(username, password) =>
+          request.withHeaders(Seq(
+            Authorization(BasicHttpCredentials(username, password))
+          ))
+        case _ => request
+      }
     } else {
       request
     }
 
-    // Add request body
-    Source.fromFutureSource(request.send().flatMap { response =>
-      response.body match {
-        case Left(ex) => Future.failed(new StreamException(ex))
-        case Right(data) => Future.successful(data)
-      }
+    Source.fromFuture(Http().singleRequest(request).flatMap {
+      case HttpResponse(StatusCodes.OK, _, entity, _) =>
+        entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
+          Json.parseByteStringUnsafe(x)
+        }
+      case resp@HttpResponse(_, _, _, _) =>
+        try {
+          throw new StreamException(resp.httpMessage.toString)
+        } finally {
+          resp.discardEntityBytes()(materializer)
+        }
     })
   }
 
@@ -108,8 +132,7 @@ object ElasticsearchSource {
     * @return source.
     */
   def paginate(config: Config)(
-    implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
-    system: ActorSystem,
+    implicit system: ActorSystem,
     executionContext: ExecutionContext
   ): Source[Json, NotUsed] =
     Source.fromGraph(new ElasticsearchPaginateSourceStage(config))
@@ -121,8 +144,7 @@ object ElasticsearchSource {
     * @param config source stage configuration.
     */
   private class ElasticsearchPaginateSourceStage(config: Config)(
-    implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
-    system: ActorSystem,
+    implicit system: ActorSystem,
     executionContext: ExecutionContext
   ) extends GraphStage[SourceShape[Json]] {
 
@@ -147,13 +169,13 @@ object ElasticsearchSource {
       setHandler(out, this)
 
       // Async success handler
-      private val successHandler = getAsyncCallback[Response[Json]](handleSuccess)
+      private val successHandler = getAsyncCallback[Json](handleSuccess)
 
       // Async failure handler
       private val failureHandler = getAsyncCallback[Throwable](handleFailure)
 
       // List of hosts to use
-      private val hosts: Iterator[String] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
+      private val hosts: Iterator[HostConfig] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
       // Start request time
       private var started: Long = System.currentTimeMillis()
@@ -161,28 +183,24 @@ object ElasticsearchSource {
       /**
         * Handle request success.
         *
-        * @param response http response.
+        * @param data http response data.
         */
-      def handleSuccess(response: Response[Json]): Unit = {
-        response.body match {
-          case Left(ex) => handleFailure(new StreamException(ex))
-          case Right(data) =>
-            // Retrieve hits
-            val result = data.evaluate(ElasticPath.Hits)
-            if (result.isDefined) {
-              system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
+      def handleSuccess(data: Json): Unit = {
+        // Retrieve hits
+        val result = data.evaluate(ElasticPath.Hits)
+        if (result.isDefined) {
+          system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
 
-              // Check if we have at least one hit
-              val it = result.get[JsArray].iterator
-              if (it.hasNext) {
-                scrollId = data.evaluate(ElasticPath.ScrollId)
-                emitMultiple(out, it)
-              } else {
-                completeStage()
-              }
-            } else {
-              handleFailure(new StreamException(response.statusText))
-            }
+          // Check if we have at least one hit
+          val it = result.get[JsArray].iterator
+          if (it.hasNext) {
+            scrollId = data.evaluate(ElasticPath.ScrollId)
+            emitMultiple(out, it)
+          } else {
+            completeStage()
+          }
+        } else {
+          handleFailure(new StreamException("Response doesn't contains hits field"))
         }
       }
 
@@ -201,49 +219,58 @@ object ElasticsearchSource {
         */
       def elapsed(): Long = System.currentTimeMillis() - started
 
-      val asJson: ResponseAs[Json, Nothing] = asByteArray.map(Json.parseBytesUnsafe)
-
       override def onPull(): Unit = {
-        {
-          // Retrieve uri based on scroll id
-          val uri = if (scrollId.isEmpty) {
-            uri"${hosts.next()}/${config.indexName}/_search?scroll=5m&sort=_doc"
-          } else {
-            uri"${hosts.next()}/_search/scroll"
+        // Host configuration
+        val hostConf = hosts.next()
+
+        // Retrieve uri based on scroll id
+        val uri = if (scrollId.isEmpty) {
+          s"${hostConf.scheme}://${hostConf.host}:${hostConf.port}/${config.indexName}/_search?scroll=5m&sort=_doc"
+        } else {
+          s"${hostConf.scheme}://${hostConf.host}:${hostConf.port}/_search/scroll"
+        }
+
+        // Prepare request
+        var request = HttpRequest()
+          .withMethod(HttpMethods.POST)
+          .withUri(uri)
+
+        request = if (scrollId.isEmpty) {
+          request.withEntity(ContentTypes.`application/json`, Json.printStringUnsafe(config.query.patch(Add(ElasticPath.Size, config.bulk)).get[Json]))
+        } else {
+          request.withEntity(ContentTypes.`application/json`, Json.printStringUnsafe(Json.obj(
+            "scroll" -> "5m",
+            "scroll_id" -> scrollId.get[Json]
+          )))
+        }
+
+        started = System.currentTimeMillis()
+
+        request = if (hostConf.auth.isDefined) {
+          hostConf.auth.get match {
+            case BasicAuthConfig(username, password) =>
+              request.withHeaders(Seq(
+                Authorization(BasicHttpCredentials(username, password))
+              ))
+            case _ => request
           }
+        } else {
+          request
+        }
 
-          // Prepare request
-          var request = sttp.post(uri)
-            .header("Content-Type", "application/json")
-            .readTimeout(5 seconds)
-            .response(asJson)
-
-
-          request = if (scrollId.isEmpty) {
-            request.body(Json.printStringUnsafe(config.query.patch(Add(ElasticPath.Size, config.bulk)).get[Json]))
-          } else {
-            request.body(Json.printStringUnsafe(Json.obj(
-              "scroll" -> "5m",
-              "scroll_id" -> scrollId.get[Json]
-            )))
-          }
-
-
-          started = System.currentTimeMillis()
-
-
-          if (uri.userInfo.isDefined) {
-            val userInfo = uri.userInfo.get
-            request.auth.basic(userInfo.username, userInfo.password.get).send()
-          } else {
-            request.send()
-          }
-          }.onComplete {
-          case Success(response) => successHandler.invoke(response)
-          case Failure(ex) => failureHandler.invoke(ex)
+        Http().singleRequest(request).map {
+          case HttpResponse(StatusCodes.OK, _, entity, _) =>
+            entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
+              successHandler.invoke(Json.parseByteStringUnsafe(x))
+            }
+          case resp@HttpResponse(_, _, _, _) =>
+            try {
+              failureHandler.invoke(new StreamException(resp.httpMessage.toString))
+            } finally {
+              resp.discardEntityBytes()(materializer)
+            }
         }
       }
-
     }
 
   }

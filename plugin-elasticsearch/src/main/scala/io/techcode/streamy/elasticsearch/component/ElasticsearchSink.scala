@@ -23,11 +23,9 @@
  */
 package io.techcode.streamy.elasticsearch.component
 
+import akka.Done
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Keep, Sink, Source}
-import akka.util.ByteString
-import akka.{Done, NotUsed}
-import com.softwaremill.sttp.SttpBackend
+import akka.stream.scaladsl.{Keep, Sink}
 import io.techcode.streamy.util.json.Json
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,8 +41,7 @@ object ElasticsearchSink {
     * @param config sink configuration.
     */
   def apply(config: ElasticsearchFlow.Config)(
-    implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
-    system: ActorSystem,
+    implicit system: ActorSystem,
     executionContext: ExecutionContext
   ): Sink[Json, Future[Done]] =
     ElasticsearchFlow(config).toMat(Sink.ignore)(Keep.right)

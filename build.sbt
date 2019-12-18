@@ -127,7 +127,7 @@ lazy val `plugin-elasticsearch` = project
     },
     addArtifact(artifact in(Compile, assembly), assembly)
   )
-  .settings(Dependencies.sttp, Dependencies.elasticTest)
+  .settings(Dependencies.akkaHttp, Dependencies.elasticTest)
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")

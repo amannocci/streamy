@@ -30,14 +30,13 @@ object Dependencies {
   object Compile {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" // Apache 2 License
     val akkaStream = "com.typesafe.akka" %% "akka-stream" // Apache 2 License
+    val akkaHttp = "com.typesafe.akka" %% "akka-http" // Apache 2 License
     val akkaSlf4j =  "com.typesafe.akka" %% "akka-slf4j" // Apache 2 License
     val logbackClassic =  "ch.qos.logback" % "logback-classic" // EPL/LGPL License
     val googleGuava = "com.google.guava" % "guava" // Apache 2 License
     val pureConfig = "com.github.pureconfig" %% "pureconfig" // Mozilla Public License 2.0
     val scalaReflect = Def.setting { "org.scala-lang" % "scala-reflect"  % scalaVersion.value }
     val metricsJvm = "io.dropwizard.metrics" % "metrics-jvm" // Apache 2 License
-    val sttpCore = "com.softwaremill.sttp" %% "core" // Apache 2 License
-    val sttpBackend = "com.softwaremill.sttp" %% "akka-http-backend" // Apache 2 License
   }
 
   object Test {
@@ -50,13 +49,13 @@ object Dependencies {
 
   import Compile._, Test._
 
-  val akka = libraryDependencies ++= Seq(akkaActor, akkaStream, akkaSlf4j).map(_ % "2.5.26")
+  val akka = libraryDependencies ++= Seq(akkaActor,akkaStream, akkaSlf4j).map(_ % "2.5.26")
+  val akkaHttp = libraryDependencies ++= Seq(Compile.akkaHttp).map(_ % "10.1.11")
   val logback = libraryDependencies ++= Seq(logbackClassic % "1.2.3")
   val guava = libraryDependencies ++= Seq(googleGuava % "28.1-jre")
   val config = libraryDependencies ++= Seq(pureConfig % "0.12.1")
   val scala = libraryDependencies ++= Seq(scalaReflect.value)
   val metric = libraryDependencies ++= Seq(metricsJvm % "4.0.5")
-  val sttp = libraryDependencies ++= Seq(sttpCore, sttpBackend).map(_ % "1.7.2")
 
   private val akkaTesting = Seq(akkaTestkit, akkaStreamTestkit).map(_ % "2.5.26")
   val akkaTest = libraryDependencies ++= akkaTesting.map(_ % "test")

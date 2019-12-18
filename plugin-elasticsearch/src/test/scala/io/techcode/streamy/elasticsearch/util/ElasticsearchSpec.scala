@@ -25,16 +25,10 @@ package io.techcode.streamy.elasticsearch.util
 
 import java.util.UUID
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import com.softwaremill.sttp.SttpBackend
-import com.softwaremill.sttp.akkahttp.AkkaHttpBackend
+import akka.http.scaladsl.Http
 import io.techcode.streamy.TestSystem
 import org.apache.http.HttpHost
 import org.elasticsearch.client.{RestClient, RestHighLevelClient}
-
-import scala.concurrent.ExecutionContext.Implicits._
-import scala.concurrent.Future
 
 /**
   * Helper for elasticsearch spec.
@@ -44,10 +38,6 @@ trait ElasticsearchSpec extends TestSystem {
   val elasticHost: String = sys.props.getOrElse("elasticsearch.host", "127.0.0.1")
   val elasticPort: Int = sys.props.getOrElse("elasticsearch.port", "9200").toInt
 
-  protected implicit val httpClient: SttpBackend[Future, Source[ByteString, Any]] = {
-    AkkaHttpBackend.usingActorSystem(system)
-  }
-
   val restClient: RestHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, elasticPort, "http")))
 
   def randomIndex(): String = {
@@ -55,6 +45,7 @@ trait ElasticsearchSpec extends TestSystem {
   }
 
   override def afterAll(): Unit = {
+    Http().shutdownAllConnectionPools()
     restClient.close()
     super.afterAll()
   }

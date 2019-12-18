@@ -25,7 +25,7 @@ package io.techcode.streamy.elasticsearch.component
 
 import akka.stream.scaladsl.Sink
 import akka.stream.testkit.scaladsl.TestSink
-import akka.util.ByteString
+import io.techcode.streamy.elasticsearch.component.ElasticsearchSource.HostConfig
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
@@ -56,15 +56,19 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
       // Stream to test
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
-        Seq(s"http://$elasticHost:$elasticPort"),
+        Seq(HostConfig(
+          scheme = "http",
+          host = elasticHost,
+          port = elasticPort
+        )),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}"""),
         bulk = 1
       )).runWith(TestSink.probe[Json])
 
       // Check
-      stream.requestNext().evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
-      stream.requestNext().evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
+      stream.requestNext(5 seconds).evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
+      stream.requestNext(5 seconds).evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
       stream.expectComplete()
     }
 
@@ -77,14 +81,18 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
       // Result of query
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq(s"http://$elasticHost:$elasticPort"),
+        Seq(HostConfig(
+          scheme = "http",
+          host = elasticHost,
+          port = elasticPort
+        )),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
-      )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
+      )).runWith(Sink.head[Json])
 
       // Check
       whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
-        x should not equal ByteString.empty
+        x should not equal Json.obj()
       }
     }
 
@@ -94,10 +102,14 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
       // Result of query
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq(s"http://$elasticHost:$elasticPort"),
+        Seq(HostConfig(
+          scheme = "http",
+          host = elasticHost,
+          port = elasticPort
+        )),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
-      )).runWith(Sink.reduce[ByteString]((x, y) => x ++ y))
+      )).runWith(Sink.ignore)
 
       assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
     }

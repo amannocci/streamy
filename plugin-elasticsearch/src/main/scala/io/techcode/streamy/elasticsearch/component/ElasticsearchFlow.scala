@@ -27,19 +27,20 @@ import java.util
 
 import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
 import akka.stream._
-import akka.stream.scaladsl.{Balance, Flow, GraphDSL, Merge, Source}
+import akka.stream.scaladsl.{Balance, Flow, GraphDSL, Merge}
 import akka.stream.stage._
 import akka.util.ByteString
-import com.softwaremill.sttp._
 import io.techcode.streamy.elasticsearch.event._
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
 /**
   * Elasticsearch flow companion.
@@ -76,7 +77,7 @@ object ElasticsearchFlow {
 
   // Component configuration
   case class Config(
-    hosts: Seq[String],
+    hosts: Seq[HostConfig],
     indexName: String,
     action: String,
     bulk: Int = DefaultBulk,
@@ -84,14 +85,28 @@ object ElasticsearchFlow {
     retry: FiniteDuration = DefaultRetry
   )
 
+  case class HostConfig(
+    scheme: String,
+    host: String,
+    port: Int,
+    auth: Option[AuthConfig] = None
+  )
+
+  // Generic auth configuration
+  trait AuthConfig
+
+  case class BasicAuthConfig(
+    username: String,
+    password: String
+  ) extends AuthConfig
+
   /**
     * Create a new elasticsearch flow.
     *
     * @param config flow configuration.
     */
   def apply(config: Config)(
-    implicit httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
-    system: ActorSystem,
+    implicit system: ActorSystem,
     executionContext: ExecutionContext
   ): Flow[Json, Json, NotUsed] = {
     if (config.worker > 1) {
@@ -133,8 +148,7 @@ object ElasticsearchFlow {
     * @param config flow stage configuration.
     */
   private class ElasticsearchFlowStage(config: Config)(
-    implicit val httpClient: SttpBackend[Future, Source[ByteString, NotUsed]],
-    system: ActorSystem,
+    implicit system: ActorSystem,
     executionContext: ExecutionContext
   ) extends GraphStage[FlowShape[Json, Json]] {
 
@@ -203,9 +217,6 @@ object ElasticsearchFlow {
       ByteString(header.toString()) ++ NewLineDelimiter ++ ByteString(doc.toString()) ++ NewLineDelimiter
     }
 
-    // Handle response as json
-    private val asJson: ResponseAs[Json, Nothing] = asByteArray.map(Json.parseBytesUnsafe)
-
     /**
       * Elasticsearch flow logic.
       */
@@ -219,7 +230,7 @@ object ElasticsearchFlow {
       private val buffer = new util.ArrayDeque[Json]
 
       // Async success handler
-      private val successHandler = getAsyncCallback[Response[Json]](handleResponse)
+      private val successHandler = getAsyncCallback[Json](handleResponse)
 
       // Async failure handler
       private val failureHandler = getAsyncCallback[Throwable](handleFailure)
@@ -239,7 +250,7 @@ object ElasticsearchFlow {
       }
 
       // List of hosts to use
-      private val hosts: Iterator[String] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
+      private val hosts: Iterator[HostConfig] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
       // Current processing message
       private var messages: Seq[Json] = Nil
@@ -247,18 +258,14 @@ object ElasticsearchFlow {
       /**
         * Handle response success.
         *
-        * @param response http response.
+        * @param data http response data.
         */
-      def handleResponse(response: Response[Json]): Unit = {
-        response.body match {
-          case Left(ex) => handleFailure(new StreamException(ex))
-          case Right(data) =>
-            val errors = data.evaluate(ElasticPath.Errors)
-            if (errors.getOrElse[Boolean](true)) {
-              processPartial(data)
-            } else {
-              processSuccess()
-            }
+      def handleResponse(data: Json): Unit = {
+        val errors = data.evaluate(ElasticPath.Errors)
+        if (errors.getOrElse[Boolean](true)) {
+          processPartial(data)
+        } else {
+          processSuccess()
         }
       }
 
@@ -363,28 +370,40 @@ object ElasticsearchFlow {
             state = State.Busy
             started = System.currentTimeMillis()
 
-            // Retrieve uri based on scroll id
-            val uri = uri"${hosts.next()}/_bulk"
+            // Host configuration
+            val hostConf = hosts.next()
 
             // Prepare request
-            var request = sttp.post(uri)
-              .header("Content-Type", "application/x-ndjson")
-              .readTimeout(5 seconds)
-              .body(marshalMessages(messages))
-              .response(asJson)
+            var request = HttpRequest()
+              .withMethod(HttpMethods.POST)
+              .withUri(s"${hostConf.scheme}://${hostConf.host}:${hostConf.port}/_bulk")
+              .withEntity(ContentType(MediaType.customWithFixedCharset("application", "x-ndjson", HttpCharsets.`UTF-8`)), marshalMessages(messages))
 
             // Add basic auth
-            request = if (uri.userInfo.isDefined) {
-              val userInfo = uri.userInfo.get
-              request.auth.basic(userInfo.username, userInfo.password.get)
+            request = if (hostConf.auth.isDefined) {
+              hostConf.auth.get match {
+                case BasicAuthConfig(username, password) =>
+                  request.withHeaders(Seq(
+                    Authorization(BasicHttpCredentials(username, password))
+                  ))
+                case _ => request
+              }
             } else {
               request
             }
 
             // Send request
-            request.send().onComplete {
-              case Success(response) => successHandler.invoke(response)
-              case Failure(ex) => failureHandler.invoke(ex)
+            Http().singleRequest(request).map {
+              case HttpResponse(StatusCodes.OK, _, entity, _) =>
+                entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
+                  successHandler.invoke(Json.parseByteStringUnsafe(x))
+                }
+              case resp@HttpResponse(_, _, _, _) =>
+                try {
+                  failureHandler.invoke(new StreamException(resp.httpMessage.toString))
+                } finally {
+                  resp.discardEntityBytes()(materializer)
+                }
             }
           }
         }
