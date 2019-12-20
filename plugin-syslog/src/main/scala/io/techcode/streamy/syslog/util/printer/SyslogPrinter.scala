@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (C) 2017-2019
+ * Copyright (c) 2017-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,7 @@ object SyslogPrinter {
 
   val Nil: String = "-"
   val Space: Char = ' '
+  val Empty: String = ""
   val Date: String = "1970-01-01T00:00:00.000Z"
   val DateStamp: String = "Jan 1 00:00:00.000"
   val ProcId: String = "1"
@@ -88,7 +89,17 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
     * @param conf         name of the field.
     * @param defaultValue default value.
     */
-  def computeVal(conf: Binder, defaultValue: String)(hook: => Unit): Unit = {
+  def computeVal(conf: Binder, defaultValue: String): Unit =
+    computeValHook(conf, defaultValue)((): Unit)
+
+  /**
+    * Print data part to format syslog message.
+    *
+    * @param conf         name of the field.
+    * @param defaultValue default value.
+    * @param hook         hook to trigger if a value is process.
+    */
+  def computeValHook(conf: Binder, defaultValue: String)(hook: => Unit = (): Unit): Unit = {
     if (conf.isDefined) {
       conf.applyString(data, hook)
     } else {
@@ -167,23 +178,23 @@ private class Rfc3164Printer(conf: Rfc3164.Config) extends PrinterHelpers {
       builder.append(SyslogPrinter.Sup)
 
       // Add timestamp
-      computeVal(binding.timestamp, SyslogPrinter.DateStamp)()
+      computeVal(binding.timestamp, SyslogPrinter.DateStamp)
       builder.append(SyslogPrinter.Space)
 
       // Add hostname
-      computeVal(binding.hostname, SyslogPrinter.HostName)()
+      computeVal(binding.hostname, SyslogPrinter.HostName)
       builder.append(SyslogPrinter.Space)
 
       // Add app name
-      computeVal(binding.appName, SyslogPrinter.AppName)()
+      computeVal(binding.appName, SyslogPrinter.AppName)
 
       // Add proc id
       builder.append(SyslogPrinter.OpenBracket)
-      computeVal(binding.procId, SyslogPrinter.ProcId)()
+      computeVal(binding.procId, SyslogPrinter.ProcId)
       builder.append(SyslogPrinter.CloseBracket)
 
       // Add message
-      computeVal(binding.message, "") {
+      computeValHook(binding.message, SyslogPrinter.Empty) {
         builder.append(SyslogPrinter.SemiColon)
         builder.append(SyslogPrinter.Space)
       }
@@ -216,30 +227,30 @@ private class Rfc5424Printer(conf: Rfc5424.Config) extends PrinterHelpers {
       builder.append(SyslogPrinter.Space)
 
       // Add timestamp
-      computeVal(binding.timestamp, SyslogPrinter.Date)()
+      computeVal(binding.timestamp, SyslogPrinter.Date)
       builder.append(SyslogPrinter.Space)
 
       // Add hostname
-      computeVal(binding.hostname, SyslogPrinter.Nil)()
+      computeVal(binding.hostname, SyslogPrinter.Nil)
       builder.append(SyslogPrinter.Space)
 
       // Add app name
-      computeVal(binding.appName, SyslogPrinter.Nil)()
+      computeVal(binding.appName, SyslogPrinter.Nil)
       builder.append(SyslogPrinter.Space)
 
       // Add proc id
-      computeVal(binding.procId, SyslogPrinter.Nil)()
+      computeVal(binding.procId, SyslogPrinter.Nil)
       builder.append(SyslogPrinter.Space)
 
       // Add message id
-      computeVal(binding.msgId, SyslogPrinter.Nil)()
+      computeVal(binding.msgId, SyslogPrinter.Nil)
       builder.append(SyslogPrinter.Space)
 
       // Skip structured data
       builder.append(SyslogPrinter.Nil)
 
       // Add message
-      computeVal(binding.message, "") {
+      computeValHook(binding.message, SyslogPrinter.Empty) {
         builder.append(SyslogPrinter.Space)
       }
     }

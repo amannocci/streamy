@@ -76,10 +76,10 @@ object TlsContext {
     // Auth
     import com.typesafe.sslconfig.ssl.{ClientAuth => SslClientAuth}
     val clientAuth = settings.sslParametersConfig.clientAuth match {
-      case SslClientAuth.Default ⇒ None
-      case SslClientAuth.Want ⇒ Some(TLSClientAuth.Want)
-      case SslClientAuth.Need ⇒ Some(TLSClientAuth.Need)
-      case SslClientAuth.None ⇒ Some(TLSClientAuth.None)
+      case SslClientAuth.Default => None
+      case SslClientAuth.Want => Some(TLSClientAuth.Want)
+      case SslClientAuth.Need => Some(TLSClientAuth.Need)
+      case SslClientAuth.None => Some(TLSClientAuth.None)
     }
 
     // New session negotiation

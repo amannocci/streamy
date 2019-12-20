@@ -99,7 +99,7 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     *
     * @param value json object value.
     */
-  def printObject(value: JsObject) {
+  def printObject(value: JsObject): Unit = {
     builder.append(JsonPrinter.OpenBrace)
     if (value.underlying.nonEmpty) {
       var firstValue = true
@@ -123,7 +123,7 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     *
     * @param value json array value.
     */
-  def printArray(value: JsArray) {
+  def printArray(value: JsArray): Unit = {
     builder.append(JsonPrinter.OpenBracket)
     if (value.underlying.nonEmpty) {
       var firstValue = true
@@ -171,14 +171,14 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     *
     * @param value string value.
     */
-  private def printString(value: String) {
+  private def printString(value: String): Unit = {
     @tailrec def firstToBeEncoded(ix: Int = 0): Int =
       if (ix == value.length) -1 else if (requiresEncoding(value.charAt(ix))) ix else firstToBeEncoded(ix + 1)
 
     builder.append(JsonPrinter.Quote)
     firstToBeEncoded() match {
-      case -1 ⇒ builder.append(value)
-      case first ⇒
+      case -1 => builder.append(value)
+      case first =>
         builder.append(value.substring(0, first))
 
         @tailrec def append(ix: Int): Unit =

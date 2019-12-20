@@ -37,7 +37,9 @@ import scala.reflect.io.Path
 trait TestPlugin extends TestSystem {
 
   protected def create(typed: Class[_], conf: Config): ActorRef = {
-    val description: PluginDescription = loadConfigOrThrow[PluginDescription](ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
+    val description: PluginDescription =
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
+        .loadOrThrow[PluginDescription]
     system.actorOf(Props(
       typed,
       PluginData(

@@ -71,7 +71,7 @@ object TcpSource {
       } else {
         plainServer(config)
       }
-    }.to(Sink.foreach { conn: IncomingConnection ⇒
+    }.to(Sink.foreach { conn: IncomingConnection =>
       system.eventStream.publish(TcpEvent.Server.ConnectionCreated(conn.localAddress, conn.remoteAddress))
       conn.flow.alsoTo(Sink.onComplete { _ =>
         system.eventStream.publish(TcpEvent.Server.ConnectionClosed(conn.localAddress, conn.remoteAddress))

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (C) 2017-2019
+ * Copyright (c) 2017-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -69,12 +69,12 @@ abstract class Plugin(
   /**
     * Fired when the plugin is starting.
     */
-  def onStart()
+  def onStart(): Unit
 
   /**
     * Fired when the plugin is stopping.
     */
-  def onStop()
+  def onStop(): Unit
 
   /**
     * Returns the folder that the plugin data's files are located in.

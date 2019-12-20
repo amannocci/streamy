@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (C) 2017-2019
+ * Copyright (c) 2017-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -68,12 +68,12 @@ private class XymonPrinter(conf: XymonTransformer.Printer.Config) extends Printe
     builder.append(XymonTransformer.Id.Status)
 
     // Optionally add lifetime
-    computeVal(binding.lifetime, XymonPrinter.Empty) {
+    computeValHook(binding.lifetime, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Plus)
     }
 
     // Optionally add group
-    computeVal(binding.group, XymonPrinter.Empty) {
+    computeValHook(binding.group, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Slash)
       builder.append(XymonTransformer.Id.Group)
       builder.append(XymonPrinter.Colon)
@@ -83,18 +83,18 @@ private class XymonPrinter(conf: XymonTransformer.Printer.Config) extends Printe
     builder.append(XymonPrinter.Space)
 
     // Hostname and testname
-    computeVal(binding.host, XymonPrinter.Host)()
+    computeVal(binding.host, XymonPrinter.Host)
     builder.append(XymonPrinter.Dot)
-    computeVal(binding.service, XymonPrinter.Service)()
+    computeVal(binding.service, XymonPrinter.Service)
 
     // Space
     builder.append(XymonPrinter.Space)
 
     // Color
-    computeVal(binding.color, XymonPrinter.Color)()
+    computeVal(binding.color, XymonPrinter.Color)
 
     // Optionally add space and message
-    computeVal(binding.message, XymonPrinter.Empty) {
+    computeValHook(binding.message, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Space)
     }
 
@@ -103,7 +103,24 @@ private class XymonPrinter(conf: XymonTransformer.Printer.Config) extends Printe
 }
 
 private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
-  def computeVal(conf: Binder, defaultValue: String)(hook: => Unit): Unit = {
+
+  /**
+    * Print data part to format xymon message.
+    *
+    * @param conf         name of the field.
+    * @param defaultValue default value.
+    */
+  def computeVal(conf: Binder, defaultValue: String): Unit =
+    computeValHook(conf, defaultValue)((): Unit)
+
+  /**
+    * Print data part to format xymon message.
+    *
+    * @param conf         name of the field.
+    * @param defaultValue default value.
+    * @param hook         hook to trigger if a value is process.
+    */
+  def computeValHook(conf: Binder, defaultValue: String)(hook: => Unit): Unit = {
     if (conf.isDefined) {
       conf.applyString(data, hook)
     } else {

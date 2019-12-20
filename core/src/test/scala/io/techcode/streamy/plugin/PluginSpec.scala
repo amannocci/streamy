@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (C) 2017-2019
+ * Copyright (c) 2017-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ package io.techcode.streamy.plugin
 import akka.actor.{ActorRef, Kill, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.StreamyTestSystem
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import pureconfig._
 import pureconfig.generic.auto._
 

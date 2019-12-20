@@ -41,7 +41,7 @@ trait Parser[In, Out] {
   protected var data: In = null.asInstanceOf[In]
 
   // Stack
-  protected val stack: mutable.ArrayStack[Any] = mutable.ArrayStack[Any]()
+  protected val stack: mutable.Stack[Any] = mutable.Stack[Any]()
 
   // Cache length of data
   protected var _length: Int = -1
