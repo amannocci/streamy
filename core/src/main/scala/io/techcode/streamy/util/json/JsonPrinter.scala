@@ -26,7 +26,6 @@ package io.techcode.streamy.util.json
 import akka.util.ByteString
 import com.google.common.io.BaseEncoding
 import io.techcode.streamy.util.lang.CharBuilder
-import io.techcode.streamy.util.math.{RyuDouble, RyuFloat}
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter, Printer, StringPrinter}
 
 import scala.annotation.tailrec
@@ -147,10 +146,10 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     */
   private def printNumber(value: JsNumber): Unit = {
     value match {
-      case x: JsInt => builder.append(x.value.toString)
-      case x: JsLong => builder.append(x.value.toString)
-      case x: JsFloat => builder.append(RyuFloat.floatToString(x.value))
-      case x: JsDouble => builder.append(RyuDouble.doubleToString(x.value))
+      case x: JsInt => builder.append(x.value)
+      case x: JsLong => builder.append(x.value)
+      case x: JsFloat => builder.append(x.value)
+      case x: JsDouble => builder.append(x.value)
       case x: JsBigDecimal => builder.append(x.value.toString())
     }
   }

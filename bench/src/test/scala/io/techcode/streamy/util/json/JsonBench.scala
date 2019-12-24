@@ -53,9 +53,9 @@ class JsonBench {
 
   @Benchmark def sizeOfLong(): Int = JsLong(Long.MaxValue).sizeHint
 
-  @Benchmark def sizeOfFloat(): Int = JsFloat(Float.MaxValue).sizeHint()
+  @Benchmark def sizeOfFloat(): Int = JsFloat(Float.MaxValue).sizeHint
 
-  @Benchmark def sizeOfDouble(): Int = JsDouble(Double.MaxValue).sizeHint()
+  @Benchmark def sizeOfDouble(): Int = JsDouble(Double.MaxValue).sizeHint
 
   @Benchmark def sizeOfNumber(): Int = JsBigDecimal(BigDecimal("1e20")).sizeHint()
 
