@@ -224,7 +224,7 @@ private class ByteStringJsonPrinter extends DerivedByteStringPrinter[Json] with 
 
   override def run(): ByteString = {
     printValue(data)
-    ByteString(builder.toString)
+    builder.toByteString
   }
 
 }

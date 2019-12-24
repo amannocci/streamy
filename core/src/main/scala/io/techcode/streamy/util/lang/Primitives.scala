@@ -81,7 +81,11 @@ object Primitives {
     var tmp = {
       if ((value >> 63) != 0) {
         size += 1
-        value * -1
+        if (Long.MinValue == value) {
+          -(value + 1)
+        } else {
+          -value
+        }
       } else {
         value
       }

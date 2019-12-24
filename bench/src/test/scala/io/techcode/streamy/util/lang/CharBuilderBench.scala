@@ -21,36 +21,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.util.printer
+package io.techcode.streamy.util.lang
 
-import akka.util.{ByteString, ByteStringBuilder}
-import io.techcode.streamy.util.lang.CharBuilder
-
-/**
-  * Represent a [[ByteString]] printer that provide an efficient way to print [[In]].
-  */
-trait ByteStringPrinter[In] extends Printer[In, ByteString]
+import akka.util.ByteString
+import org.openjdk.jmh.annotations.Benchmark
 
 /**
-  * Represent a direct [[ByteString]] printer that provide an efficient way to print [[In]].
+  * Char builder bench.
   */
-trait DirectByteStringPrinter[In] extends ByteStringPrinter[In] {
+class CharBuilderBench {
 
-  // Used to build bytestring directly
-  protected implicit var builder: ByteStringBuilder = ByteString.newBuilder
+  @Benchmark def toByteString: ByteString = CharBuilderBench.Sample.toByteString
 
-  override def cleanup(): Unit = builder = ByteString.newBuilder
+  @Benchmark override def toString: String = CharBuilderBench.Sample.toString
 
 }
 
-/**
-  * Represent a derived [[ByteString]] printer based on [[CharBuilder]] that provide an efficient way to print [[In]].
-  */
-trait DerivedByteStringPrinter[In] extends ByteStringPrinter[In] {
+object CharBuilderBench {
 
-  // Used to build bytestring indirectly
-  protected implicit var builder: CharBuilder = new CharBuilder()
-
-  override def cleanup(): Unit = builder.reset()
+  val Sample: CharBuilder = new CharBuilder().append("foobar" * 100)
 
 }

@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.util.lang
 
+import akka.util.ByteString
 import io.techcode.streamy.util.math.{RyuDouble, RyuFloat}
 
 object CharBuilder {
@@ -59,6 +60,10 @@ object CharBuilder {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
   )
+
+  private val IntMinValue: Array[Char] = Int.MinValue.toString.toCharArray
+
+  private val LongMinValue: Array[Char] = Long.MinValue.toString.toCharArray
 
 }
 
@@ -109,6 +114,20 @@ final class CharBuilder {
   def length(): Int = len
 
   /**
+    * Appends a char sequence.
+    *
+    * @param seq sequence.
+    * @return this object for chaining.
+    */
+  def append(seq: Array[Char]): CharBuilder = {
+    val totalLen = len + seq.length
+    resizeIfNecessary(totalLen)
+    System.arraycopy(seq, 0, buf, len, seq.length)
+    len = totalLen
+    this
+  }
+
+  /**
     * Appends a sequence.
     *
     * @param seq sequence.
@@ -138,50 +157,55 @@ final class CharBuilder {
     val totalLen = len + Primitives.stringSize(value)
     resizeIfNecessary(totalLen)
 
-    // Compute vars
-    var rawValue = value
-    var charPos = totalLen
-    var sign: Char = 0
-    var q = 0
-    var r = 0
+    if (Int.MinValue == value) {
+      append(CharBuilder.IntMinValue)
+      this
+    } else {
+      // Compute vars
+      var rawValue = value
+      var charPos = totalLen
+      var sign: Char = 0
+      var q = 0
+      var r = 0
 
-    // Handle negative sign
-    if (rawValue < 0) {
-      sign = '-'
-      rawValue = -rawValue
+      // Handle negative sign
+      if (rawValue < 0) {
+        sign = '-'
+        rawValue = -rawValue
+      }
+
+      // Generate two digits per iteration
+      while (rawValue >= 65536) {
+        q = rawValue / 100
+        // really: r = rawValue - (q * 100);
+        r = rawValue - ((q << 6) + (q << 5) + (q << 2))
+        rawValue = q
+        charPos -= 1
+        buf(charPos) = CharBuilder.DigitOnes(r)
+        charPos -= 1
+        buf(charPos) = CharBuilder.DigitTens(r)
+      }
+
+      // Fall thru to fast mode for smaller numbers
+      // assert(rawValue <= 65536, rawValue)
+      do {
+        q = (rawValue * 52429) >>> (16 + 3)
+        // r = rawValue - (q * 10)
+        r = rawValue - ((q << 3) + (q << 1))
+        charPos -= 1
+        buf(charPos) = CharBuilder.Digits(r)
+        rawValue = q
+      } while (rawValue != 0)
+
+      // Handle sign
+      if (sign != 0) {
+        charPos -= 1
+        buf(charPos) = sign
+      }
+
+      len = totalLen
+      this
     }
-
-    // Generate two digits per iteration
-    while (rawValue >= 65536) {
-      q = rawValue / 100
-      // really: r = rawValue - (q * 100);
-      r = rawValue - ((q << 6) + (q << 5) + (q << 2))
-      rawValue = q
-      charPos -= 1
-      buf(charPos) = CharBuilder.DigitOnes(r)
-      charPos -= 1
-      buf(charPos) = CharBuilder.DigitTens(r)
-    }
-
-    // Fall thru to fast mode for smaller numbers
-    // assert(rawValue <= 65536, rawValue)
-    do {
-      q = (rawValue * 52429) >>> (16 + 3)
-      // r = rawValue - (q * 10)
-      r = rawValue - ((q << 3) + (q << 1))
-      charPos -= 1
-      buf(charPos) = CharBuilder.Digits(r)
-      rawValue = q
-    } while (rawValue != 0)
-
-    // Handle sign
-    if (sign != 0) {
-      charPos -= 1
-      buf(charPos) = sign
-    }
-
-    len = totalLen
-    this
   }
 
   /**
@@ -194,64 +218,69 @@ final class CharBuilder {
     val totalLen = len + Primitives.stringSize(value)
     resizeIfNecessary(totalLen)
 
-    // Compute vars
-    var rawValue = value
-    var charPos = totalLen
-    var sign: Char = 0
-    var q: Long = 0
-    var r: Int = 0
+    if (Long.MinValue == value) {
+      append(CharBuilder.LongMinValue)
+      this
+    } else {
+      // Compute vars
+      var rawValue = value
+      var charPos = totalLen
+      var sign: Char = 0
+      var q: Long = 0
+      var r: Int = 0
 
-    // Handle negative sign
-    if (rawValue < 0) {
-      sign = '-'
-      rawValue = -rawValue
+      // Handle negative sign
+      if (rawValue < 0) {
+        sign = '-'
+        rawValue = -rawValue
+      }
+
+      // Generate two digits per iteration
+      while (rawValue >= Int.MaxValue) {
+        q = rawValue / 100
+        // really: r = rawValue - (q * 100);
+        r = (rawValue - ((q << 6) + (q << 5) + (q << 2))).toInt
+        rawValue = q
+        charPos -= 1
+        buf(charPos) = CharBuilder.DigitOnes(r)
+        charPos -= 1
+        buf(charPos) = CharBuilder.DigitTens(r)
+      }
+
+      // Get 2 digits/iteration using ints
+      var q2 = 0
+      var rawValue2 = rawValue.toInt
+      while (rawValue2 >= 65536) {
+        q2 = rawValue2 / 100
+        // really: r = i2 - (q * 100)
+        r = rawValue2 - ((q2 << 6) + (q2 << 5) + (q2 << 2))
+        rawValue2 = q2
+        charPos -= 1
+        buf(charPos) = CharBuilder.DigitOnes(r)
+        charPos -= 1
+        buf(charPos) = CharBuilder.DigitTens(r)
+      }
+
+      // Fall thru to fast mode for smaller numbers
+      // assert(rawValue2 <= 65536, rawValue2);
+      do {
+        q2 = (rawValue2 * 52429) >>> (16 + 3)
+        // r = rawValue - (q2 * 10)
+        r = rawValue2 - ((q2 << 3) + (q2 << 1))
+        charPos -= 1
+        buf(charPos) = CharBuilder.Digits(r)
+        rawValue2 = q2
+      } while (rawValue2 != 0)
+
+      // Handle sign
+      if (sign != 0) {
+        charPos -= 1
+        buf(charPos) = sign
+      }
+
+      len = totalLen
+      this
     }
-
-    // Generate two digits per iteration
-    while (rawValue >= Int.MaxValue) {
-      q = rawValue / 100
-      // really: r = rawValue - (q * 100);
-      r = (rawValue - ((q << 6) + (q << 5) + (q << 2))).toInt
-      rawValue = q
-      charPos -= 1
-      buf(charPos) = CharBuilder.DigitOnes(r)
-      charPos -= 1
-      buf(charPos) = CharBuilder.DigitTens(r)
-    }
-
-    // Get 2 digits/iteration using ints
-    var q2 = 0
-    var rawValue2 = rawValue.toInt
-    while (rawValue2 >= 65536) {
-      q2 = rawValue2 / 100
-      // really: r = i2 - (q * 100)
-      r = rawValue2 - ((q2 << 6) + (q2 << 5) + (q2 << 2))
-      rawValue2 = q2
-      charPos -= 1
-      buf(charPos) = CharBuilder.DigitOnes(r)
-      charPos -= 1
-      buf(charPos) = CharBuilder.DigitTens(r)
-    }
-
-    // Fall thru to fast mode for smaller numbers
-    // assert(rawValue2 <= 65536, rawValue2);
-    do {
-      q2 = (rawValue2 * 52429) >>> (16 + 3)
-      // r = rawValue - (q2 * 10)
-      r = rawValue2 - ((q2 << 3) + (q2 << 1))
-      charPos -= 1
-      buf(charPos) = CharBuilder.Digits(r)
-      rawValue2 = q2
-    } while (rawValue2 != 0)
-
-    // Handle sign
-    if (sign != 0) {
-      charPos -= 1
-      buf(charPos) = sign
-    }
-
-    len = totalLen
-    this
   }
 
   /**
@@ -317,5 +346,21 @@ final class CharBuilder {
   }
 
   override def toString: String = new String(buf, 0, len)
+
+  /**
+    * Returns a byte string representation of the object.
+    * Very optimized due to HotSpotIntrinsicCandidate on method `StringUTF16.toBytes`.
+    * It perform better than this.
+    * ---------------------------------------------------------------------------------
+    * val charBuf = CharBuffer.wrap(buf)
+    * val size = (charBuf.remaining.toFloat * decoder.averageBytesPerChar).toInt
+    * val byteBuf = new Array[Byte](size)
+    * decoder.encode(charBuf, ByteBuffer.wrap(byteBuf), true)
+    * ByteString.fromArrayUnsafe(byteBuf)
+    * ---------------------------------------------------------------------------------
+    *
+    * @return a byte string representation of the object.
+    */
+  def toByteString: ByteString = ByteString(toString)
 
 }
