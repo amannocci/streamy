@@ -72,6 +72,8 @@ object CharBuilder {
   *
   * It wraps a (growable) array of characters, and can accept
   * additional String or Char data to be added to its buffer.
+  * It perform better in some operations than [[java.lang.StringBuilder]]
+  * and can be reset without extra allocation or cleanup.
   */
 final class CharBuilder {
 
@@ -128,19 +130,19 @@ final class CharBuilder {
   }
 
   /**
-    * Appends a sequence.
+    * Appends a string.
     *
-    * @param seq sequence.
+    * @param str string.
     * @return this object for chaining.
     */
-  def append(seq: CharSequence): CharBuilder = {
-    val totalLen = len + seq.length
+  def append(str: String): CharBuilder = {
+    val totalLen = len + str.length
     resizeIfNecessary(totalLen)
     var i = 0
     var j = len
     len = totalLen
-    while (i < seq.length) {
-      buf(j) = seq.charAt(i)
+    while (i < str.length) {
+      buf(j) = str.charAt(i)
       i += 1
       j += 1
     }
@@ -316,10 +318,10 @@ final class CharBuilder {
     * @return this object for chaining.
     */
   def append(ch: Char): CharBuilder = {
-    val tlen = len + 1
-    resizeIfNecessary(tlen)
+    val totalLen = len + 1
+    resizeIfNecessary(totalLen)
     buf(len) = ch
-    len = tlen
+    len = totalLen
     this
   }
 
@@ -355,7 +357,7 @@ final class CharBuilder {
     * val charBuf = CharBuffer.wrap(buf)
     * val size = (charBuf.remaining.toFloat * decoder.averageBytesPerChar).toInt
     * val byteBuf = new Array[Byte](size)
-    * decoder.encode(charBuf, ByteBuffer.wrap(byteBuf), true)
+    * encoder.encode(charBuf, ByteBuffer.wrap(byteBuf), true)
     * ByteString.fromArrayUnsafe(byteBuf)
     * ---------------------------------------------------------------------------------
     *

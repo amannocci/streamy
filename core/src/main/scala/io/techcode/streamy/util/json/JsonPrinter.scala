@@ -36,9 +36,9 @@ import scala.annotation.tailrec
 object JsonPrinter {
 
   // Constants
-  val Null: String = "null"
-  val True: String = "true"
-  val False: String = "false"
+  val Null: Array[Char] = "null".toCharArray
+  val True: Array[Char] = "true".toCharArray
+  val False: Array[Char] = "false".toCharArray
   val Quote: Char = '"'
   val Colon: Char = ':'
   val OpenBrace: Char = '{'

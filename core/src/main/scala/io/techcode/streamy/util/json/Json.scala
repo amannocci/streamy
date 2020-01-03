@@ -512,7 +512,9 @@ sealed trait Json extends JsDefined {
     */
   def sizeHint(): Int = toString.length
 
-  override def toString: String = Json.printStringUnsafe(this)
+  override lazy val toString: String = Json.printStringUnsafe(this)
+
+  lazy val toByteString: ByteString = Json.printByteStringUnsafe(this)
 
 }
 
@@ -642,7 +644,6 @@ case class JsLong(value: Long) extends JsNumber {
 
   override def copy(): Json = this
 
-  // Dividing with powers of two
   override lazy val sizeHint: Int = Primitives.stringSize(value)
 
 }
