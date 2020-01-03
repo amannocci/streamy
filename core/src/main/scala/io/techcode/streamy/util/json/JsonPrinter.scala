@@ -171,17 +171,19 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     * @param value string value.
     */
   private def printString(value: String): Unit = {
+    val lenValue = value.length
+
     @tailrec def firstToBeEncoded(ix: Int = 0): Int =
-      if (ix == value.length) -1 else if (requiresEncoding(value.charAt(ix))) ix else firstToBeEncoded(ix + 1)
+      if (ix == lenValue) -1 else if (requiresEncoding(value.charAt(ix))) ix else firstToBeEncoded(ix + 1)
 
     builder.append(JsonPrinter.Quote)
     firstToBeEncoded() match {
       case -1 => builder.append(value)
       case first =>
-        builder.append(value.substring(0, first))
+        builder.append(value, 0, first)
 
         @tailrec def append(ix: Int): Unit =
-          if (ix < value.length) {
+          if (ix < lenValue) {
             value.charAt(ix) match {
               case c if !requiresEncoding(c) => builder.append(c)
               case '"' => builder.append("\\\"")

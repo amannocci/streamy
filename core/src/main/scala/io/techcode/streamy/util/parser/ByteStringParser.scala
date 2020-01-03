@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.util.parser
 
-import java.nio.charset.Charset
+import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.{ByteBuffer, CharBuffer}
 
 import akka.util.ByteString
@@ -128,24 +128,7 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
     true
   }
 
-  final def capture(inner: => Boolean, field: ByteString => Boolean, optional: Boolean = false): Boolean = {
-    val marker = _cursor
-    var state = inner
-    if (state) {
-      val binding = field(data.slice(marker, _cursor))
-      if (!binding) {
-        state = optional
-      }
-    }
-    state
-  }
-
-  /**
-    * Returns a [[ByteString]] based on start and end index.
-    *
-    * @return a byte string slice.
-    */
-  final def partition(): ByteStringPartition = new ByteStringPartition(data, _mark, _cursor)
+  final def slice(): ByteString = data.slice(_mark, _cursor)
 
   override def cleanup(): Unit = {
     super.cleanup()
@@ -159,7 +142,7 @@ trait ByteStringParser[Out] extends Parser[ByteString, Out] {
   * Companion byte string parser.
   */
 object ByteStringParser {
-  val UTF8: Charset = Charset.forName("UTF-8")
+  val UTF8: Charset = StandardCharsets.UTF_8
   val ErrorChar = '\uFFFD' // compile-time constant, universal UTF-8 replacement character '�'
   val EOI = '\uFFFF'
 }

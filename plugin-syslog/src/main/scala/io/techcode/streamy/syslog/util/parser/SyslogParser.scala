@@ -23,8 +23,11 @@
  */
 package io.techcode.streamy.syslog.util.parser
 
+import java.nio.charset.StandardCharsets
+
 import akka.util.ByteString
 import com.google.common.base.CharMatcher
+import com.google.common.primitives.Ints
 import io.techcode.streamy.syslog.component.SyslogTransformer._
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{ByteStringParser, CharMatchers, ParseException}
@@ -138,15 +141,14 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
 
   private def capturePrival(rule: => Boolean): Boolean = {
     mark()
-    val state = rule
-    if (binding.facility.isDefined || binding.severity.isDefined) {
-      val prival = partition().asDigit()
+    if (rule && (binding.facility.isDefined || binding.severity.isDefined)) {
+      val prival = Ints.tryParse(slice().decodeString(StandardCharsets.US_ASCII))
 
       // Read severity or facility
-      binding.facility(prival >> 3)
-      binding.severity(prival & 7)
+      binding.facility(prival >> 3) && binding.severity(prival & 7)
+    } else {
+      false
     }
-    state
   }
 
   def version(): Boolean =
@@ -155,46 +157,41 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def hostname(): Boolean =
     sp() && or(
       nilValue(),
-      capture(
-        times(1, mode.hostname, CharMatchers.PrintUsAscii),
+      capture(times(1, mode.hostname, CharMatchers.PrintUsAscii)) {
         binding.hostname(_)
-      )
+      }
     )
 
   def appName(): Boolean =
     sp() && or(
       nilValue(),
-      capture(
-        times(1, mode.appName, CharMatchers.PrintUsAscii),
+      capture(times(1, mode.appName, CharMatchers.PrintUsAscii)) {
         binding.appName(_)
-      )
+      }
     )
 
   def procId(): Boolean =
     sp() && or(
       nilValue(),
-      capture(
-        times(1, mode.procId, CharMatchers.PrintUsAscii),
+      capture(times(1, mode.procId, CharMatchers.PrintUsAscii)) {
         binding.procId(_)
-      )
+      }
     )
 
   def msgId(): Boolean =
     sp() && or(
       nilValue(),
-      capture(
-        times(1, mode.msgId, CharMatchers.PrintUsAscii),
+      capture(times(1, mode.msgId, CharMatchers.PrintUsAscii)) {
         binding.msgId(_)
-      )
+      }
     )
 
   def timestamp(): Boolean =
     sp() && or(
       nilValue(),
-      capture(
-        fullDate() && ch('T') && fullTime(),
+      capture(fullDate() && ch('T') && fullTime()) {
         binding.timestamp(_)
-      )
+      }
     )
 
   def fullDate(): Boolean =
@@ -229,10 +226,9 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
 
   def structuredData(): Boolean = or(
     nilValue(),
-    capture(
-      sdElement(),
+    capture(sdElement()) {
       binding.structData(_)
-    )
+    }
   )
 
   def sdElement(): Boolean =
@@ -246,10 +242,9 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def sdName(): Boolean = times(1, 32, SyslogParser.SdNameMatcher)
 
   def msg(): Boolean =
-    sp() && capture(
-      any(),
+    sp() && capture(any()) {
       binding.message(_)
-    )
+    }
 
   override def cleanup(): Unit = {
     super.cleanup()
@@ -299,42 +294,37 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
 
   private def capturePrival(rule: => Boolean): Boolean = {
     mark()
-    val state = rule
-    if (binding.facility.isDefined || binding.severity.isDefined) {
-      val prival = partition().asDigit()
+    if (rule && (binding.facility.isDefined || binding.severity.isDefined)) {
+      val prival = Ints.tryParse(slice().decodeString(StandardCharsets.UTF_8))
 
       // Read severity or facility
-      binding.facility(prival >> 3)
-      binding.severity(prival & 7)
+      binding.facility(prival >> 3) && binding.severity(prival & 7)
+    } else {
+      false
     }
-    state
   }
 
   def hostname(): Boolean =
-    capture(
-      times(1, mode.hostname, CharMatchers.PrintUsAscii),
+    capture(times(1, mode.hostname, CharMatchers.PrintUsAscii)) {
       binding.hostname(_)
-    )
+    }
 
   def appName(): Boolean =
-    capture(
-      times(1, mode.appName, SyslogParser.AppNameMatcher),
+    capture(times(1, mode.appName, SyslogParser.AppNameMatcher)) {
       binding.appName(_)
-    )
+    }
 
   def procId(): Boolean =
     openBracket() &&
-      capture(
-        times(1, mode.procId, SyslogParser.ProcIdMatcher),
+      capture(times(1, mode.procId, SyslogParser.ProcIdMatcher)) {
         binding.procId(_)
-      ) &&
+      } &&
       closeBracket()
 
   def timestamp(): Boolean =
-    capture(
-      fullDate(),
+    capture(fullDate()) {
       binding.timestamp(_)
-    )
+    }
 
   def fullDate(): Boolean =
     dateMonth() && ws() && dateMDay() && sp() && fullTime()
@@ -352,10 +342,9 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
   def timeSecond(): Boolean = times(2, CharMatchers.Digit)
 
   def msg(): Boolean =
-    sp() && capture(
-      any(),
+    sp() && capture(any()) {
       binding.message(_)
-    )
+    }
 
   override def cleanup(): Unit = {
     super.cleanup()

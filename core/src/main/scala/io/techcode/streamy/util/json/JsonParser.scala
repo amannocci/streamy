@@ -294,29 +294,28 @@ private class ByteStringJsonParser(conf: JsonParser.Config) extends ByteStringPa
       }
     }
 
-    capture(
+    capture {
       hookIsInt(optional(ch('-')) && `int`(), state = true) &&
         optional(hookIsInt(`frac`(), state = false)) &&
-        optional(hookIsInt(`exp`(), state = false)),
-      value => {
-        val rawVal = value.decodeString(StandardCharsets.US_ASCII)
-        if (isInt) {
-          val value = Longs.tryParse(rawVal)
-          if (value == null) {
-            false
-          } else if (value.longValue() != value.intValue()) {
-            jsValue = JsLong(value.longValue())
-            true
-          } else {
-            jsValue = JsInt(value.intValue())
-            true
-          }
+        optional(hookIsInt(`exp`(), state = false))
+    } { value =>
+      val rawVal = value.decodeString(StandardCharsets.US_ASCII)
+      if (isInt) {
+        val value = Longs.tryParse(rawVal)
+        if (value == null) {
+          false
+        } else if (value.longValue() != value.intValue()) {
+          jsValue = JsLong(value.longValue())
+          true
         } else {
-          jsValue = JsBigDecimal(BigDecimal(rawVal))
+          jsValue = JsInt(value.intValue())
           true
         }
+      } else {
+        jsValue = JsBigDecimal(BigDecimal(rawVal))
+        true
       }
-    )
+    }
   }
 
   // https://tools.ietf.org/html/rfc4627#section-2.5
@@ -354,29 +353,28 @@ private class StringJsonParser(conf: JsonParser.Config) extends StringParser[Jso
       }
     }
 
-    capture(
+    capture {
       hookIsInt(optional(ch('-')) && `int`(), state = true) &&
         optional(hookIsInt(`frac`(), state = false)) &&
-        optional(hookIsInt(`exp`(), state = false)),
-      value => {
-        val rawVal = value
-        if (isInt) {
-          val value = Longs.tryParse(rawVal)
-          if (value == null) {
-            false
-          } else if (value.longValue() != value.intValue()) {
-            jsValue = JsLong(value.longValue())
-            true
-          } else {
-            jsValue = JsInt(value.intValue())
-            true
-          }
+        optional(hookIsInt(`exp`(), state = false))
+    } { value =>
+      val rawVal = value
+      if (isInt) {
+        val value = Longs.tryParse(rawVal)
+        if (value == null) {
+          false
+        } else if (value.longValue() != value.intValue()) {
+          jsValue = JsLong(value.longValue())
+          true
         } else {
-          jsValue = JsBigDecimal(BigDecimal(rawVal))
+          jsValue = JsInt(value.intValue())
           true
         }
+      } else {
+        jsValue = JsBigDecimal(BigDecimal(rawVal))
+        true
       }
-    )
+    }
   }
 
   // https://tools.ietf.org/html/rfc4627#section-2.5

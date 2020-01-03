@@ -56,23 +56,25 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       parser.parse(ByteString("foobar"))
     }
 
-    "return bytestring partition" in {
-      val parser = new ByteStringParserImpl() {
-        override def root(): Boolean = {
-          mark()
-          str("foo")
-          partition().asString() should equal("foo")
-          true
-        }
-      }
-      parser.parse(ByteString("foobar"))
-    }
-
     "return current cursor position" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = true
       }
       parser.cursor() should equal(0)
+    }
+
+    "return slice of data" in {
+      var result = ByteString.empty
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = {
+          mark()
+          str("foo")
+          result = slice()
+          true
+        }
+      }
+      parser.parse(ByteString("foobar"))
+      result should equal(ByteString("foo"))
     }
 
     "detect end of input" in {
@@ -85,10 +87,9 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "capture properly a value if present" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(
-            str("foo"),
+          capture(str("foo")) {
             StringBinder("test")(_)
-          )
+          }
         }
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("test" -> "foo")))
@@ -97,10 +98,9 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture a value if undefined" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(
-            str("foo"),
-            NoneBinder(_),
-          )
+          capture(str("foo")) {
+            NoneBinder(_)
+          }
         }
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj()))
@@ -109,11 +109,9 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture properly an optional value if present" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(
-            zeroOrMore(str("1")),
-            IntBinder("foobar")(_),
-            optional = true
-          )
+          captureOptional(zeroOrMore(str("1"))) {
+            IntBinder("foobar")(_)
+          }
         }
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj()))
@@ -122,10 +120,9 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture properly a value if absent" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(
-            zeroOrMore(str("1")),
+          capture(zeroOrMore(str("1"))) {
             IntBinder("foobar")(_)
-          )
+          }
         }
       }
       parser.parse(ByteString("foobar")).toOption should equal(None)
@@ -441,10 +438,10 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
         val subParsing: ByteStringParserImpl {
           def root(): Boolean
         } = new ByteStringParserImpl {
-          override def root(): Boolean = capture(str("foo"), StringBinder("foo")(_))
+          override def root(): Boolean = capture(str("foo"))(StringBinder("foo")(_))
         }
 
-        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && capture(str("bar"), StringBinder("bar")(_))
+        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && capture(str("bar"))(StringBinder("bar")(_))
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("foo" -> "foo", "bar" -> "bar")))
     }

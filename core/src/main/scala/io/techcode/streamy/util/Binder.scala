@@ -213,7 +213,6 @@ case class StringBinder(override val key: String, charset: Charset = StandardCha
 
   def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean = {
     builder += (key -> JsString(value.decodeString(charset)))
-    val test: mutable.Builder[(String, Json), JsObject] = Json.objectBuilder()
     true
   }
 

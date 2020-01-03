@@ -37,16 +37,6 @@ trait StringParser[Out] extends Parser[String, Out] {
 
   final def current(): Char = data.charAt(_cursor)
 
-  final def capture(inner: => Boolean, field: String => Boolean, optional: Boolean = false): Boolean = {
-    val marker = _cursor
-    var state = inner
-    if (state) {
-      val binding = field(data.slice(marker, _cursor))
-      if (!binding) {
-        state = optional
-      }
-    }
-    state
-  }
+  final def slice(): String = data.slice(_mark, _cursor)
 
 }

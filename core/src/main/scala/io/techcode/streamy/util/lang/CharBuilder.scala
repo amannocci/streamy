@@ -135,17 +135,22 @@ final class CharBuilder {
     * @param str string.
     * @return this object for chaining.
     */
-  def append(str: String): CharBuilder = {
-    val totalLen = len + str.length
+  def append(str: String): CharBuilder = append(str, 0, str.length)
+
+  /**
+    * Appends a sub string part.
+    *
+    * @param str   string.
+    * @param begin start of sub string.
+    * @param end   end of sub string.
+    * @return this object for chaining.
+    */
+  def append(str: String, begin: Int, end: Int): CharBuilder = {
+    require(begin <= end, "Begin param must be inferior or equal to end param")
+    val totalLen = len + (end - begin)
     resizeIfNecessary(totalLen)
-    var i = 0
-    var j = len
+    str.getChars(0, end, buf, len)
     len = totalLen
-    while (i < str.length) {
-      buf(j) = str.charAt(i)
-      i += 1
-      j += 1
-    }
     this
   }
 
