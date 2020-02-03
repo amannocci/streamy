@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2018-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,38 +21,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.util.parser
-
-import java.nio.charset.StandardCharsets
+package io.techcode.streamy.util.lang
 
 import akka.util.ByteString
-import org.scalatest._
+import org.openjdk.jmh.annotations.Benchmark
 
 /**
-  * ByteString partition spec.
+  * Char builder bench.
   */
-class ByteStringPartitionSpec extends WordSpecLike with Matchers {
+class CharBuilderBench {
 
-  "ByteStringPartition" should {
-    "be convert to utf-8 string" in {
-      val result = new ByteStringPartition(ByteString("foobar"), 0, 3)
-      result.asString() should equal("foo")
-    }
+  @Benchmark def toByteString: ByteString = CharBuilderBench.Sample.toByteString
 
-    "be convert to iso 8859 string" in {
-      val result = new ByteStringPartition(ByteString("foobar"), 0, 3)
-      result.asString(StandardCharsets.ISO_8859_1) should equal("foo")
-    }
+  @Benchmark override def toString: String = CharBuilderBench.Sample.toString
 
-    "be convert to digit" in {
-      val result = new ByteStringPartition(ByteString("123456"), 0, 3)
-      result.asDigit() should equal(123)
-    }
+}
 
-    "be convert to byte string" in {
-      val result = new ByteStringPartition(ByteString("123456"), 0, 3)
-      result.asBytes() should equal(ByteString("123"))
-    }
-  }
+object CharBuilderBench {
+
+  val Sample: CharBuilder = new CharBuilder().append("foobar" * 100)
 
 }

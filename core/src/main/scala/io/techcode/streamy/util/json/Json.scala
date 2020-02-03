@@ -24,6 +24,8 @@
 package io.techcode.streamy.util.json
 
 import akka.util.ByteString
+import io.techcode.streamy.util.lang.Primitives
+import io.techcode.streamy.util.math.{RyuDouble, RyuFloat}
 import io.techcode.streamy.util.parser.{ByteStringParser, StringParser}
 import io.techcode.streamy.util.printer.{ByteStringPrinter, PrintException, StringPrinter}
 
@@ -510,7 +512,9 @@ sealed trait Json extends JsDefined {
     */
   def sizeHint(): Int = toString.length
 
-  override def toString: String = Json.printStringUnsafe(this)
+  override lazy val toString: String = Json.printStringUnsafe(this)
+
+  lazy val toByteString: ByteString = Json.printByteStringUnsafe(this)
 
 }
 
@@ -615,61 +619,7 @@ case class JsInt(value: Int) extends JsNumber {
 
   override def copy(): Json = this
 
-  // Divide and conquer implementation (only comparison)
-  override lazy val sizeHint: Int = {
-    // Initial offset in case of negative number
-    var size = 0
-
-    // In negative case we inverse sign
-    val tmp = {
-      if ((value >> 31) != 0) {
-        size += 1
-        value * -1
-      } else {
-        value
-      }
-    }
-
-    // Divide and conquer
-    if (tmp < 100000) {
-      if (tmp < 100) {
-        if (tmp < 10) {
-          size += 1
-        } else {
-          size += 2
-        }
-      } else {
-        if (tmp < 1000) {
-          size += 3
-        } else {
-          if (tmp < 10000) {
-            size += 4
-          } else {
-            size += 5
-          }
-        }
-      }
-    } else {
-      if (tmp < 10000000) {
-        if (tmp < 1000000) {
-          size += 6
-        } else {
-          size += 7
-        }
-      } else {
-        if (tmp < 100000000) {
-          size += 8
-        } else {
-          if (tmp < 1000000000) {
-            size += 9
-          } else {
-            size += 10
-          }
-        }
-      }
-    }
-    size
-  }
+  override lazy val sizeHint: Int = Primitives.stringSize(value)
 
 }
 
@@ -694,42 +644,7 @@ case class JsLong(value: Long) extends JsNumber {
 
   override def copy(): Json = this
 
-  // Dividing with powers of two
-  override lazy val sizeHint: Int = {
-    // Initial offset in case of negative number
-    var size = 1
-
-    // In negative case we inverse sign
-    var tmp = {
-      if ((value >> 63) != 0) {
-        size += 1
-        value * -1
-      } else {
-        value
-      }
-    }
-
-    if (tmp >= 10000000000000000L) {
-      size += 16
-      tmp /= 10000000000000000L
-    }
-    if (tmp >= 100000000) {
-      size += 8
-      tmp /= 100000000
-    }
-    if (tmp >= 10000) {
-      size += 4
-      tmp /= 10000
-    }
-    if (tmp >= 100) {
-      size += 2
-      tmp /= 100
-    }
-    if (tmp >= 10) {
-      size += 1
-    }
-    size
-  }
+  override lazy val sizeHint: Int = Primitives.stringSize(value)
 
 }
 
@@ -754,6 +669,8 @@ case class JsFloat(value: Float) extends JsNumber {
 
   override def copy(): Json = this
 
+  override lazy val sizeHint: Int = RyuFloat.toString(value).length
+
 }
 
 /**
@@ -776,6 +693,8 @@ case class JsDouble(value: Double) extends JsNumber {
   override def toBigDecimal: BigDecimal = BigDecimal(value)
 
   override def copy(): Json = this
+
+  override lazy val sizeHint: Int = RyuDouble.toString(value).length
 
 }
 

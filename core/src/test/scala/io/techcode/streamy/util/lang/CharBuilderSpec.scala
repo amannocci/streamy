@@ -57,6 +57,30 @@ class CharBuilderSpec extends StreamyTestSystem {
       builder.toString should equal("foobar")
     }
 
+    "be able to append an int" in {
+      val builder = new CharBuilder
+      builder.append(-10).append(50)
+      builder.toString should equal("-1050")
+    }
+
+    "be able to append a long" in {
+      val builder = new CharBuilder
+      builder.append(9223372036854775800L)
+      builder.toString should equal("9223372036854775800")
+    }
+
+    "be able to append a float" in {
+      val builder = new CharBuilder
+      builder.append(Float.MaxValue)
+      builder.toString should equal("3.4028235E38")
+    }
+
+    "be able to append a double" in {
+      val builder = new CharBuilder
+      builder.append(Double.MaxValue)
+      builder.toString should equal("1.7976931348623157E308")
+    }
+
     "be able to append any object" in {
       val builder = new CharBuilder
       builder.append(10)

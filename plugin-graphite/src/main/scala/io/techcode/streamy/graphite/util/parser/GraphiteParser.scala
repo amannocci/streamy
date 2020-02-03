@@ -94,10 +94,9 @@ private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStr
   def timestamp(): Boolean = parseUntilDelimiter(binding.timestamp)
 
   @inline private def parseUntilDelimiter(field: Binder): Boolean =
-    capture(
-      oneOrMore(GraphiteParser.DelimiterMatcher),
+    capture(oneOrMore(GraphiteParser.DelimiterMatcher)) {
       field(_)
-    )
+    }
 
   override def cleanup(): Unit = {
     super.cleanup()

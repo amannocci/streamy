@@ -27,8 +27,6 @@ import akka.util.ByteString
 import com.google.common.math.{IntMath, LongMath}
 import org.scalatest._
 
-import scala.collection.mutable
-
 /**
   * Json spec.
   */

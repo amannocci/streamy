@@ -199,7 +199,7 @@ private class Rfc3164Printer(conf: Rfc3164.Config) extends PrinterHelpers {
         builder.append(SyslogPrinter.Space)
       }
     }
-    ByteString(builder.toString)
+    builder.toByteString
   }
 
 }

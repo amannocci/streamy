@@ -120,6 +120,13 @@ trait Parser[In, Out] {
   final def unmark(): Unit = _cursor = _mark
 
   /**
+    * Create a slice of data based on mark and cursor.
+    *
+    * @return slice of data.
+    */
+  def slice(): In
+
+  /**
     * Advance cursor by n where n is consumed data.
     */
   def advance(): Boolean = {
@@ -135,14 +142,35 @@ trait Parser[In, Out] {
   final def eoi(): Boolean = _cursor == length
 
   /**
-    * Runs the inner rule and capture a [[String]] if field is defined.
+    * Runs the inner rule and capture a [[In]] if field is defined.
     *
-    * @param inner    inner rule.
-    * @param field    field to populate if success.
-    * @param optional define if capture is optional.
+    * @param inner inner rule.
+    * @param field field to populate if success.
     * @return true if parsing succeeded, otherwise false.
     */
-  def capture(inner: => Boolean, field: In => Boolean, optional: Boolean = false): Boolean
+  def capture(inner: => Boolean)(field: In => Boolean): Boolean = {
+    mark()
+    if (inner) {
+      field(slice())
+    } else {
+      false
+    }
+  }
+
+  /**
+    * Runs the inner rule and capture a [[In]] if field is defined optionally.
+    *
+    * @param inner inner rule.
+    * @param field field to populate if success.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  def captureOptional(inner: => Boolean)(field: In => Boolean): Boolean = {
+    mark()
+    if (inner) {
+      field(slice())
+    }
+    true
+  }
 
   /**
     * Except to match a single character.

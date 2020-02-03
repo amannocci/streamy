@@ -312,22 +312,20 @@ class JsonPointerParser extends StringParser[JsonPointer] {
 
   override def root(): Boolean = zeroOrMore(
     ch('/') &&
-      capture(
-        refToken(),
-        rawToken => {
-          if (rawToken.isEmpty) {
-            false
+      capture(refToken()) { rawToken =>
+        if (rawToken.isEmpty) {
+          false
+        } else {
+          val token = rawToken.replaceAll("~0", "~").replaceAll("~1", "/")
+          if (CharMatchers.Digit.matchesAllOf(token)) {
+            pointer = pointer / token.toInt
           } else {
-            val token = rawToken.replaceAll("~0", "~").replaceAll("~1", "/")
-            if (CharMatchers.Digit.matchesAllOf(token)) {
-              pointer = pointer / token.toInt
-            } else {
-              pointer = pointer / token
-            }
-            true
+            pointer = pointer / token
           }
+          true
         }
-      )) && eoi()
+      }
+  ) && eoi()
 
   private def refToken(): Boolean = zeroOrMore(or(
     times(1, JsonPointerParser.Unescaped),

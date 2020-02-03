@@ -57,7 +57,7 @@ private[parser] trait ParserHelpers {
 
 /**
   * Xymon parser for the status command. The message syntax is as follows:
-  *   status[+LIFETIME][/group:GROUP] HOSTNAME.TESTNAME COLOR <additional_text>
+  * status[+LIFETIME][/group:GROUP] HOSTNAME.TESTNAME COLOR <additional_text>
   * For more information on the parameters, see the xymon man page
   */
 private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extends ByteStringParser[Json] with ParserHelpers {
@@ -88,10 +88,9 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
   def lifetime(): Boolean =
     optional(
       plus() &&
-        capture(
-          duration() && optional(durationUnit()),
+        capture(duration() && optional(durationUnit())) {
           binding.lifetime(_)
-        )
+        }
     )
 
   def duration(): Boolean = oneOrMore(CharMatchers.Digit)
@@ -103,40 +102,35 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
       slash() &&
         oneOrMore(CharMatchers.LowerAlpha) &&
         colon() &&
-        capture(
-          oneOrMore(XymonParser.GroupNameMatcher),
+        capture(oneOrMore(XymonParser.GroupNameMatcher)) {
           binding.group(_)
-        )
+        }
     )
 
   def hostAndService(): Boolean =
     host && dot() && service()
 
   def host(): Boolean =
-    capture(
-      oneOrMore(XymonParser.HostNameMatcher),
+    capture(oneOrMore(XymonParser.HostNameMatcher)) {
       binding.host(_)
-    )
+    }
 
   def service(): Boolean =
-    capture(
-      oneOrMore(XymonParser.TestNameMatcher),
+    capture(oneOrMore(XymonParser.TestNameMatcher)) {
       binding.service(_)
-    )
+    }
 
   def color(): Boolean =
-    capture(
-      oneOrMore(CharMatchers.LowerAlpha),
+    capture(oneOrMore(CharMatchers.LowerAlpha)) {
       binding.color(_)
-    )
+    }
 
   def additionalText(): Boolean =
     optional(
       sp() &&
-      capture(
-        any(),
-        binding.message(_)
-      )
+        capture(any()) {
+          binding.message(_)
+        }
     )
 
   override def cleanup(): Unit = {

@@ -24,7 +24,6 @@
 package io.techcode.streamy.util.printer
 
 import akka.util.{ByteString, ByteStringBuilder}
-import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.lang.CharBuilder
 
 /**
@@ -45,7 +44,7 @@ trait DirectByteStringPrinter[In] extends ByteStringPrinter[In] {
 }
 
 /**
-  * Represent a derived [[ByteString]] printer based on [[CharBuilder]] that provide an efficient way to print [[Json]].
+  * Represent a derived [[ByteString]] printer based on [[CharBuilder]] that provide an efficient way to print [[In]].
   */
 trait DerivedByteStringPrinter[In] extends ByteStringPrinter[In] {
 

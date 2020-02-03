@@ -26,7 +26,6 @@ package io.techcode.streamy.util.json
 import akka.util.ByteString
 import com.google.common.io.BaseEncoding
 import io.techcode.streamy.util.lang.CharBuilder
-import io.techcode.streamy.util.math.{RyuDouble, RyuFloat}
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter, Printer, StringPrinter}
 
 import scala.annotation.tailrec
@@ -37,9 +36,9 @@ import scala.annotation.tailrec
 object JsonPrinter {
 
   // Constants
-  val Null: String = "null"
-  val True: String = "true"
-  val False: String = "false"
+  val Null: Array[Char] = "null".toCharArray
+  val True: Array[Char] = "true".toCharArray
+  val False: Array[Char] = "false".toCharArray
   val Quote: Char = '"'
   val Colon: Char = ':'
   val OpenBrace: Char = '{'
@@ -147,10 +146,10 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     */
   private def printNumber(value: JsNumber): Unit = {
     value match {
-      case x: JsInt => builder.append(x.value.toString)
-      case x: JsLong => builder.append(x.value.toString)
-      case x: JsFloat => builder.append(RyuFloat.floatToString(x.value))
-      case x: JsDouble => builder.append(RyuDouble.doubleToString(x.value))
+      case x: JsInt => builder.append(x.value)
+      case x: JsLong => builder.append(x.value)
+      case x: JsFloat => builder.append(x.value)
+      case x: JsDouble => builder.append(x.value)
       case x: JsBigDecimal => builder.append(x.value.toString())
     }
   }
@@ -172,17 +171,19 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     * @param value string value.
     */
   private def printString(value: String): Unit = {
+    val lenValue = value.length
+
     @tailrec def firstToBeEncoded(ix: Int = 0): Int =
-      if (ix == value.length) -1 else if (requiresEncoding(value.charAt(ix))) ix else firstToBeEncoded(ix + 1)
+      if (ix == lenValue) -1 else if (requiresEncoding(value.charAt(ix))) ix else firstToBeEncoded(ix + 1)
 
     builder.append(JsonPrinter.Quote)
     firstToBeEncoded() match {
       case -1 => builder.append(value)
       case first =>
-        builder.append(value.substring(0, first))
+        builder.append(value, 0, first)
 
         @tailrec def append(ix: Int): Unit =
-          if (ix < value.length) {
+          if (ix < lenValue) {
             value.charAt(ix) match {
               case c if !requiresEncoding(c) => builder.append(c)
               case '"' => builder.append("\\\"")
@@ -225,7 +226,7 @@ private class ByteStringJsonPrinter extends DerivedByteStringPrinter[Json] with 
 
   override def run(): ByteString = {
     printValue(data)
-    ByteString(builder.toString)
+    builder.toByteString
   }
 
 }
