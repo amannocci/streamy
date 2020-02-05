@@ -446,6 +446,22 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("foo" -> "foo", "bar" -> "bar")))
     }
 
+    "process correctly when using stack" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = {
+          capture {
+            or(
+              str("123"),
+              str("123")
+            )
+          } { x =>
+            stack.push(x)
+            true
+          }
+        }
+      }
+      parser.parse(ByteString("123123")).isRight should equal(true)
+    }
   }
 
   "Parser exception" should {
