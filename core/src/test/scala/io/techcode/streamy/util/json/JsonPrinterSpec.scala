@@ -45,43 +45,43 @@ class JsonPrinterSpec extends WordSpecLike with Matchers {
     }
 
     "print an json int correctly" in {
-      Json.printStringUnsafe(JsInt(Int.MinValue)) should equal(Int.MinValue.toString)
+      Json.printStringUnsafe(JsInt.fromLiteral(Int.MinValue)) should equal(Int.MinValue.toString)
     }
 
     "print an json long correctly" in {
-      Json.printStringUnsafe(JsLong(Long.MinValue)) should equal(Long.MinValue.toString)
+      Json.printStringUnsafe(JsLong.fromLiteral(Long.MinValue)) should equal(Long.MinValue.toString)
     }
 
     "print an json float correctly" in {
-      Json.printStringUnsafe(JsFloat(Float.MinValue)) should equal(Float.MinValue.toString)
+      Json.printStringUnsafe(JsFloat.fromLiteral(Float.MinValue)) should equal(Float.MinValue.toString)
     }
 
     "print an json double correctly" in {
-      Json.printStringUnsafe(JsDouble(Double.MinValue)) should equal(Double.MinValue.toString)
+      Json.printStringUnsafe(JsDouble.fromLiteral(Double.MinValue)) should equal(Double.MinValue.toString)
     }
 
     "print an json big decimal correctly" in {
-      Json.printStringUnsafe(JsBigDecimal(BigDecimal("1e20"))) should equal("1E+20")
+      Json.printStringUnsafe(JsBigDecimal.fromLiteral(BigDecimal("1e20"))) should equal("1E+20")
     }
 
     "print an json bytes correctly" in {
-      Json.printStringUnsafe(JsBytes(ByteString("foobar"))) should equal("\"Zm9vYmFy\"")
+      Json.printStringUnsafe(JsBytes.fromLiteral(ByteString("foobar"))) should equal("\"Zm9vYmFy\"")
     }
 
     "print an json string without unicode char correctly" in {
-      Json.printStringUnsafe(JsString("foobar")) should equal("\"foobar\"")
+      Json.printStringUnsafe(JsString.fromLiteral("foobar")) should equal("\"foobar\"")
     }
 
     "print an json string with \" char correctly" in {
-      Json.printStringUnsafe(JsString("foob\"ar")) should equal(""""foob\"ar"""")
+      Json.printStringUnsafe(JsString.fromLiteral("foob\"ar")) should equal(""""foob\"ar"""")
     }
 
     "print an json string with \\ char correctly" in {
-      Json.printStringUnsafe(JsString("foob\\\\ar")) should equal(""""foob\\\\ar"""")
+      Json.printStringUnsafe(JsString.fromLiteral("foob\\\\ar")) should equal(""""foob\\\\ar"""")
     }
 
     "print an json string with control chars correctly" in {
-      Json.printStringUnsafe(JsString("\b\f\n\r\t")) should equal(""""\b\f\n\r\t"""")
+      Json.printStringUnsafe(JsString.fromLiteral("\b\f\n\r\t")) should equal(""""\b\f\n\r\t"""")
     }
 
   }

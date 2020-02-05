@@ -192,25 +192,25 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
   "Json test operation" should {
     "return JsUndefined on failure" in {
       val input = Json.obj("test" -> "test")
-      val result = input.patch(Test(Root / "test", JsInt(0)))
+      val result = input.patch(Test(Root / "test", JsInt.fromLiteral(0)))
       result should equal(JsUndefined)
     }
 
     "return current value on success" in {
       val input = Json.obj("test" -> "test")
-      val result = input.patch(Test(Root / "test", JsString("test")))
+      val result = input.patch(Test(Root / "test", JsString.fromLiteral("test")))
       result should equal(input)
     }
 
     "return JsUndefined on deep failure" in {
       val input = Json.obj("test" -> Json.obj("test" -> "failure"))
-      val result = input.patch(Test(Root / "test" / "test", JsInt(0)))
+      val result = input.patch(Test(Root / "test" / "test", JsInt.fromLiteral(0)))
       result should equal(JsUndefined)
     }
 
     "return JsUndefined on missing" in {
       val input = Json.obj("test" -> "test")
-      val result = input.patch(Test(Root / "failure", JsInt(0)))
+      val result = input.patch(Test(Root / "failure", JsInt.fromLiteral(0)))
       result should equal(JsUndefined)
     }
   }

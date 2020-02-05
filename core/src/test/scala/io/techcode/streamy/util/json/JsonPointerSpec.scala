@@ -38,12 +38,12 @@ class JsPointerSpec extends WordSpecLike with Matchers {
 
     "return a value if possible when evaluate on json object" in {
       val input = Json.obj("test" -> "foobar")
-      input.evaluate(Root / "test") should equal(JsString("foobar"))
+      input.evaluate(Root / "test") should equal(JsString.fromLiteral("foobar"))
     }
 
     "return a value if possible when evaluate on deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "foobar")))
-      input.evaluate(Root / "test" / 0 / "test") should equal(JsString("foobar"))
+      input.evaluate(Root / "test" / 0 / "test") should equal(JsString.fromLiteral("foobar"))
     }
 
     "return a none when evaluate on json object is failed" in {
@@ -58,13 +58,13 @@ class JsPointerSpec extends WordSpecLike with Matchers {
 
     "return a value if possible when evaluate on json array" in {
       val input = Json.arr("test", "foobar")
-      input.evaluate(Root / 0) should equal(JsString("test"))
-      input.evaluate(Root / 1) should equal(JsString("foobar"))
+      input.evaluate(Root / 0) should equal(JsString.fromLiteral("test"))
+      input.evaluate(Root / 1) should equal(JsString.fromLiteral("foobar"))
     }
 
     "return a value if possible when evaluate on deep json array" in {
       val input = Json.obj("test" -> Json.obj("test" -> Json.arr("foobar")))
-      input.evaluate(Root / "test" / "test" / 0) should equal(JsString("foobar"))
+      input.evaluate(Root / "test" / "test" / 0) should equal(JsString.fromLiteral("foobar"))
     }
 
     "return a none when evaluate on json array is failed" in {

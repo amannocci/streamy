@@ -23,7 +23,10 @@
  */
 package io.techcode.streamy.util.json
 
+import java.nio.charset.StandardCharsets
+
 import akka.util.ByteString
+import com.google.common.primitives.{Doubles, Floats, Ints, Longs}
 import io.techcode.streamy.util.lang.Primitives
 import io.techcode.streamy.util.math.{RyuDouble, RyuFloat}
 import io.techcode.streamy.util.parser.{ByteStringParser, StringParser}
@@ -212,7 +215,7 @@ object Json {
 /**
   * Represents an optional json representation.
   */
-trait MaybeJson {
+sealed trait MaybeJson {
 
   /**
     * Returns true if the json is JsUndefined, false otherwise.
@@ -404,7 +407,7 @@ trait MaybeJson {
 /**
   * Represents a defined json.
   */
-abstract class JsDefined extends MaybeJson {
+sealed abstract class JsDefined extends MaybeJson {
 
   def isEmpty: Boolean = false
 
@@ -503,7 +506,7 @@ sealed trait Json extends JsDefined {
     *
     * @return current json value.
     */
-  def copy(): Json
+  def copy(): Json = this
 
   /**
     * Size hint of the string representation of this element in Json.
@@ -513,8 +516,6 @@ sealed trait Json extends JsDefined {
   def sizeHint(): Int = toString.length
 
   override lazy val toString: String = Json.printStringUnsafe(this)
-
-  lazy val toByteString: ByteString = Json.printByteStringUnsafe(this)
 
 }
 
@@ -567,7 +568,7 @@ case object JsFalse extends JsBoolean(false) {
 /**
   * Represents a Json number value.
   */
-trait JsNumber extends Json {
+sealed trait JsNumber extends Json {
 
   override val isNumber: Boolean = true
 
@@ -599,11 +600,75 @@ trait JsNumber extends Json {
 }
 
 /**
-  * Represent a json int value.
-  *
-  * @param value underlying value.
+  * Helper to create json int values.
   */
-case class JsInt(value: Int) extends JsNumber {
+object JsInt {
+
+  /**
+    * Create a json int value from a literal.
+    *
+    * @param value literal value.
+    * @return json int value.
+    */
+  def fromLiteral(value: Int): JsInt = JsIntLiteral(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsInt without parsing the passed in read value until method value is called.
+    * This method of creating a JsInt saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an bytestring from some other API, and want to delay parsing.
+    *
+    * @param value bytestring representation value.
+    * @return json int value.
+    */
+  def fromByteStringUnsafe(value: ByteString): JsInt = JsIntBytesRepr(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsInt without parsing the passed in read value until method value is called.
+    * This method of creating a JsInt saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an string from some other API, and want to delay parsing.
+    *
+    * @param value string representation value.
+    * @return json int value.
+    */
+  def fromStringUnsafe(value: String): JsInt = JsIntStrRepr(value)
+
+  /**
+    * Apply extractor implementation.
+    *
+    * @param value literal value.
+    * @return json int value.
+    */
+  def apply(value: Int): JsInt = fromLiteral(value)
+
+  /**
+    * Unapply extractor implementation.
+    *
+    * @param value json int value.
+    * @return literal value.
+    */
+  def unapply(value: JsInt): Option[Int] = value match {
+    case x: JsIntLiteral => Some(x.value)
+    case _ => None
+  }
+
+}
+
+/**
+  * Represent a json int value.
+  */
+sealed trait JsInt extends JsNumber {
+
+  def value: Int
 
   override val isInt: Boolean = true
 
@@ -617,18 +682,122 @@ case class JsInt(value: Int) extends JsNumber {
 
   override def toBigDecimal: BigDecimal = BigDecimal(value)
 
-  override def copy(): Json = this
+  override def hashCode(): Int = value.hashCode()
+
+  override def equals(that: Any): Boolean = that match {
+    case that: JsInt => value.equals(that.value)
+    case _ => false
+  }
+
+}
+
+/**
+  * Represent a json int value as a literal value.
+  *
+  * @param value literal value.
+  */
+private case class JsIntLiteral(value: Int) extends JsInt {
 
   override lazy val sizeHint: Int = Primitives.stringSize(value)
 
 }
 
 /**
-  * Represent a json long value.
+  * Represent a json int value as a repr value.
   *
-  * @param value underlying value.
+  * @param repr bytestring representation.
   */
-case class JsLong(value: Long) extends JsNumber {
+private case class JsIntBytesRepr(repr: ByteString) extends JsInt {
+
+  lazy val value: Int = Ints.tryParse(repr.decodeString(StandardCharsets.US_ASCII))
+
+  override lazy val sizeHint: Int = repr.size
+
+}
+
+/**
+  * Represent a json int value as a repr value.
+  *
+  * @param repr string representation.
+  */
+private case class JsIntStrRepr(repr: String) extends JsInt {
+
+  lazy val value: Int = Ints.tryParse(repr)
+
+  override lazy val sizeHint: Int = repr.length
+
+}
+
+/**
+  * Helper to create json long values.
+  */
+object JsLong {
+
+  /**
+    * Create a json long value from a literal.
+    *
+    * @param value literal value.
+    * @return json long value.
+    */
+  def fromLiteral(value: Long): JsLong = JsLongLiteral(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsLong without parsing the passed in read value until method value is called.
+    * This method of creating a JsLong saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an bytestring from some other API, and want to delay parsing.
+    *
+    * @param value bytestring representation value.
+    * @return json long value.
+    */
+  def fromByteStringUnsafe(value: ByteString): JsLong = JsLongBytesRepr(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsLong without parsing the passed in read value until method value is called.
+    * This method of creating a JsLong saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an string from some other API, and want to delay parsing.
+    *
+    * @param value string representation value.
+    * @return json long value.
+    */
+  def fromStringUnsafe(value: String): JsLong = JsLongStrRepr(value)
+
+  /**
+    * Apply extractor implementation.
+    *
+    * @param value literal value.
+    * @return json long value.
+    */
+  def apply(value: Long): JsLong = fromLiteral(value)
+
+  /**
+    * Unapply extractor implementation.
+    *
+    * @param value json long value.
+    * @return literal value.
+    */
+  def unapply(value: JsLong): Option[Long] = value match {
+    case x: JsLongLiteral => Some(x.value)
+    case _ => None
+  }
+
+}
+
+/**
+  * Represent a json long value.
+  */
+sealed trait JsLong extends JsNumber {
+
+  def value: Long
 
   override val isLong: Boolean = true
 
@@ -642,18 +811,122 @@ case class JsLong(value: Long) extends JsNumber {
 
   override def toBigDecimal: BigDecimal = BigDecimal(value)
 
-  override def copy(): Json = this
+  override def hashCode(): Int = value.hashCode()
+
+  override def equals(that: Any): Boolean = that match {
+    case that: JsLong => value.equals(that.value)
+    case _ => false
+  }
+
+}
+
+/**
+  * Represent a json long value as a literal value.
+  *
+  * @param value literal value.
+  */
+private case class JsLongLiteral(value: Long) extends JsLong {
 
   override lazy val sizeHint: Int = Primitives.stringSize(value)
 
 }
 
 /**
-  * Represent a json float value.
+  * Represent a json long value as a repr value.
   *
-  * @param value underlying value.
+  * @param repr bytestring representation.
   */
-case class JsFloat(value: Float) extends JsNumber {
+private[json] case class JsLongBytesRepr(repr: ByteString) extends JsLong {
+
+  lazy val value: Long = Longs.tryParse(repr.decodeString(StandardCharsets.US_ASCII))
+
+  override lazy val sizeHint: Int = repr.size
+
+}
+
+/**
+  * Represent a json long value as a repr value.
+  *
+  * @param repr string representation.
+  */
+private case class JsLongStrRepr(repr: String) extends JsLong {
+
+  lazy val value: Long = Longs.tryParse(repr)
+
+  override lazy val sizeHint: Int = repr.length
+
+}
+
+/**
+  * Helper to create json float values.
+  */
+object JsFloat {
+
+  /**
+    * Create a json float value from a literal.
+    *
+    * @param value literal value.
+    * @return json float value.
+    */
+  def fromLiteral(value: Float): JsFloat = JsFloatLiteral(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsFloat without parsing the passed in read value until method value is called.
+    * This method of creating a JsFloat saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an bytestring from some other API, and want to delay parsing.
+    *
+    * @param value bytestring representation value.
+    * @return json float value.
+    */
+  def fromByteStringUnsafe(value: ByteString): JsFloat = JsFloatBytesRepr(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsFloat without parsing the passed in read value until method value is called.
+    * This method of creating a JsFloat saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an string from some other API, and want to delay parsing.
+    *
+    * @param value string representation value.
+    * @return json float value.
+    */
+  def fromStringUnsafe(value: String): JsFloat = JsFloatStrRepr(value)
+
+  /**
+    * Apply extractor implementation.
+    *
+    * @param value literal value.
+    * @return json float value.
+    */
+  def apply(value: Float): JsFloat = fromLiteral(value)
+
+  /**
+    * Unapply extractor implementation.
+    *
+    * @param value json float value.
+    * @return literal value.
+    */
+  def unapply(value: JsFloat): Option[Float] = value match {
+    case x: JsFloatLiteral => Some(x.value)
+    case _ => None
+  }
+
+}
+
+/**
+  * Represent a json float value.
+  */
+sealed trait JsFloat extends JsNumber {
+
+  def value: Float
 
   override val isFloat: Boolean = true
 
@@ -667,18 +940,122 @@ case class JsFloat(value: Float) extends JsNumber {
 
   override def toBigDecimal: BigDecimal = BigDecimal(value)
 
-  override def copy(): Json = this
+  override def hashCode(): Int = value.hashCode()
+
+  override def equals(that: Any): Boolean = that match {
+    case that: JsFloat => value.equals(that.value)
+    case _ => false
+  }
+
+}
+
+/**
+  * Represent a json float value as a literal value.
+  *
+  * @param value literal value.
+  */
+private case class JsFloatLiteral(value: Float) extends JsFloat {
 
   override lazy val sizeHint: Int = RyuFloat.toString(value).length
 
 }
 
 /**
-  * Represent a json double value.
+  * Represent a json float value as a repr value.
   *
-  * @param value underlying value.
+  * @param repr bytestring representation.
   */
-case class JsDouble(value: Double) extends JsNumber {
+private case class JsFloatBytesRepr(repr: ByteString) extends JsFloat {
+
+  lazy val value: Float = Floats.tryParse(repr.decodeString(StandardCharsets.US_ASCII))
+
+  override lazy val sizeHint: Int = repr.size
+
+}
+
+/**
+  * Represent a json float value as a repr value.
+  *
+  * @param repr string representation.
+  */
+private case class JsFloatStrRepr(repr: String) extends JsFloat {
+
+  lazy val value: Float = Floats.tryParse(repr)
+
+  override lazy val sizeHint: Int = repr.length
+
+}
+
+/**
+  * Helper to create json double values.
+  */
+object JsDouble {
+
+  /**
+    * Create a json double value from a literal.
+    *
+    * @param value literal value.
+    * @return json double value.
+    */
+  def fromLiteral(value: Double): JsDouble = JsDoubleLiteral(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsDouble without parsing the passed in read value until method value is called.
+    * This method of creating a JsDouble saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an bytestring from some other API, and want to delay parsing.
+    *
+    * @param value bytestring representation value.
+    * @return json double value.
+    */
+  def fromByteStringUnsafe(value: ByteString): JsDouble = JsDoubleBytesRepr(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsDouble without parsing the passed in read value until method value is called.
+    * This method of creating a JsDouble saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an string from some other API, and want to delay parsing.
+    *
+    * @param value string representation value.
+    * @return json double value.
+    */
+  def fromStringUnsafe(value: String): JsDouble = JsDoubleStrRepr(value)
+
+  /**
+    * Apply extractor implementation.
+    *
+    * @param value literal value.
+    * @return json double value.
+    */
+  def apply(value: Double): JsDouble = fromLiteral(value)
+
+  /**
+    * Unapply extractor implementation.
+    *
+    * @param value json double value.
+    * @return literal value.
+    */
+  def unapply(value: JsDouble): Option[Double] = value match {
+    case x: JsDoubleLiteral => Some(x.value)
+    case _ => None
+  }
+
+}
+
+/**
+  * Represent a json double value.
+  */
+sealed trait JsDouble extends JsNumber {
+
+  def value: Double
 
   override val isDouble: Boolean = true
 
@@ -692,18 +1069,123 @@ case class JsDouble(value: Double) extends JsNumber {
 
   override def toBigDecimal: BigDecimal = BigDecimal(value)
 
-  override def copy(): Json = this
+  override def hashCode(): Int = value.hashCode()
+
+  override def equals(that: Any): Boolean = that match {
+    case that: JsDouble => value.equals(that.value)
+    case _ => false
+  }
+
+}
+
+
+/**
+  * Represent a json double value as a literal value.
+  *
+  * @param value literal value.
+  */
+private case class JsDoubleLiteral(value: Double) extends JsDouble {
 
   override lazy val sizeHint: Int = RyuDouble.toString(value).length
 
 }
 
 /**
-  * Represent a json big decimal value.
+  * Represent a json double value as a repr value.
   *
-  * @param value underlying value.
+  * @param repr bytestring representation.
   */
-case class JsBigDecimal(value: BigDecimal) extends JsNumber {
+private case class JsDoubleBytesRepr(repr: ByteString) extends JsDouble {
+
+  lazy val value: Double = Doubles.tryParse(repr.decodeString(StandardCharsets.US_ASCII))
+
+  override lazy val sizeHint: Int = repr.size
+
+}
+
+/**
+  * Represent a json double value as a repr value.
+  *
+  * @param repr string representation.
+  */
+private case class JsDoubleStrRepr(repr: String) extends JsDouble {
+
+  lazy val value: Double = Doubles.tryParse(repr)
+
+  override lazy val sizeHint: Int = repr.length
+
+}
+
+/**
+  * Helper to create json big decimal values.
+  */
+object JsBigDecimal {
+
+  /**
+    * Create a json big decimal value from a literal.
+    *
+    * @param value literal value.
+    * @return json big decimal value.
+    */
+  def fromLiteral(value: BigDecimal): JsBigDecimal = JsBigDecimalLiteral(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsBigDecimal without parsing the passed in read value until method value is called.
+    * This method of creating a JsBigDecimal saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an bytestring from some other API, and want to delay parsing.
+    *
+    * @param value bytestring representation value.
+    * @return json big decimal value.
+    */
+  def fromByteStringUnsafe(value: ByteString): JsBigDecimal = JsBigDecimalBytesRepr(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsBigDecimal without parsing the passed in read value until method value is called.
+    * This method of creating a JsBigDecimal saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an string from some other API, and want to delay parsing.
+    *
+    * @param value string representation value.
+    * @return json big decimal value.
+    */
+  def fromStringUnsafe(value: String): JsBigDecimal = JsBigDecimalStrRepr(value)
+
+  /**
+    * Apply extractor implementation.
+    *
+    * @param value literal value.
+    * @return json big decimal value.
+    */
+  def apply(value: BigDecimal): JsBigDecimal = fromLiteral(value)
+
+  /**
+    * Unapply extractor implementation.
+    *
+    * @param value json big decimal value.
+    * @return literal value.
+    */
+  def unapply(value: JsBigDecimal): Option[BigDecimal] = value match {
+    case x: JsBigDecimalLiteral => Some(x.value)
+    case _ => None
+  }
+
+}
+
+/**
+  * Represent a json big decimal value.
+  */
+sealed trait JsBigDecimal extends JsNumber {
+
+  def value: BigDecimal
 
   override val isBigDecimal: Boolean = true
 
@@ -717,35 +1199,223 @@ case class JsBigDecimal(value: BigDecimal) extends JsNumber {
 
   override def toBigDecimal: BigDecimal = value
 
-  override def copy(): Json = this
+  override def hashCode(): Int = value.hashCode()
+
+  override def equals(that: Any): Boolean = that match {
+    case that: JsBigDecimal => value.equals(that.value)
+    case _ => false
+  }
+}
+
+/**
+  * Represent a json bigdecimal value as a literal value.
+  *
+  * @param value literal value.
+  */
+private case class JsBigDecimalLiteral(value: BigDecimal) extends JsBigDecimal
+
+/**
+  * Represent a json bigdecimal value as a repr value.
+  *
+  * @param repr bytestring representation.
+  */
+private case class JsBigDecimalBytesRepr(repr: ByteString) extends JsBigDecimal {
+
+  lazy val value: BigDecimal = BigDecimal(repr.decodeString(StandardCharsets.US_ASCII))
+
+  override lazy val sizeHint: Int = repr.size
+
+}
+
+/**
+  * Represent a json bigdecimal value as a repr value.
+  *
+  * @param repr string representation.
+  */
+private case class JsBigDecimalStrRepr(repr: String) extends JsBigDecimal {
+
+  lazy val value: BigDecimal = BigDecimal(repr)
+
+  override lazy val sizeHint: Int = repr.length
+
+}
+
+/**
+  * Helper to create json string values.
+  */
+object JsString {
+
+  /**
+    * Create a json string value from a literal.
+    *
+    * @param value literal value.
+    * @return json string value.
+    */
+  def fromLiteral(value: String): JsString = JsStringLiteral(value)
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsString without parsing the passed in read value until method value is called.
+    * This method of creating a JsString saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an bytestring from some other API, and want to delay parsing.
+    *
+    * @param value bytestring representation value.
+    * @return json string value.
+    */
+  def fromByteStringUnsafe(value: ByteString): JsString = JsStringBytesRepr(value)
+
+  /**
+    * Apply extractor implementation.
+    *
+    * @param value literal value.
+    * @return json string value.
+    */
+  def apply(value: String): JsString = fromLiteral(value)
+
+  /**
+    * Unapply extractor implementation.
+    *
+    * @param value json string value.
+    * @return literal value.
+    */
+  def unapply(value: JsString): Option[String] = value match {
+    case x: JsStringLiteral => Some(x.value)
+    case _ => None
+  }
 
 }
 
 /**
   * Represent a json string value.
-  *
-  * @param value underlying value.
   */
-case class JsString(value: String) extends Json {
+sealed trait JsString extends Json {
+
+  def value: String
 
   override val isString: Boolean = true
 
-  override def copy(): Json = this
+  override def hashCode(): Int = value.hashCode()
+
+  override def equals(that: Any): Boolean = that match {
+    case that: JsString => value.equals(that.value)
+    case _ => false
+  }
+
+}
+
+/**
+  * Represent a json string value as a literal value.
+  *
+  * @param value literal value.
+  */
+case class JsStringLiteral(value: String) extends JsString {
 
   override val sizeHint: Int = value.length + 2
 
 }
 
 /**
-  * Represent a json bytes value.
+  * Represent a json string value as a repr value.
   *
-  * @param value underlying value.
+  * @param repr bytestring representation.
   */
-case class JsBytes(value: ByteString) extends Json {
+private case class JsStringBytesRepr(repr: ByteString) extends JsString {
+
+  lazy val value: String = repr.utf8String
+
+  override lazy val sizeHint: Int = repr.size + 2
+
+}
+
+/**
+  * Helper to create json byte string values.
+  */
+object JsBytes {
+
+  /**
+    * Create a json byte string value from a literal.
+    *
+    * @param value literal value.
+    * @return json byte string value.
+    */
+  def fromLiteral(value: ByteString): JsBytes = JsBytesLiteral(value)
+
+
+  /**
+    * Unsafe API: Use only in situations you are completely confident that this is what
+    * you need, and that you understand the implications documented below.
+    *
+    * Creates a JsBytes without parsing the passed in read value until method value is called.
+    * This method of creating a JsBytes saves parsing and therefore can lead to better performance, however it also means
+    * that the passed value is validated before.
+    *
+    * This API is intended for users who have obtained an string from some other API, and want to delay parsing.
+    *
+    * @param value string representation value.
+    * @return json byte string value.
+    */
+  def fromStringUnsafe(value: String): JsBytes = JsBytesStrRepr(value)
+
+  /**
+    * Apply extractor implementation.
+    *
+    * @param value literal value.
+    * @return json bytes value.
+    */
+  def apply(value: ByteString): JsBytes = fromLiteral(value)
+
+  /**
+    * Unapply extractor implementation.
+    *
+    * @param value json bytes value.
+    * @return literal value.
+    */
+  def unapply(value: JsBytes): Option[ByteString] = value match {
+    case x: JsBytesLiteral => Some(x.value)
+    case _ => None
+  }
+
+}
+
+/**
+  * Represent a json bytes value.
+  */
+sealed trait JsBytes extends Json {
+
+  def value: ByteString
 
   override val isBytes: Boolean = true
 
-  override def copy(): Json = this
+  override def hashCode(): Int = value.hashCode()
+
+  override def equals(that: Any): Boolean = that match {
+    case that: JsBytes => value.equals(that.value)
+    case _ => false
+  }
+
+}
+
+/**
+  * Represent a json bytes value as a literal value.
+  *
+  * @param value literal value.
+  */
+private case class JsBytesLiteral(value: ByteString) extends JsBytes
+
+/**
+  * Represent a json bytes value as a repr value.
+  *
+  * @param repr string representation.
+  */
+private case class JsBytesStrRepr(repr: String) extends JsBytes {
+
+  lazy val value: ByteString = ByteString(repr)
+
+  override lazy val sizeHint: Int = repr.length
 
 }
 
@@ -754,7 +1424,7 @@ case class JsBytes(value: ByteString) extends Json {
   *
   * @param underlying underlying structure.
   */
-case class JsArray private[json](
+case class JsArray(
   private[json] val underlying: ArrayBuffer[Json]
 ) extends Json with mutable.Growable[Json] {
 
@@ -866,7 +1536,7 @@ case class JsArray private[json](
 
   override val isArray: Boolean = true
 
-  def copy(): Json = JsArray(underlying.clone())
+  override def copy(): Json = JsArray(underlying.clone())
 
   override lazy val sizeHint: Int = underlying.map(_.sizeHint()).sum + 1 + underlying.size
 
@@ -883,7 +1553,7 @@ case class JsArray private[json](
   *
   * @param underlying underlying structure.
   */
-case class JsObject private[json](
+case class JsObject(
   private[json] val underlying: mutable.HashMap[String, Json]
 ) extends Json with mutable.Growable[(String, Json)] {
 
@@ -1014,7 +1684,7 @@ case class JsObject private[json](
 
   override val isObject: Boolean = true
 
-  def copy(): Json = JsObject(underlying.clone())
+  override def copy(): Json = JsObject(underlying.clone())
 
   override lazy val sizeHint: Int =
     1 + underlying.keys.map(_.length + 2).sum + underlying.values.map(_.sizeHint()).sum + (underlying.values.size * 2)

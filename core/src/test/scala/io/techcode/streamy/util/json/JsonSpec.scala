@@ -77,16 +77,16 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "be iterate using a foreach" in {
       var founded = false
-      Json.obj("test" -> "test").foreach(el => founded |= el._2.equals(JsString("test")))
+      Json.obj("test" -> "test").foreach(el => founded |= el._2.equals(JsString.fromLiteral("test")))
       founded should equal(true)
     }
 
     "return field set" in {
-      Json.obj("test" -> "test").fieldSet should equal(Set("test" -> JsString("test")))
+      Json.obj("test" -> "test").fieldSet should equal(Set("test" -> JsString.fromLiteral("test")))
     }
 
     "return values as iterable" in {
-      Json.obj("test" -> "test").values.head should equal(Seq(JsString("test")).head)
+      Json.obj("test" -> "test").values.head should equal(Seq(JsString.fromLiteral("test")).head)
     }
 
     "flatten correctly a json object" in {
@@ -171,7 +171,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return value if present" in {
       val input = Json.obj("test" -> "foobar")
-      input("test") should equal(JsString("foobar"))
+      input("test") should equal(JsString.fromLiteral("foobar"))
     }
 
     "return undefined if absent" in {
@@ -354,11 +354,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be converted to iterator" in {
-      Json.arr("foobar").iterator.next() should equal(JsString("foobar"))
+      Json.arr("foobar").iterator.next() should equal(JsString.fromLiteral("foobar"))
     }
 
     "be converted to seq" in {
-      Json.arr("foobar").toSeq.head should equal(JsString("foobar"))
+      Json.arr("foobar").toSeq.head should equal(JsString.fromLiteral("foobar"))
     }
 
     "map json array correctly" in {
@@ -368,7 +368,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return value if present" in {
       val input = Json.arr("test", "foobar")
-      input(1) should equal(JsString("foobar"))
+      input(1) should equal(JsString.fromLiteral("foobar"))
     }
 
     "return undefined if absent" in {
@@ -386,7 +386,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return head of json array if present" in {
       val input = Json.arr("test", "foobar")
-      input.head() should equal(JsString("test"))
+      input.head() should equal(JsString.fromLiteral("test"))
     }
 
     "return head of json array if not present" in {
@@ -396,7 +396,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return last of json array if present" in {
       val input = Json.arr("test", "foobar")
-      input.last() should equal(JsString("foobar"))
+      input.last() should equal(JsString.fromLiteral("foobar"))
     }
 
     "return last of json array if not present" in {
@@ -431,174 +431,174 @@ class JsonSpec extends WordSpecLike with Matchers {
 
   "Json number" should {
     "stringify float correctly" in {
-      JsFloat(1.0F).toString should equal("1.0")
+      JsFloat.fromLiteral(1.0F).toString should equal("1.0")
     }
 
     "map json number correctly" in {
-      JsFloat(10F).map[JsNumber](_ => JsNull) should equal(JsNull)
+      JsFloat.fromLiteral(10F).map[JsNumber](_ => JsNull) should equal(JsNull)
       JsNull.map[Float](_ => JsNull) should equal(JsUndefined)
     }
 
     "flatMap json number correctly" in {
-      JsFloat(10F).flatMap[JsNumber](_ => JsNull) should equal(JsNull)
+      JsFloat.fromLiteral(10F).flatMap[JsNumber](_ => JsNull) should equal(JsNull)
       JsNull.flatMap[JsNumber](_ => JsNull) should equal(JsUndefined)
     }
 
     "get json number correctly" in {
-      JsFloat(10F).get[JsNumber] should equal(JsFloat(10F))
+      JsFloat.fromLiteral(10F).get[JsNumber] should equal(JsFloat.fromLiteral(10F))
     }
 
     "getOrElse json number correctly" in {
-      JsFloat(10F).getOrElse[JsNumber](JsFloat(0F)) should equal(JsFloat(10F))
-      JsNull.getOrElse[JsNumber](JsFloat(0F)) should equal(JsFloat(0F))
+      JsFloat.fromLiteral(10F).getOrElse[JsNumber](JsFloat.fromLiteral(0F)) should equal(JsFloat.fromLiteral(10F))
+      JsNull.getOrElse[JsNumber](JsFloat.fromLiteral(0F)) should equal(JsFloat.fromLiteral(0F))
     }
 
     "be identified as number" in {
-      JsFloat(0F).isNumber should equal(true)
+      JsFloat.fromLiteral(0F).isNumber should equal(true)
     }
 
     "be identified as not null" in {
-      JsFloat(0F).isNull should equal(false)
+      JsFloat.fromLiteral(0F).isNull should equal(false)
     }
   }
 
   "Json float" should {
     "stringify float correctly" in {
-      JsFloat(1.0F).toString should equal("1.0")
+      JsFloat.fromLiteral(1.0F).toString should equal("1.0")
     }
 
     "map json float correctly" in {
-      JsFloat(10F).map[Float](_ => JsNull) should equal(JsNull)
+      JsFloat.fromLiteral(10F).map[Float](_ => JsNull) should equal(JsNull)
       JsNull.map[Float](_ => JsNull) should equal(JsUndefined)
     }
 
     "return float conversion for big decimal" in {
-      JsBigDecimal(BigDecimal(6.0F)).toFloat should equal(6.0F)
+      JsBigDecimal.fromLiteral(BigDecimal(6.0F)).toFloat should equal(6.0F)
     }
 
     "return int conversion for float" in {
-      JsFloat(2.0F).toInt should equal(2)
+      JsFloat.fromLiteral(2.0F).toInt should equal(2)
     }
 
     "return long conversion for float" in {
-      JsFloat(2.0F).toLong should equal(2L)
+      JsFloat.fromLiteral(2.0F).toLong should equal(2L)
     }
 
     "return float conversion for float" in {
-      JsFloat(2.0F).toFloat should equal(2.0F)
+      JsFloat.fromLiteral(2.0F).toFloat should equal(2.0F)
     }
 
     "return double conversion for float" in {
-      JsFloat(2.0F).toDouble should equal(2.0D)
+      JsFloat.fromLiteral(2.0F).toDouble should equal(2.0D)
     }
 
     "return big decimal conversion for float" in {
-      JsFloat(2.0F).toBigDecimal should equal(BigDecimal(2.0F))
+      JsFloat.fromLiteral(2.0F).toBigDecimal should equal(BigDecimal(2.0F))
     }
 
     "return correct size for float" in {
-      JsFloat(2.0F).sizeHint should equal(3)
+      JsFloat.fromLiteral(2.0F).sizeHint should equal(3)
     }
 
     "be identified as number" in {
-      JsFloat(0F).isNumber should equal(true)
+      JsFloat.fromLiteral(0F).isNumber should equal(true)
     }
 
     "be identified as float" in {
-      JsFloat(0F).isFloat should equal(true)
+      JsFloat.fromLiteral(0F).isFloat should equal(true)
     }
   }
 
   "Json double" should {
     "stringify double correctly" in {
-      JsDouble(1.0D).toString should equal("1.0")
+      JsDouble.fromLiteral(1.0D).toString should equal("1.0")
     }
 
     "map json double correctly" in {
-      JsDouble(10D).map[Double](_ => JsNull) should equal(JsNull)
+      JsDouble.fromLiteral(10D).map[Double](_ => JsNull) should equal(JsNull)
       JsNull.map[Double](_ => JsNull) should equal(JsUndefined)
     }
 
     "return correct size for double" in {
-      JsDouble(2.0D).sizeHint should equal(3)
+      JsDouble.fromLiteral(2.0D).sizeHint should equal(3)
     }
 
     "return int conversion for double" in {
-      JsDouble(2.0D).toInt should equal(2)
+      JsDouble.fromLiteral(2.0D).toInt should equal(2)
     }
 
     "return long conversion for double" in {
-      JsDouble(2.0D).toLong should equal(2L)
+      JsDouble.fromLiteral(2.0D).toLong should equal(2L)
     }
 
     "return float conversion for double" in {
-      JsDouble(2.0D).toFloat should equal(2.0F)
+      JsDouble.fromLiteral(2.0D).toFloat should equal(2.0F)
     }
 
     "return double conversion for double" in {
-      JsDouble(2.0D).toDouble should equal(2.0D)
+      JsDouble.fromLiteral(2.0D).toDouble should equal(2.0D)
     }
 
     "return big decimal conversion for double" in {
-      JsDouble(2.0D).toBigDecimal should equal(BigDecimal(2.0D))
+      JsDouble.fromLiteral(2.0D).toBigDecimal should equal(BigDecimal(2.0D))
     }
 
     "be identified as number" in {
-      JsDouble(0D).isNumber should equal(true)
+      JsDouble.fromLiteral(0D).isNumber should equal(true)
     }
 
     "be identified as double" in {
-      JsDouble(0D).isDouble should equal(true)
+      JsDouble.fromLiteral(0D).isDouble should equal(true)
     }
   }
 
   "Json int" should {
     "stringify int correctly" in {
-      JsInt(0).toString should equal("0")
+      JsInt.fromLiteral(0).toString should equal("0")
     }
 
     "return correct size for int" in {
       // Positive cases
       var size = 1
       for (i <- 0 until String.valueOf(Int.MaxValue).length) {
-        JsInt(1 * IntMath.pow(10, i)).sizeHint should equal(size)
+        JsInt.fromLiteral(1 * IntMath.pow(10, i)).sizeHint should equal(size)
         size += 1
       }
 
       // Negative cases
       size = 2
       for (i <- 0 until String.valueOf(Int.MaxValue).length) {
-        JsInt(-1 * IntMath.pow(10, i)).sizeHint should equal(size)
+        JsInt.fromLiteral(-1 * IntMath.pow(10, i)).sizeHint should equal(size)
         size += 1
       }
     }
 
     "return int conversion for int" in {
-      JsInt(1).toInt should equal(1)
+      JsInt.fromLiteral(1).toInt should equal(1)
     }
 
     "return long conversion for int" in {
-      JsInt(1).toLong should equal(1L)
+      JsInt.fromLiteral(1).toLong should equal(1L)
     }
 
     "return float conversion for int" in {
-      JsInt(1).toFloat should equal(1.0F)
+      JsInt.fromLiteral(1).toFloat should equal(1.0F)
     }
 
     "return double conversion for int" in {
-      JsInt(1).toDouble should equal(1.0D)
+      JsInt.fromLiteral(1).toDouble should equal(1.0D)
     }
 
     "return big decimal conversion for int" in {
-      JsInt(1).toBigDecimal should equal(BigDecimal(1))
+      JsInt.fromLiteral(1).toBigDecimal should equal(BigDecimal(1))
     }
 
     "be identified as number" in {
-      JsInt(0).isNumber should equal(true)
+      JsInt.fromLiteral(0).isNumber should equal(true)
     }
 
     "be identified as int" in {
-      JsInt(0).isInt should equal(true)
+      JsInt.fromLiteral(0).isInt should equal(true)
     }
   }
 
@@ -612,90 +612,90 @@ class JsonSpec extends WordSpecLike with Matchers {
       // Positive cases
       var size = 1
       for (i <- 0 until String.valueOf(Long.MaxValue).length) {
-        JsLong(1 * LongMath.pow(10, i)).sizeHint should equal(size)
+        JsLong.fromLiteral(1 * LongMath.pow(10, i)).sizeHint should equal(size)
         size += 1
       }
 
       // Negative cases
       size = 2
       for (i <- 0 until String.valueOf(Long.MaxValue).length) {
-        JsLong(-1 * LongMath.pow(10, i)).sizeHint should equal(size)
+        JsLong.fromLiteral(-1 * LongMath.pow(10, i)).sizeHint should equal(size)
         size += 1
       }
     }
 
     "return int conversion for long" in {
-      JsLong(1L).toInt should equal(1)
+      JsLong.fromLiteral(1L).toInt should equal(1)
     }
 
     "return long conversion for long" in {
-      JsLong(1L).toLong should equal(1L)
+      JsLong.fromLiteral(1L).toLong should equal(1L)
     }
 
     "return float conversion for long" in {
-      JsLong(1L).toFloat should equal(1.0F)
+      JsLong.fromLiteral(1L).toFloat should equal(1.0F)
     }
 
     "return double conversion for long" in {
-      JsLong(1L).toDouble should equal(1.0D)
+      JsLong.fromLiteral(1L).toDouble should equal(1.0D)
     }
 
     "return big decimal conversion for long" in {
-      JsLong(1L).toBigDecimal should equal(BigDecimal(1))
+      JsLong.fromLiteral(1L).toBigDecimal should equal(BigDecimal(1))
     }
 
     "be identified as number" in {
-      JsLong(0).isNumber should equal(true)
+      JsLong.fromLiteral(0).isNumber should equal(true)
     }
 
     "be identified as long" in {
-      JsLong(0).isLong should equal(true)
+      JsLong.fromLiteral(0).isLong should equal(true)
     }
   }
 
   "Json big decimal" should {
     "return correct size for big decimal" in {
-      JsBigDecimal(BigDecimal("2e128")).sizeHint should equal(6)
+      JsBigDecimal.fromLiteral(BigDecimal("2e128")).sizeHint should equal(6)
     }
 
     "return int conversion for big decimal" in {
-      JsBigDecimal(BigDecimal(6)).toInt should equal(6)
+      JsBigDecimal.fromLiteral(BigDecimal(6)).toInt should equal(6)
     }
 
     "return long conversion for big decimal" in {
-      JsBigDecimal(BigDecimal(6L)).toLong should equal(6L)
+      JsBigDecimal.fromLiteral(BigDecimal(6L)).toLong should equal(6L)
     }
 
     "return double conversion for big decimal" in {
-      JsBigDecimal(BigDecimal(6.0D)).toDouble should equal(6.0D)
+      JsBigDecimal.fromLiteral(BigDecimal(6.0D)).toDouble should equal(6.0D)
     }
 
     "return big decimal conversion for big decimal" in {
-      JsBigDecimal(BigDecimal("2e128")).toBigDecimal should equal(BigDecimal("2e128"))
+      JsBigDecimal.fromLiteral(BigDecimal("2e128")).toBigDecimal should equal(BigDecimal("2e128"))
     }
 
     "be identified as big decimal" in {
-      JsBigDecimal(BigDecimal(0F)).isBigDecimal should equal(true)
+      JsBigDecimal.fromLiteral(BigDecimal(0F)).isBigDecimal should equal(true)
     }
   }
 
   "Json string" should {
     "return correct size for string" in {
-      JsString("test").sizeHint should equal(6) // "test"
+      JsString.fromLiteral("test").sizeHint should equal(6) // "test"
     }
 
     "be identified as string" in {
-      JsString("").isString should equal(true)
+      JsString.fromLiteral("").isString should equal(true)
     }
   }
 
   "Json bytes" should {
     "stringify bytestring correctly" in {
-      JsBytes(ByteString("test")).toString should equal("\"dGVzdA==\"")
+      JsBytes.fromLiteral(ByteString("test")).toString should equal("\"dGVzdA==\"")
     }
 
     "be identified as bytes" in {
-      JsBytes(ByteString.empty).isBytes should equal(true)
+      JsBytes.fromLiteral(ByteString.empty).isBytes should equal(true)
     }
   }
 
@@ -808,17 +808,17 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "map json big decimal correctly" in {
-      JsBigDecimal(BigDecimal(10D)).map[BigDecimal](_ => JsNull) should equal(JsNull)
+      JsBigDecimal.fromLiteral(BigDecimal(10D)).map[BigDecimal](_ => JsNull) should equal(JsNull)
       JsNull.map[BigDecimal](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json string correctly" in {
-      JsString("test").map[String](_ => JsNull) should equal(JsNull)
+      JsString.fromLiteral("test").map[String](_ => JsNull) should equal(JsNull)
       JsNull.map[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "map json byte string correctly" in {
-      JsBytes(ByteString("test")).map[ByteString](_ => JsNull) should equal(JsNull)
+      JsBytes.fromLiteral(ByteString("test")).map[ByteString](_ => JsNull) should equal(JsNull)
       JsNull.map[ByteString](_ => JsNull) should equal(JsUndefined)
     }
 
@@ -848,37 +848,37 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "flatMap json int correctly" in {
-      JsInt(10).flatMap[Int](_ => JsNull) should equal(JsNull)
+      JsInt.fromLiteral(10).flatMap[Int](_ => JsNull) should equal(JsNull)
       JsNull.flatMap[Int](_ => JsNull) should equal(JsUndefined)
     }
 
     "flatMap json long correctly" in {
-      JsLong(10L).flatMap[Long](_ => JsNull) should equal(JsNull)
+      JsLong.fromLiteral(10L).flatMap[Long](_ => JsNull) should equal(JsNull)
       JsNull.flatMap[Long](_ => JsNull) should equal(JsUndefined)
     }
 
     "flatMap json float correctly" in {
-      JsFloat(10F).flatMap[Float](_ => JsNull) should equal(JsNull)
+      JsFloat.fromLiteral(10F).flatMap[Float](_ => JsNull) should equal(JsNull)
       JsNull.flatMap[Float](_ => JsNull) should equal(JsUndefined)
     }
 
     "flatMap json double correctly" in {
-      JsDouble(10D).flatMap[Double](_ => JsNull) should equal(JsNull)
+      JsDouble.fromLiteral(10D).flatMap[Double](_ => JsNull) should equal(JsNull)
       JsNull.flatMap[Double](_ => JsNull) should equal(JsUndefined)
     }
 
     "flatMap json big decimal correctly" in {
-      JsBigDecimal(BigDecimal(10D)).flatMap[BigDecimal](_ => JsNull) should equal(JsNull)
+      JsBigDecimal.fromLiteral(BigDecimal(10D)).flatMap[BigDecimal](_ => JsNull) should equal(JsNull)
       JsNull.flatMap[BigDecimal](_ => JsNull) should equal(JsUndefined)
     }
 
     "flatMap json string correctly" in {
-      JsString("test").flatMap[String](_ => JsNull) should equal(JsNull)
+      JsString.fromLiteral("test").flatMap[String](_ => JsNull) should equal(JsNull)
       JsNull.flatMap[String](_ => JsNull) should equal(JsUndefined)
     }
 
     "flatMap json byte string correctly" in {
-      JsBytes(ByteString("test")).flatMap[ByteString](_ => JsNull) should equal(JsNull)
+      JsBytes.fromLiteral(ByteString("test")).flatMap[ByteString](_ => JsNull) should equal(JsNull)
       JsNull.flatMap[ByteString](_ => JsNull) should equal(JsUndefined)
     }
 
@@ -888,7 +888,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "get json correctly" in {
       val input = Json.parseStringUnsafe("1330950829160")
-      input.get[Json] should equal(JsLong(1330950829160L))
+      input.get[Json] should equal(JsLong.fromLiteral(1330950829160L))
     }
 
     "get json array correctly" in {
@@ -900,7 +900,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "get json number correctly" in {
-      JsInt(10).get[JsNumber] should equal(JsInt(10))
+      JsInt.fromLiteral(10).get[JsNumber] should equal(JsInt.fromLiteral(10))
     }
 
     "get boolean correctly" in {
@@ -909,31 +909,31 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "get int correctly" in {
-      JsInt(10).get[Int] should equal(10)
+      JsInt.fromLiteral(10).get[Int] should equal(10)
     }
 
     "get long correctly" in {
-      JsLong(10L).get[Long] should equal(10)
+      JsLong.fromLiteral(10L).get[Long] should equal(10)
     }
 
     "get float correctly" in {
-      JsFloat(10F).get[Float] should equal(10F)
+      JsFloat.fromLiteral(10F).get[Float] should equal(10F)
     }
 
     "get double correctly" in {
-      JsDouble(10D).get[Double] should equal(10D)
+      JsDouble.fromLiteral(10D).get[Double] should equal(10D)
     }
 
     "get big decimal correctly" in {
-      JsBigDecimal(BigDecimal(10D)).get[BigDecimal] should equal(BigDecimal(10D))
+      JsBigDecimal.fromLiteral(BigDecimal(10D)).get[BigDecimal] should equal(BigDecimal(10D))
     }
 
     "get string correctly" in {
-      JsString("test").get[String] should equal("test")
+      JsString.fromLiteral("test").get[String] should equal("test")
     }
 
     "get byte string correctly" in {
-      JsBytes(ByteString("test")).get[ByteString] should equal(ByteString("test"))
+      JsBytes.fromLiteral(ByteString("test")).get[ByteString] should equal(ByteString("test"))
     }
 
     "get json undefined correctly" in {
@@ -943,7 +943,7 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "getOrElse json correctly" in {
-      JsLong(1330950829160L).getOrElse[Json](JsNull) should equal(JsLong(1330950829160L))
+      JsLong.fromLiteral(1330950829160L).getOrElse[Json](JsNull) should equal(JsLong.fromLiteral(1330950829160L))
       JsUndefined.getOrElse[Json](JsNull) should equal(JsNull)
     }
 
@@ -958,8 +958,8 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "getOrElse json number correctly" in {
-      JsInt(10).getOrElse[JsNumber](JsInt(0)) should equal(JsInt(10))
-      JsNull.getOrElse[JsNumber](JsInt(0)) should equal(JsInt(0))
+      JsInt.fromLiteral(10).getOrElse[JsNumber](JsInt.fromLiteral(0)) should equal(JsInt.fromLiteral(10))
+      JsNull.getOrElse[JsNumber](JsInt.fromLiteral(0)) should equal(JsInt.fromLiteral(0))
     }
 
     "getOrElse boolean correctly" in {
@@ -969,37 +969,37 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "getOrElse int correctly" in {
-      JsInt(10).getOrElse[Int](0) should equal(10)
+      JsInt.fromLiteral(10).getOrElse[Int](0) should equal(10)
       JsNull.getOrElse[Int](0) should equal(0)
     }
 
     "getOrElse long correctly" in {
-      JsLong(10L).getOrElse[Long](0) should equal(10)
+      JsLong.fromLiteral(10L).getOrElse[Long](0) should equal(10)
       JsNull.getOrElse[Long](0) should equal(0)
     }
 
     "getOrElse float correctly" in {
-      JsFloat(10F).getOrElse[Float](0F) should equal(10F)
+      JsFloat.fromLiteral(10F).getOrElse[Float](0F) should equal(10F)
       JsNull.getOrElse[Float](0F) should equal(0F)
     }
 
     "getOrElse double correctly" in {
-      JsDouble(10D).getOrElse[Double](0D) should equal(10D)
+      JsDouble.fromLiteral(10D).getOrElse[Double](0D) should equal(10D)
       JsNull.getOrElse[Double](0D) should equal(0D)
     }
 
     "getOrElse big decimal correctly" in {
-      JsBigDecimal(BigDecimal(10D)).getOrElse[BigDecimal](BigDecimal(0)) should equal(BigDecimal(10D))
+      JsBigDecimal.fromLiteral(BigDecimal(10D)).getOrElse[BigDecimal](BigDecimal(0)) should equal(BigDecimal(10D))
       JsNull.getOrElse[BigDecimal](0) should equal(BigDecimal(0))
     }
 
     "getOrElse string correctly" in {
-      JsString("test").getOrElse[String]("") should equal("test")
+      JsString.fromLiteral("test").getOrElse[String]("") should equal("test")
       JsNull.getOrElse[String]("") should equal("")
     }
 
     "getOrElse byte string correctly" in {
-      JsBytes(ByteString("test")).getOrElse[ByteString](ByteString.empty) should equal(ByteString("test"))
+      JsBytes.fromLiteral(ByteString("test")).getOrElse[ByteString](ByteString.empty) should equal(ByteString("test"))
       JsNull.getOrElse[ByteString](ByteString.empty) should equal(ByteString.empty)
     }
 
@@ -1024,31 +1024,31 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "process if exists json int correctly" in {
-      JsInt(10).ifExists[Int](_ => JsNull)
+      JsInt.fromLiteral(10).ifExists[Int](_ => JsNull)
     }
 
     "process if exists json long correctly" in {
-      JsLong(10L).ifExists[Long](_ => JsNull)
+      JsLong.fromLiteral(10L).ifExists[Long](_ => JsNull)
     }
 
     "process if exists json float correctly" in {
-      JsFloat(10F).ifExists[Float](_ => JsNull)
+      JsFloat.fromLiteral(10F).ifExists[Float](_ => JsNull)
     }
 
     "process if exists json double correctly" in {
-      JsDouble(10D).ifExists[Double](_ => JsNull)
+      JsDouble.fromLiteral(10D).ifExists[Double](_ => JsNull)
     }
 
     "process if exists json big decimal correctly" in {
-      JsBigDecimal(BigDecimal(10D)).ifExists[BigDecimal](_ => JsNull)
+      JsBigDecimal.fromLiteral(BigDecimal(10D)).ifExists[BigDecimal](_ => JsNull)
     }
 
     "process if exists json string correctly" in {
-      JsString("test").ifExists[String](_ => JsNull)
+      JsString.fromLiteral("test").ifExists[String](_ => JsNull)
     }
 
     "process if exists json byte string correctly" in {
-      JsBytes(ByteString("test")).ifExists[ByteString](_ => JsNull)
+      JsBytes.fromLiteral(ByteString("test")).ifExists[ByteString](_ => JsNull)
     }
 
     "process if exists json undefined correctly" in {
@@ -1062,47 +1062,47 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "parse long integers correctly" in {
       val input = Json.parseStringUnsafe("1330950829160")
-      input should equal(JsLong(1330950829160L))
+      input should equal(JsLong.fromLiteral(1330950829160L))
     }
 
     "parse short integers correctly" in {
       val input = Json.parseStringUnsafe("1234")
-      input should equal(JsInt(1234))
+      input should equal(JsInt.fromLiteral(1234))
     }
 
     "parse byte integers correctly" in {
       val input = Json.parseStringUnsafe("123")
-      input should equal(JsInt(123))
+      input should equal(JsInt.fromLiteral(123))
     }
 
     "parse big decimal correctly" in {
       val input = Json.parseStringUnsafe("12345678901234567890.42")
-      input should equal(JsBigDecimal(BigDecimal("12345678901234567890.42")))
+      input should equal(JsBigDecimal.fromLiteral(BigDecimal("12345678901234567890.42")))
     }
 
     "parse big decimal with large exponents in scientific notation correctly" in {
       val input = Json.parseStringUnsafe("1.2e1000")
-      input should equal(JsBigDecimal(BigDecimal("1.2e1000")))
+      input should equal(JsBigDecimal.fromLiteral(BigDecimal("1.2e1000")))
     }
 
     "parse big decimal with large negative exponents in scientific notation correctly" in {
       val input = Json.parseStringUnsafe("6.75e-1000")
-      input should equal(JsBigDecimal(BigDecimal("6.75e-1000")))
+      input should equal(JsBigDecimal.fromLiteral(BigDecimal("6.75e-1000")))
     }
 
     "parse big decimal with small exponents in scientific notation correctly" in {
       val input = Json.parseStringUnsafe("1.234e3")
-      input should equal(JsBigDecimal(BigDecimal("1.234e3")))
+      input should equal(JsBigDecimal.fromLiteral(BigDecimal("1.234e3")))
     }
 
     "parse big decimal with small negative exponents in scientific notation correctly" in {
       val input = Json.parseStringUnsafe("1.234e-3")
-      input should equal(JsBigDecimal(BigDecimal("1.234e-3")))
+      input should equal(JsBigDecimal.fromLiteral(BigDecimal("1.234e-3")))
     }
 
     "parse big decimal with integer base correctly" in {
       val input = Json.parseStringUnsafe("2e128")
-      input should equal(JsBigDecimal(BigDecimal("2e128")))
+      input should equal(JsBigDecimal.fromLiteral(BigDecimal("2e128")))
     }
 
     "parse list correctly" in {
