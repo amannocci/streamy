@@ -214,7 +214,7 @@ object ElasticsearchFlow {
 
       // Remove extra fields
       val doc = pkt.patch(ElasticOp.RemoveExtraFields).get[Json]
-      header.toByteString ++ NewLineDelimiter ++ doc.toByteString ++ NewLineDelimiter
+      Json.printByteStringUnsafe(header) ++ NewLineDelimiter ++ Json.printByteStringUnsafe(doc) ++ NewLineDelimiter
     }
 
     /**

@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.util.json
 
+import java.nio.charset.StandardCharsets
+
 import akka.util.ByteString
 import com.google.common.io.BaseEncoding
 import io.techcode.streamy.util.lang.CharBuilder
@@ -82,11 +84,11 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     */
   def printValue(value: Json): Unit = {
     value match {
-      case x: JsObject => printObject(x)
-      case x: JsArray => printArray(x)
-      case x: JsString => printString(x.value)
-      case x: JsNumber => printNumber(x)
-      case x: JsBytes => printBytes(x)
+      case x: JsObject => printJsObject(x)
+      case x: JsArray => printJsArray(x)
+      case x: JsString => printJsString(x)
+      case x: JsNumber => printJsNumber(x)
+      case x: JsBytes => printJsBytes(x)
       case _: JsTrue.type => builder.append(JsonPrinter.True)
       case _: JsFalse.type => builder.append(JsonPrinter.False)
       case _: JsNull.type => builder.append(JsonPrinter.Null)
@@ -98,7 +100,7 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     *
     * @param value json object value.
     */
-  def printObject(value: JsObject): Unit = {
+  def printJsObject(value: JsObject): Unit = {
     builder.append(JsonPrinter.OpenBrace)
     if (value.underlying.nonEmpty) {
       var firstValue = true
@@ -122,7 +124,7 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     *
     * @param value json array value.
     */
-  def printArray(value: JsArray): Unit = {
+  def printJsArray(value: JsArray): Unit = {
     builder.append(JsonPrinter.OpenBracket)
     if (value.underlying.nonEmpty) {
       var firstValue = true
@@ -144,14 +146,22 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     *
     * @param value json number value.
     */
-  private def printNumber(value: JsNumber): Unit = {
-    value match {
-      case x: JsInt => builder.append(x.value)
-      case x: JsLong => builder.append(x.value)
-      case x: JsFloat => builder.append(x.value)
-      case x: JsDouble => builder.append(x.value)
-      case x: JsBigDecimal => builder.append(x.value.toString())
-    }
+  protected def printJsNumber(value: JsNumber): Unit = value match {
+    case x: JsIntLiteral => builder.append(x.value)
+    case x: JsIntBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsIntStrRepr => builder.append(x.repr)
+    case x: JsLongLiteral => builder.append(x.value)
+    case x: JsLongBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsLongStrRepr => builder.append(x.repr)
+    case x: JsFloatLiteral => builder.append(x.value)
+    case x: JsFloatBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsFloatStrRepr => builder.append(x.repr)
+    case x: JsDoubleLiteral => builder.append(x.value)
+    case x: JsDoubleBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsDoubleStrRepr => builder.append(x.repr)
+    case x: JsBigDecimalLiteral => builder.append(x.value.toString())
+    case x: JsBigDecimalBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsBigDecimalStrRepr => builder.append(x.repr)
   }
 
   /**
@@ -159,11 +169,18 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     *
     * @param value json bytes value.
     */
-  private def printBytes(value: JsBytes): Unit = {
+  protected def printJsBytes(value: JsBytes): Unit = {
     builder.append(JsonPrinter.Quote)
       .append(BaseEncoding.base64().encode(value.value.toArray[Byte]))
       .append(JsonPrinter.Quote)
   }
+
+  /**
+    * Print a string value.
+    *
+    * @param value string value.
+    */
+  private def printJsString(value: JsString): Unit = printString(value.value)
 
   /**
     * Print a string value.

@@ -182,37 +182,37 @@ sealed abstract class SomeBinder(val key: String) extends Binder {
 case class StringBinder(override val key: String, charset: Charset = StandardCharsets.UTF_8) extends SomeBinder(key) {
 
   def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsString(value.toString))
+    builder += (key -> JsString.fromLiteral(value.toString))
     true
   }
 
   def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsString(value.toString))
+    builder += (key -> JsString.fromLiteral(value.toString))
     true
   }
 
   def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsString(value.toString))
+    builder += (key -> JsString.fromLiteral(value.toString))
     true
   }
 
   def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsString(value.toString))
+    builder += (key -> JsString.fromLiteral(value.toString))
     true
   }
 
   def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsString(value.toString))
+    builder += (key -> JsString.fromLiteral(value.toString))
     true
   }
 
   def apply(value: String)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsString(value))
+    builder += (key -> JsString.fromLiteral(value))
     true
   }
 
   def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsString(value.decodeString(charset)))
+    builder += (key -> JsString.fromLiteral(value.decodeString(charset)))
     true
   }
 
@@ -248,37 +248,37 @@ case class StringBinder(override val key: String, charset: Charset = StandardCha
 case class BytesBinder(override val key: String) extends SomeBinder(key) {
 
   def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsBytes(ByteString(value.toString)))
+    builder += (key -> JsBytes.fromLiteral(ByteString(value.toString)))
     true
   }
 
   def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsBytes(ByteString(value.toString)))
+    builder += (key -> JsBytes.fromLiteral(ByteString(value.toString)))
     true
   }
 
   def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsBytes(ByteString(value.toString)))
+    builder += (key -> JsBytes.fromLiteral(ByteString(value.toString)))
     true
   }
 
   def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsBytes(ByteString(value.toString)))
+    builder += (key -> JsBytes.fromLiteral(ByteString(value.toString)))
     true
   }
 
   def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsBytes(ByteString(value.toString)))
+    builder += (key -> JsBytes.fromLiteral(ByteString(value.toString)))
     true
   }
 
   def apply(value: String)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsBytes(ByteString(value)))
+    builder += (key -> JsBytes.fromLiteral(ByteString(value)))
     true
   }
 
   def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsBytes(value))
+    builder += (key -> JsBytes.fromLiteral(value))
     true
   }
 
@@ -314,40 +314,40 @@ case class BytesBinder(override val key: String) extends SomeBinder(key) {
 case class IntBinder(override val key: String) extends SomeBinder(key) {
 
   def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsInt(if (value) 1 else 0))
+    builder += (key -> JsInt.fromLiteral(if (value) 1 else 0))
     true
   }
 
   def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsInt(value))
+    builder += (key -> JsInt.fromLiteral(value))
     true
   }
 
   def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsInt(value.toInt))
+    builder += (key -> JsInt.fromLiteral(value.toInt))
     true
   }
 
   def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsInt(value.toInt))
+    builder += (key -> JsInt.fromLiteral(value.toInt))
     true
   }
 
   def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsInt(value.toInt))
+    builder += (key -> JsInt.fromLiteral(value.toInt))
     true
   }
 
   def apply(value: String)(implicit builder: JsObjectBuilder): Boolean = {
     Option(Ints.tryParse(value)).exists { v =>
-      builder += (key -> JsInt(v))
+      builder += (key -> JsInt.fromLiteral(v))
       true
     }
   }
 
   def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean =
     Option(Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII))).exists { v =>
-      builder += (key -> JsInt(v))
+      builder += (key -> JsInt.fromLiteral(v))
       true
     }
 
@@ -383,39 +383,39 @@ case class IntBinder(override val key: String) extends SomeBinder(key) {
 case class LongBinder(override val key: String) extends SomeBinder(key) {
 
   def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsLong(if (value) 1 else 0))
+    builder += (key -> JsLong.fromLiteral(if (value) 1 else 0))
     true
   }
 
   def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsLong(value))
+    builder += (key -> JsLong.fromLiteral(value))
     true
   }
 
   def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsLong(value))
+    builder += (key -> JsLong.fromLiteral(value))
     true
   }
 
   def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsLong(value.toLong))
+    builder += (key -> JsLong.fromLiteral(value.toLong))
     true
   }
 
   def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsLong(value.toLong))
+    builder += (key -> JsLong.fromLiteral(value.toLong))
     true
   }
 
   def apply(value: String)(implicit builder: JsObjectBuilder): Boolean =
     Option(Longs.tryParse(value)).exists { v =>
-      builder += (key -> JsLong(v))
+      builder += (key -> JsLong.fromLiteral(v))
       true
     }
 
   def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean =
     Option(Longs.tryParse(value.decodeString(StandardCharsets.US_ASCII))).exists { v =>
-      builder += (key -> JsLong(v))
+      builder += (key -> JsLong.fromLiteral(v))
       true
     }
 
@@ -451,39 +451,39 @@ case class LongBinder(override val key: String) extends SomeBinder(key) {
 case class FloatBinder(override val key: String) extends SomeBinder(key) {
 
   def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsFloat(if (value) 1 else 0))
+    builder += (key -> JsFloat.fromLiteral(if (value) 1 else 0))
     true
   }
 
   def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsFloat(value.toFloat))
+    builder += (key -> JsFloat.fromLiteral(value.toFloat))
     true
   }
 
   def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsFloat(value.toFloat))
+    builder += (key -> JsFloat.fromLiteral(value.toFloat))
     true
   }
 
   def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsFloat(value))
+    builder += (key -> JsFloat.fromLiteral(value))
     true
   }
 
   def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsFloat(value.toFloat))
+    builder += (key -> JsFloat.fromLiteral(value.toFloat))
     true
   }
 
   def apply(value: String)(implicit builder: JsObjectBuilder): Boolean =
     Option(Floats.tryParse(value)).exists { v =>
-      builder += (key -> JsFloat(v))
+      builder += (key -> JsFloat.fromLiteral(v))
       true
     }
 
   def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean =
     Option(Floats.tryParse(value.decodeString(StandardCharsets.US_ASCII))).exists { v =>
-      builder += (key -> JsFloat(v))
+      builder += (key -> JsFloat.fromLiteral(v))
       true
     }
 
@@ -519,39 +519,39 @@ case class FloatBinder(override val key: String) extends SomeBinder(key) {
 case class DoubleBinder(override val key: String) extends SomeBinder(key) {
 
   def apply(value: Boolean)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsDouble(if (value) 1 else 0))
+    builder += (key -> JsDouble.fromLiteral(if (value) 1 else 0))
     true
   }
 
   def apply(value: Int)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsDouble(value.toDouble))
+    builder += (key -> JsDouble.fromLiteral(value.toDouble))
     true
   }
 
   def apply(value: Long)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsDouble(value.toDouble))
+    builder += (key -> JsDouble.fromLiteral(value.toDouble))
     true
   }
 
   def apply(value: Float)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsDouble(value))
+    builder += (key -> JsDouble.fromLiteral(value))
     true
   }
 
   def apply(value: Double)(implicit builder: JsObjectBuilder): Boolean = {
-    builder += (key -> JsDouble(value.toDouble))
+    builder += (key -> JsDouble.fromLiteral(value.toDouble))
     true
   }
 
   def apply(value: String)(implicit builder: JsObjectBuilder): Boolean =
     Option(Doubles.tryParse(value)).exists { v =>
-      builder += (key -> JsDouble(v))
+      builder += (key -> JsDouble.fromLiteral(v))
       true
     }
 
   def apply(value: ByteString)(implicit builder: JsObjectBuilder): Boolean =
     Option(Doubles.tryParse(value.decodeString(StandardCharsets.US_ASCII))).exists { v =>
-      builder += (key -> JsDouble(v))
+      builder += (key -> JsDouble.fromLiteral(v))
       true
     }
 

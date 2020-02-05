@@ -39,7 +39,7 @@ trait JsonImplicit {
     * @param value js value.
     * @return string.
     */
-  implicit def jsonToString(value: Json): String = value.toString
+  implicit def jsonToString(value: Json): String = Json.printStringUnsafe(value)
 
   /**
     * Convert a string to json value.
@@ -47,7 +47,7 @@ trait JsonImplicit {
     * @param value string value.
     * @return json.
     */
-  implicit def stringToJson(value: String): Json = JsString(value)
+  implicit def stringToJson(value: String): Json = JsString.fromLiteral(value)
 
   /**
     * Convert a float to json value.
@@ -55,7 +55,7 @@ trait JsonImplicit {
     * @param value float value.
     * @return json.
     */
-  implicit def floatToJson(value: Float): Json = JsFloat(value)
+  implicit def floatToJson(value: Float): Json = JsFloat.fromLiteral(value)
 
   /**
     * Convert a double to json value.
@@ -63,7 +63,7 @@ trait JsonImplicit {
     * @param value double value.
     * @return json.
     */
-  implicit def doubleToJson(value: Double): Json = JsDouble(value)
+  implicit def doubleToJson(value: Double): Json = JsDouble.fromLiteral(value)
 
   /**
     * Convert a byte to json value.
@@ -71,7 +71,7 @@ trait JsonImplicit {
     * @param value byte value.
     * @return json.
     */
-  implicit def byteToJson(value: Byte): Json = JsInt(value)
+  implicit def byteToJson(value: Byte): Json = JsInt.fromLiteral(value)
 
   /**
     * Convert a short to json value.
@@ -79,7 +79,7 @@ trait JsonImplicit {
     * @param value short value.
     * @return json.
     */
-  implicit def shortToJson(value: Short): Json = JsInt(value)
+  implicit def shortToJson(value: Short): Json = JsInt.fromLiteral(value)
 
   /**
     * Convert a int to json value.
@@ -87,7 +87,7 @@ trait JsonImplicit {
     * @param value int value.
     * @return json.
     */
-  implicit def intToJson(value: Int): Json = JsInt(value)
+  implicit def intToJson(value: Int): Json = JsInt.fromLiteral(value)
 
   /**
     * Convert a long to json value.
@@ -95,7 +95,7 @@ trait JsonImplicit {
     * @param value long value.
     * @return json.
     */
-  implicit def longToJson(value: Long): Json = JsLong(value)
+  implicit def longToJson(value: Long): Json = JsLong.fromLiteral(value)
 
   /**
     * Convert a boolean to json value.
@@ -111,7 +111,7 @@ trait JsonImplicit {
     * @param value byte string value.
     * @return json.
     */
-  implicit def byteStringToJson(value: ByteString): Json = JsBytes(value)
+  implicit def byteStringToJson(value: ByteString): Json = JsBytes.fromLiteral(value)
 
   /**
     * Convert a big decimal to json value.
@@ -119,7 +119,7 @@ trait JsonImplicit {
     * @param value big decimal value.
     * @return json.
     */
-  implicit def bigDecimalToJson(value: BigDecimal): Json = JsBigDecimal(value)
+  implicit def bigDecimalToJson(value: BigDecimal): Json = JsBigDecimal.fromLiteral(value)
 
   // Json reader to support pureconfig
   implicit val jsonReader: ConfigReader[Json] = ConfigReader.fromString[Json](ConvertHelpers.tryF(Json.parseString(_).toTry))
