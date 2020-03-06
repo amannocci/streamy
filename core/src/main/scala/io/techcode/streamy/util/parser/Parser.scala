@@ -100,7 +100,7 @@ trait Parser[In, Out] {
     *
     * @return length of the input data.
     */
-  final def length: Int = _length
+  @inline final def length: Int = _length
 
   /**
     * The index of the next (yet unmatched) character.

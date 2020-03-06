@@ -465,6 +465,8 @@ class JsonSpec extends WordSpecLike with Matchers {
   "Json float" should {
     "stringify float correctly" in {
       JsFloat.fromLiteral(1.0F).toString should equal("1.0")
+      JsFloat.fromByteStringUnsafe(ByteString("1.0")).toString should equal("1.0")
+      JsFloat.fromStringUnsafe("1.0").toString should equal("1.0")
     }
 
     "map json float correctly" in {
@@ -472,46 +474,60 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsNull.map[Float](_ => JsNull) should equal(JsUndefined)
     }
 
-    "return float conversion for big decimal" in {
-      JsBigDecimal.fromLiteral(BigDecimal(6.0F)).toFloat should equal(6.0F)
-    }
-
     "return int conversion for float" in {
       JsFloat.fromLiteral(2.0F).toInt should equal(2)
+      JsFloat.fromByteStringUnsafe(ByteString("2.0")).toInt should equal(2)
+      JsFloat.fromStringUnsafe("2.0").toInt should equal(2)
     }
 
     "return long conversion for float" in {
       JsFloat.fromLiteral(2.0F).toLong should equal(2L)
+      JsFloat.fromByteStringUnsafe(ByteString("2.0")).toLong should equal(2L)
+      JsFloat.fromStringUnsafe("2.0").toLong should equal(2L)
     }
 
     "return float conversion for float" in {
-      JsFloat.fromLiteral(2.0F).toFloat should equal(2.0F)
+      JsFloat.fromLiteral(6.0F).toFloat should equal(6.0F)
+      JsFloat.fromByteStringUnsafe(ByteString("6.0")).toFloat should equal(6.0F)
+      JsFloat.fromStringUnsafe("6.0").toFloat should equal(6.0F)
     }
 
     "return double conversion for float" in {
       JsFloat.fromLiteral(2.0F).toDouble should equal(2.0D)
+      JsFloat.fromByteStringUnsafe(ByteString("2.0")).toDouble should equal(2.0D)
+      JsFloat.fromStringUnsafe("2.0").toDouble should equal(2.0D)
     }
 
     "return big decimal conversion for float" in {
       JsFloat.fromLiteral(2.0F).toBigDecimal should equal(BigDecimal(2.0F))
+      JsFloat.fromByteStringUnsafe(ByteString("2.0")).toBigDecimal should equal(BigDecimal(2.0F))
+      JsFloat.fromStringUnsafe("2.0").toBigDecimal should equal(BigDecimal(2.0F))
     }
 
     "return correct size for float" in {
       JsFloat.fromLiteral(2.0F).sizeHint should equal(3)
+      JsFloat.fromByteStringUnsafe(ByteString("2.0")).sizeHint should equal(3)
+      JsFloat.fromStringUnsafe("2.0").sizeHint should equal(3)
     }
 
     "be identified as number" in {
       JsFloat.fromLiteral(0F).isNumber should equal(true)
+      JsFloat.fromByteStringUnsafe(ByteString("0")).isNumber should equal(true)
+      JsFloat.fromStringUnsafe("0").isNumber should equal(true)
     }
 
     "be identified as float" in {
       JsFloat.fromLiteral(0F).isFloat should equal(true)
+      JsFloat.fromByteStringUnsafe(ByteString("0")).isFloat should equal(true)
+      JsFloat.fromStringUnsafe("0").isFloat should equal(true)
     }
   }
 
   "Json double" should {
     "stringify double correctly" in {
       JsDouble.fromLiteral(1.0D).toString should equal("1.0")
+      JsDouble.fromByteStringUnsafe(ByteString("1.0")).toString should equal("1.0")
+      JsDouble.fromStringUnsafe("1.0").toString should equal("1.0")
     }
 
     "map json double correctly" in {
@@ -521,40 +537,58 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return correct size for double" in {
       JsDouble.fromLiteral(2.0D).sizeHint should equal(3)
+      JsDouble.fromByteStringUnsafe(ByteString("2.0")).sizeHint should equal(3)
+      JsDouble.fromStringUnsafe("2.0").sizeHint should equal(3)
     }
 
     "return int conversion for double" in {
       JsDouble.fromLiteral(2.0D).toInt should equal(2)
+      JsDouble.fromByteStringUnsafe(ByteString("2.0")).toInt should equal(2)
+      JsDouble.fromStringUnsafe("2.0").toInt should equal(2)
     }
 
     "return long conversion for double" in {
       JsDouble.fromLiteral(2.0D).toLong should equal(2L)
+      JsDouble.fromByteStringUnsafe(ByteString("2.0")).toLong should equal(2L)
+      JsDouble.fromStringUnsafe("2.0").toLong should equal(2L)
     }
 
     "return float conversion for double" in {
       JsDouble.fromLiteral(2.0D).toFloat should equal(2.0F)
+      JsDouble.fromByteStringUnsafe(ByteString("2.0")).toFloat should equal(2.0F)
+      JsDouble.fromStringUnsafe("2.0").toFloat should equal(2.0F)
     }
 
     "return double conversion for double" in {
       JsDouble.fromLiteral(2.0D).toDouble should equal(2.0D)
+      JsDouble.fromByteStringUnsafe(ByteString("2.0")).toDouble should equal(2.0D)
+      JsDouble.fromStringUnsafe("2.0").toDouble should equal(2.0D)
     }
 
     "return big decimal conversion for double" in {
       JsDouble.fromLiteral(2.0D).toBigDecimal should equal(BigDecimal(2.0D))
+      JsDouble.fromByteStringUnsafe(ByteString("2.0")).toBigDecimal should equal(BigDecimal(2.0D))
+      JsDouble.fromStringUnsafe("2.0").toBigDecimal should equal(BigDecimal(2.0D))
     }
 
     "be identified as number" in {
-      JsDouble.fromLiteral(0D).isNumber should equal(true)
+      JsDouble.fromLiteral(0.0D).isNumber should equal(true)
+      JsDouble.fromByteStringUnsafe(ByteString("0.0")).isNumber should equal(true)
+      JsDouble.fromStringUnsafe("0.0").isNumber should equal(true)
     }
 
     "be identified as double" in {
-      JsDouble.fromLiteral(0D).isDouble should equal(true)
+      JsDouble.fromLiteral(0.0D).isDouble should equal(true)
+      JsDouble.fromByteStringUnsafe(ByteString("0.0")).isDouble should equal(true)
+      JsDouble.fromStringUnsafe("0.0").isDouble should equal(true)
     }
   }
 
   "Json int" should {
     "stringify int correctly" in {
       JsInt.fromLiteral(0).toString should equal("0")
+      JsInt.fromByteStringUnsafe(ByteString("0")).toString should equal("0")
+      JsInt.fromStringUnsafe("0").toString should equal("0")
     }
 
     "return correct size for int" in {
@@ -575,37 +609,52 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return int conversion for int" in {
       JsInt.fromLiteral(1).toInt should equal(1)
+      JsInt.fromByteStringUnsafe(ByteString("1")).toInt should equal(1)
+      JsInt.fromStringUnsafe("1").toInt should equal(1)
     }
 
     "return long conversion for int" in {
       JsInt.fromLiteral(1).toLong should equal(1L)
+      JsInt.fromByteStringUnsafe(ByteString("1")).toLong should equal(1L)
+      JsInt.fromStringUnsafe("1").toLong should equal(1L)
     }
 
     "return float conversion for int" in {
       JsInt.fromLiteral(1).toFloat should equal(1.0F)
+      JsInt.fromByteStringUnsafe(ByteString("1")).toFloat should equal(1.0F)
+      JsInt.fromStringUnsafe("1").toFloat should equal(1.0F)
     }
 
     "return double conversion for int" in {
       JsInt.fromLiteral(1).toDouble should equal(1.0D)
+      JsInt.fromByteStringUnsafe(ByteString("1")).toDouble should equal(1.0D)
+      JsInt.fromStringUnsafe("1").toDouble should equal(1.0D)
     }
 
     "return big decimal conversion for int" in {
       JsInt.fromLiteral(1).toBigDecimal should equal(BigDecimal(1))
+      JsInt.fromByteStringUnsafe(ByteString("1")).toBigDecimal should equal(BigDecimal(1))
+      JsInt.fromStringUnsafe("1").toBigDecimal should equal(BigDecimal(1))
     }
 
     "be identified as number" in {
       JsInt.fromLiteral(0).isNumber should equal(true)
+      JsInt.fromByteStringUnsafe(ByteString("0")).isNumber should equal(true)
+      JsInt.fromStringUnsafe("0").isNumber should equal(true)
     }
 
     "be identified as int" in {
       JsInt.fromLiteral(0).isInt should equal(true)
+      JsInt.fromByteStringUnsafe(ByteString("0")).isInt should equal(true)
+      JsInt.fromStringUnsafe("0").isInt should equal(true)
     }
   }
 
   "Json long" should {
     "stringify long integers correctly" in {
-      val input = Json.obj("l" -> 1330950829160L)
-      input.toString should equal("""{"l":1330950829160}""")
+      JsLong.fromLiteral(1330950829160L).toString should equal("1330950829160")
+      JsLong.fromByteStringUnsafe(ByteString("1330950829160")).toString should equal("1330950829160")
+      JsLong.fromStringUnsafe("1330950829160").toString should equal("1330950829160")
     }
 
     "return correct size for long" in {
@@ -626,76 +675,106 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return int conversion for long" in {
       JsLong.fromLiteral(1L).toInt should equal(1)
+      JsLong.fromByteStringUnsafe(ByteString("1")).toInt should equal(1)
+      JsLong.fromStringUnsafe("1").toInt should equal(1)
     }
 
     "return long conversion for long" in {
       JsLong.fromLiteral(1L).toLong should equal(1L)
+      JsLong.fromByteStringUnsafe(ByteString("1")).toLong should equal(1L)
+      JsLong.fromStringUnsafe("1").toLong should equal(1L)
     }
 
     "return float conversion for long" in {
       JsLong.fromLiteral(1L).toFloat should equal(1.0F)
+      JsLong.fromByteStringUnsafe(ByteString("1")).toFloat should equal(1.0F)
+      JsLong.fromStringUnsafe("1").toFloat should equal(1.0F)
     }
 
     "return double conversion for long" in {
       JsLong.fromLiteral(1L).toDouble should equal(1.0D)
+      JsLong.fromByteStringUnsafe(ByteString("1")).toDouble should equal(1.0D)
+      JsLong.fromStringUnsafe("1").toDouble should equal(1.0D)
     }
 
     "return big decimal conversion for long" in {
       JsLong.fromLiteral(1L).toBigDecimal should equal(BigDecimal(1))
+      JsLong.fromByteStringUnsafe(ByteString("1")).toBigDecimal should equal(BigDecimal(1))
+      JsLong.fromStringUnsafe("1").toBigDecimal should equal(BigDecimal(1))
     }
 
     "be identified as number" in {
       JsLong.fromLiteral(0).isNumber should equal(true)
+      JsLong.fromByteStringUnsafe(ByteString("0")).isNumber should equal(true)
+      JsLong.fromStringUnsafe("0").isNumber should equal(true)
     }
 
     "be identified as long" in {
       JsLong.fromLiteral(0).isLong should equal(true)
+      JsLong.fromByteStringUnsafe(ByteString("0")).isLong should equal(true)
+      JsLong.fromStringUnsafe("0").isLong should equal(true)
     }
   }
 
   "Json big decimal" should {
     "return correct size for big decimal" in {
       JsBigDecimal.fromLiteral(BigDecimal("2e128")).sizeHint should equal(6)
+      JsBigDecimal.fromByteStringUnsafe(ByteString("2e128")).sizeHint should equal(5)
+      JsBigDecimal.fromStringUnsafe("2e128").sizeHint should equal(5)
     }
 
     "return int conversion for big decimal" in {
-      JsBigDecimal.fromLiteral(BigDecimal(6)).toInt should equal(6)
+      JsBigDecimal.fromLiteral(BigDecimal(6.0D)).toInt should equal(6)
+      JsBigDecimal.fromByteStringUnsafe(ByteString("6.0")).toInt should equal(6)
+      JsBigDecimal.fromStringUnsafe("6.0").toInt should equal(6)
     }
 
     "return long conversion for big decimal" in {
-      JsBigDecimal.fromLiteral(BigDecimal(6L)).toLong should equal(6L)
+      JsBigDecimal.fromLiteral(BigDecimal(6.0D)).toLong should equal(6L)
+      JsBigDecimal.fromByteStringUnsafe(ByteString("6.0")).toLong should equal(6L)
+      JsBigDecimal.fromStringUnsafe("6.0").toLong should equal(6L)
     }
 
     "return double conversion for big decimal" in {
-      JsBigDecimal.fromLiteral(BigDecimal(6.0D)).toDouble should equal(6.0D)
+      JsBigDecimal.fromLiteral(BigDecimal(6.0D)).toDouble should equal(6D)
+      JsBigDecimal.fromByteStringUnsafe(ByteString("6.0")).toInt should equal(6D)
+      JsBigDecimal.fromStringUnsafe("6.0").toInt should equal(6D)
     }
 
     "return big decimal conversion for big decimal" in {
       JsBigDecimal.fromLiteral(BigDecimal("2e128")).toBigDecimal should equal(BigDecimal("2e128"))
+      JsBigDecimal.fromByteStringUnsafe(ByteString("2e128")).toBigDecimal should equal(BigDecimal("2e128"))
+      JsBigDecimal.fromStringUnsafe("2e128").toBigDecimal should equal(BigDecimal("2e128"))
     }
 
     "be identified as big decimal" in {
       JsBigDecimal.fromLiteral(BigDecimal(0F)).isBigDecimal should equal(true)
+      JsBigDecimal.fromByteStringUnsafe(ByteString("0")).isBigDecimal should equal(true)
+      JsBigDecimal.fromStringUnsafe("0").isBigDecimal should equal(true)
     }
   }
 
   "Json string" should {
     "return correct size for string" in {
       JsString.fromLiteral("test").sizeHint should equal(6) // "test"
+      JsString.fromByteStringUnsafe(ByteString("test")).sizeHint should equal(6) // "test"
     }
 
     "be identified as string" in {
       JsString.fromLiteral("").isString should equal(true)
+      JsString.fromByteStringUnsafe(ByteString("")).isString should equal(true)
     }
   }
 
   "Json bytes" should {
     "stringify bytestring correctly" in {
       JsBytes.fromLiteral(ByteString("test")).toString should equal("\"dGVzdA==\"")
+      JsBytes.fromStringUnsafe("test").toString should equal("\"dGVzdA==\"")
     }
 
     "be identified as bytes" in {
       JsBytes.fromLiteral(ByteString.empty).isBytes should equal(true)
+      JsBytes.fromStringUnsafe("").isBytes should equal(true)
     }
   }
 
