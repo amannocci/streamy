@@ -512,14 +512,31 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "support pattern matching" in {
       JsFloat.fromLiteral(2.0F) match {
+        case JsFloat(x) => x should equal(2.0F)
         case x: JsFloat => x.value should equal(2.0F)
       }
       JsFloat.fromByteStringUnsafe(ByteString("2.0")) match {
+        case JsFloat(x) => x should equal(2.0F)
         case x: JsFloat => x.value should equal(2.0F)
       }
       JsFloat.fromStringUnsafe("2.0") match {
+        case JsFloat(x) => x should equal(2.0F)
         case x: JsFloat => x.value should equal(2.0F)
       }
+    }
+
+    "be equal to float" in {
+      JsFloat.fromLiteral(2.0F) should equal(JsFloat.fromLiteral(2.0F))
+      JsFloat.fromLiteral(2.0F) should equal(JsFloat.fromByteStringUnsafe(ByteString("2.0")))
+      JsFloat.fromLiteral(2.0F) should equal(JsFloat.fromStringUnsafe("2.0"))
+      JsFloat.fromLiteral(0.0F) should not equal(JsFloat.fromLiteral(2.0F))
+      JsFloat.fromLiteral(0.0F) should not equal(JsInt.fromLiteral(2))
+    }
+
+    "be equal to hashCode float" in {
+      JsFloat.fromLiteral(2.0F).hashCode() should equal(JsFloat.fromLiteral(2.0F).hashCode())
+      JsFloat.fromLiteral(2.0F).hashCode() should equal(JsFloat.fromByteStringUnsafe(ByteString("2.0")).hashCode())
+      JsFloat.fromLiteral(2.0F).hashCode() should equal(JsFloat.fromStringUnsafe("2.0").hashCode())
     }
 
     "be identified as number" in {
@@ -585,14 +602,31 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "support pattern matching" in {
       JsDouble.fromLiteral(2.0D) match {
+        case JsDouble(x) => x should equal(2.0D)
         case x: JsDouble => x.value should equal(2.0D)
       }
       JsDouble.fromByteStringUnsafe(ByteString("2.0")) match {
+        case JsDouble(x) => x should equal(2.0D)
         case x: JsDouble => x.value should equal(2.0D)
       }
       JsDouble.fromStringUnsafe("2.0") match {
-        case x: JsDouble => x.value should equal(2.0F)
+        case JsDouble(x) => x should equal(2.0D)
+        case x: JsDouble => x.value should equal(2.0D)
       }
+    }
+
+    "be equal to double" in {
+      JsDouble.fromLiteral(0.0D) should equal(JsDouble.fromLiteral(0.0F))
+      JsDouble.fromLiteral(0.0D) should equal(JsDouble.fromByteStringUnsafe(ByteString("0.0")))
+      JsDouble.fromLiteral(0.0D) should equal(JsDouble.fromStringUnsafe("0.0"))
+      JsDouble.fromLiteral(0.0D) should not equal(JsDouble.fromLiteral(2.0D))
+      JsDouble.fromLiteral(0.0D) should not equal(JsInt.fromLiteral(0))
+    }
+
+    "be equal to hashCode double" in {
+      JsDouble.fromLiteral(0.0D).hashCode() should equal(JsDouble.fromLiteral(0.0F).hashCode())
+      JsDouble.fromLiteral(0.0D).hashCode() should equal(JsDouble.fromByteStringUnsafe(ByteString("0.0")).hashCode())
+      JsDouble.fromLiteral(0.0D).hashCode() should equal(JsDouble.fromStringUnsafe("0.0").hashCode())
     }
 
     "be identified as number" in {
@@ -663,14 +697,31 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "support pattern matching" in {
       JsInt.fromLiteral(1) match {
+        case JsInt(x) => x should equal(1)
         case x: JsInt => x.value should equal(1)
       }
       JsInt.fromByteStringUnsafe(ByteString("1")) match {
+        case JsInt(x) => x should equal(1)
         case x: JsInt => x.value should equal(1)
       }
       JsInt.fromStringUnsafe("1") match {
+        case JsInt(x) => x should equal(1)
         case x: JsInt => x.value should equal(1)
       }
+    }
+
+    "be equal to int" in {
+      JsInt.fromLiteral(0) should equal(JsInt.fromLiteral(0))
+      JsInt.fromLiteral(0) should equal(JsInt.fromByteStringUnsafe(ByteString("0")))
+      JsInt.fromLiteral(0) should equal(JsInt.fromStringUnsafe("0"))
+      JsInt.fromLiteral(0) should not equal(JsInt.fromLiteral(2))
+      JsInt.fromLiteral(0) should not equal(JsDouble.fromLiteral(0.0D))
+    }
+
+    "be equal to hashCode int" in {
+      JsInt.fromLiteral(0).hashCode() should equal(JsInt.fromLiteral(0).hashCode())
+      JsInt.fromLiteral(0).hashCode() should equal(JsInt.fromByteStringUnsafe(ByteString("0")).hashCode())
+      JsInt.fromLiteral(0).hashCode() should equal(JsInt.fromStringUnsafe("0").hashCode())
     }
 
     "be identified as number" in {
@@ -741,14 +792,31 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "support pattern matching" in {
       JsLong.fromLiteral(1L) match {
+        case JsLong(x) => x should equal(1L)
         case x: JsLong => x.value should equal(1L)
       }
       JsLong.fromByteStringUnsafe(ByteString("1")) match {
+        case JsLong(x) => x should equal(1L)
         case x: JsLong => x.value should equal(1L)
       }
       JsLong.fromStringUnsafe("1") match {
+        case JsLong(x) => x should equal(1L)
         case x: JsLong => x.value should equal(1L)
       }
+    }
+
+    "be equal to long" in {
+      JsLong.fromLiteral(0L) should equal(JsLong.fromLiteral(0L))
+      JsLong.fromLiteral(0L) should equal(JsLong.fromByteStringUnsafe(ByteString("0")))
+      JsLong.fromLiteral(0L) should equal(JsLong.fromStringUnsafe("0"))
+      JsLong.fromLiteral(0L) should not equal(JsLong.fromLiteral(2))
+      JsLong.fromLiteral(0) should not equal(JsDouble.fromLiteral(0.0D))
+    }
+
+    "be equal to hashCode long" in {
+      JsLong.fromLiteral(0).hashCode() should equal(JsLong.fromLiteral(0).hashCode())
+      JsLong.fromLiteral(0).hashCode() should equal(JsLong.fromByteStringUnsafe(ByteString("0")).hashCode())
+      JsLong.fromLiteral(0).hashCode() should equal(JsLong.fromStringUnsafe("0").hashCode())
     }
 
     "be identified as number" in {
@@ -797,14 +865,31 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "support pattern matching" in {
       JsBigDecimal.fromLiteral(BigDecimal("2e128")) match {
+        case JsBigDecimal(x) => x should equal(BigDecimal("2e128"))
         case x: JsBigDecimal => x.value should equal(BigDecimal("2e128"))
       }
       JsBigDecimal.fromByteStringUnsafe(ByteString("2e128")) match {
+        case JsBigDecimal(x) => x should equal(BigDecimal("2e128"))
         case x: JsBigDecimal => x.value should equal(BigDecimal("2e128"))
       }
       JsBigDecimal.fromStringUnsafe("2e128") match {
+        case JsBigDecimal(x) => x should equal(BigDecimal("2e128"))
         case x: JsBigDecimal => x.value should equal(BigDecimal("2e128"))
       }
+    }
+
+    "be equal to big decimal" in {
+      JsBigDecimal.fromLiteral(BigDecimal(0)) should equal(JsBigDecimal.fromLiteral(BigDecimal(0)))
+      JsBigDecimal.fromLiteral(BigDecimal(0)) should equal(JsBigDecimal.fromByteStringUnsafe(ByteString("0")))
+      JsBigDecimal.fromLiteral(BigDecimal(0)) should equal(JsBigDecimal.fromStringUnsafe("0"))
+      JsBigDecimal.fromLiteral(BigDecimal(0)) should not equal(JsBigDecimal.fromLiteral(BigDecimal(2)))
+      JsBigDecimal.fromLiteral(BigDecimal(0)) should not equal(JsInt.fromLiteral(0))
+    }
+
+    "be equal to hashCode big decimal" in {
+      JsBigDecimal.fromLiteral(0).hashCode() should equal(JsBigDecimal.fromLiteral(0).hashCode())
+      JsBigDecimal.fromLiteral(0).hashCode() should equal(JsBigDecimal.fromByteStringUnsafe(ByteString("0")).hashCode())
+      JsBigDecimal.fromLiteral(0).hashCode() should equal(JsBigDecimal.fromStringUnsafe("0").hashCode())
     }
 
     "be identified as big decimal" in {
@@ -822,11 +907,25 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "support pattern matching" in {
       JsString.fromLiteral("test") match {
+        case JsString(x) => x should equal("test")
         case x: JsString => x.value should equal("test")
       }
       JsString.fromByteStringUnsafe(ByteString("test")) match {
+        case JsString(x) => x should equal("test")
         case x: JsString => x.value should equal("test")
       }
+    }
+
+    "be equal to string" in {
+      JsString.fromLiteral("foobar") should equal(JsString.fromLiteral("foobar"))
+      JsString.fromLiteral("foobar") should equal(JsString.fromByteStringUnsafe(ByteString("foobar")))
+      JsString.fromLiteral("foobar") should not equal(JsString.fromLiteral("foo"))
+      JsString.fromLiteral("foobar") should not equal(JsInt.fromLiteral(0))
+    }
+
+    "be equal to hashCode string" in {
+      JsString.fromLiteral("foobar").hashCode() should equal(JsString.fromLiteral("foobar").hashCode())
+      JsString.fromLiteral("foobar").hashCode() should equal(JsString.fromByteStringUnsafe(ByteString("foobar")).hashCode())
     }
 
     "be identified as string" in {
@@ -843,11 +942,25 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "support pattern matching" in {
       JsBytes.fromLiteral(ByteString("test")) match {
+        case JsBytes(x) => x should equal(ByteString("test"))
         case x: JsBytes => x.value should equal(ByteString("test"))
       }
       JsBytes.fromStringUnsafe("test") match {
+        case JsBytes(x) => x should equal(ByteString("test"))
         case x: JsBytes => x.value should equal(ByteString("test"))
       }
+    }
+
+    "be equal to bytes" in {
+      JsBytes.fromLiteral(ByteString("foobar")) should equal(JsBytes.fromLiteral(ByteString("foobar")))
+      JsBytes.fromLiteral(ByteString("foobar")) should equal(JsBytes.fromStringUnsafe("foobar"))
+      JsBytes.fromLiteral(ByteString("foobar")) should not equal(JsBytes.fromLiteral(ByteString("foo")))
+      JsBytes.fromLiteral(ByteString("foobar")) should not equal(JsInt.fromLiteral(0))
+    }
+
+    "be equal to hashCode bytes" in {
+      JsBytes.fromLiteral(ByteString("foobar")).hashCode() should equal(JsBytes.fromLiteral(ByteString("foobar")).hashCode())
+      JsBytes.fromLiteral(ByteString("foobar")).hashCode() should equal(JsBytes.fromStringUnsafe("foobar").hashCode())
     }
 
     "be identified as bytes" in {
@@ -1323,6 +1436,27 @@ class JsonSpec extends WordSpecLike with Matchers {
       result should equal(Json.obj(
         "foobar" -> "test"
       ))
+    }
+
+    "provide a way to build json object" in {
+      val builder = Json.objectBuilder()
+      builder += "foobar" -> 1
+      builder ++= Seq(
+        "foobar" -> 1,
+        "foobar2" -> 2
+      )
+      if (builder.knownSize >= 0) {
+        builder.clear()
+      }
+    }
+
+    "provide a way to build json array" in {
+      val builder = Json.arrayBuilder()
+      builder += "foobar"
+      builder ++= Seq(1, 2)
+      if (builder.knownSize >= 0) {
+        builder.clear()
+      }
     }
   }
 
