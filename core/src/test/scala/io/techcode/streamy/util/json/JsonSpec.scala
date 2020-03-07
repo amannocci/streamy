@@ -464,6 +464,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
   "Json float" should {
     "stringify float correctly" in {
+      JsFloat(1.0F).toString should equal("1.0")
       JsFloat.fromLiteral(1.0F).toString should equal("1.0")
       JsFloat.fromByteStringUnsafe(ByteString("1.0")).toString should equal("1.0")
       JsFloat.fromStringUnsafe("1.0").toString should equal("1.0")
@@ -554,6 +555,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
   "Json double" should {
     "stringify double correctly" in {
+      JsDouble(1.0D).toString should equal("1.0")
       JsDouble.fromLiteral(1.0D).toString should equal("1.0")
       JsDouble.fromByteStringUnsafe(ByteString("1.0")).toString should equal("1.0")
       JsDouble.fromStringUnsafe("1.0").toString should equal("1.0")
@@ -644,6 +646,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
   "Json int" should {
     "stringify int correctly" in {
+      JsInt(0).toString should equal("0")
       JsInt.fromLiteral(0).toString should equal("0")
       JsInt.fromByteStringUnsafe(ByteString("0")).toString should equal("0")
       JsInt.fromStringUnsafe("0").toString should equal("0")
@@ -739,6 +742,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
   "Json long" should {
     "stringify long integers correctly" in {
+      JsLong(1330950829160L).toString should equal("1330950829160")
       JsLong.fromLiteral(1330950829160L).toString should equal("1330950829160")
       JsLong.fromByteStringUnsafe(ByteString("1330950829160")).toString should equal("1330950829160")
       JsLong.fromStringUnsafe("1330950829160").toString should equal("1330950829160")
@@ -834,6 +838,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
   "Json big decimal" should {
     "return correct size for big decimal" in {
+      JsBigDecimal(BigDecimal("2e128")).sizeHint should equal(6)
       JsBigDecimal.fromLiteral(BigDecimal("2e128")).sizeHint should equal(6)
       JsBigDecimal.fromByteStringUnsafe(ByteString("2e128")).sizeHint should equal(5)
       JsBigDecimal.fromStringUnsafe("2e128").sizeHint should equal(5)
@@ -849,6 +854,12 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsBigDecimal.fromLiteral(BigDecimal(6.0D)).toLong should equal(6L)
       JsBigDecimal.fromByteStringUnsafe(ByteString("6.0")).toLong should equal(6L)
       JsBigDecimal.fromStringUnsafe("6.0").toLong should equal(6L)
+    }
+
+    "return float conversion for big decimal" in {
+      JsBigDecimal.fromLiteral(BigDecimal(6.0D)).toFloat should equal(6.0D)
+      JsBigDecimal.fromByteStringUnsafe(ByteString("6.0")).toFloat should equal(6.0D)
+      JsBigDecimal.fromStringUnsafe("6.0").toFloat should equal(6.0D)
     }
 
     "return double conversion for big decimal" in {
@@ -901,6 +912,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
   "Json string" should {
     "return correct size for string" in {
+      JsString("test").sizeHint should equal(6) // "test"
       JsString.fromLiteral("test").sizeHint should equal(6) // "test"
       JsString.fromByteStringUnsafe(ByteString("test")).sizeHint should equal(6) // "test"
     }
@@ -936,6 +948,7 @@ class JsonSpec extends WordSpecLike with Matchers {
 
   "Json bytes" should {
     "stringify bytestring correctly" in {
+      JsBytes(ByteString("test")).toString should equal("\"dGVzdA==\"")
       JsBytes.fromLiteral(ByteString("test")).toString should equal("\"dGVzdA==\"")
       JsBytes.fromStringUnsafe("test").toString should equal("\"dGVzdA==\"")
     }
@@ -1439,6 +1452,12 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "provide a way to build json object" in {
+      assertThrows[NotImplementedError] {
+        Json.obj().addOne("foobar" -> 1)
+      }
+      assertThrows[NotImplementedError] {
+        Json.obj().clear()
+      }
       val builder = Json.objectBuilder()
       builder += "foobar" -> 1
       builder ++= Seq(
@@ -1451,6 +1470,12 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "provide a way to build json array" in {
+      assertThrows[NotImplementedError] {
+        Json.arr().addOne("foobar")
+      }
+      assertThrows[NotImplementedError] {
+        Json.arr().clear()
+      }
       val builder = Json.arrayBuilder()
       builder += "foobar"
       builder ++= Seq(1, 2)
