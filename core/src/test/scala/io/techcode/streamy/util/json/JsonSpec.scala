@@ -510,6 +510,18 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsFloat.fromStringUnsafe("2.0").sizeHint should equal(3)
     }
 
+    "support pattern matching" in {
+      JsFloat.fromLiteral(2.0F) match {
+        case x: JsFloat => x.value should equal(2.0F)
+      }
+      JsFloat.fromByteStringUnsafe(ByteString("2.0")) match {
+        case x: JsFloat => x.value should equal(2.0F)
+      }
+      JsFloat.fromStringUnsafe("2.0") match {
+        case x: JsFloat => x.value should equal(2.0F)
+      }
+    }
+
     "be identified as number" in {
       JsFloat.fromLiteral(0F).isNumber should equal(true)
       JsFloat.fromByteStringUnsafe(ByteString("0")).isNumber should equal(true)
@@ -569,6 +581,18 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsDouble.fromLiteral(2.0D).toBigDecimal should equal(BigDecimal(2.0D))
       JsDouble.fromByteStringUnsafe(ByteString("2.0")).toBigDecimal should equal(BigDecimal(2.0D))
       JsDouble.fromStringUnsafe("2.0").toBigDecimal should equal(BigDecimal(2.0D))
+    }
+
+    "support pattern matching" in {
+      JsDouble.fromLiteral(2.0D) match {
+        case x: JsDouble => x.value should equal(2.0D)
+      }
+      JsDouble.fromByteStringUnsafe(ByteString("2.0")) match {
+        case x: JsDouble => x.value should equal(2.0D)
+      }
+      JsDouble.fromStringUnsafe("2.0") match {
+        case x: JsDouble => x.value should equal(2.0F)
+      }
     }
 
     "be identified as number" in {
@@ -637,6 +661,18 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsInt.fromStringUnsafe("1").toBigDecimal should equal(BigDecimal(1))
     }
 
+    "support pattern matching" in {
+      JsInt.fromLiteral(1) match {
+        case x: JsInt => x.value should equal(1)
+      }
+      JsInt.fromByteStringUnsafe(ByteString("1")) match {
+        case x: JsInt => x.value should equal(1)
+      }
+      JsInt.fromStringUnsafe("1") match {
+        case x: JsInt => x.value should equal(1)
+      }
+    }
+
     "be identified as number" in {
       JsInt.fromLiteral(0).isNumber should equal(true)
       JsInt.fromByteStringUnsafe(ByteString("0")).isNumber should equal(true)
@@ -703,6 +739,18 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsLong.fromStringUnsafe("1").toBigDecimal should equal(BigDecimal(1))
     }
 
+    "support pattern matching" in {
+      JsLong.fromLiteral(1L) match {
+        case x: JsLong => x.value should equal(1L)
+      }
+      JsLong.fromByteStringUnsafe(ByteString("1")) match {
+        case x: JsLong => x.value should equal(1L)
+      }
+      JsLong.fromStringUnsafe("1") match {
+        case x: JsLong => x.value should equal(1L)
+      }
+    }
+
     "be identified as number" in {
       JsLong.fromLiteral(0).isNumber should equal(true)
       JsLong.fromByteStringUnsafe(ByteString("0")).isNumber should equal(true)
@@ -747,6 +795,18 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsBigDecimal.fromStringUnsafe("2e128").toBigDecimal should equal(BigDecimal("2e128"))
     }
 
+    "support pattern matching" in {
+      JsBigDecimal.fromLiteral(BigDecimal("2e128")) match {
+        case x: JsBigDecimal => x.value should equal(BigDecimal("2e128"))
+      }
+      JsBigDecimal.fromByteStringUnsafe(ByteString("2e128")) match {
+        case x: JsBigDecimal => x.value should equal(BigDecimal("2e128"))
+      }
+      JsBigDecimal.fromStringUnsafe("2e128") match {
+        case x: JsBigDecimal => x.value should equal(BigDecimal("2e128"))
+      }
+    }
+
     "be identified as big decimal" in {
       JsBigDecimal.fromLiteral(BigDecimal(0F)).isBigDecimal should equal(true)
       JsBigDecimal.fromByteStringUnsafe(ByteString("0")).isBigDecimal should equal(true)
@@ -760,6 +820,15 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsString.fromByteStringUnsafe(ByteString("test")).sizeHint should equal(6) // "test"
     }
 
+    "support pattern matching" in {
+      JsString.fromLiteral("test") match {
+        case x: JsString => x.value should equal("test")
+      }
+      JsString.fromByteStringUnsafe(ByteString("test")) match {
+        case x: JsString => x.value should equal("test")
+      }
+    }
+
     "be identified as string" in {
       JsString.fromLiteral("").isString should equal(true)
       JsString.fromByteStringUnsafe(ByteString("")).isString should equal(true)
@@ -770,6 +839,15 @@ class JsonSpec extends WordSpecLike with Matchers {
     "stringify bytestring correctly" in {
       JsBytes.fromLiteral(ByteString("test")).toString should equal("\"dGVzdA==\"")
       JsBytes.fromStringUnsafe("test").toString should equal("\"dGVzdA==\"")
+    }
+
+    "support pattern matching" in {
+      JsBytes.fromLiteral(ByteString("test")) match {
+        case x: JsBytes => x.value should equal(ByteString("test"))
+      }
+      JsBytes.fromStringUnsafe("test") match {
+        case x: JsBytes => x.value should equal(ByteString("test"))
+      }
     }
 
     "be identified as bytes" in {
