@@ -27,6 +27,15 @@ import akka.actor.{DeadLetter, PoisonPill, Props}
 import akka.testkit.TestProbe
 import io.techcode.streamy.StreamyTestSystem
 
+// Simulate supervision restart
+private[this] class Impl extends DeadLetterMonitor {
+
+  override def receive: Receive = {
+    case _ => throw new IllegalStateException()
+  }
+
+}
+
 /**
   * Dead letter monitoring spec.
   */
@@ -47,6 +56,15 @@ class DeadLetterMonitorSpec extends StreamyTestSystem {
       probe watch deadLetterMonitor
       system.eventStream.subscribe(deadLetterMonitor, classOf[DeadLetter])
       system.eventStream.publish(DeadLetter("Test", deadLetterMonitor, deadLetterMonitor))
+      deadLetterMonitor ! PoisonPill
+      probe.expectTerminated(deadLetterMonitor)
+    }
+
+    "handle correctly restart" in {
+      val deadLetterMonitor = system.actorOf(Props[Impl])
+      val probe = TestProbe()
+      probe watch deadLetterMonitor
+      deadLetterMonitor ! "fatal"
       deadLetterMonitor ! PoisonPill
       probe.expectTerminated(deadLetterMonitor)
     }
