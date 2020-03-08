@@ -23,10 +23,7 @@
  */
 package io.techcode.streamy.util.json
 
-import java.nio.charset.StandardCharsets
-
 import akka.util.ByteString
-import com.google.common.primitives.Longs
 import io.techcode.streamy.util.lang.CharBuilder
 import io.techcode.streamy.util.parser._
 
@@ -39,6 +36,9 @@ object JsonParser {
 
   // Default values
   private val DefaultMaxDepth: Int = 1000
+
+  // Special stuff
+  private[json] val IntPivot = Int.MinValue.toString.length - 2
 
   // Default configuration
   val DefaultConfig: Config = Config(DefaultMaxDepth)
@@ -167,7 +167,6 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
       advance()
     }
   }
-
 
   // https://tools.ietf.org/html/rfc4627#section-2.3
   protected def `array`(remainingNesting: Int): Boolean = {
@@ -299,22 +298,16 @@ private class ByteStringJsonParser(conf: JsonParser.Config) extends ByteStringPa
         optional(hookIsInt(`frac`(), state = false)) &&
         optional(hookIsInt(`exp`(), state = false))
     } { value =>
-      val rawVal = value.decodeString(StandardCharsets.US_ASCII)
       if (isInt) {
-        val value = Longs.tryParse(rawVal)
-        if (value == null) {
-          false
-        } else if (value.longValue() != value.intValue()) {
-          jsValue = JsLong(value.longValue())
-          true
+        if (value.length <= JsonParser.IntPivot) {
+          jsValue = JsInt.fromByteStringUnsafe(value)
         } else {
-          jsValue = JsInt(value.intValue())
-          true
+          jsValue = JsLong.fromByteStringUnsafe(value)
         }
       } else {
-        jsValue = JsBigDecimal(BigDecimal(rawVal))
-        true
+        jsValue = JsBigDecimal.fromByteStringUnsafe(value)
       }
+      true
     }
   }
 
@@ -325,7 +318,7 @@ private class ByteStringJsonParser(conf: JsonParser.Config) extends ByteStringPa
       utf8 {
         zeroOrMore(`char`())
       }
-      jsValue = JsString(builder.toString)
+      jsValue = JsString.fromLiteral(builder.toString)
       true
     } &&
       ch('"')
@@ -358,22 +351,16 @@ private class StringJsonParser(conf: JsonParser.Config) extends StringParser[Jso
         optional(hookIsInt(`frac`(), state = false)) &&
         optional(hookIsInt(`exp`(), state = false))
     } { value =>
-      val rawVal = value
       if (isInt) {
-        val value = Longs.tryParse(rawVal)
-        if (value == null) {
-          false
-        } else if (value.longValue() != value.intValue()) {
-          jsValue = JsLong(value.longValue())
-          true
+        if (value.length <= JsonParser.IntPivot) {
+          jsValue = JsInt.fromStringUnsafe(value)
         } else {
-          jsValue = JsInt(value.intValue())
-          true
+          jsValue = JsLong.fromStringUnsafe(value)
         }
       } else {
-        jsValue = JsBigDecimal(BigDecimal(rawVal))
-        true
+        jsValue = JsBigDecimal.fromStringUnsafe(value)
       }
+      true
     }
   }
 
@@ -382,7 +369,7 @@ private class StringJsonParser(conf: JsonParser.Config) extends StringParser[Jso
     ch('"') && {
       builder.reset()
       zeroOrMore(`char`())
-      jsValue = JsString(builder.toString)
+      jsValue = JsString.fromLiteral(builder.toString)
       true
     } &&
       ch('"')

@@ -23,12 +23,13 @@
  */
 package io.techcode.streamy.util.json
 
+import io.techcode.streamy.util.parser.ParseException
 import org.scalatest._
 
 /**
   * JsonPointer spec.
   */
-class JsPointerSpec extends WordSpecLike with Matchers {
+class JsonPointerSpec extends WordSpecLike with Matchers {
 
   "JsonPointer" should {
     "return same json value for root pointer" in {
@@ -38,12 +39,12 @@ class JsPointerSpec extends WordSpecLike with Matchers {
 
     "return a value if possible when evaluate on json object" in {
       val input = Json.obj("test" -> "foobar")
-      input.evaluate(Root / "test") should equal(JsString("foobar"))
+      input.evaluate(Root / "test") should equal(JsString.fromLiteral("foobar"))
     }
 
     "return a value if possible when evaluate on deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "foobar")))
-      input.evaluate(Root / "test" / 0 / "test") should equal(JsString("foobar"))
+      input.evaluate(Root / "test" / 0 / "test") should equal(JsString.fromLiteral("foobar"))
     }
 
     "return a none when evaluate on json object is failed" in {
@@ -58,13 +59,13 @@ class JsPointerSpec extends WordSpecLike with Matchers {
 
     "return a value if possible when evaluate on json array" in {
       val input = Json.arr("test", "foobar")
-      input.evaluate(Root / 0) should equal(JsString("test"))
-      input.evaluate(Root / 1) should equal(JsString("foobar"))
+      input.evaluate(Root / 0) should equal(JsString.fromLiteral("test"))
+      input.evaluate(Root / 1) should equal(JsString.fromLiteral("foobar"))
     }
 
     "return a value if possible when evaluate on deep json array" in {
       val input = Json.obj("test" -> Json.obj("test" -> Json.arr("foobar")))
-      input.evaluate(Root / "test" / "test" / 0) should equal(JsString("foobar"))
+      input.evaluate(Root / "test" / "test" / 0) should equal(JsString.fromLiteral("foobar"))
     }
 
     "return a none when evaluate on json array is failed" in {
@@ -78,7 +79,12 @@ class JsPointerSpec extends WordSpecLike with Matchers {
     }
 
     "return a string representation" in {
-      (Root / "failed").toString should equal("/failed")
+      (Root / "failed" / 0).toString should equal("/failed/0")
+    }
+
+    "return if this is a root json pointer" in {
+      Root.isRoot should equal(true)
+      (Root / "foobar").isRoot should equal(false)
     }
 
     "equal to the same root json pointer" in {
@@ -90,7 +96,7 @@ class JsPointerSpec extends WordSpecLike with Matchers {
     }
 
     "not equal to the same json pointer" in {
-      Root / "foobar" should not equal("foobar")
+      Root / "foobar" should not equal(Root / "foo" / "bar")
     }
 
     "be iterable" in {
@@ -98,7 +104,7 @@ class JsPointerSpec extends WordSpecLike with Matchers {
     }
   }
 
-  "JsonObjectAccessor" should {
+  "JsObjectAccessor" should {
     "be equal to the same accessor" in {
       JsObjectAccessor("foobar") should equal(JsObjectAccessor("foobar"))
     }
@@ -112,7 +118,7 @@ class JsPointerSpec extends WordSpecLike with Matchers {
     }
   }
 
-  "JsonArrayAccessor" should {
+  "JsArrayAccessor" should {
     "be equal to the same accessor" in {
       JsArrayAccessor(0) should equal(JsArrayAccessor(0))
     }
@@ -128,49 +134,46 @@ class JsPointerSpec extends WordSpecLike with Matchers {
 
   "JsonPointer parser" should {
     "parse correctly a root pointer" in {
-      val parser = new JsonPointerParser()
-      parser.parse("/") should equal(Right(Root))
+      JsonPointerParser.parseUnsafe("/") should equal(Root)
     }
 
     "parse correctly a simple key pointer" in {
-      val parser = new JsonPointerParser()
-      parser.parse("/key") should equal(Right(Root / "key"))
+      JsonPointerParser.parseUnsafe("/key") should equal(Root / "key")
     }
 
     "parse correctly a simple key pointer with escaped character" in {
-      val parser = new JsonPointerParser()
-      parser.parse("/key~0~1") should equal(Right(Root / "key~/"))
+      JsonPointerParser.parseUnsafe("/key~0~1") should equal(Root / "key~/")
     }
 
     "parse correctly a simple indice pointer with character" in {
-      val parser = new JsonPointerParser()
-      parser.parse("/0") should equal(Right(Root / 0))
+      JsonPointerParser.parseUnsafe("/0") should equal(Root / 0)
     }
 
     "parse correctly a simple indice pointer with escaped character" in {
-      val parser = new JsonPointerParser()
-      parser.parse("/0/~0~1") should equal(Right(Root / 0 / "~/"))
+      JsonPointerParser.parseUnsafe("/0/~0~1") should equal(Root / 0 / "~/")
     }
 
     "parse correctly a complex pointer" in {
-      val parser = new JsonPointerParser()
-      parser.parse("/0/key/1") should equal(Right(Root / 0 / "key" / 1))
+      JsonPointerParser.parseUnsafe("/0/key/1") should equal(Root / 0 / "key" / 1)
     }
 
     "parse correctly a complex pointer with escaped character" in {
-      val parser = new JsonPointerParser()
-      parser.parse("/0/key/1/~0~1") should equal(Right(Root / 0 / "key" / 1 / "~/"))
+      JsonPointerParser.parseUnsafe("/0/key/1/~0~1") should equal(Root / 0 / "key" / 1 / "~/")
     }
 
     "parse correctly a multiples pointers" in {
-      val parser = new JsonPointerParser()
-      parser.parse("/key") should equal(Right(Root / "key"))
-      parser.parse("/foobar") should equal(Right(Root / "foobar"))
+      JsonPointerParser.parseUnsafe("/key") should equal(Root / "key")
+      JsonPointerParser.parseUnsafe("/foobar") should equal(Root / "foobar")
     }
 
     "fail correctly for an invalid json pointer" in {
-      val parser = new JsonPointerParser()
-      parser.parse("key").isLeft should equal(true)
+      JsonPointerParser.parse("key").isLeft should equal(true)
+    }
+
+    "fail correctly for an unsafe invalid json pointer" in {
+      assertThrows[ParseException] {
+        JsonPointerParser.parseUnsafe("key")
+      }
     }
   }
 

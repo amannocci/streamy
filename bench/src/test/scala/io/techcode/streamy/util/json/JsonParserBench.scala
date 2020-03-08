@@ -52,22 +52,16 @@ object JsonParserBench {
   object Sample {
 
     val JsonObjImpl: JsObject = Json.obj(
-      "int" -> Int.MaxValue,
-      "long" -> Long.MaxValue,
-      "float" -> Float.MaxValue,
-      "double" -> Double.MaxValue,
+      "int" -> 0,
+      "long" -> 0L,
+      "float" -> 0F,
+      "double" -> 0D,
       "string" -> "string"
     )
 
-    val StringImpl: String = Json.obj(
-      "int" -> Int.MaxValue,
-      "long" -> Long.MaxValue,
-      "float" -> Float.MaxValue,
-      "double" -> Double.MaxValue,
-      "string" -> "string"
-    ).toString
+    val StringImpl: String = JsonObjImpl.toString
 
-    val ByteStringImpl: ByteString = ByteString(StringImpl)
+    val ByteStringImpl: ByteString = ByteString(StringImpl).compact
 
     val BytesImpl: Array[Byte] = ByteStringImpl.toArray[Byte]
 

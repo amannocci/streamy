@@ -48,56 +48,56 @@ class JsonParserSpec extends WordSpecLike with Matchers {
     }
 
     "parse an json int zero correctly" in {
-      Json.parseByteStringUnsafe(ByteString("0")) should equal(JsInt(0))
+      Json.parseByteStringUnsafe(ByteString("0")) should equal(JsInt.fromLiteral(0))
     }
 
     "parse an json int correctly" in {
-      Json.parseByteStringUnsafe(ByteString(Int.MinValue.toString)) should equal(JsInt(Int.MinValue))
+      Json.parseByteStringUnsafe(ByteString("-12345678")) should equal(JsInt.fromLiteral(-12345678))
     }
 
     "parse an json long correctly" in {
-      Json.parseByteStringUnsafe(ByteString(Long.MinValue.toString)) should equal(JsLong(Long.MinValue))
+      Json.parseByteStringUnsafe(ByteString(Long.MinValue.toString)) should equal(JsLong.fromLiteral(Long.MinValue))
     }
 
     "parse an json float correctly" in {
-      Json.parseByteStringUnsafe(ByteString(Float.MinValue.toString)) should equal(JsBigDecimal(BigDecimal(Float.MinValue.toString)))
+      Json.parseByteStringUnsafe(ByteString(Float.MinValue.toString)) should equal(JsBigDecimal.fromLiteral(BigDecimal(Float.MinValue.toString)))
     }
 
     "parse an json float 1.23 correctly" in {
-      Json.parseByteStringUnsafe(ByteString("1.23")) should equal(JsBigDecimal(BigDecimal("1.23")))
+      Json.parseByteStringUnsafe(ByteString("1.23")) should equal(JsBigDecimal.fromLiteral(BigDecimal("1.23")))
     }
 
     "parse an json double correctly" in {
-      Json.parseByteStringUnsafe(ByteString(Double.MinValue.toString)) should equal(JsBigDecimal(BigDecimal(Double.MinValue.toString)))
+      Json.parseByteStringUnsafe(ByteString(Double.MinValue.toString)) should equal(JsBigDecimal.fromLiteral(BigDecimal(Double.MinValue.toString)))
     }
 
     "parse an json big decimal correctly" in {
-      Json.parseByteStringUnsafe(ByteString("1e20")) should equal(JsBigDecimal(BigDecimal("1e20")))
+      Json.parseByteStringUnsafe(ByteString("1e20")) should equal(JsBigDecimal.fromLiteral(BigDecimal("1e20")))
     }
 
     "parse an json big decimal -1E10 correctly" in {
-      Json.parseByteStringUnsafe(ByteString("-1E10")) should equal(JsBigDecimal(BigDecimal("-1E10")))
+      Json.parseByteStringUnsafe(ByteString("-1E10")) should equal(JsBigDecimal.fromLiteral(BigDecimal("-1E10")))
     }
 
     "parse an json big decimal 12.34e-10 correctly" in {
-      Json.parseByteStringUnsafe(ByteString("12.34e-10")) should equal(JsBigDecimal(BigDecimal("1.234E-9")))
+      Json.parseByteStringUnsafe(ByteString("12.34e-10")) should equal(JsBigDecimal.fromLiteral(BigDecimal("1.234E-9")))
     }
 
     "parse an json string correctly" in {
-      Json.parseByteStringUnsafe(ByteString(""""foobar"""")) should equal(JsString("foobar"))
+      Json.parseByteStringUnsafe(ByteString(""""foobar"""")) should equal(JsString.fromLiteral("foobar"))
     }
 
     "parse an json string from encoded bytes correctly" in {
-      Json.parseByteStringUnsafe(ByteString("\"4-byte UTF-8 chars like \uD801\uDC37\"")) should equal(JsString("4-byte UTF-8 chars like \uD801\uDC37"))
+      Json.parseByteStringUnsafe(ByteString("\"4-byte UTF-8 chars like \uD801\uDC37\"")) should equal(JsString.fromLiteral("4-byte UTF-8 chars like \uD801\uDC37"))
     }
 
     "parse an json string escape correctly" in {
-      Json.parseByteStringUnsafe(ByteString(""""\"\\/\b\f\n\r\t"""")) should equal(JsString("\"\\/\b\f\n\r\t"))
-      Json.parseByteStringUnsafe(ByteString("\"L\\" + "u00e4nder\"")) should equal(JsString("Länder"))
+      Json.parseByteStringUnsafe(ByteString(""""\"\\/\b\f\n\r\t"""")) should equal(JsString.fromLiteral("\"\\/\b\f\n\r\t"))
+      Json.parseByteStringUnsafe(ByteString("\"L\\" + "u00e4nder\"")) should equal(JsString.fromLiteral("Länder"))
     }
 
     "parse an json string of the slash (SOLIDUS) character correctly" in {
-      Json.parseByteStringUnsafe(ByteString("\"" + "/\\/\\u002f" + "\"")) should equal(JsString("///"))
+      Json.parseByteStringUnsafe(ByteString("\"" + "/\\/\\u002f" + "\"")) should equal(JsString.fromLiteral("///"))
     }
 
     "parse a json object correctly" in {
@@ -115,7 +115,7 @@ class JsonParserSpec extends WordSpecLike with Matchers {
         """[null, 1.23, {"key":true }]"""
       )) should equal(Json.arr(
         JsNull,
-        JsBigDecimal(BigDecimal("1.23")),
+        JsBigDecimal.fromLiteral(BigDecimal("1.23")),
         Json.obj("key" -> JsTrue)
       ))
     }
@@ -131,7 +131,7 @@ class JsonParserSpec extends WordSpecLike with Matchers {
     }
 
     "parse directly from UTF-8 encoded bytes when string starts with a multi-byte character" in {
-      Json.parseByteStringUnsafe(ByteString(""""£0.99"""")) should equal(JsString("£0.99"))
+      Json.parseByteStringUnsafe(ByteString(""""£0.99"""")) should equal(JsString.fromLiteral("£0.99"))
     }
 
     "parse a json object with whitespace correctly" in {

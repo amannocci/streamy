@@ -59,14 +59,14 @@ class CharBuilderSpec extends StreamyTestSystem {
 
     "be able to append an int" in {
       val builder = new CharBuilder
-      builder.append(-10).append(50)
-      builder.toString should equal("-1050")
+      builder.append(-10).append(50).append(Int.MinValue)
+      builder.toString should equal("-1050-2147483648")
     }
 
     "be able to append a long" in {
       val builder = new CharBuilder
-      builder.append(9223372036854775800L)
-      builder.toString should equal("9223372036854775800")
+      builder.append(9223372036854775800L).append(Long.MinValue)
+      builder.toString should equal("9223372036854775800-9223372036854775808")
     }
 
     "be able to append a float" in {

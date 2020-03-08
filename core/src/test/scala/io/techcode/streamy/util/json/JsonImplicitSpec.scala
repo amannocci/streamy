@@ -50,31 +50,31 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
     }
 
     "provide a shortcut to convert string in json" in {
-      stringToJson("""{"test":"test"}""") should equal(JsString("""{"test":"test"}"""))
+      stringToJson("""{"test":"test"}""") should equal(JsString.fromLiteral("""{"test":"test"}"""))
     }
 
     "provide a shortcut to convert float in json" in {
-      floatToJson(2.0F) should equal(JsFloat(2.0F))
+      floatToJson(2.0F) should equal(JsFloat.fromLiteral(2.0F))
     }
 
     "provide a shortcut to convert double in json" in {
-      doubleToJson(2.0D) should equal(JsDouble(2.0D))
+      doubleToJson(2.0D) should equal(JsDouble.fromLiteral(2.0D))
     }
 
     "provide a shortcut to convert byte in json" in {
-      byteToJson(2) should equal(JsInt(2))
+      byteToJson(2) should equal(JsInt.fromLiteral(2))
     }
 
     "provide a shortcut to convert short in json" in {
-      shortToJson(2) should equal(JsInt(2))
+      shortToJson(2) should equal(JsInt.fromLiteral(2))
     }
 
     "provide a shortcut to convert int in json" in {
-      intToJson(2) should equal(JsInt(2))
+      intToJson(2) should equal(JsInt.fromLiteral(2))
     }
 
     "provide a shortcut to convert long in json" in {
-      longToJson(2L) should equal(JsLong(2L))
+      longToJson(2L) should equal(JsLong.fromLiteral(2L))
     }
 
     "provide a shortcut to convert boolean in json" in {
@@ -82,11 +82,11 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
     }
 
     "provide a shortcut to convert byte string in json" in {
-      byteStringToJson(ByteString.empty) should equal(JsBytes(ByteString.empty))
+      byteStringToJson(ByteString.empty) should equal(JsBytes.fromLiteral(ByteString.empty))
     }
 
     "provide a shortcut to convert big decimal in json" in {
-      bigDecimalToJson(BigDecimal.valueOf(0)) should equal(JsBigDecimal(BigDecimal.valueOf(0)))
+      bigDecimalToJson(BigDecimal.valueOf(0)) should equal(JsBigDecimal.fromLiteral(BigDecimal.valueOf(0)))
     }
   }
 
