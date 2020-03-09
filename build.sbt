@@ -167,6 +167,20 @@ lazy val `plugin-json` = project
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
 
+lazy val `plugin-kafka` = project
+  .in(file("plugin-kafka"))
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(
+    Dependencies.akkaStreamKafka
+  )
+  .settings(Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
+
 lazy val `plugin-metric` = project
   .in(file("plugin-metric"))
   .settings(
@@ -274,6 +288,7 @@ lazy val root = project
     `plugin-fingerprint`,
     `plugin-graphite`,
     `plugin-json`,
+    `plugin-kafka`,
     `plugin-metric`,
     `plugin-protobuf`,
     `plugin-riemann`,
