@@ -28,11 +28,12 @@ import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.kafka.scaladsl.{Committer, Consumer}
 import akka.kafka.{CommitterSettings, ConsumerMessage, ConsumerSettings, Subscriptions}
 import akka.stream.Materializer
+import akka.stream.contrib.PassThroughFlow
 import akka.stream.scaladsl.{Flow, Keep}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
-import io.techcode.streamy.component.PassThroughFlow
-import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.json._
+import io.techcode.streamy.util.{Binder, NoneBinder}
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
 
@@ -46,8 +47,26 @@ object KafkaSource {
     handler: Flow[Json, Json, NotUsed],
     bootstrapServers: String,
     groupId: String,
-    autoOffsetReset: String = "earliest",
-    topics: Set[String]
+    autoOffsetReset: String = "latest",
+    topics: Set[String] = Set.empty,
+    topicPattern: String = "",
+    binding: Binding = Binding()
+  ) {
+    def validate(): Unit = {
+      if (topics.isEmpty && topicPattern.isEmpty) {
+        throw new IllegalArgumentException()
+      }
+    }
+  }
+
+  // Component binding
+  case class Binding(
+    key: Binder = NoneBinder,
+    offset: Binder = NoneBinder,
+    value: Binder = NoneBinder,
+    partition: Binder = NoneBinder,
+    topic: Binder = NoneBinder,
+    timestamp: Binder = NoneBinder
   )
 
   /**
@@ -56,30 +75,40 @@ object KafkaSource {
     * @param config source configuration.
     */
   def atLeastOnce(config: Config)(implicit system: ActorSystem, materializer: Materializer): Consumer.DrainingControl[Done] = {
+    // Validate configuration
+    config.validate()
+
+    // Set consumer settings
     val consumerSettings = ConsumerSettings(system, new StringDeserializer, new ByteArrayDeserializer)
       .withBootstrapServers(config.bootstrapServers)
       .withGroupId(config.groupId)
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, config.autoOffsetReset)
 
+    // Set committer settings
     val committerSettings = CommitterSettings(system)
 
-    val process = Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]]]
-      .map { msg =>
-        val record = msg.record
-        Json.obj(
-          "key" -> record.key(),
-          "offset" -> record.offset(),
-          "value" -> ByteString.fromArrayUnsafe(record.value()),
-          "partition" -> record.partition(),
-          "topic" -> record.topic(),
-          "timestamp" -> record.timestamp()
-        )
-      }
+    // Default flow
+    val process: Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]], Json, NotUsed] =
+      Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]]]
+        .map { msg =>
+          val record = msg.record
+          val binding = config.binding
+          implicit val builder: JsObjectBuilder = Json.objectBuilder()
 
+          binding.key(record.key())
+          binding.offset(record.offset())
+          binding.value(ByteString.fromArrayUnsafe(record.value()))
+          binding.partition(record.partition())
+          binding.topic(record.topic())
+          binding.timestamp(record.timestamp())
+          builder.result()
+        }
+
+    // Run source
     Consumer
       .committableSource(consumerSettings, Subscriptions.topics(config.topics))
-      .via(PassThroughFlow(process.via(config.handler), Keep.right))
-      .map(msg => msg.committableOffset)
+      .via(PassThroughFlow(process.via(config.handler), Keep.left))
+      .map(_.committableOffset)
       .toMat(Committer.sink(committerSettings))(Keep.both)
       .mapMaterializedValue(DrainingControl.apply)
       .run()

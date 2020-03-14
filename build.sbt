@@ -88,6 +88,7 @@ lazy val core = project
   )
   .settings(
     Dependencies.akka,
+    Dependencies.akkaStreamContrib,
     Dependencies.logback,
     Dependencies.guava,
     Dependencies.config,
