@@ -23,7 +23,8 @@
  */
 package io.techcode.streamy.plugin
 
-import java.net.{URL, URLClassLoader}
+import java.net.URL
+import java.nio.file.Paths
 
 import akka.actor.{Actor, DiagnosticActorLogging, Props}
 import akka.pattern.gracefulStop
@@ -38,6 +39,7 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+import java.nio.file.{Path => JPath}
 import scala.reflect.io.{Directory, File, Path}
 
 /**
@@ -47,9 +49,6 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
 
   // Actor refs
   private var plugins: Map[String, PluginContainer] = Map.empty
-
-  // Plugin class loader
-  private var pluginClassLoader: ClassLoader = _
 
   // Configuration
   private val lifecycleConfig = ConfigSource.fromConfig(conf).at("lifecycle").loadOrThrow[LifecycleConfig]
@@ -72,9 +71,6 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
     // Check dependencies & prepare loading
     val toLoads = checkDependencies(pluginDescriptions)
 
-    // Load all valid jars
-    pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file.get).toArray, getClass.getClassLoader)
-
     // Waiting response list
     toLoads.foreach(pluginDescription => {
       try {
@@ -82,7 +78,7 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
         val pluginConf = mergeConfig(s"plugin.${pluginDescription.name}", pluginDescription)
 
         // Load main plugin class
-        val typed = Class.forName(pluginDescription.main.get, true, pluginClassLoader)
+        val typed = Class.forName(pluginDescription.main.get)
 
         // Plugin container
         val pluginData = PluginData(
@@ -157,7 +153,7 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
     */
   private def getPluginDescriptions: mutable.AnyRefMap[String, PluginDescription] = {
     // Retrieve all jar files
-    val jarFiles = Directory(folderConfig.plugin.toFile).files.filter((x: File) => Path.isExtensionJarOrZip(x.jfile))
+    val jarFiles = Directory(PluginManager.PluginsDirectory.toFile).files.filter((x: File) => Path.isExtensionJarOrZip(x.jfile))
 
     // Attempt to load all plugins
     val pluginDescriptions = mutable.AnyRefMap.empty[String, PluginDescription]
@@ -226,6 +222,10 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
   */
 object PluginManager {
 
+  // Empty plugin configuration
   val EmptyPluginConfig: Config = ConfigFactory.empty()
+
+  // Plugin directory path
+  val PluginsDirectory: JPath = Paths.get(".").resolve("plugin")
 
 }

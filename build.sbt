@@ -42,7 +42,9 @@ lazy val commonSettings = Seq(
   // Scala compiler options
   scalacOptions in(Compile, doc) ++= Seq(
     "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
-  )
+  ),
+
+  scriptClasspath := Seq("*", "../plugin/*")
 )
 
 lazy val bench = project
