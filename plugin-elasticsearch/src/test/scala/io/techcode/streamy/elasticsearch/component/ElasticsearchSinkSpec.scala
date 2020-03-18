@@ -57,25 +57,6 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
       }
     }
 
-    "send data using multiple workers" in {
-      val result = Source.single(Json.obj("foo" -> "bar"))
-        .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
-          Seq(HostConfig(
-            scheme = "http",
-            host = elasticHost,
-            port = elasticPort
-          )),
-          randomIndex(),
-          "index",
-          bulk = 1,
-          worker = 2
-        )))
-
-      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
-        x should equal(Done)
-      }
-    }
-
     "send data in bulk" in {
       val result = Source.fromIterator(() => Seq(Json.obj("foo" -> "bar"), Json.obj("foo" -> "bar")).toIterator)
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(

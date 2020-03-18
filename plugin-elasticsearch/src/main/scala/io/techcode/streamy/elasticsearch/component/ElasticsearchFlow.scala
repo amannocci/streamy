@@ -23,21 +23,20 @@
  */
 package io.techcode.streamy.elasticsearch.component
 
-import java.util
-
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
 import akka.stream._
-import akka.stream.scaladsl.{Balance, Flow, GraphDSL, Merge}
+import akka.stream.scaladsl.Flow
 import akka.stream.stage._
 import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.event._
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
+import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -55,24 +54,23 @@ object ElasticsearchFlow {
   // New line delimiter
   private val NewLineDelimiter: ByteString = ByteString("\n")
 
+  // Relevant http status
+  private object HttpStatus {
+    val BadRequest: Int = 400
+    val NotFound: Int = 404
+    val Conflict: Int = 409
+    val TooManyRequest: Int = 429
+  }
+
   // Precomputed path
   private object ElasticPath {
     val Id: JsonPointer = Root / "_id"
     val Type: JsonPointer = Root / "_type"
     val Version: JsonPointer = Root / "_version"
     val VersionType: JsonPointer = Root / "_version_type"
+    val Document: JsonPointer = Root
     val Errors: JsonPointer = Root / "errors"
     val Items: JsonPointer = Root / "items"
-  }
-
-  // Precomputed operations
-  private object ElasticOp {
-    val RemoveExtraFields: JsonOperation = Bulk(ops = Seq(
-      Remove(ElasticPath.Id, mustExist = false),
-      Remove(ElasticPath.Type, mustExist = false),
-      Remove(ElasticPath.Version, mustExist = false),
-      Remove(ElasticPath.VersionType, mustExist = false)
-    ))
   }
 
   // Component configuration
@@ -81,8 +79,16 @@ object ElasticsearchFlow {
     indexName: String,
     action: String,
     bulk: Int = DefaultBulk,
-    worker: Int = DefaultWorker,
-    retry: FiniteDuration = DefaultRetry
+    retry: FiniteDuration = DefaultRetry,
+    binding: Binding = Binding()
+  )
+
+  case class Binding(
+    id: JsonPointer = ElasticPath.Id,
+    `type`: JsonPointer = ElasticPath.Type,
+    version: JsonPointer = ElasticPath.Version,
+    versionType: JsonPointer = ElasticPath.VersionType,
+    document: JsonPointer = ElasticPath.Document
   )
 
   case class HostConfig(
@@ -95,6 +101,7 @@ object ElasticsearchFlow {
   // Generic auth configuration
   trait AuthConfig
 
+  // Basic auth configuration
   case class BasicAuthConfig(
     username: String,
     password: String
@@ -108,39 +115,9 @@ object ElasticsearchFlow {
   def apply(config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ): Flow[Json, Json, NotUsed] = {
-    if (config.worker > 1) {
-      balancer(Flow.fromGraph(new ElasticsearchFlowStage(config)), config.worker)
-    } else {
-      Flow.fromGraph(new ElasticsearchFlowStage(config))
-    }
-  }
-
-  /**
-    * Balancing jobs to a fixed pool of workers.
-    *
-    * @param worker      worker logic.
-    * @param workerCount worker count.
-    * @tparam In  input type.
-    * @tparam Out output type.
-    * @return balanced flow.
-    */
-  private def balancer[In, Out](worker: Flow[In, Out, Any], workerCount: Int): Flow[In, Out, NotUsed] = {
-    import akka.stream.scaladsl.GraphDSL.Implicits._
-
-    Flow.fromGraph(GraphDSL.create() { implicit b =>
-      val balancer = b.add(Balance[In](workerCount, waitForAllDownstreams = true))
-      val merge = b.add(Merge[Out](workerCount))
-
-      for (_ <- 1 to workerCount) {
-        // for each worker, add an edge from the balancer to the worker, then wire
-        // it to the merge element
-        balancer ~> worker.async ~> merge
-      }
-
-      FlowShape(balancer.in, merge.out)
-    })
-  }
+  ): Flow[Json, Json, NotUsed] = Flow[Json]
+    .batch(config.bulk, immutable.Seq(_)) { case (seq, wm) => seq :+ wm }
+    .via(Flow.fromGraph(new ElasticsearchFlowStage(config)))
 
   /**
     * Elasticsearch flow stage.
@@ -150,16 +127,19 @@ object ElasticsearchFlow {
   private class ElasticsearchFlowStage(config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ) extends GraphStage[FlowShape[Json, Json]] {
+  ) extends GraphStage[FlowShape[Seq[Json], Json]] {
 
     // Inlet
-    val in: Inlet[Json] = Inlet("ElasticsearchFlow.in")
+    val in: Inlet[Seq[Json]] = Inlet("ElasticsearchFlow.in")
 
     // Outlet
     val out: Outlet[Json] = Outlet("ElasticsearchFlow.out")
 
     // Shape
-    override val shape: FlowShape[Json, Json] = FlowShape.of(in, out)
+    override val shape: FlowShape[Seq[Json], Json] = FlowShape.of(in, out)
+
+    // Binding
+    val binding: Binding = config.binding
 
     // Logic generator
     override def createLogic(attr: Attributes): TimerGraphStageLogic = new ElasticsearchFlowLogic
@@ -170,11 +150,7 @@ object ElasticsearchFlow {
       * @param pkts packets to process.
       * @return prepared request in bulk format.
       */
-    private def marshalMessages(pkts: Seq[Json]): Array[Byte] = {
-      pkts.map(marshalMessage)
-        .reduce((x, y) => x ++ y)
-        .compact.toArray[Byte]
-    }
+    private def marshalMessages(pkts: Seq[Json]): ByteString = pkts.map(marshalMessage).reduce((x, y) => x ++ y)
 
     /**
       * Marshal a single packet.
@@ -190,30 +166,32 @@ object ElasticsearchFlow {
       val versionType = pkt.evaluate(ElasticPath.VersionType)
 
       // Build header
-      val header = Json.obj(config.action -> {
-        val builder = Json.objectBuilder()
-          .+=("_index" -> config.indexName)
-          .+=("_type" -> `type`)
+      val header = Json.obj(
+        config.action -> {
+          val builder = Json.objectBuilder()
+            .+=("_index" -> config.indexName)
+            .+=("_type" -> `type`)
 
-        // Add version if present
-        version.ifExists[Long] { x =>
-          builder += ("_version" -> x)
+          // Add version if present
+          version.ifExists[Long] { x =>
+            builder += ("_version" -> x)
+          }
+
+          // Add version type if present
+          versionType.ifExists[String] { x =>
+            builder += ("_version_type" -> x)
+          }
+
+          // Add id if present
+          id.ifExists[String] { x =>
+            builder += ("_id" -> x)
+          }
+          builder.result()
         }
+      )
 
-        // Add version type if present
-        versionType.ifExists[String] { x =>
-          builder += ("_version_type" -> x)
-        }
-
-        // Add id if present
-        id.ifExists[String] { x =>
-          builder += ("_id" -> x)
-        }
-        builder.result()
-      })
-
-      // Remove extra fields
-      val doc = pkt.patch(ElasticOp.RemoveExtraFields).get[Json]
+      // Retrieve document
+      val doc = pkt.evaluate(binding.document).get[Json]
       Json.printByteStringUnsafe(header) ++ NewLineDelimiter ++ Json.printByteStringUnsafe(doc) ++ NewLineDelimiter
     }
 
@@ -225,9 +203,6 @@ object ElasticsearchFlow {
 
       // Set handler
       setHandlers(in, out, this)
-
-      // Pending message
-      private val buffer = new util.ArrayDeque[Json]
 
       // Async success handler
       private val successHandler = getAsyncCallback[Json](handleResponse)
@@ -252,8 +227,11 @@ object ElasticsearchFlow {
       // List of hosts to use
       private val hosts: Iterator[HostConfig] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
-      // Current processing message
+      // Pending message
       private var messages: Seq[Json] = Nil
+
+      // Current processing message
+      private var inProcessMessages: Seq[Json] = Nil
 
       /**
         * Handle response success.
@@ -277,14 +255,32 @@ object ElasticsearchFlow {
       @inline def handleFailure(ex: Throwable): Unit = processFailure(ex.getMessage)
 
       /**
+        * Returns true if there is no messages to process.
+        *
+        * @return true if there is no messages to process, otherwise false.
+        */
+      def checkForCompletion(): Unit =
+        if (isClosed(in) && messages.isEmpty && inProcessMessages.isEmpty) {
+          completeStage()
+        }
+
+      /**
+        * Emit messages in order downstream.
+        */
+      def emitDownstream(): Unit = {
+        val results = messages
+        messages = Nil
+        inProcessMessages = Nil
+        state = State.Idle
+        emitMultiple(out, results.iterator, () => checkForCompletion)
+      }
+
+      /**
         * Process success elements.
         */
       def processSuccess(): Unit = {
         system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
-        val results = messages
-        messages = Nil
-        state = State.Idle
-        emitMultiple(out, results.iterator, () => performRequest())
+        emitDownstream()
       }
 
       /**
@@ -295,18 +291,19 @@ object ElasticsearchFlow {
         val items = data.evaluate(ElasticPath.Items).get[JsArray]
 
         var backPressure = false
-        val results = messages.zip(items.toSeq)
-          .map(x => (x._1.get[JsObject], x._2.get[JsObject]))
-          .filter { case (item, result) =>
+        val partialDocuments = inProcessMessages.zip(items.toSeq)
+          .filter { case (document, result) =>
             val status = result.evaluate(statusPath).get[Int]
 
             // We can't do anything in case of conflict or bad request or not found
-            if (status == 409 || status == 400 || status == 404) {
-              system.eventStream.publish(ElasticsearchEvent.Drop(item, result))
-              false
-            } else {
-              if (status == 429) backPressure = true
-              true
+            status match {
+              case HttpStatus.Conflict | HttpStatus.BadRequest | HttpStatus.NotFound =>
+                system.eventStream.publish(ElasticsearchEvent.Drop(document, result))
+                false
+              case HttpStatus.TooManyRequest =>
+                backPressure = true
+                true
+              case _ => true
             }
           }
           .groupBy { case (_, result) =>
@@ -314,16 +311,18 @@ object ElasticsearchFlow {
             if (status < 300) 0 else 1
           }
 
-        messages = Nil
-        results.getOrElse(1, Nil).map(_._1).foreach(buffer.push)
-
-        if (backPressure) {
-          scheduleOnce(NotUsed, config.retry)
+        inProcessMessages = partialDocuments.getOrElse(1, Nil).map(_._1)
+        if (inProcessMessages.nonEmpty) {
+          if (backPressure) {
+            scheduleOnce(NotUsed, config.retry)
+          } else {
+            state = State.Idle
+            performRequest()
+          }
         } else {
-          state = State.Idle
+          emitDownstream()
         }
         system.eventStream.publish(ElasticsearchEvent.Partial(elapsed()))
-        emitMultiple(out, results.getOrElse(0, Nil).map(_._1).iterator, () => performRequest())
       }
 
       /**
@@ -333,78 +332,53 @@ object ElasticsearchFlow {
         */
       def processFailure(exceptionMsg: String): Unit = {
         system.eventStream.publish(ElasticsearchEvent.Failure(exceptionMsg, elapsed()))
-        messages.foreach(buffer.push)
-        messages = Nil
         scheduleOnce(NotUsed, config.retry)
-      }
-
-      /**
-        * Try to pull an element in the buffer.
-        */
-      private def tryPull(): Unit = {
-        if (buffer.size() < config.bulk && !isClosed(in) && !hasBeenPulled(in)) {
-          pull(in)
-        }
-      }
-
-      /**
-        * Prepare message to send in request.
-        */
-      def prepareElems(): Unit = {
-        messages = (1 to Math.min(config.bulk, buffer.size())).map { _ =>
-          buffer.pop()
-        }
       }
 
       /**
         * Perform a request if idle.
         */
       def performRequest(): Unit = {
-        if (isClosed(in) && buffer.isEmpty) {
-          completeStage()
-        } else if (state == State.Idle) {
-          prepareElems()
-
+        if (state == State.Idle && inProcessMessages.nonEmpty) {
           // Perform request
-          if (messages.nonEmpty) {
-            state = State.Busy
-            started = System.currentTimeMillis()
+          state = State.Busy
+          started = System.currentTimeMillis()
 
-            // Host configuration
-            val hostConf = hosts.next()
+          // Host configuration
+          val hostConf = hosts.next()
 
-            // Prepare request
-            var request = HttpRequest()
-              .withMethod(HttpMethods.POST)
-              .withUri(s"${hostConf.scheme}://${hostConf.host}:${hostConf.port}/_bulk")
-              .withEntity(ContentType(MediaType.customWithFixedCharset("application", "x-ndjson", HttpCharsets.`UTF-8`)), marshalMessages(messages))
+          // Prepare request
+          var request = HttpRequest()
+            .withMethod(HttpMethods.POST)
+            .withUri(s"${hostConf.scheme}://${hostConf.host}:${hostConf.port}/_bulk")
+            .withEntity(ContentType(MediaType.customWithFixedCharset("application", "x-ndjson", HttpCharsets.`UTF-8`)), marshalMessages(inProcessMessages))
 
-            // Add basic auth
-            request = if (hostConf.auth.isDefined) {
-              hostConf.auth.get match {
-                case BasicAuthConfig(username, password) =>
-                  request.withHeaders(Seq(
-                    Authorization(BasicHttpCredentials(username, password))
-                  ))
-                case _ => request
+          // Add basic auth
+          request = if (hostConf.auth.isDefined) {
+            hostConf.auth.get match {
+              case BasicAuthConfig(username, password) =>
+                request.withHeaders(Seq(
+                  Authorization(BasicHttpCredentials(username, password))
+                )
+                )
+              case _ => request
+            }
+          } else {
+            request
+          }
+
+          // Send request
+          Http().singleRequest(request).map {
+            case HttpResponse(StatusCodes.OK, _, entity, _) =>
+              entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
+                successHandler.invoke(Json.parseByteStringUnsafe(x))
               }
-            } else {
-              request
-            }
-
-            // Send request
-            Http().singleRequest(request).map {
-              case HttpResponse(StatusCodes.OK, _, entity, _) =>
-                entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
-                  successHandler.invoke(Json.parseByteStringUnsafe(x))
-                }
-              case resp@HttpResponse(_, _, _, _) =>
-                try {
-                  failureHandler.invoke(new StreamException(resp.httpMessage.toString))
-                } finally {
-                  resp.discardEntityBytes()(materializer)
-                }
-            }
+            case resp@HttpResponse(_, _, _, _) =>
+              try {
+                failureHandler.invoke(new StreamException(resp.httpMessage.toString))
+              } finally {
+                resp.discardEntityBytes()(materializer)
+              }
           }
         }
       }
@@ -424,29 +398,29 @@ object ElasticsearchFlow {
       }
 
       // On demand try to pull
-      override def onPull(): Unit = tryPull()
+      override def onPull(): Unit =
+        if (!isClosed(in) && !hasBeenPulled(in)) {
+          pull(in)
+        }
 
       override def onPush(): Unit = {
         // Keep going, we handle stage complete after last response
         setKeepGoing(true)
 
         // Get element
-        buffer.push(grab(in))
+        messages = grab(in)
+        inProcessMessages = messages
 
         // Perform request if idle
         performRequest()
-
-        // Don't forget to fill buffer
-        tryPull()
       }
 
-      override def onUpstreamFinish(): Unit = {
-        // Base on state
+      override def onUpstreamFinish(): Unit =
+      // Base on state
         state match {
           case State.Idle => completeStage()
           case State.Busy => ()
         }
-      }
 
     }
 

@@ -14,8 +14,4 @@ info "Install hooks"
 cd "${BASE_PROJECT}"
 bash "${SCRIPT_DIR}/install-hooks.sh"
 
-# Create symbolic links
-info "Create symbolic links"
-ln -sfn "${BASE_PROJECT}/core/runtime/plugin" "${BASE_PROJECT}/plugin"
-
 exit 0
