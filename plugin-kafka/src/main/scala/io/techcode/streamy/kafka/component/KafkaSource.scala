@@ -105,9 +105,18 @@ object KafkaSource {
           Event(builder.result(), msg.committableOffset)
         }
 
+    // Support patterns or explicit
+    val subscriptions = {
+      if (config.topics.nonEmpty) {
+        Subscriptions.topics(config.topics)
+      } else {
+        Subscriptions.topics(config.topicPattern)
+      }
+    }
+
     // Run source
     Consumer
-      .committableSource(consumerSettings, Subscriptions.topics(config.topics))
+      .committableSource(consumerSettings, subscriptions)
       .via(process)
       .via(config.handler)
       .map(_.ctx)
