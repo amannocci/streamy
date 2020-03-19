@@ -110,7 +110,7 @@ object KafkaSource {
       if (config.topics.nonEmpty) {
         Subscriptions.topics(config.topics)
       } else {
-        Subscriptions.topics(config.topicPattern)
+        Subscriptions.topicPattern(config.topicPattern)
       }
     }
 
