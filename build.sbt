@@ -189,7 +189,8 @@ lazy val `plugin-kafka` = project
       val cp = (fullClasspath in assembly).value
       cp.filterNot { x =>
         x.data.getName.startsWith("classes") ||
-        x.data.getName.startsWith("kafka-clients") ||
+          x.data.getName.startsWith("akka-stream-kafka") ||
+          x.data.getName.startsWith("kafka-clients") ||
           x.data.getName.startsWith("zstd-jni") ||
           x.data.getName.startsWith("lz4-java") ||
           x.data.getName.startsWith("slf4j-api") ||
