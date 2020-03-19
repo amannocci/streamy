@@ -24,14 +24,15 @@
 package io.techcode.streamy.kafka.component
 
 import akka.actor.ActorSystem
+import akka.kafka.ConsumerMessage.CommittableOffset
 import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.kafka.scaladsl.{Committer, Consumer}
 import akka.kafka.{CommitterSettings, ConsumerMessage, ConsumerSettings, Subscriptions}
 import akka.stream.Materializer
-import akka.stream.contrib.PassThroughFlow
 import akka.stream.scaladsl.{Flow, Keep}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.{Binder, NoneBinder}
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -44,7 +45,7 @@ object KafkaSource {
 
   // Component configuration
   case class Config(
-    handler: Flow[Json, Json, NotUsed],
+    handler: Flow[Event[CommittableOffset], Event[CommittableOffset], NotUsed],
     bootstrapServers: String,
     groupId: String,
     autoOffsetReset: String = "latest",
@@ -88,7 +89,7 @@ object KafkaSource {
     val committerSettings = CommitterSettings(system)
 
     // Default flow
-    val process: Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]], Json, NotUsed] =
+    val process: Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]], Event[CommittableOffset], NotUsed] =
       Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]]]
         .map { msg =>
           val record = msg.record
@@ -101,14 +102,15 @@ object KafkaSource {
           binding.partition(record.partition())
           binding.topic(record.topic())
           binding.timestamp(record.timestamp())
-          builder.result()
+          Event(builder.result(), msg.committableOffset)
         }
 
     // Run source
     Consumer
       .committableSource(consumerSettings, Subscriptions.topics(config.topics))
-      .via(PassThroughFlow(process.via(config.handler), Keep.left))
-      .map(_.committableOffset)
+      .via(process)
+      .via(config.handler)
+      .map(_.ctx)
       .toMat(Committer.sink(committerSettings))(Keep.both)
       .mapMaterializedValue(DrainingControl.apply)
       .run()
