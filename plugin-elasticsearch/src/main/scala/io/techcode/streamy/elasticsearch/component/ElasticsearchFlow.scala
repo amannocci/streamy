@@ -69,6 +69,7 @@ object ElasticsearchFlow {
     val Type: JsonPointer = Root / "_type"
     val Version: JsonPointer = Root / "_version"
     val VersionType: JsonPointer = Root / "_version_type"
+    val Index: JsonPointer = Root / "_index"
     val Document: JsonPointer = Root
     val Errors: JsonPointer = Root / "errors"
     val Items: JsonPointer = Root / "items"
@@ -89,6 +90,7 @@ object ElasticsearchFlow {
     `type`: JsonPointer = ElasticPath.Type,
     version: JsonPointer = ElasticPath.Version,
     versionType: JsonPointer = ElasticPath.VersionType,
+    index: JsonPointer = ElasticPath.Index,
     document: JsonPointer = ElasticPath.Document
   )
 
@@ -166,12 +168,13 @@ object ElasticsearchFlow {
       val `type` = payload.evaluate(ElasticPath.Type).getOrElse[String]("doc")
       val version = payload.evaluate(ElasticPath.Version)
       val versionType = payload.evaluate(ElasticPath.VersionType)
+      val index = payload.evaluate(ElasticPath.Index).getOrElse[String](config.indexName)
 
       // Build header
       val header = Json.obj(
         config.action -> {
           val builder = Json.objectBuilder()
-            .+=("_index" -> config.indexName)
+            .+=("_index" -> index)
             .+=("_type" -> `type`)
 
           // Add version if present
