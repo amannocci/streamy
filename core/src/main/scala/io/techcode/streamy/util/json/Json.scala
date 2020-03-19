@@ -84,9 +84,19 @@ object Json {
     new mutable.GrowableBuilder[(String, Json), JsObject](Json.obj()) {
       var underlying: mutable.HashMap[String, Json] = mutable.HashMap[String, Json]()
 
-      override def clear(): Unit = underlying = mutable.HashMap[String, Json]()
+      override def clear(): Unit =
+        if (underlying.isEmpty) {
+          Json.jsonObjEmpty
+        } else {
+          underlying = mutable.HashMap[String, Json]()
+        }
 
-      override def result(): JsObject = JsObject(underlying)
+      override def result(): JsObject =
+        if (underlying.isEmpty) {
+          Json.jsonObjEmpty
+        } else {
+          JsObject(underlying)
+        }
 
       override def addOne(elem: (String, Json)): this.type = {
         underlying += elem
@@ -110,9 +120,19 @@ object Json {
     new mutable.GrowableBuilder[Json, JsArray](Json.arr()) {
       var underlying: mutable.ArrayBuffer[Json] = mutable.ArrayBuffer[Json]()
 
-      override def clear(): Unit = underlying = mutable.ArrayBuffer[Json]()
+      override def clear(): Unit =
+        if (underlying.isEmpty) {
+          Json.jsonArrayEmpty
+        } else {
+          underlying = mutable.ArrayBuffer[Json]()
+        }
 
-      override def result(): JsArray = JsArray(underlying)
+      override def result(): JsArray =
+        if (underlying.isEmpty) {
+          Json.jsonArrayEmpty
+        } else {
+          JsArray(underlying)
+        }
 
       override def addOne(elem: Json): this.type = {
         underlying += elem

@@ -30,6 +30,7 @@ object Dependencies {
   object Compile {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" // Apache 2 License
     val akkaStream = "com.typesafe.akka" %% "akka-stream" // Apache 2 License
+    val akkaStreamKafka = "com.typesafe.akka" %% "akka-stream-kafka" // Apache 2 License
     val akkaHttp = "com.typesafe.akka" %% "akka-http" // Apache 2 License
     val akkaSlf4j =  "com.typesafe.akka" %% "akka-slf4j" // Apache 2 License
     val logbackClassic =  "ch.qos.logback" % "logback-classic" // EPL/LGPL License
@@ -50,6 +51,7 @@ object Dependencies {
   import Compile._, Test._
 
   val akka = libraryDependencies ++= Seq(akkaActor,akkaStream, akkaSlf4j).map(_ % "2.5.29")
+  val akkaStreamKafka = libraryDependencies ++= Seq(Compile.akkaStreamKafka).map(_ % "2.0.2")
   val akkaHttp = libraryDependencies ++= Seq(Compile.akkaHttp).map(_ % "10.1.11")
   val logback = libraryDependencies ++= Seq(logbackClassic % "1.2.3")
   val guava = libraryDependencies ++= Seq(googleGuava % "28.2-jre")
