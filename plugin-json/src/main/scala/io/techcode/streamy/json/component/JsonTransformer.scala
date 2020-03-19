@@ -31,6 +31,7 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBeh
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.json.component.JsonTransformer.Bind
 import io.techcode.streamy.json.component.JsonTransformer.Bind.Bind
 import io.techcode.streamy.json.component.JsonTransformer.Mode.Mode
@@ -69,9 +70,9 @@ object JsonTransformer {
     * @param conf flow configuration.
     * @return new json flow.
     */
-  def apply(conf: Config): Flow[Json, Json, NotUsed] = conf.mode match {
-    case Mode.Serialize => Flow.fromGraph(FlowTransformer(() => new SerializerTransformerLogic(conf)))
-    case Mode.Deserialize => Flow.fromGraph(FlowTransformer(() => new DeserializerTransformerLogic(conf)))
+  def apply[T](conf: Config): Flow[Event[T], Event[T], NotUsed] = conf.mode match {
+    case Mode.Serialize => Flow.fromGraph(FlowTransformer[T](() => new SerializerTransformerLogic(conf)))
+    case Mode.Deserialize => Flow.fromGraph(FlowTransformer[T](() => new DeserializerTransformerLogic(conf)))
   }
 
 }
@@ -79,8 +80,8 @@ object JsonTransformer {
 /**
   * Either hanlder for safe conversion.
   */
-private trait EitherHandler {
-  this: FlowTransformerLogic =>
+private trait EitherHandler[T] {
+  this: FlowTransformerLogic[T] =>
 
   def handleEither[A <: Throwable, B](data: Json, result: Either[A, B]): Json = result match {
     case Right(succ) => succ match {
@@ -98,7 +99,7 @@ private trait EitherHandler {
   *
   * @param config json transformer configuration.
   */
-private class SerializerTransformerLogic(config: JsonTransformer.Config) extends FlowTransformerLogic(config) with EitherHandler {
+private class SerializerTransformerLogic[T](config: JsonTransformer.Config) extends FlowTransformerLogic[T](config) with EitherHandler[T] {
 
   @inline override def transform(value: Json): MaybeJson = config.bind match {
     case Bind.String => handleEither(value, Json.printString(value))
@@ -112,7 +113,7 @@ private class SerializerTransformerLogic(config: JsonTransformer.Config) extends
   *
   * @param config json transformer configuration.
   */
-private class DeserializerTransformerLogic(config: JsonTransformer.Config) extends FlowTransformerLogic(config) with EitherHandler {
+private class DeserializerTransformerLogic[T](config: JsonTransformer.Config) extends FlowTransformerLogic[T](config) with EitherHandler[T] {
 
   private val byteStringJsonParser = JsonParser.byteStringParser()
   private val stringJsonParser = JsonParser.stringParser()

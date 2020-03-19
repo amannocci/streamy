@@ -23,11 +23,13 @@
  */
 package io.techcode.streamy.component
 
+import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.util.ByteString
 import io.techcode.streamy.StreamyTestSystem
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.printer.PrintException
@@ -39,9 +41,9 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
   "Sink transformer" should {
     "handle correctly a json value" in {
-      val sink = SinkTransformer(() => () => ByteString.empty)
+      val sink = SinkTransformer[NotUsed](() => () => ByteString.empty)
 
-      Source.single(Json.obj("foo" -> "bar"))
+      Source.single(Event[NotUsed](Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .requestNext() should equal(ByteString.empty)
@@ -52,9 +54,9 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val sink = SinkTransformer(() => () => throw new PrintException("Error"))
+      val sink = SinkTransformer[NotUsed](() => () => throw new PrintException("Error"))
 
-      Source.single(Json.obj("foo" -> "bar"))
+      Source.single(Event[NotUsed](Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .request(1)
@@ -66,9 +68,9 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val sink = SinkTransformer(() => () => throw new PrintException("Error"))
+      val sink = SinkTransformer[NotUsed](() => () => throw new PrintException("Error"))
 
-      Source.single(Json.obj("foo" -> "bar"))
+      Source.single(Event[NotUsed](Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .request(1)

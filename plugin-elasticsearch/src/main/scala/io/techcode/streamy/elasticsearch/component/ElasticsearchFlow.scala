@@ -33,6 +33,7 @@ import akka.stream.scaladsl.Flow
 import akka.stream.stage._
 import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.event._
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
@@ -112,10 +113,10 @@ object ElasticsearchFlow {
     *
     * @param config flow configuration.
     */
-  def apply(config: Config)(
+  def apply[T](config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ): Flow[Json, Json, NotUsed] = Flow[Json]
+  ): Flow[Event[T], Event[T], NotUsed] = Flow[Event[T]]
     .batch(config.bulk, immutable.Seq(_)) { case (seq, wm) => seq :+ wm }
     .via(Flow.fromGraph(new ElasticsearchFlowStage(config)))
 
@@ -124,19 +125,19 @@ object ElasticsearchFlow {
     *
     * @param config flow stage configuration.
     */
-  private class ElasticsearchFlowStage(config: Config)(
+  private class ElasticsearchFlowStage[T](config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ) extends GraphStage[FlowShape[Seq[Json], Json]] {
+  ) extends GraphStage[FlowShape[Seq[Event[T]], Event[T]]] {
 
     // Inlet
-    val in: Inlet[Seq[Json]] = Inlet("ElasticsearchFlow.in")
+    val in: Inlet[Seq[Event[T]]] = Inlet("ElasticsearchFlow.in")
 
     // Outlet
-    val out: Outlet[Json] = Outlet("ElasticsearchFlow.out")
+    val out: Outlet[Event[T]] = Outlet("ElasticsearchFlow.out")
 
     // Shape
-    override val shape: FlowShape[Seq[Json], Json] = FlowShape.of(in, out)
+    override val shape: FlowShape[Seq[Event[T]], Event[T]] = FlowShape.of(in, out)
 
     // Binding
     val binding: Binding = config.binding
@@ -145,25 +146,26 @@ object ElasticsearchFlow {
     override def createLogic(attr: Attributes): TimerGraphStageLogic = new ElasticsearchFlowLogic
 
     /**
-      * Marshal all packets.
+      * Marshal all events.
       *
-      * @param pkts packets to process.
+      * @param events events to process.
       * @return prepared request in bulk format.
       */
-    private def marshalMessages(pkts: Seq[Json]): ByteString = pkts.map(marshalMessage).reduce((x, y) => x ++ y)
+    private def marshalMessages(events: Seq[Event[T]]): ByteString = events.map(marshalMessage).reduce((x, y) => x ++ y)
 
     /**
       * Marshal a single packet.
       *
-      * @param pkt packet to marshal.
+      * @param event event to marshal.
       * @return bytestring representation.
       */
-    private def marshalMessage(pkt: Json): ByteString = {
+    private def marshalMessage(event: Event[T]): ByteString = {
       // Retrive header information
-      val id = pkt.evaluate(ElasticPath.Id)
-      val `type` = pkt.evaluate(ElasticPath.Type).getOrElse[String]("doc")
-      val version = pkt.evaluate(ElasticPath.Version)
-      val versionType = pkt.evaluate(ElasticPath.VersionType)
+      val payload = event.payload
+      val id = payload.evaluate(ElasticPath.Id)
+      val `type` = payload.evaluate(ElasticPath.Type).getOrElse[String]("doc")
+      val version = payload.evaluate(ElasticPath.Version)
+      val versionType = payload.evaluate(ElasticPath.VersionType)
 
       // Build header
       val header = Json.obj(
@@ -191,7 +193,7 @@ object ElasticsearchFlow {
       )
 
       // Retrieve document
-      val doc = pkt.evaluate(binding.document).get[Json]
+      val doc = payload.evaluate(binding.document).get[Json]
       Json.printByteStringUnsafe(header) ++ NewLineDelimiter ++ Json.printByteStringUnsafe(doc) ++ NewLineDelimiter
     }
 
@@ -228,10 +230,10 @@ object ElasticsearchFlow {
       private val hosts: Iterator[HostConfig] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
       // Pending message
-      private var messages: Seq[Json] = Nil
+      private var messages: Seq[Event[T]] = Nil
 
       // Current processing message
-      private var inProcessMessages: Seq[Json] = Nil
+      private var inProcessMessages: Seq[Event[T]] = Nil
 
       /**
         * Handle response success.
@@ -272,7 +274,7 @@ object ElasticsearchFlow {
         messages = Nil
         inProcessMessages = Nil
         state = State.Idle
-        emitMultiple(out, results.iterator, () => checkForCompletion)
+        emitMultiple(out, results.iterator, () => checkForCompletion())
       }
 
       /**

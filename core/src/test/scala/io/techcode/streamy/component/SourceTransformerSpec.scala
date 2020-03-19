@@ -23,11 +23,13 @@
  */
 package io.techcode.streamy.component
 
+import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Source}
 import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.util.ByteString
 import io.techcode.streamy.StreamyTestSystem
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{ByteStringParser, ParseException}
@@ -39,15 +41,15 @@ class SourceTransformerSpec extends StreamyTestSystem {
 
   "Source transformer" should {
     "handle correctly a bytestring" in {
-      val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser[Json] {
+      val source = Flow.fromGraph(SourceTransformer[NotUsed](() => new ByteStringParser[Json] {
         override def run(): Json = Json.obj()
 
         override def root(): Boolean = true
       }))
       Source.single(ByteString.empty)
         .via(source)
-        .runWith(TestSink.probe[Json])
-        .requestNext() should equal(Json.obj())
+        .runWith(TestSink.probe[Event[NotUsed]])
+        .requestNext() should equal(Event(Json.obj()))
     }
 
     "handle correctly a bytestring with skipped error" in {
@@ -55,7 +57,7 @@ class SourceTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser[Json] {
+      val source = Flow.fromGraph(SourceTransformer[NotUsed](() => new ByteStringParser[Json] {
         override def run() = throw new ParseException("Error")
 
         override def root(): Boolean = false
@@ -63,7 +65,7 @@ class SourceTransformerSpec extends StreamyTestSystem {
 
       Source.single(ByteString.empty)
         .via(source)
-        .runWith(TestSink.probe[Json])
+        .runWith(TestSink.probe[Event[NotUsed]])
         .request(1)
         .expectComplete()
     }
@@ -73,7 +75,7 @@ class SourceTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val source = Flow.fromGraph(SourceTransformer(() => new ByteStringParser[Json] {
+      val source = Flow.fromGraph(SourceTransformer[NotUsed](() => new ByteStringParser[Json] {
         override def run() = throw new ParseException("Error")
 
         override def root(): Boolean = false
@@ -81,7 +83,7 @@ class SourceTransformerSpec extends StreamyTestSystem {
 
       Source.single(ByteString.empty)
         .via(source)
-        .runWith(TestSink.probe[Json])
+        .runWith(TestSink.probe[Event[NotUsed]])
         .request(1)
         .expectError() should equal(new StreamException("Error", ByteString.empty))
     }

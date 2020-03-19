@@ -24,6 +24,7 @@
 package io.techcode.streamy.fingerprint.component
 
 import io.techcode.streamy.component.TestTransformer
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.fingerprint.component.FingerprintTransformer.Config
 import io.techcode.streamy.util.json._
 
@@ -36,112 +37,112 @@ class FingerprintTransformerSpec extends TestTransformer {
     "be used in a flow" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "md5")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"098f6bcd4621d373cade4e832627b4f6"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"098f6bcd4621d373cade4e832627b4f6"}"""))
       )
     }
 
     "transform correctly a packet inplace with md5 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "md5")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"098f6bcd4621d373cade4e832627b4f6"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"098f6bcd4621d373cade4e832627b4f6"}"""))
       )
     }
 
     "transform correctly a packet inplace with sha1 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "sha1")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"}"""))
       )
     }
 
     "transform correctly a packet inplace with sha256 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "sha256")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}"""))
       )
     }
 
     "transform correctly a packet inplace with sha384 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "sha384")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"768412320f7b0aa5812fce428dc4706b3cae50e02a64caa16a782249bfe8efc4b7ef1ccb126255d196047dfedf17a0a9"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"768412320f7b0aa5812fce428dc4706b3cae50e02a64caa16a782249bfe8efc4b7ef1ccb126255d196047dfedf17a0a9"}"""))
       )
     }
 
     "transform correctly a packet inplace with sha512 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "sha512")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"}"""))
       )
     }
 
     "transform correctly a packet inplace with alder32 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "alder32")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"c1015d04"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"c1015d04"}"""))
       )
     }
 
     "transform correctly a packet inplace with crc32 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "crc32")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"0c7e7fd8"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"0c7e7fd8"}"""))
       )
     }
 
     "transform correctly a packet inplace with crc32c hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "crc32c")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"c072a086"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"c072a086"}"""))
       )
     }
 
     "transform correctly a packet inplace with murmur3_32 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "murmur3_32")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"13d26bba"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"13d26bba"}"""))
       )
     }
 
     "transform correctly a packet inplace with murmur3_128 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "murmur3_128")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"9de1bd74cc287dac824dbdf93182129a"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"9de1bd74cc287dac824dbdf93182129a"}"""))
       )
     }
 
     "transform correctly a packet inplace with sipHash24 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "sipHash24")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"9a72565c525e7626"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"9a72565c525e7626"}"""))
       )
     }
 
     "transform correctly a packet inplace with farmHashFingerprint64 hashing" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64")),
-        Json.parseStringUnsafe("""{"message":"test"}"""),
-        Json.parseStringUnsafe("""{"message":"b2b585aa3d381777"}""")
+        Event(Json.parseStringUnsafe("""{"message":"test"}""")),
+        Event(Json.parseStringUnsafe("""{"message":"b2b585aa3d381777"}"""))
       )
     }
 
     "handle correctly unexpected input" in {
       except(
         FingerprintTransformer(Config(source = Root / "message", hashing = "farmHashFingerprint64")),
-        Json.parseStringUnsafe("""{"message":10}"""),
-        Json.parseStringUnsafe("""{"message":10}""")
+        Event(Json.parseStringUnsafe("""{"message":10}""")),
+        Event(Json.parseStringUnsafe("""{"message":10}"""))
       )
     }
   }

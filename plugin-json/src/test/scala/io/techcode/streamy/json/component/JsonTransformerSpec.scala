@@ -23,8 +23,10 @@
  */
 package io.techcode.streamy.json.component
 
+import akka.NotUsed
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.json.component.JsonTransformer.{Bind, Config, Mode}
 import io.techcode.streamy.util.json.{Json, _}
 
@@ -186,94 +188,94 @@ object JsonTransformerSpec {
 
   object Input {
 
-    val SkipEmptyStringSource: JsObject = Json.obj("message" -> "")
+    val SkipEmptyStringSource: Event[NotUsed] = Event(Json.obj("message" -> ""))
 
-    val SkipStringSource: JsObject = Json.obj("message" -> "foobar")
+    val SkipStringSource: Event[NotUsed] = Event(Json.obj("message" -> "foobar"))
 
-    val SkipWrongJsonSource: JsObject = Json.obj("message" -> "{foobar}")
+    val SkipWrongJsonSource: Event[NotUsed] = Event(Json.obj("message" -> "{foobar}"))
 
-    val SkipEmptyByteStringSource: JsObject = Json.obj("message" -> ByteString())
+    val SkipEmptyByteStringSource: Event[NotUsed] = Event(Json.obj("message" -> ByteString()))
 
-    val SkipByteStringSource: JsObject = Json.obj("message" -> ByteString("foobar"))
+    val SkipByteStringSource: Event[NotUsed] = Event(Json.obj("message" -> ByteString("foobar")))
 
-    val SkipWrongJsonByteStringSource: JsObject = Json.obj("message" -> ByteString("{foobar}"))
+    val SkipWrongJsonByteStringSource: Event[NotUsed] = Event(Json.obj("message" -> ByteString("{foobar}")))
 
-    val DeserializeInplace: JsObject = Json.obj("message" -> """{"message":"foobar"}""")
+    val DeserializeInplace: Event[NotUsed] = Event(Json.obj("message" -> """{"message":"foobar"}"""))
 
-    val DeserializeSourceToRoot: JsObject = Json.obj("message" -> """{"test":"foobar"}""")
+    val DeserializeSourceToRoot: Event[NotUsed] = Event(Json.obj("message" -> """{"test":"foobar"}"""))
 
-    val DeserializeSourceToExistingRoot: JsObject = Json.obj("message" -> """{"message":"foobar"}""")
+    val DeserializeSourceToExistingRoot: Event[NotUsed] = Event(Json.obj("message" -> """{"message":"foobar"}"""))
 
-    val DeserializeInplaceByteString: JsObject = Json.obj("message" -> ByteString("""{"message":"foobar"}"""))
+    val DeserializeInplaceByteString: Event[NotUsed] = Event(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
 
-    val DeserializeSourceToRootByteString: JsObject = Json.obj("message" -> ByteString("""{"test":"foobar"}"""))
+    val DeserializeSourceToRootByteString: Event[NotUsed] = Event(Json.obj("message" -> ByteString("""{"test":"foobar"}""")))
 
-    val DeserializeSourceToExistingRootByteString: JsObject = Json.obj("message" -> ByteString("""{"message":"foobar"}"""))
+    val DeserializeSourceToExistingRootByteString: Event[NotUsed] = Event(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
 
-    val SerializeInplace: JsObject = Json.obj("message" -> Json.obj("message" -> "foobar"))
+    val SerializeInplace: Event[NotUsed] = Event(Json.obj("message" -> Json.obj("message" -> "foobar")))
 
-    val SerializeRootToTarget: JsObject = Json.obj("test" -> "foobar")
+    val SerializeRootToTarget: Event[NotUsed] = Event(Json.obj("test" -> "foobar"))
 
-    val SerializeRootToExistingTarget: JsObject = Json.obj("test" -> "foobar")
+    val SerializeRootToExistingTarget: Event[NotUsed] = Event(Json.obj("test" -> "foobar"))
 
-    val WrongType: JsObject = Json.obj("test" -> 10)
+    val WrongType: Event[NotUsed] = Event(Json.obj("test" -> 10))
 
   }
 
   object Transformer {
 
-    val DeserializeSource = JsonTransformer(Config(Root / "message", mode = Mode.Deserialize))
+    val DeserializeSource = JsonTransformer[NotUsed](Config(Root / "message", mode = Mode.Deserialize))
 
-    val DeserializeSourceBytes = JsonTransformer(Config(Root / "message", mode = Mode.Deserialize, bind = Bind.Bytes))
+    val DeserializeSourceBytes = JsonTransformer[NotUsed](Config(Root / "message", mode = Mode.Deserialize, bind = Bind.Bytes))
 
-    val DeserializeSourceToRoot = JsonTransformer(Config(Root / "message", Some(Root), mode = Mode.Deserialize))
+    val DeserializeSourceToRoot = JsonTransformer[NotUsed](Config(Root / "message", Some(Root), mode = Mode.Deserialize))
 
-    val DeserializeSourceToRootBytes = JsonTransformer(Config(Root / "message", Some(Root), mode = Mode.Deserialize, bind = Bind.Bytes))
+    val DeserializeSourceToRootBytes = JsonTransformer[NotUsed](Config(Root / "message", Some(Root), mode = Mode.Deserialize, bind = Bind.Bytes))
 
-    val DeserializeSourceToExistingRoot = JsonTransformer(Config(Root / "message", Some(Root), mode = Mode.Deserialize))
+    val DeserializeSourceToExistingRoot = JsonTransformer[NotUsed](Config(Root / "message", Some(Root), mode = Mode.Deserialize))
 
-    val DeserializeSourceToExistingRootBytes = JsonTransformer(Config(Root / "message", Some(Root), mode = Mode.Deserialize, bind = Bind.Bytes))
+    val DeserializeSourceToExistingRootBytes = JsonTransformer[NotUsed](Config(Root / "message", Some(Root), mode = Mode.Deserialize, bind = Bind.Bytes))
 
-    val SerializeSource = JsonTransformer(Config(Root / "message", mode = Mode.Serialize))
+    val SerializeSource = JsonTransformer[NotUsed](Config(Root / "message", mode = Mode.Serialize))
 
-    val SerializeSourceBytes = JsonTransformer(Config(Root / "message", mode = Mode.Serialize, bind = Bind.Bytes))
+    val SerializeSourceBytes = JsonTransformer[NotUsed](Config(Root / "message", mode = Mode.Serialize, bind = Bind.Bytes))
 
-    val SerializeRootToTarget = JsonTransformer(Config(Root, Some(Root / "message"), mode = Mode.Serialize))
+    val SerializeRootToTarget = JsonTransformer[NotUsed](Config(Root, Some(Root / "message"), mode = Mode.Serialize))
 
-    val SerializeRootToExistingTarget = JsonTransformer(Config(Root, Some(Root / "test"), mode = Mode.Serialize))
+    val SerializeRootToExistingTarget = JsonTransformer[NotUsed](Config(Root, Some(Root / "test"), mode = Mode.Serialize))
 
-    val WrongTypeString = JsonTransformer(Config(Root, Some(Root / "test"), mode = Mode.Deserialize))
+    val WrongTypeString = JsonTransformer[NotUsed](Config(Root, Some(Root / "test"), mode = Mode.Deserialize))
 
-    val WrongTypeBytes = JsonTransformer(Config(Root, Some(Root / "test"), mode = Mode.Deserialize, bind = Bind.Bytes))
+    val WrongTypeBytes = JsonTransformer[NotUsed](Config(Root, Some(Root / "test"), mode = Mode.Deserialize, bind = Bind.Bytes))
 
   }
 
   object Output {
 
-    val DeserializeInplace: JsObject = Json.obj("message" -> Json.obj("message" -> "foobar"))
+    val DeserializeInplace: Event[NotUsed] = Event(Json.obj("message" -> Json.obj("message" -> "foobar")))
 
-    val DeserializeSourceToRoot: JsObject = Json.obj(
+    val DeserializeSourceToRoot: Event[NotUsed] = Event(Json.obj(
       "message" -> """{"test":"foobar"}""",
       "test" -> "foobar"
-    )
+    ))
 
-    val DeserializeSourceToRootByteString: JsObject = Json.obj(
+    val DeserializeSourceToRootByteString: Event[NotUsed] = Event(Json.obj(
       "message" -> ByteString("""{"test":"foobar"}"""),
       "test" -> "foobar"
-    )
+    ))
 
-    val DeserializeSourceToExistingRoot: JsObject = Json.obj("message" -> "foobar")
+    val DeserializeSourceToExistingRoot: Event[NotUsed] = Event(Json.obj("message" -> "foobar"))
 
-    val SerializeInplace: JsObject = Json.obj("message" -> """{"message":"foobar"}""")
+    val SerializeInplace: Event[NotUsed] = Event(Json.obj("message" -> """{"message":"foobar"}"""))
 
-    val SerializeInplaceBytes: JsObject = Json.obj("message" -> ByteString("""{"message":"foobar"}"""))
+    val SerializeInplaceBytes: Event[NotUsed] = Event(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
 
-    val SerializeRootToTarget: JsObject = Json.obj(
+    val SerializeRootToTarget: Event[NotUsed] = Event(Json.obj(
       "message" -> """{"test":"foobar"}""",
       "test" -> "foobar"
-    )
+    ))
 
-    val SerializeRootToExistingTarget: JsObject = Json.obj("test" -> """{"test":"foobar"}""")
+    val SerializeRootToExistingTarget: Event[NotUsed] = Event(Json.obj("test" -> """{"test":"foobar"}"""))
 
   }
 

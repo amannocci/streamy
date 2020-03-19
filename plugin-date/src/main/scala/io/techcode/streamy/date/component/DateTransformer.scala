@@ -32,12 +32,13 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.json._
 
 /**
   * Date transformer implementation.
   */
-private[component] class DateTransformerLogic(config: DateTransformer.Config) extends FlowTransformerLogic(config) {
+private[component] class DateTransformerLogic[T](config: DateTransformer.Config) extends FlowTransformerLogic[T](config) {
 
   override def transform(value: Json): MaybeJson = value
     .map[String](x => config.outputFormatter.format(config.inputFormatter.parse(x)))
@@ -64,12 +65,12 @@ object DateTransformer {
   ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
   /**
-    * Create a date transformer flow that transform incoming [[Json]] objects.
+    * Create a date transformer flow that transform incoming [[Event]] objects.
     *
     * @param conf flow configuration.
     * @return new date flow.
     */
-  def apply(conf: Config): Flow[Json, Json, NotUsed] =
-    Flow.fromGraph(FlowTransformer(() => new DateTransformerLogic(conf)))
+  def apply[T](conf: Config): Flow[Event[T], Event[T], NotUsed] =
+    Flow.fromGraph(FlowTransformer[T](() => new DateTransformerLogic(conf)))
 
 }

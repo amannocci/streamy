@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.fingerprint.component
 
+import akka.NotUsed
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -67,29 +68,29 @@ object FingerprintTransformerBench {
 
   object Transformer {
 
-    val Md5 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "md5"))
+    val Md5 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "md5"))
 
-    val Sha1 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "sha1"))
+    val Sha1 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "sha1"))
 
-    val Sha256 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "sha256"))
+    val Sha256 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "sha256"))
 
-    val Sha384 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "sha384"))
+    val Sha384 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "sha384"))
 
-    val Sha512 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "sha512"))
+    val Sha512 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "sha512"))
 
-    val Alder32 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "alder32"))
+    val Alder32 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "alder32"))
 
-    val Crc32 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "crc32"))
+    val Crc32 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "crc32"))
 
-    val Crc32c = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "crc32c"))
+    val Crc32c = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "crc32c"))
 
-    val Murmur3_32 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "murmur3_32"))
+    val Murmur3_32 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "murmur3_32"))
 
-    val Murmur3_128 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "murmur3_128"))
+    val Murmur3_128 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "murmur3_128"))
 
-    val SipHash24 = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "sipHash24"))
+    val SipHash24 = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "sipHash24"))
 
-    val FarmHash = new FingerprintTransformerLogic(FingerprintTransformer.Config(source = Root / "message", hashing = "farmHashFingerprint64"))
+    val FarmHash = new FingerprintTransformerLogic[NotUsed](FingerprintTransformer.Config(source = Root / "message", hashing = "farmHashFingerprint64"))
 
   }
 

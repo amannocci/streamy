@@ -27,8 +27,8 @@ import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing => StreamFraming}
 import akka.util.ByteString
 import io.techcode.streamy.component.SourceTransformer
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.graphite.util.parser.GraphiteParser
-import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.{Binder, NoneBinder}
 
 /**
@@ -37,13 +37,13 @@ import io.techcode.streamy.util.{Binder, NoneBinder}
 object GraphiteTransformer {
 
   /**
-    * Create a graphite flow that transform incoming [[ByteString]] to [[Json]].
+    * Create a graphite flow that transform incoming [[ByteString]] to [[Event]].
     * This parser is compliant with Graphite protocol.
     *
     * @param conf flow configuration.
     * @return new graphite flow compliant with Graphite protocol.
     */
-  def parser(conf: Config): Flow[ByteString, Json, NotUsed] = {
+  def parser[T](conf: Config): Flow[ByteString, Event[T], NotUsed] = {
     StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
       .via(Flow.fromGraph(SourceTransformer(() => GraphiteParser.parser(conf))))
   }

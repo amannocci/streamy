@@ -25,6 +25,7 @@ package io.techcode.streamy.date.component
 
 import java.time.format.DateTimeFormatter
 
+import akka.NotUsed
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -53,19 +54,19 @@ object DateTransformerBench {
 
   object Transformer {
 
-    val Idempotent: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
+    val Idempotent: DateTransformerLogic[NotUsed] = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTransformer.Iso8601
     ))
 
-    val FromIsoToCustom: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
+    val FromIsoToCustom: DateTransformerLogic[NotUsed] = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy")
     ))
 
-    val FromCustomToIso: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
+    val FromCustomToIso: DateTransformerLogic[NotUsed] = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy"),
       outputFormatter = DateTransformer.Iso8601

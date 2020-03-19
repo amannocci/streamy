@@ -26,6 +26,7 @@ package io.techcode.streamy.riemann.component
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import io.techcode.streamy.component.TestTransformer
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.json._
 
 import scala.language.postfixOps
@@ -37,7 +38,7 @@ class RiemannTransformerSpec extends TestTransformer {
 
   "Riemann transformer" should {
     "print and parse data correctly" in {
-      except[Json, Json](
+      except(
         RiemannTransformerSpec.Transformer,
         RiemannTransformerSpec.Input,
         RiemannTransformerSpec.Output
@@ -51,7 +52,7 @@ object RiemannTransformerSpec {
 
   private val Time: Long = System.currentTimeMillis()
 
-  val Input: Json = Json.obj(
+  val Input: Event[NotUsed] = Event(Json.obj(
     "ok" -> true,
     "error" -> "test",
     "events" -> Json.arr(
@@ -73,13 +74,13 @@ object RiemannTransformerSpec {
         "metric_f" -> 0F,
       )
     )
-  )
+  ))
 
-  val Transformer: Flow[Json, Json, NotUsed] =
+  val Transformer: Flow[Event[NotUsed], Event[NotUsed], NotUsed] =
     RiemannTransformer.printer(RiemannTransformer.Printer.Config())
       .via(RiemannTransformer.parser(RiemannTransformer.Parser.Config()))
 
-  val Output: Json = Json.obj(
+  val Output: Event[NotUsed] = Event(Json.obj(
     "ok" -> true,
     "error" -> "test",
     "events" -> Json.arr(
@@ -100,7 +101,7 @@ object RiemannTransformerSpec {
         "metric_d" -> 0D,
         "metric_f" -> 0F,
       )
-    )
+    ))
   )
 
 }

@@ -27,6 +27,7 @@ import akka.stream.ActorAttributes.SupervisionStrategy
 import akka.stream._
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.printer.ByteStringPrinter
@@ -36,15 +37,15 @@ import scala.util.control.NonFatal
 
 /**
   * Sink transformer abstract implementation that provide
-  * a convenient way to process a convertion from [[Json]] to [[ByteString]].
+  * a convenient way to process a convertion from [[Event]] to [[ByteString]].
   */
-final case class SinkTransformer(factory: () => ByteStringPrinter[Json]) extends GraphStage[FlowShape[Json, ByteString]] {
+final case class SinkTransformer[T](factory: () => ByteStringPrinter[Json]) extends GraphStage[FlowShape[Event[T], ByteString]] {
 
-  val in: Inlet[Json] = Inlet[Json]("sinkTransformer.in")
+  val in: Inlet[Event[T]] = Inlet[Event[T]]("sinkTransformer.in")
 
   val out: Outlet[ByteString] = Outlet[ByteString]("sinkTransformer.out")
 
-  override val shape: FlowShape[Json, ByteString] = FlowShape(in, out)
+  override val shape: FlowShape[Event[T], ByteString] = FlowShape(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
 
@@ -57,10 +58,10 @@ final case class SinkTransformer(factory: () => ByteStringPrinter[Json]) extends
 
     override def onPush(): Unit = {
       try {
-        val pkt = grab(in)
-        printer.print(pkt) match {
+        val event = grab(in)
+        printer.print(event.payload) match {
           case Right(result) => push(out, result)
-          case Left(ex) => throw new StreamException(ex.getMessage, pkt, Map.empty)
+          case Left(ex) => throw new StreamException(ex.getMessage, event.payload, Map.empty)
         }
       } catch {
         case NonFatal(ex) => decider(ex) match {

@@ -27,7 +27,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing}
 import akka.util.ByteString
 import com.google.protobuf.MessageLite
-import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.event.Event
 
 /**
   * Protobuf transformer companion.
@@ -35,23 +35,23 @@ import io.techcode.streamy.util.json.Json
 object ProtobufTransformer {
 
   /**
-    * Create a protobuf flow that transform incoming [[ByteString]] to [[Json]].
+    * Create a protobuf flow that transform incoming [[ByteString]] to [[Event]].
     *
     * @param conf flow configuration.
     * @return new protobuf flow.
     */
-  def parser[T <: MessageLite](conf: Parser.Config[T]): Flow[ByteString, Json, NotUsed] =
+  def parser[T, PT <: MessageLite](conf: Parser.Config[T, PT]): Flow[ByteString, Event[T], NotUsed] =
     Framing.simpleFramingProtocolDecoder(conf.maxSize)
-      .map(raw => conf.proto.getParserForType.parseFrom(raw.asByteBuffer).asInstanceOf[T])
+      .map(raw => conf.proto.getParserForType.parseFrom(raw.asByteBuffer).asInstanceOf[PT])
       .via(Flow.fromFunction(conf.decoder))
 
   /**
-    * Create a protobuf flow that transform incoming [[Json]] to [[ByteString]].
+    * Create a protobuf flow that transform incoming [[Event]] to [[ByteString]].
     *
     * @param conf flow configuration.
     * @return new protobuf flow.
     */
-  def printer[T <: MessageLite](conf: Printer.Config[T]): Flow[Json, ByteString, NotUsed] =
+  def printer[T, PT <: MessageLite](conf: Printer.Config[T, PT]): Flow[Event[T], ByteString, NotUsed] =
     Flow.fromFunction(conf.encoder)
       .map(obj => ByteString.fromArrayUnsafe(obj.toByteArray))
       .via(Framing.simpleFramingProtocolEncoder(conf.maxSize))
@@ -60,10 +60,10 @@ object ProtobufTransformer {
   object Parser {
 
     // Configuration
-    case class Config[T <: MessageLite](
+    case class Config[T, PT <: MessageLite](
       maxSize: Int = Int.MaxValue - 4,
       proto: MessageLite,
-      decoder: T => Json
+      decoder: PT => Event[T]
     )
 
   }
@@ -72,10 +72,10 @@ object ProtobufTransformer {
   object Printer {
 
     // Configuration
-    case class Config[T <: MessageLite](
+    case class Config[T, PT <: MessageLite](
       maxSize: Int = Int.MaxValue - 4,
       proto: MessageLite,
-      encoder: Json => T
+      encoder: Event[T] => PT
     )
 
   }

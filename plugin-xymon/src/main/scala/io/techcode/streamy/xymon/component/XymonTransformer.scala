@@ -27,7 +27,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
-import io.techcode.streamy.util.json._
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.{Binder, NoneBinder}
 import io.techcode.streamy.xymon.util.parser.XymonParser
 import io.techcode.streamy.xymon.util.printer.XymonPrinter
@@ -38,20 +38,20 @@ import io.techcode.streamy.xymon.util.printer.XymonPrinter
 object XymonTransformer {
 
   /**
-    * Create a xymon flow that transform incoming [[ByteString]] to [[Json]].
+    * Create a xymon flow that transform incoming [[ByteString]] to [[Event]].
     *
     * @param conf flow configuration.
     */
-  def parser(conf: Parser.Config): Flow[ByteString, Json, NotUsed] =
-    Flow.fromGraph(SourceTransformer(() => XymonParser.parser(conf)))
+  def parser[T](conf: Parser.Config): Flow[ByteString, Event[T], NotUsed] =
+    Flow.fromGraph(SourceTransformer[T](() => XymonParser.parser(conf)))
 
   /**
-    * Create a xymon flow that transform incoming [[Json]] to [[ByteString]].
+    * Create a xymon flow that transform incoming [[Event]] to [[ByteString]].
     *
     * @param conf flow configuration.
     */
-  def printer(conf: Printer.Config): Flow[Json, ByteString, NotUsed] =
-    Flow.fromGraph(SinkTransformer(() => XymonPrinter.printer(conf)))
+  def printer[T](conf: Printer.Config): Flow[Event[T], ByteString, NotUsed] =
+    Flow.fromGraph(SinkTransformer[T](() => XymonPrinter.printer(conf)))
 
   object Id {
     val Status = "status"

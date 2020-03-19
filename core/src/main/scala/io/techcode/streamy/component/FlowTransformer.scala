@@ -31,6 +31,7 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBeh
 import io.techcode.streamy.component.FlowTransformer.{Config, SuccessBehaviour}
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
@@ -41,32 +42,32 @@ import scala.util.control.NonFatal
   * Flow transformer logic abstract implementation that provide
   * a convenient way to process an update on [[Json]].
   */
-abstract class FlowTransformerLogic(config: Config) extends (Json => Json) {
+abstract class FlowTransformerLogic[T](config: Config) extends (Json => Json) {
 
   // Choose right transform function
   private val function: Json => Json = {
     if (config.target.isEmpty || config.source == config.target.get) {
       // Transform inplace and report error if needed
-      pkt: Json =>
-        pkt.evaluate(config.source)
-          .flatMap[Json](transform(_, pkt))
-          .flatMap[Json](x => pkt.patch(Replace(config.source, x)))
-          .getOrElse[Json](error(Transformer.GenericErrorMsg, pkt))
+      payload: Json =>
+        payload.evaluate(config.source)
+          .flatMap[Json](transform(_, payload))
+          .flatMap[Json](x => payload.patch(Replace(config.source, x)))
+          .getOrElse[Json](error(Transformer.GenericErrorMsg, payload))
     } else {
       // Transform inplace and then copy to target
-      pkt: Json =>
-        pkt.evaluate(config.source)
-          .flatMap[Json](transform(_, pkt))
+      payload: Json =>
+        payload.evaluate(config.source)
+          .flatMap[Json](transform(_, payload))
           .flatMap[Json] { v =>
             val operated: MaybeJson = {
               if (config.target.get == Root) {
-                pkt.flatMap[JsObject] { x =>
+                payload.flatMap[JsObject] { x =>
                   v.map[JsObject] { y =>
                     x.merge(y)
                   }
                 }
               } else {
-                pkt
+                payload
               }
             }
 
@@ -85,7 +86,7 @@ abstract class FlowTransformerLogic(config: Config) extends (Json => Json) {
             } else {
               operated.flatMap[Json](_.patch(operations))
             }
-          }.getOrElse[Json](error(Transformer.GenericErrorMsg, pkt))
+          }.getOrElse[Json](error(Transformer.GenericErrorMsg, payload))
     }
   }
 
@@ -138,16 +139,16 @@ abstract class FlowTransformerLogic(config: Config) extends (Json => Json) {
   }
 
   /**
-    * Transform only value of given packet.
+    * Transform only value of given payload.
     *
-    * @param value value to transform.
-    * @param pkt   original packet.
+    * @param value   value to transform.
+    * @param payload original payload.
     * @return json structure.
     */
-  @inline def transform(value: Json, pkt: Json): MaybeJson = transform(value)
+  @inline def transform(value: Json, payload: Json): MaybeJson = transform(value)
 
   /**
-    * Transform only value of given packet.
+    * Transform only value of given payload.
     *
     * @param value value to transform.
     * @return json structure.
@@ -155,26 +156,26 @@ abstract class FlowTransformerLogic(config: Config) extends (Json => Json) {
   def transform(value: Json): MaybeJson = JsUndefined
 
   /**
-    * Apply transform component on packet.
+    * Apply transform component on payload.
     *
-    * @param pkt packet involved.
-    * @return packet transformed.
+    * @param payload payload involved.
+    * @return payload transformed.
     */
-  @inline def apply(pkt: Json): Json = function(pkt)
+  @inline def apply(payload: Json): Json = function(payload)
 
 }
 
 /**
   * Flow transformer abstract implementation that provide
-  * a convenient way to process an update on [[Json]].
+  * a convenient way to process an update on [[Event]].
   */
-final case class FlowTransformer(factory: () => FlowTransformerLogic) extends GraphStage[FlowShape[Json, Json]] {
+final case class FlowTransformer[T](factory: () => FlowTransformerLogic[T]) extends GraphStage[FlowShape[Event[T], Event[T]]] {
 
-  val in: Inlet[Json] = Inlet[Json]("flowTransformer.in")
+  val in: Inlet[Event[T]] = Inlet[Event[T]]("flowTransformer.in")
 
-  val out: Outlet[Json] = Outlet[Json]("flowTransformer.out")
+  val out: Outlet[Event[T]] = Outlet[Event[T]]("flowTransformer.out")
 
-  override val shape: FlowShape[Json, Json] = FlowShape(in, out)
+  override val shape: FlowShape[Event[T], Event[T]] = FlowShape(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
 
@@ -187,7 +188,7 @@ final case class FlowTransformer(factory: () => FlowTransformerLogic) extends Gr
 
     override def onPush(): Unit = {
       try {
-        push(out, logic(grab(in)))
+        push(out, grab(in).withPayload(logic(_)))
       } catch {
         case NonFatal(ex) =>
           decider(ex) match {

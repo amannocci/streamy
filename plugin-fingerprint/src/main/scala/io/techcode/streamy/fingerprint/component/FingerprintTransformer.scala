@@ -33,12 +33,13 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.json._
 
 /**
   * Fingerprint transformer implementation.
   */
-private[component] class FingerprintTransformerLogic(config: FingerprintTransformer.Config) extends FlowTransformerLogic(config) {
+private[component] class FingerprintTransformerLogic[T](config: FingerprintTransformer.Config) extends FlowTransformerLogic[T](config) {
 
   // Choose right transform function
   private val hashFunc: HashFunction = FingerprintTransformer.Hashings(config.hashing)
@@ -85,7 +86,7 @@ object FingerprintTransformer {
     * @param conf flow configuration.
     * @return new fingerprint flow.
     */
-  def apply(conf: Config): Flow[Json, Json, NotUsed] =
-    Flow.fromGraph(FlowTransformer(() => new FingerprintTransformerLogic(conf)))
+  def apply[T](conf: Config): Flow[Event[T], Event[T], NotUsed] =
+    Flow.fromGraph(FlowTransformer[T](() => new FingerprintTransformerLogic(conf)))
 
 }

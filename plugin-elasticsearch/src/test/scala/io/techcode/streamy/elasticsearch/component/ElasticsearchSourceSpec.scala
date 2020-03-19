@@ -23,10 +23,12 @@
  */
 package io.techcode.streamy.elasticsearch.component
 
+import akka.NotUsed
 import akka.stream.scaladsl.Sink
 import akka.stream.testkit.scaladsl.TestSink
 import io.techcode.streamy.elasticsearch.component.ElasticsearchSource.HostConfig
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import org.elasticsearch.action.index.IndexRequest
@@ -49,10 +51,12 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       val index = randomIndex()
       restClient.index(new IndexRequest(index)
         .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT
+      )
       restClient.index(new IndexRequest(index)
         .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT
+      )
 
       // Stream to test
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
@@ -60,15 +64,17 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
           scheme = "http",
           host = elasticHost,
           port = elasticPort
-        )),
+        )
+        ),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}"""),
         bulk = 1
-      )).runWith(TestSink.probe[Json])
+      )
+      ).runWith(TestSink.probe[Event[NotUsed]])
 
       // Check
-      stream.requestNext(5 seconds).evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
-      stream.requestNext(5 seconds).evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
+      stream.requestNext(5 seconds).payload.evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
+      stream.requestNext(5 seconds).payload.evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
       stream.expectComplete()
     }
 
@@ -77,7 +83,8 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       val index = randomIndex()
       restClient.index(new IndexRequest(index)
         .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT)
+        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT
+      )
 
       // Result of query
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(
@@ -85,10 +92,12 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
           scheme = "http",
           host = elasticHost,
           port = elasticPort
-        )),
+        )
+        ),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
-      )).runWith(Sink.head[Json])
+      )
+      ).runWith(Sink.head[Event[NotUsed]])
 
       // Check
       whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
@@ -106,10 +115,12 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
           scheme = "http",
           host = elasticHost,
           port = elasticPort
-        )),
+        )
+        ),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
-      )).runWith(Sink.ignore)
+      )
+      ).runWith(Sink.ignore)
 
       assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
     }
