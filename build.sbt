@@ -122,6 +122,13 @@ lazy val `plugin-elasticsearch` = project
       _.copy(includeScala = false)
     },
 
+    assemblyExcludedJars in assembly := {
+      val cp = (fullClasspath in assembly).value
+      cp.filter { x =>
+        x.data.getName.startsWith("scala-library")
+      }
+    },
+
     // Publish fat jars
     artifact in(Compile, assembly) := {
       val art = (artifact in(Compile, assembly)).value
@@ -171,15 +178,36 @@ lazy val `plugin-kafka` = project
   .in(file("plugin-kafka"))
   .settings(
     commonSettings,
-    name := "streamy-" + name.value
+    name := "streamy-" + name.value,
+
+    // Don't include scala in assembly
+    assemblyOption in assembly ~= {
+      _.copy(includeScala = false)
+    },
+
+    assemblyExcludedJars in assembly := {
+      val cp = (fullClasspath in assembly).value
+      cp.filterNot { x =>
+        x.data.getName.startsWith("classes") ||
+        x.data.getName.startsWith("kafka-clients") ||
+          x.data.getName.startsWith("zstd-jni") ||
+          x.data.getName.startsWith("lz4-java") ||
+          x.data.getName.startsWith("slf4j-api") ||
+          x.data.getName.startsWith("snappy-java")
+      }
+    },
+
+    // Publish fat jars
+    artifact in(Compile, assembly) := {
+      val art = (artifact in(Compile, assembly)).value
+      art.withClassifier(Some("assembly"))
+    },
+    addArtifact(artifact in(Compile, assembly), assembly)
   )
-  .settings(
-    Dependencies.akkaStreamKafka
-  )
+  .settings(Dependencies.akkaStreamKafka)
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
-  .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-metric` = project
   .in(file("plugin-metric"))
