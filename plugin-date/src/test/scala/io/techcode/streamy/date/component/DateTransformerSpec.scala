@@ -26,8 +26,11 @@ package io.techcode.streamy.date.component
 import java.time.format.DateTimeFormatter
 import java.time.{ZoneId, ZoneOffset}
 
+import akka.NotUsed
+import akka.stream.scaladsl.Flow
 import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.json._
 
 /**
@@ -82,37 +85,37 @@ object DateTransformerSpec {
 
   object Input {
 
-    val Iso8601: JsObject = Json.obj("date" -> "2000-10-11T14:32:52Z")
+    val Iso8601: Event[NotUsed] = Event(Json.obj("date" -> "2000-10-11T14:32:52Z"))
 
-    val Iso8601Zoned: JsObject = Json.obj("date" -> "2000-10-11T14:32:52+0200")
+    val Iso8601Zoned: Event[NotUsed] = Event(Json.obj("date" -> "2000-10-11T14:32:52+0200"))
 
-    val Custom: JsObject = Json.obj("date" -> "Wed Oct 11 14:32:52 2000")
+    val Custom: Event[NotUsed] = Event(Json.obj("date" -> "Wed Oct 11 14:32:52 2000"))
 
-    val NotString: JsObject = Json.obj("date" -> 1)
+    val NotString: Event[NotUsed] = Event(Json.obj("date" -> 1))
 
   }
 
   object Transformer {
 
-    val Idempotent = DateTransformer(DateTransformer.Config(
+    val Idempotent: Flow[Event[NotUsed], Event[NotUsed], NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTransformer.Iso8601
     ))
 
-    val FromIsoToCustom = DateTransformer(DateTransformer.Config(
+    val FromIsoToCustom: Flow[Event[NotUsed], Event[NotUsed], NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy")
     ))
 
-    val FromCustomToIso = DateTransformer(DateTransformer.Config(
+    val FromCustomToIso: Flow[Event[NotUsed], Event[NotUsed], NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy").withZone(ZoneId.of("UTC")),
       outputFormatter = DateTransformer.Iso8601.withZone(ZoneOffset.UTC)
     ))
 
-    val Validation = DateTransformer(DateTransformer.Config(
+    val Validation: Flow[Event[NotUsed], Event[NotUsed], NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
       source = Root / "date",
       onError = ErrorBehaviour.Discard,
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy").withZone(ZoneId.of("UTC")),
@@ -123,11 +126,11 @@ object DateTransformerSpec {
 
   object Output {
 
-    val Iso8601: JsObject = Json.obj("date" -> "2000-10-11T14:32:52Z")
+    val Iso8601: Event[NotUsed] = Event(Json.obj("date" -> "2000-10-11T14:32:52Z"))
 
-    val Iso8601Zoned: JsObject = Json.obj("date" -> "2000-10-11T14:32:52+02")
+    val Iso8601Zoned: Event[NotUsed] = Event(Json.obj("date" -> "2000-10-11T14:32:52+02"))
 
-    val Custom: JsObject = Json.obj("date" -> "Wed Oct 11 14:32:52 2000")
+    val Custom: Event[NotUsed] = Event(Json.obj("date" -> "Wed Oct 11 14:32:52 2000"))
 
   }
 

@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.json.component
 
+import akka.NotUsed
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -47,10 +48,10 @@ class JsonTransformerBench {
   */
 private object JsonTransformerBench {
 
-  val Source = new DeserializerTransformerLogic(JsonTransformer.Config(source = Root / "message"))
+  val Source = new DeserializerTransformerLogic[NotUsed](JsonTransformer.Config(source = Root / "message"))
 
-  val SourceAndTarget = new DeserializerTransformerLogic(JsonTransformer.Config(source = Root / "message", target = Some(Root / "target")))
+  val SourceAndTarget = new DeserializerTransformerLogic[NotUsed](JsonTransformer.Config(source = Root / "message", target = Some(Root / "target")))
 
-  val Failure = new DeserializerTransformerLogic(JsonTransformer.Config(source = Root / "message"))
+  val Failure = new DeserializerTransformerLogic[NotUsed](JsonTransformer.Config(source = Root / "message"))
 
 }

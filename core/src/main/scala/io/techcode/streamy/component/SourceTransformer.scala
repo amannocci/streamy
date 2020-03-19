@@ -27,6 +27,7 @@ import akka.stream.ActorAttributes.SupervisionStrategy
 import akka.stream._
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.ByteStringParser
@@ -36,15 +37,15 @@ import scala.util.control.NonFatal
 
 /**
   * Source transformer abstract implementation that provide
-  * a convenient way to process a conversion from [[ByteString]] to [[Json]].
+  * a convenient way to process a conversion from [[ByteString]] to [[Event]].
   */
-final case class SourceTransformer(factory: () => ByteStringParser[Json]) extends GraphStage[FlowShape[ByteString, Json]] {
+final case class SourceTransformer[T](factory: () => ByteStringParser[Json]) extends GraphStage[FlowShape[ByteString, Event[T]]] {
 
   val in: Inlet[ByteString] = Inlet[ByteString]("sourceTransformer.in")
 
-  val out: Outlet[Json] = Outlet[Json]("sourceTransformer.out")
+  val out: Outlet[Event[T]] = Outlet[Event[T]]("sourceTransformer.out")
 
-  override val shape: FlowShape[ByteString, Json] = FlowShape(in, out)
+  override val shape: FlowShape[ByteString, Event[T]] = FlowShape(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
 
@@ -57,10 +58,10 @@ final case class SourceTransformer(factory: () => ByteStringParser[Json]) extend
 
     override def onPush(): Unit = {
       try {
-        val pkt = grab(in)
-        parser.parse(pkt) match {
-          case Right(result) => push(out, result)
-          case Left(ex) => throw new StreamException(ex.getMessage, pkt, Map.empty)
+        val data = grab(in)
+        parser.parse(data) match {
+          case Right(result) => push(out, Event[T](result))
+          case Left(ex) => throw new StreamException(ex.getMessage, data, Map.empty)
         }
       } catch {
         case NonFatal(ex) => decider(ex) match {

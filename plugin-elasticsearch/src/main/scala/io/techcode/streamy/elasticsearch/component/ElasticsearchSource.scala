@@ -33,6 +33,7 @@ import akka.stream.scaladsl.Source
 import akka.stream.stage.{GraphStage, GraphStageLogic, OutHandler, StageLogging}
 import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.event.ElasticsearchEvent
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
@@ -81,11 +82,11 @@ object ElasticsearchSource {
     *
     * @param config source configuration.
     */
-  def single(config: Config)(
+  def single[T](config: Config)(
     implicit materializer: Materializer,
     system: ActorSystem,
     executionContext: ExecutionContext
-  ): Source[Json, NotUsed] = {
+  ): Source[Event[T], NotUsed] = {
     val hosts = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
     // Retrieve uri based on scroll id
@@ -114,7 +115,7 @@ object ElasticsearchSource {
     Source.fromFuture(Http().singleRequest(request).flatMap {
       case HttpResponse(StatusCodes.OK, _, entity, _) =>
         entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
-          Json.parseByteStringUnsafe(x)
+          Event(Json.parseByteStringUnsafe(x))
         }
       case resp@HttpResponse(_, _, _, _) =>
         try {
@@ -131,11 +132,11 @@ object ElasticsearchSource {
     * @param config source configuration.
     * @return source.
     */
-  def paginate(config: Config)(
+  def paginate[T](config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ): Source[Json, NotUsed] =
-    Source.fromGraph(new ElasticsearchPaginateSourceStage(config))
+  ): Source[Event[T], NotUsed] =
+    Source.fromGraph(new ElasticsearchPaginateSourceStage[T](config))
       .buffer(config.bulk, OverflowStrategy.backpressure)
 
   /**
@@ -143,16 +144,16 @@ object ElasticsearchSource {
     *
     * @param config source stage configuration.
     */
-  private class ElasticsearchPaginateSourceStage(config: Config)(
+  private class ElasticsearchPaginateSourceStage[T](config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ) extends GraphStage[SourceShape[Json]] {
+  ) extends GraphStage[SourceShape[Event[T]]] {
 
     // Outlet
-    val out: Outlet[Json] = Outlet("ElasticsearchPaginateSource.out")
+    val out: Outlet[Event[T]] = Outlet("ElasticsearchPaginateSource.out")
 
     // Shape
-    override val shape: SourceShape[Json] = SourceShape(out)
+    override val shape: SourceShape[Event[T]] = SourceShape(out)
 
     // Logic generator
     override def createLogic(attr: Attributes): GraphStageLogic = new ElasticsearchPaginateSourceLogic
@@ -192,7 +193,7 @@ object ElasticsearchSource {
           system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
 
           // Check if we have at least one hit
-          val it = result.get[JsArray].iterator
+          val it = result.get[JsArray].iterator.map[Event[T]](Event(_))
           if (it.hasNext) {
             scrollId = data.evaluate(ElasticPath.ScrollId)
             emitMultiple(out, it)

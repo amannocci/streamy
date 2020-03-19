@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,29 +21,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.elasticsearch.component
+package io.techcode.streamy.event
 
-import akka.Done
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Keep, Sink}
-import io.techcode.streamy.event.Event
-
-import scala.concurrent.{ExecutionContext, Future}
+import akka.NotUsed
+import io.techcode.streamy.util.json.Json
 
 /**
-  * Elasticsearch sink companion.
+  * Basic streamy event.
+  *
+  * @param payload json payload.
+  * @param ctx     optional context.
+  * @tparam T type of context.
   */
-object ElasticsearchSink {
+case class Event[T](
+  payload: Json,
+  ctx: T = null.asInstanceOf[T]
+) {
 
   /**
-    * Create a new elasticsearch sink.
+    * Update payload.
     *
-    * @param config sink configuration.
+    * @param transform function to transform payload.
+    * @return new event.
     */
-  def apply[T](config: ElasticsearchFlow.Config)(
-    implicit system: ActorSystem,
-    executionContext: ExecutionContext
-  ): Sink[Event[T], Future[Done]] =
-    ElasticsearchFlow(config).toMat(Sink.ignore)(Keep.right)
+  def withPayload(transform: Json => Json): Event[T] = copy[T](transform(payload))
 
+  /**
+    * Update context.
+    *
+    * @param transform function to transform context.
+    * @tparam Out type of new event.
+    * @return new event.
+    */
+  def withCtx[Out](transform: T => Out): Event[Out] = copy(payload, transform(ctx))
 }

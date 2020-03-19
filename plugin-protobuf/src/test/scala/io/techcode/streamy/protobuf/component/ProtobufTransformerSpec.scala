@@ -27,6 +27,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing}
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.protobuf.Data
 import io.techcode.streamy.protobuf.Data.{Pkt, Pkts}
 import io.techcode.streamy.util.json._
@@ -40,7 +41,7 @@ class ProtobufTransformerSpec extends TestTransformer {
 
   "Protobuf transformer" should {
     "parser data correctly" in {
-      except[ByteString, Json](
+      except(
         ProtobufTransformerSpec.Parser.Transformer.Simple,
         ProtobufTransformerSpec.Parser.Input.Simple,
         ProtobufTransformerSpec.Parser.Output.Simple
@@ -48,7 +49,7 @@ class ProtobufTransformerSpec extends TestTransformer {
     }
 
     "print data correctly" in {
-      except[Json, ByteString](
+      except(
         ProtobufTransformerSpec.Printer.Transformer.Simple,
         ProtobufTransformerSpec.Printer.Input.Simple,
         ProtobufTransformerSpec.Printer.Output.Simple
@@ -70,18 +71,18 @@ object ProtobufTransformerSpec {
 
     object Transformer {
 
-      val Simple: Flow[ByteString, Json, NotUsed] =
+      val Simple: Flow[ByteString, Event[NotUsed], NotUsed] =
         Framing.simpleFramingProtocolEncoder(Int.MaxValue - 4)
           .via(ProtobufTransformer.parser(ProtobufTransformer.Parser.Config(
             proto = Data.Pkts.getDefaultInstance,
-            decoder = (pkts: Pkts) => Json.obj("test" -> pkts.getPkt(0).getAttrsMap.get("test"))
+            decoder = (pkts: Pkts) => Event(Json.obj("test" -> pkts.getPkt(0).getAttrsMap.get("test")))
           )))
 
     }
 
     object Output {
 
-      val Simple: Json = Json.obj("test" -> "test")
+      val Simple: Event[NotUsed] = Event(Json.obj("test" -> "test"))
 
     }
 
@@ -91,16 +92,16 @@ object ProtobufTransformerSpec {
 
     object Input {
 
-      val Simple: Json = Json.obj("test" -> "test")
+      val Simple: Event[NotUsed] = Event(Json.obj("test" -> "test"))
 
     }
 
     object Transformer {
 
-      val Simple: Flow[Json, ByteString, NotUsed] =
+      val Simple: Flow[Event[NotUsed], ByteString, NotUsed] =
         ProtobufTransformer.printer(ProtobufTransformer.Printer.Config(
           proto = Data.Pkts.getDefaultInstance,
-          encoder = (doc: Json) => Pkts.newBuilder().addPkt(Pkt.newBuilder().putAttrs("test", doc.evaluate(Root / "test").get[String])).build()
+          encoder = (evt: Event[NotUsed]) => Pkts.newBuilder().addPkt(Pkt.newBuilder().putAttrs("test", evt.payload.evaluate(Root / "test").get[String])).build()
         )).via(Framing.simpleFramingProtocolDecoder(Int.MaxValue - 4))
     }
 

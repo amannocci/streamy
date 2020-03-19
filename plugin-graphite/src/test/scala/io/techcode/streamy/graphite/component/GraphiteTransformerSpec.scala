@@ -27,6 +27,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.{FloatBinder, LongBinder, StringBinder}
 
@@ -71,7 +72,7 @@ object GraphiteTransformerSpec {
       timestamp = LongBinder("timestamp"),
     )
 
-    val Parsing: Flow[ByteString, Json, NotUsed] = GraphiteTransformer.parser(GraphiteTransformer.Config(
+    val Parsing: Flow[ByteString, Event[NotUsed], NotUsed] = GraphiteTransformer.parser[NotUsed](GraphiteTransformer.Config(
       binding = Binding
     ))
 
@@ -79,11 +80,11 @@ object GraphiteTransformerSpec {
 
   object Output {
 
-    val Parser: Json = Json.obj(
+    val Parser: Event[NotUsed] = Event(Json.obj(
       "key" -> "gatling.basicsimulation.allRequests.ok.count",
       "value" -> 2F,
       "timestamp" -> 1518123202L
-    )
+    ))
 
   }
 

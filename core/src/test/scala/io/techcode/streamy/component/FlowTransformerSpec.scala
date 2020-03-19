@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.component
 
+import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
@@ -31,6 +32,7 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
@@ -39,15 +41,15 @@ import io.techcode.streamy.util.json._
   */
 class FlowTransformerSpec extends StreamyTestSystem {
 
-  class Impl(config: ImplConfig) extends FlowTransformerLogic(config) {
+  class Impl[T](config: ImplConfig) extends FlowTransformerLogic[T](config) {
     override def transform(value: Json): MaybeJson = value match {
       case x: JsString => s"${x.value}bar"
       case _ => JsUndefined
     }
   }
 
-  class ImplParent(config: ImplConfig) extends FlowTransformerLogic(config) {
-    override def transform(value: Json, pkt: Json): MaybeJson = value match {
+  class ImplParent[T](config: ImplConfig) extends FlowTransformerLogic[T](config) {
+    override def transform(value: Json, payload: Json): MaybeJson = value match {
       case x: JsString => s"${x.value}bar"
       case _ => JsUndefined
     }
@@ -67,12 +69,12 @@ class FlowTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val transformer = FlowTransformer(() => new Impl(ImplConfig(Root / "message")))
+      val transformer = FlowTransformer[NotUsed](() => new Impl(ImplConfig(Root / "message")))
 
-      Source.single(Json.obj("message" -> "foo"))
+      Source.single(Event[NotUsed](Json.obj("message" -> "foo")))
         .via(transformer)
-        .runWith(TestSink.probe[Json])
-        .requestNext() should equal(Json.obj("message" -> "foobar"))
+        .runWith(TestSink.probe[Event[NotUsed]])
+        .requestNext() should equal(Event(Json.obj("message" -> "foobar")))
     }
 
     "transform correctly a packet with a specific target" in {
@@ -80,15 +82,15 @@ class FlowTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val transformer = FlowTransformer(() => new Impl(ImplConfig(Root / "message", Some(Root / "target"))))
+      val transformer = FlowTransformer[NotUsed](() => new Impl(ImplConfig(Root / "message", Some(Root / "target"))))
 
-      Source.single(Json.obj("message" -> "foo"))
+      Source.single(Event[NotUsed](Json.obj("message" -> "foo")))
         .via(transformer)
-        .runWith(TestSink.probe[Json])
-        .requestNext() should equal(Json.obj(
+        .runWith(TestSink.probe[Event[NotUsed]])
+        .requestNext() should equal(Event(Json.obj(
         "message" -> "foo",
         "target" -> "foobar"
-      ))
+      )))
     }
 
     "transform correctly a packet with a specific target and remove source" in {

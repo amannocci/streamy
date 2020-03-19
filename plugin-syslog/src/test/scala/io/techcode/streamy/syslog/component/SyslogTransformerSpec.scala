@@ -30,6 +30,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
+import io.techcode.streamy.event.Event
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing
 import io.techcode.streamy.syslog.component.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
@@ -327,7 +328,7 @@ object SyslogTransformerSpec {
       val ParserMalformedCountMax: ByteString = ParserMalformedPrefix ++ framingCount(ParserSimple)
       val ParserMalformedCountNegative: ByteString = ByteString("-") ++ framingCount(ParserSimple)
 
-      val PrinterSimple: Json = Json.obj(
+      val PrinterSimple: Event[NotUsed] = Event(Json.obj(
         SyslogTransformer.Rfc3164.Id.Facility -> 4,
         SyslogTransformer.Rfc3164.Id.Severity -> 2,
         SyslogTransformer.Rfc3164.Id.Timestamp -> "Aug 24 05:34:00",
@@ -336,7 +337,7 @@ object SyslogTransformerSpec {
         SyslogTransformer.Rfc3164.Id.ProcId -> "77042",
         SyslogTransformer.Rfc3164.Id.MsgId -> "ID47",
         SyslogTransformer.Rfc3164.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
-      )
+      ))
 
     }
 
@@ -351,38 +352,38 @@ object SyslogTransformerSpec {
         message = StringBinder(SyslogTransformer.Rfc3164.Id.Message)
       )
 
-      val ParserStrictDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc3164.Config(
+      val ParserStrictDelimiter: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc3164.Config(
         binding = Binding
       ))
 
-      val ParserLenientDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc3164.Config(
+      val ParserLenientDelimiter: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc3164.Config(
         mode = SyslogTransformer.Rfc3164.Mode.Lenient,
         binding = Binding
       ))
 
-      val ParserStrictCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc3164.Config(
+      val ParserStrictCount: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc3164.Config(
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val ParserLenientCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc3164.Config(
+      val ParserLenientCount: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc3164.Config(
         mode = SyslogTransformer.Rfc3164.Mode.Lenient,
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val ParserLenientCountMax: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc3164.Config(
+      val ParserLenientCountMax: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc3164.Config(
         mode = SyslogTransformer.Rfc3164.Mode.Lenient,
         framing = Framing.Count,
         maxSize = 1024,
         binding = Binding
       ))
 
-      val PrinterDelimiter: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc3164.Config(
+      val PrinterDelimiter: Flow[Event[NotUsed], ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc3164.Config(
         binding = Binding
       ))
 
-      val PrinterCount: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc3164.Config(
+      val PrinterCount: Flow[Event[NotUsed], ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc3164.Config(
         framing = Framing.Count,
         binding = Binding
       ))
@@ -391,7 +392,7 @@ object SyslogTransformerSpec {
 
     object Output {
 
-      val ParserSimple: Json = Json.obj(
+      val ParserSimple: Event[NotUsed] = Event(Json.obj(
         SyslogTransformer.Rfc3164.Id.Facility -> 4,
         SyslogTransformer.Rfc3164.Id.Severity -> 2,
         SyslogTransformer.Rfc3164.Id.Timestamp -> "Apr  4 13:51:20",
@@ -399,7 +400,7 @@ object SyslogTransformerSpec {
         SyslogTransformer.Rfc3164.Id.AppName -> "su",
         SyslogTransformer.Rfc3164.Id.ProcId -> "77042",
         SyslogTransformer.Rfc3164.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
-      )
+      ))
 
       val PrinterSimple: ByteString = ByteString("<34>Aug 24 05:34:00 mymachine.example.com su[77042]: 'su root' failed for lonvick on /dev/pts/8")
 
@@ -430,7 +431,7 @@ object SyslogTransformerSpec {
       val ParserMalformedPrefix: ByteString = ByteString("1000000")
       val ParserMalformedCountMax: ByteString = ParserMalformedPrefix ++ framingCount(ParserSimple)
       val ParserMalformedCountNegative: ByteString = ByteString("-") ++ framingCount(ParserSimple)
-      val PrinterSimple: Json = Json.obj(
+      val PrinterSimple: Event[NotUsed] = Event(Json.obj(
         SyslogTransformer.Rfc5424.Id.Facility -> 4,
         SyslogTransformer.Rfc5424.Id.Severity -> 2,
         SyslogTransformer.Rfc5424.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
@@ -439,7 +440,7 @@ object SyslogTransformerSpec {
         SyslogTransformer.Rfc5424.Id.ProcId -> "77042",
         SyslogTransformer.Rfc5424.Id.MsgId -> "ID47",
         SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
-      )
+      ))
 
     }
 
@@ -457,43 +458,43 @@ object SyslogTransformerSpec {
         message = StringBinder(SyslogTransformer.Rfc5424.Id.Message)
       )
 
-      val ParserStrictDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
+      val ParserStrictDelimiter: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc5424.Config(
         binding = Binding
       ))
 
-      val ParserLenientDelimiter: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
+      val ParserLenientDelimiter: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc5424.Config(
         mode = Mode.Lenient,
         binding = Binding
       ))
 
-      val ParserStrictCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
+      val ParserStrictCount: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc5424.Config(
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val ParserLenientCount: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
+      val ParserLenientCount: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc5424.Config(
         mode = Mode.Lenient,
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val ParserLenientCountMax: Flow[ByteString, Json, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
+      val ParserLenientCountMax: Flow[ByteString, Event[NotUsed], NotUsed] = SyslogTransformer.parser[NotUsed](SyslogTransformer.Rfc5424.Config(
         mode = Mode.Lenient,
         framing = Framing.Count,
         maxSize = 1024,
         binding = Binding
       ))
 
-      val PrinterDelimiter: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
+      val PrinterDelimiter: Flow[Event[NotUsed], ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
         binding = Binding
       ))
 
-      val PrinterCount: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
+      val PrinterCount: Flow[Event[NotUsed], ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val PrinterDefault: Flow[Json, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
+      val PrinterDefault: Flow[Event[NotUsed], ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
         binding = Binding.copy(
           facility = NoneBinder,
           severity = NoneBinder,
@@ -505,7 +506,7 @@ object SyslogTransformerSpec {
 
     object Output {
 
-      val ParserSimple: Json = Json.obj(
+      val ParserSimple: Event[NotUsed] = Event(Json.obj(
         SyslogTransformer.Rfc5424.Id.Facility -> 4,
         SyslogTransformer.Rfc5424.Id.Severity -> 2,
         SyslogTransformer.Rfc5424.Id.Timestamp -> "2003-10-11T22:14:15.003Z",
@@ -515,9 +516,9 @@ object SyslogTransformerSpec {
         SyslogTransformer.Rfc5424.Id.MsgId -> "ID47",
         SyslogTransformer.Rfc5424.Id.StructData -> """[sigSig ver="1"]""",
         SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
-      )
+      ))
 
-      val ParserAlternative: Json = ParserSimple.patch(Replace(Root / SyslogTransformer.Rfc5424.Id.Timestamp, "1985-04-12T19:20:50.52-04:00")).get[Json]
+      val ParserAlternative: Event[NotUsed] = Event(ParserSimple.payload.patch(Replace(Root / SyslogTransformer.Rfc5424.Id.Timestamp, "1985-04-12T19:20:50.52-04:00")).get[Json])
 
       val PrinterSimple: ByteString = ByteString("<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 - 'su root' failed for lonvick on /dev/pts/8")
 
