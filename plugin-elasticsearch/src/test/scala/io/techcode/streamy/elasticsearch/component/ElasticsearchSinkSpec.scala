@@ -58,6 +58,25 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
       }
     }
 
+    "send data with document parsing bypass" in {
+      val result = Source.single(Event[NotUsed](Json.printByteStringUnsafe(Json.obj("foo" -> "bar"))))
+        .runWith(ElasticsearchSink[NotUsed](ElasticsearchFlow.Config(
+          Seq(HostConfig(
+            scheme = "http",
+            host = elasticHost,
+            port = elasticPort
+          )),
+          randomIndex(),
+          "index",
+          bulk = 1,
+          bypassDocumentParsing = true
+        )))
+
+      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
+        x should equal(Done)
+      }
+    }
+
     "send data in bulk" in {
       val result = Source.fromIterator[Event[NotUsed]](() => Seq(Event[NotUsed](Json.obj("foo" -> "bar")), Event[NotUsed](Json.obj("foo" -> "bar"))).iterator)
         .runWith(ElasticsearchSink[NotUsed](ElasticsearchFlow.Config(

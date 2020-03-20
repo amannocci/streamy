@@ -82,7 +82,8 @@ object ElasticsearchFlow {
     action: String,
     bulk: Int = DefaultBulk,
     retry: FiniteDuration = DefaultRetry,
-    binding: Binding = Binding()
+    binding: Binding = Binding(),
+    bypassDocumentParsing: Boolean = false
   )
 
   case class Binding(
@@ -196,8 +197,15 @@ object ElasticsearchFlow {
       )
 
       // Retrieve document
-      val doc = payload.evaluate(binding.document).get[Json]
-      Json.printByteStringUnsafe(header) ++ NewLineDelimiter ++ Json.printByteStringUnsafe(doc) ++ NewLineDelimiter
+      val doc = {
+        val analysis = payload.evaluate(binding.document).get[Json]
+        if (analysis.isBytes && config.bypassDocumentParsing) {
+          analysis.get[ByteString]
+        } else {
+          Json.printByteStringUnsafe(analysis)
+        }
+      }
+      Json.printByteStringUnsafe(header) ++ NewLineDelimiter ++ doc ++ NewLineDelimiter
     }
 
     /**
