@@ -27,7 +27,7 @@ import akka.actor.ActorSystem
 import akka.kafka.ConsumerMessage.CommittableOffset
 import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.kafka.scaladsl.{Committer, Consumer}
-import akka.kafka.{CommitterSettings, ConsumerMessage, ConsumerSettings, Subscriptions}
+import akka.kafka.{AutoSubscription, CommitterSettings, ConsumerMessage, ConsumerSettings, Subscriptions}
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Keep}
 import akka.util.ByteString
@@ -49,15 +49,27 @@ object KafkaSource {
     bootstrapServers: String,
     groupId: String,
     autoOffsetReset: String = "latest",
-    topics: Set[String] = Set.empty,
-    topicPattern: String = "",
+    topics: TopicConfig,
     binding: Binding = Binding()
-  ) {
-    def validate(): Unit = {
-      if (topics.isEmpty && topicPattern.isEmpty) {
-        throw new IllegalArgumentException()
-      }
-    }
+  )
+
+  // Generic topic configuration
+  trait TopicConfig {
+    def toSubscription: AutoSubscription
+  }
+
+  // Static topic configuration
+  case class StaticTopicConfig(
+    statics: Set[String]
+  ) extends TopicConfig {
+    override def toSubscription: AutoSubscription = Subscriptions.topics(statics)
+  }
+
+  // Topic pattern configuration
+  case class PatternTopicConfig(
+    pattern: String
+  ) extends TopicConfig {
+    override def toSubscription: AutoSubscription = Subscriptions.topicPattern(pattern)
   }
 
   // Component binding
@@ -76,9 +88,6 @@ object KafkaSource {
     * @param config source configuration.
     */
   def atLeastOnce(config: Config)(implicit system: ActorSystem, materializer: Materializer): Consumer.DrainingControl[Done] = {
-    // Validate configuration
-    config.validate()
-
     // Set consumer settings
     val consumerSettings = ConsumerSettings(system, new StringDeserializer, new ByteArrayDeserializer)
       .withBootstrapServers(config.bootstrapServers)
@@ -105,18 +114,9 @@ object KafkaSource {
           Event(builder.result(), msg.committableOffset)
         }
 
-    // Support patterns or explicit
-    val subscriptions = {
-      if (config.topics.nonEmpty) {
-        Subscriptions.topics(config.topics)
-      } else {
-        Subscriptions.topicPattern(config.topicPattern)
-      }
-    }
-
     // Run source
     Consumer
-      .committableSource(consumerSettings, subscriptions)
+      .committableSource(consumerSettings, config.topics.toSubscription)
       .via(process)
       .via(config.handler)
       .map(_.ctx)
