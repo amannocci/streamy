@@ -26,7 +26,7 @@ package io.techcode.streamy.elasticsearch.component
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.{ContentType, _}
 import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
 import akka.stream._
 import akka.stream.scaladsl.Flow
@@ -48,7 +48,7 @@ import scala.language.postfixOps
 object ElasticsearchFlow {
 
   // Default values
-  val DefaultBulk: Int = 500
+  val DefaultBulk: Int = 100
   val DefaultWorker: Int = 1
   val DefaultRetry: FiniteDuration = 1 second
 
@@ -75,6 +75,17 @@ object ElasticsearchFlow {
     val Items: JsonPointer = Root / "items"
   }
 
+  // Precomputed elasticsearch headers
+  private object ElasticHeaders {
+    val Id: String = "_id"
+    val Index: String = "_index"
+    val Type: String = "_type"
+    val Version: String = "_version"
+    val VersionType: String = "_version_type"
+    val Ct: ContentType.WithFixedCharset =
+      ContentType(MediaType.customWithFixedCharset("application", "x-ndjson", HttpCharsets.`UTF-8`))
+  }
+
   // Component configuration
   case class Config(
     hosts: Seq[HostConfig],
@@ -86,6 +97,7 @@ object ElasticsearchFlow {
     bypassDocumentParsing: Boolean = false
   )
 
+  // Binding configuration
   case class Binding(
     id: JsonPointer = ElasticPath.Id,
     `type`: JsonPointer = ElasticPath.Type,
@@ -175,22 +187,22 @@ object ElasticsearchFlow {
       val header = Json.obj(
         config.action -> {
           val builder = Json.objectBuilder()
-            .+=("_index" -> index)
-            .+=("_type" -> `type`)
+            .+=(ElasticHeaders.Index -> index)
+            .+=(ElasticHeaders.Type -> `type`)
 
           // Add version if present
           version.ifExists[Long] { x =>
-            builder += ("_version" -> x)
+            builder += (ElasticHeaders.Version -> x)
           }
 
           // Add version type if present
           versionType.ifExists[String] { x =>
-            builder += ("_version_type" -> x)
+            builder += (ElasticHeaders.VersionType -> x)
           }
 
           // Add id if present
           id.ifExists[String] { x =>
-            builder += ("_id" -> x)
+            builder += (ElasticHeaders.Id -> x)
           }
           builder.result()
         }
@@ -364,7 +376,7 @@ object ElasticsearchFlow {
           var request = HttpRequest()
             .withMethod(HttpMethods.POST)
             .withUri(s"${hostConf.scheme}://${hostConf.host}:${hostConf.port}/_bulk")
-            .withEntity(ContentType(MediaType.customWithFixedCharset("application", "x-ndjson", HttpCharsets.`UTF-8`)), marshalMessages(inProcessMessages))
+            .withEntity(ElasticHeaders.Ct, marshalMessages(inProcessMessages))
 
           // Add basic auth
           request = if (hostConf.auth.isDefined) {
@@ -372,8 +384,7 @@ object ElasticsearchFlow {
               case BasicAuthConfig(username, password) =>
                 request.withHeaders(Seq(
                   Authorization(BasicHttpCredentials(username, password))
-                )
-                )
+                ))
               case _ => request
             }
           } else {
