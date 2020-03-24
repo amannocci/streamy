@@ -27,6 +27,9 @@ import sbt._
 
 object Dependencies {
 
+  val AkkaVersion = "2.5.29"
+  val TestContainersVersion = "0.36.1"
+
   object Compile {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" // Apache 2 License
     val akkaStream = "com.typesafe.akka" %% "akka-stream" // Apache 2 License
@@ -41,6 +44,8 @@ object Dependencies {
   }
 
   object Test {
+    val testContainers = "com.dimafeng" %% "testcontainers-scala-scalatest"
+    val testContainersElastic = "com.dimafeng" %% "testcontainers-scala-elasticsearch"
     val elastic = "org.elasticsearch.client" % "elasticsearch-rest-high-level-client"
     val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" // Apache 2 License
     val akkaStreamTestkit = "com.typesafe.akka" %% "akka-stream-testkit" // Apache 2 License
@@ -50,7 +55,7 @@ object Dependencies {
 
   import Compile._, Test._
 
-  val akka = libraryDependencies ++= Seq(akkaActor,akkaStream, akkaSlf4j).map(_ % "2.5.29")
+  val akka = libraryDependencies ++= Seq(akkaActor,akkaStream, akkaSlf4j).map(_ % AkkaVersion)
   val akkaStreamKafka = libraryDependencies ++= Seq(Compile.akkaStreamKafka).map(_ % "2.0.2")
   val akkaHttp = libraryDependencies ++= Seq(Compile.akkaHttp).map(_ % "10.1.11")
   val logback = libraryDependencies ++= Seq(logbackClassic % "1.2.3")
@@ -59,10 +64,14 @@ object Dependencies {
   val scala = libraryDependencies ++= Seq(scalaReflect.value)
   val metric = libraryDependencies ++= Seq(metricsJvm % "4.0.5")
 
-  private val akkaTesting = Seq(akkaTestkit, akkaStreamTestkit).map(_ % "2.5.29")
+  private val akkaTesting = Seq(akkaTestkit, akkaStreamTestkit).map(_ % AkkaVersion)
   val akkaTest = libraryDependencies ++= akkaTesting.map(_ % "test")
   val akkaTestLib = libraryDependencies ++= akkaTesting
-  val elasticTest = libraryDependencies ++= Seq(elastic).map(_ % "7.3.0" % "test")
+  val elasticTest = libraryDependencies ++= Seq(
+    elastic % "7.3.0",
+    testContainers % TestContainersVersion,
+    testContainersElastic % TestContainersVersion
+  ).map(_ % "test")
   val testKit = libraryDependencies ++= Seq(scalaTest % "3.0.8", mockitoCore % "2.23.4")
 
 }

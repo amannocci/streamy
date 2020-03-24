@@ -26,6 +26,7 @@ package io.techcode.streamy.elasticsearch.util
 import java.util.UUID
 
 import akka.http.scaladsl.Http
+import com.dimafeng.testcontainers.{ElasticsearchContainer, ForAllTestContainer}
 import io.techcode.streamy.TestSystem
 import org.apache.http.HttpHost
 import org.elasticsearch.client.{RestClient, RestHighLevelClient}
@@ -33,15 +34,25 @@ import org.elasticsearch.client.{RestClient, RestHighLevelClient}
 /**
   * Helper for elasticsearch spec.
   */
-trait ElasticsearchSpec extends TestSystem {
+trait ElasticsearchSpec extends TestSystem with ForAllTestContainer {
 
-  val elasticHost: String = sys.props.getOrElse("elasticsearch.host", "127.0.0.1")
-  val elasticPort: Int = sys.props.getOrElse("elasticsearch.port", "9200").toInt
+  override val container: ElasticsearchContainer = ElasticsearchContainer(
+    "docker.elastic.co/elasticsearch/elasticsearch:7.3.0"
+  )
 
-  val restClient: RestHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, elasticPort, "http")))
+  var restClient: RestHighLevelClient = _
+  var elasticHost: String = _
+  var elasticPort: Int = _
 
   def randomIndex(): String = {
     UUID.randomUUID().toString
+  }
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    restClient = new RestHighLevelClient(RestClient.builder(HttpHost.create(container.httpHostAddress)))
+    elasticHost = container.containerIpAddress
+    elasticPort = container.mappedPort(9200)
   }
 
   override def afterAll(): Unit = {

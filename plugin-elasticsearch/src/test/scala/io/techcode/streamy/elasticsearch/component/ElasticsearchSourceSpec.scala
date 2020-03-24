@@ -64,8 +64,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
           scheme = "http",
           host = elasticHost,
           port = elasticPort
-        )
-        ),
+        )),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}"""),
         bulk = 1
@@ -92,8 +91,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
           scheme = "http",
           host = elasticHost,
           port = elasticPort
-        )
-        ),
+        )),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
       )
@@ -115,8 +113,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
           scheme = "http",
           host = elasticHost,
           port = elasticPort
-        )
-        ),
+        )),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
       )
