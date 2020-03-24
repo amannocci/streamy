@@ -2,10 +2,8 @@ version: 2
 executorType: machine
 jobs:
   build:
-    environment:
-      # Customize the JVM maximum heap limit
-      JVM_OPTS: -Xmx2048m
-
+    machine:
+      image: 'cimg/base:stable'
     steps:
     # Download docker images
     - checkout
@@ -14,8 +12,7 @@ jobs:
     - restore_cache:
         keys:
         - v1-dependencies-{{ checksum "build.sbt" }}
-        # fallback to using the latest cache if no exact match is found
-        - v1-dependencies-
+
     # Install bats & nmap's ncat
     - run: sudo rm -rf /var/lib/apt/lists/*
     - run: sudo apt-get update > /dev/null
@@ -36,4 +33,4 @@ jobs:
     - save_cache:
         paths:
         - ~/.m2
-        key: v1-dependencies--{{ checksum "build.sbt" }}
+        key: v1-dependencies-{{ checksum "build.sbt" }}
