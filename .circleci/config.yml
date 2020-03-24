@@ -3,7 +3,7 @@ executorType: machine
 jobs:
   build:
     machine:
-      image: 'cimg/base:stable'
+      image: 'ubuntu-1604:201903-01'
     steps:
     # Download docker images
     - checkout
