@@ -10,8 +10,6 @@ scala:
 
 # Test against various jvm
 jdk:
-  - oraclejdk8
-  - oraclejdk11
   - openjdk8
   - openjdk11
 
