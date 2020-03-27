@@ -1,0 +1,41 @@
+---
+
+# Specify lang
+language: scala
+scala:
+  - 2.13.1
+
+# Test against various jvm
+jdk:
+  - oraclejdk8
+  - oraclejdk11
+  - openjdk8
+  - openjdk11
+
+# apt update before install
+addons:
+  apt:
+    update: true
+
+# We need docker for testing
+services:
+  - docker
+
+# Cache maven dependencies
+cache:
+  directories:
+    - $HOME/.m2
+
+# Install bats, protobuf & nmap
+before_install:
+  - sudo apt-get -y install bats gawk protobuf-compiler nmap
+
+# clean, check, build, test, report
+script:
+  - bats core/src/test/bash
+  - chmod -R +x scripts/*
+  - sbt -batch -mem 2048 clean
+  - sbt -batch -mem 2048 scalastyle
+  - sbt -batch -mem 2048 compile
+  - sbt -batch -mem 2048 ";coverage;test;coverageReport;coverageAggregate"
+  - bash <(curl -s https://codecov.io/bash)
