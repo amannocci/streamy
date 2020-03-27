@@ -1,5 +1,5 @@
 # Streamy
-[![CircleCI](https://circleci.com/gh/amannocci/streamy/tree/master.svg?style=svg)](https://circleci.com/gh/amannocci/streamy/tree/master)
+[![TravisCI](https://travis-ci.com/amannocci/streamy.svg?branch=master)](https://travis-ci.com/github/amannocci/streamy)
 [![codecov](https://codecov.io/gh/amannocci/streamy/branch/master/graph/badge.svg)](https://codecov.io/gh/amannocci/streamy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Famannocci%2Fstreamy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Famannocci%2Fstreamy?ref=badge_shield)
