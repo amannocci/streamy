@@ -32,10 +32,13 @@ before_install:
 
 # clean, check, build, test, report
 script:
+  # Env tests
   - bats core/src/test/bash
   - chmod -R +x scripts/*
+  # Application test
   - sbt -batch -mem 2048 clean
   - sbt -batch -mem 2048 scalastyle
   - sbt -batch -mem 2048 compile
   - sbt -batch -mem 2048 ";coverage;test;coverageReport;coverageAggregate"
+  # Report
   - bash <(curl -s https://codecov.io/bash)
