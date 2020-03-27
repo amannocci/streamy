@@ -1,5 +1,8 @@
 ---
 
+# Specify distro
+dist: bionic
+
 # Specify lang
 language: scala
 scala:
@@ -36,9 +39,9 @@ script:
   - bats core/src/test/bash
   - chmod -R +x scripts/*
   # Application test
-  - sbt -batch -mem 2048 clean
-  - sbt -batch -mem 2048 scalastyle
-  - sbt -batch -mem 2048 compile
-  - sbt -batch -mem 2048 ";coverage;test;coverageReport;coverageAggregate"
+  - sbt ++$TRAVIS_SCALA_VERSION clean
+  - sbt ++$TRAVIS_SCALA_VERSION scalastyle
+  - sbt ++$TRAVIS_SCALA_VERSION compile
+  - sbt ++$TRAVIS_SCALA_VERSION ";coverage;test;coverageReport;coverageAggregate"
   # Report
   - bash <(curl -s https://codecov.io/bash)
