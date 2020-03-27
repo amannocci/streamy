@@ -1,0 +1,45 @@
+---
+
+# Specify distro
+dist: bionic
+
+# Specify lang
+language: scala
+scala:
+  - 2.13.1
+
+# Test against various jvm
+jdk:
+  - openjdk8
+  - openjdk11
+
+# apt update before install
+addons:
+  apt:
+    update: true
+
+# We need docker for testing
+services:
+  - docker
+
+# Cache maven dependencies
+cache:
+  directories:
+    - $HOME/.m2
+
+# Install bats, protobuf & nmap
+before_install:
+  - sudo apt-get -y install bats gawk protobuf-compiler nmap
+
+# clean, check, build, test, report
+script:
+  # Env tests
+  - bats core/src/test/bash
+  - chmod -R +x scripts/*
+  # Application test
+  - sbt ++$TRAVIS_SCALA_VERSION clean
+  - sbt ++$TRAVIS_SCALA_VERSION scalastyle
+  - sbt ++$TRAVIS_SCALA_VERSION compile
+  - sbt ++$TRAVIS_SCALA_VERSION ";coverage;test;coverageReport;coverageAggregate"
+  # Report
+  - bash <(curl -s https://codecov.io/bash)
