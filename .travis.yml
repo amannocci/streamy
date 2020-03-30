@@ -29,7 +29,7 @@ cache:
 
 # Install bats, protobuf & nmap
 before_install:
-  - sudo apt-get -y install bats gawk protobuf-compiler nmap
+  - sudo apt-get -y install bats gawk protobuf-compiler
 
 # clean, check, build, test, report
 script:

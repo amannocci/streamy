@@ -21,37 +21,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.event
+package io.techcode.streamy.tcp.util
 
-import io.techcode.streamy.util.json.Json
+import com.dimafeng.testcontainers.{Container, ForAllTestContainer, GenericContainer, MultipleContainers}
+import io.techcode.streamy.TestSystem
 
-/**
-  * Basic streamy event.
-  *
-  * @param payload json payload.
-  * @param ctx     optional context.
-  * @tparam T type of context.
-  */
-case class Event[T](
-  payload: Json,
-  ctx: T = null.asInstanceOf[T]
-) {
 
-  /**
-    * Update payload.
-    *
-    * @param transform function to transform payload.
-    * @return new event.
-    */
-  def withPayload(transform: Json => Json): Event[T] = copy[T](transform(payload))
+trait TcpSpec extends TestSystem with ForAllTestContainer {
 
-  /**
-    * Update context.
-    *
-    * @param transform function to transform context.
-    * @tparam Out type of new event.
-    * @return new event.
-    */
-  def withCtx[Out](transform: T => Out): Event[Out] = copy(payload, transform(ctx))
+  val ncatPlain: GenericContainer = GenericContainer(
+    dockerImage = "itsthenetwork/alpine-ncat",
+    exposedPorts = Seq(5000),
+    command = Seq("-lk", "5000")
+  )
+
+  val ncatTls: GenericContainer = GenericContainer(
+    dockerImage = "itsthenetwork/alpine-ncat",
+    exposedPorts = Seq(5000),
+    command = Seq("-lk", "5000", "-i", "3s", "--ssl", "--ssl-cert", "/tmp/test-cert.pem", "--ssl-key", "/tmp/test-key.pem")
+  ).configure { c =>
+    c.withFileSystemBind(
+      getClass.getClassLoader.getResource("test-cert.pem").getFile,
+      "/tmp/test-cert.pem"
+    )
+    c.withFileSystemBind(
+      getClass.getClassLoader.getResource("test-key.pem").getFile,
+      "/tmp/test-key.pem"
+    )
+  }
+
+  override val container: MultipleContainers = MultipleContainers(ncatPlain, ncatTls)
 
 }

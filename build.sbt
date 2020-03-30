@@ -278,6 +278,7 @@ lazy val `plugin-tcp` = project
     commonSettings,
     name := "streamy-" + name.value
   )
+  .settings(Dependencies.tcpTest)
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")

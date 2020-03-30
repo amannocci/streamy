@@ -28,6 +28,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.techcode.streamy.TestSystem
 import io.techcode.streamy.tcp.event.TcpEvent
+import io.techcode.streamy.tcp.util.TcpSpec
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -36,18 +37,13 @@ import scala.sys.process._
 /**
   * Tcp sink spec.
   */
-class TcpSinkSpec extends TestSystem {
-
-  // Start ncat servers
-  override def beforeAll(): Unit = {
-    "bash ./plugin-tcp/src/test/resources/listener.sh".run
-  }
+class TcpSinkSpec extends TestSystem with TcpSpec {
 
   "Tcp sink" when {
     "tls is disabled" should {
       "send data correctly" in {
         val result = Source.single(TcpSinkSpec.Input)
-          .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple))
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple.copy(port = ncatPlain.mappedPort(5000))))
         whenReady(result, timeout(10 seconds), interval(100 millis)) { x =>
           x should equal(Done)
         }
@@ -55,7 +51,7 @@ class TcpSinkSpec extends TestSystem {
 
       "send data correctly with reconnect" in {
         val result = Source.single(TcpSinkSpec.Input)
-          .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect))
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect.copy(port = ncatPlain.mappedPort(5000))))
         whenReady(result, timeout(10 seconds), interval(100 millis)) { x =>
           x should equal(Done)
         }
@@ -65,7 +61,7 @@ class TcpSinkSpec extends TestSystem {
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
         Source.single(TcpFlowSpec.Input)
-          .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple))
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.Simple.copy(port = ncatPlain.mappedPort(5000))))
         expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
         expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
       }
@@ -74,7 +70,7 @@ class TcpSinkSpec extends TestSystem {
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
         Source.single(TcpFlowSpec.Input)
-          .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect))
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.SimpleWithReconnect.copy(port = ncatPlain.mappedPort(5000))))
         expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
         expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
       }
@@ -83,7 +79,7 @@ class TcpSinkSpec extends TestSystem {
     "tls is enabled" should {
       "send data correctly" in {
         val result = Source.single(TcpSinkSpec.Input)
-          .runWith(TcpSink.client(TcpSinkSpec.Sink.Secure))
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.Secure.copy(port = ncatTls.mappedPort(5000))))
         whenReady(result, timeout(10 seconds), interval(100 millis)) { x =>
           x should equal(Done)
         }
@@ -91,7 +87,7 @@ class TcpSinkSpec extends TestSystem {
 
       "send data correctly with reconnect" in {
         val result = Source.single(TcpSinkSpec.Input)
-          .runWith(TcpSink.client(TcpSinkSpec.Sink.SecureWithReconnect))
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.SecureWithReconnect.copy(port = ncatTls.mappedPort(5000))))
         whenReady(result, timeout(10 seconds), interval(100 millis)) { x =>
           x should equal(Done)
         }
@@ -101,7 +97,7 @@ class TcpSinkSpec extends TestSystem {
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
         Source.single(TcpFlowSpec.Input)
-          .runWith(TcpSink.client(TcpSinkSpec.Sink.Secure))
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.Secure.copy(port = ncatTls.mappedPort(5000))))
         expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
         expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
       }
@@ -110,7 +106,7 @@ class TcpSinkSpec extends TestSystem {
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionCreated])
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Client.ConnectionClosed])
         Source.single(TcpFlowSpec.Input)
-          .runWith(TcpSink.client(TcpSinkSpec.Sink.SecureWithReconnect))
+          .runWith(TcpSink.client(TcpSinkSpec.Sink.SecureWithReconnect.copy(port = ncatTls.mappedPort(5000))))
         expectMsgClass(classOf[TcpEvent.Client.ConnectionCreated])
         expectMsgClass(classOf[TcpEvent.Client.ConnectionClosed])
       }

@@ -88,4 +88,8 @@ object Dependencies {
     testContainersKafka % TestContainersVersion
   ).map(_ % "test")
 
+  val tcpTest = libraryDependencies ++= Seq(
+    testContainers % TestContainersScalaVersion
+  ).map(_ % "test")
+
 }
