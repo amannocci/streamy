@@ -208,7 +208,7 @@ lazy val `plugin-kafka` = project
     },
     addArtifact(artifact in(Compile, assembly), assembly)
   )
-  .settings(Dependencies.akkaStreamKafka)
+  .settings(Dependencies.akkaStreamKafka, Dependencies.kafkaTest)
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
