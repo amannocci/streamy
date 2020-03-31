@@ -89,15 +89,7 @@ lazy val core = project
         |make_template
       """.stripMargin
   )
-  .settings(
-    Dependencies.akka,
-    Dependencies.logback,
-    Dependencies.guava,
-    Dependencies.config,
-    Dependencies.scala,
-    Dependencies.akkaTest,
-    Dependencies.testKit
-  )
+  .settings(Dependencies.core)
   .settings(Packages.settings)
   .settings(Publish.settings)
   .enablePlugins(JavaServerAppPackaging, SystemVPlugin)
@@ -139,7 +131,7 @@ lazy val `plugin-elasticsearch` = project
     },
     addArtifact(artifact in(Compile, assembly), assembly)
   )
-  .settings(Dependencies.akkaHttp, Dependencies.elasticTest)
+  .settings(Dependencies.elasticsearch)
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
@@ -208,7 +200,7 @@ lazy val `plugin-kafka` = project
     },
     addArtifact(artifact in(Compile, assembly), assembly)
   )
-  .settings(Dependencies.akkaStreamKafka, Dependencies.kafkaTest)
+  .settings(Dependencies.kafka)
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
@@ -278,7 +270,7 @@ lazy val `plugin-tcp` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Dependencies.tcpTest)
+  .settings(Dependencies.tcp)
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
@@ -296,13 +288,13 @@ lazy val `plugin-xymon` = project
   .disablePlugins(AssemblyPlugin)
 
 lazy val testkit = project
-  .in(file("test"))
+  .in(file("testkit"))
   .settings(
     commonSettings,
     name := "streamy-" + name.value,
     coverageEnabled := false
   )
-  .settings(Dependencies.akkaTestLib, Dependencies.testKit)
+  .settings(Dependencies.testkit)
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .disablePlugins(AssemblyPlugin)
