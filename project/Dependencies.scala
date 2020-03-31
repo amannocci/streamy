@@ -54,7 +54,6 @@ object Dependencies {
     val metricsJvm = "io.dropwizard.metrics" % "metrics-jvm" % MetricJvmVersion // Apache 2 License
     val mockitoCore = "org.mockito" % "mockito-core" % MockitoCoreVersion
     val pureConfig = "com.github.pureconfig" %% "pureconfig" % PureConfig // Mozilla Public License 2.0
-    val scalaReflect = "org.scala-lang" % "scala-reflect" % "2.13.1"
     val scalaTest = "org.scalatest" %% "scalatest" % ScalaTest
   }
 
@@ -74,7 +73,7 @@ object Dependencies {
   import Test._
 
   val core = libraryDependencies ++= Seq(
-    akkaActor, akkaStream, akkaSlf4j, logbackClassic, googleGuava, pureConfig, scalaReflect,
+    akkaActor, akkaStream, akkaSlf4j, logbackClassic, googleGuava, pureConfig,
     Test.akkaTestkit, Test.akkaStreamTestkit, Test.mockitoCore, Test.scalaTest
   )
 

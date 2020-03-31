@@ -28,5 +28,6 @@ import java.nio.file.Path
 // Streamy folder config
 case class FolderConfig(
   data: Path,
-  conf: Path
+  conf: Path,
+  plugin: Path
 )

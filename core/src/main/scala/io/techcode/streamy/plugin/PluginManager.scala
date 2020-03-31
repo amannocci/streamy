@@ -23,8 +23,10 @@
  */
 package io.techcode.streamy.plugin
 
-import java.net.URL
-import java.nio.file.Paths
+import java.net.{URL, URLClassLoader}
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.{Files, Path}
+import java.util.function.BiPredicate
 
 import akka.actor.{Actor, DiagnosticActorLogging, Props}
 import akka.pattern.gracefulStop
@@ -39,8 +41,6 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import java.nio.file.{Path => JPath}
-import scala.reflect.io.{Directory, File, Path}
 
 /**
   * The plugin manager that handle all plugins stuff.
@@ -49,6 +49,9 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
 
   // Actor refs
   private var plugins: Map[String, PluginContainer] = Map.empty
+
+  // Plugin class loader
+  private var pluginClassLoader: ClassLoader = _
 
   // Configuration
   private val lifecycleConfig = ConfigSource.fromConfig(conf).at("lifecycle").loadOrThrow[LifecycleConfig]
@@ -71,20 +74,23 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
     // Check dependencies & prepare loading
     val toLoads = checkDependencies(pluginDescriptions)
 
+    // Load all valid jars
+    pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file.get).toArray, getClass.getClassLoader)
+
     // Waiting response list
     toLoads.foreach(pluginDescription => {
       try {
         // Merge application configuration and plugin configuration
-        val pluginConf = mergeConfig(s"plugin.${pluginDescription.name}", pluginDescription)
+        val pluginConf = mergeConfig(pluginDescription)
 
         // Load main plugin class
-        val typed = Class.forName(pluginDescription.main.get)
+        val typed = Class.forName(pluginDescription.main.get, true, pluginClassLoader)
 
         // Plugin container
         val pluginData = PluginData(
           pluginDescription,
           pluginConf,
-          Directory(folderConfig.data.toFile)
+          folderConfig.data
         )
 
         // Start plugin
@@ -134,16 +140,20 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
   /**
     * Merge all configurations levels.
     *
-    * @param path        internal path of plugin conf in streamy conf.
     * @param description plugin description.
     * @return configuration merged.
     */
-  private def mergeConfig(path: String, description: PluginDescription): Config = {
+  private def mergeConfig(description: PluginDescription): Config = {
+    val path = s"plugin.${description.name}"
     (if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig).resolve()
-      .withFallback((Directory(folderConfig.conf.toFile) / s"${description.name}.conf")
-        .ifFile(f => ConfigFactory.parseFile(f.jfile))
-        .getOrElse(PluginManager.EmptyPluginConfig).resolve())
-      .withFallback(ConfigFactory.parseURL(new URL(s"jar:${description.file.get}!/config.conf")).resolve())
+      .withFallback {
+        val pluginConf = folderConfig.conf.resolve(s"${description.name}.conf")
+        if (Files.exists(pluginConf) && Files.isRegularFile(pluginConf) && Files.isReadable(pluginConf)) {
+          ConfigFactory.parseFile(pluginConf.toFile).resolve()
+        } else {
+          PluginManager.EmptyPluginConfig
+        }
+      }.withFallback(ConfigFactory.parseURL(new URL(s"jar:${description.file.get}!/config.conf")).resolve())
   }
 
   /**
@@ -153,24 +163,25 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
     */
   private def getPluginDescriptions: mutable.AnyRefMap[String, PluginDescription] = {
     // Retrieve all jar files
-    val jarFiles = Directory(PluginManager.PluginsDirectory.toFile).files.filter((x: File) => Path.isExtensionJarOrZip(x.jfile))
+    val jarMatcher: BiPredicate[Path, BasicFileAttributes] = (path, _) => path.endsWith(".jar")
 
     // Attempt to load all plugins
     val pluginDescriptions = mutable.AnyRefMap.empty[String, PluginDescription]
-    for (jar <- jarFiles) {
+    Files.find(folderConfig.plugin, 1, jarMatcher).forEach { jar =>
       // Retrieve configuration details
-      val conf = ConfigFactory.parseURL(new URL(s"jar:file:${jar.toAbsolute.toString()}!/plugin.conf"))
+      val conf = ConfigFactory.parseURL(new URL(s"jar:file:${jar.toAbsolutePath.toString}!/plugin.conf"))
 
       // Attempt to convert configuration to plugin description
       try {
-        val description = ConfigSource.fromConfig(conf).loadOrThrow[PluginDescription].copy(file = Some(jar.toURL))
+        val description = ConfigSource.fromConfig(conf).loadOrThrow[PluginDescription].copy(file = Some(jar.toUri.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
         case _: ConfigReaderException[_] =>
           log.mdc(commonMdc)
-          log.error("Can't load '{}' plugin", jar.name)
+          log.error("Can't load '{}' plugin", jar.getFileName.toString)
       }
     }
+
     pluginDescriptions
   }
 
@@ -224,8 +235,5 @@ object PluginManager {
 
   // Empty plugin configuration
   val EmptyPluginConfig: Config = ConfigFactory.empty()
-
-  // Plugin directory path
-  val PluginsDirectory: JPath = Paths.get(".").resolve("plugin")
 
 }

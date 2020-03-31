@@ -23,13 +23,13 @@
  */
 package io.techcode.streamy.plugin
 
+import java.nio.file.Paths
+
 import akka.actor.{ActorRef, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.TestSystem
 import pureconfig._
 import pureconfig.generic.auto._
-
-import scala.reflect.io.Path
 
 /**
   * Helper for plugin test.
@@ -45,7 +45,7 @@ trait TestPlugin extends TestSystem {
       PluginData(
         description,
         conf,
-        Path(".").toDirectory
+        Paths.get(".")
       )
     ))
   }

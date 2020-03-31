@@ -39,9 +39,6 @@ lazy val commonSettings = Seq(
   // Disable test in assembly
   test in assembly := {},
 
-  // Java compiler options
-  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-
   // Scala compiler options
   scalacOptions in(Compile, doc) ++= Seq(
     "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
