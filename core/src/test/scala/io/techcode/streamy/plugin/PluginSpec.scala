@@ -23,19 +23,35 @@
  */
 package io.techcode.streamy.plugin
 
+import java.nio.file.Paths
+
 import akka.actor.{ActorRef, Kill, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.StreamyTestSystem
+import org.scalatest.{Inside, PrivateMethodTester}
 import org.scalatestplus.mockito.MockitoSugar
 import pureconfig._
 import pureconfig.generic.auto._
 
-import scala.reflect.io.Path
-
 /**
   * Plugin spec.
   */
-class PluginSpec extends StreamyTestSystem with MockitoSugar {
+class PluginSpec extends StreamyTestSystem with MockitoSugar with Inside with PrivateMethodTester {
+
+  "PluginDescription" should {
+    "contains all informations" in {
+      val description = PluginDescription(name = "test", version = "1.0.0", file = Some(Paths.get(".").toUri.toURL))
+      inside(description) { case PluginDescription(name, version, _, _, _, _, _) =>
+        name should be("test")
+        version should be("1.0.0")
+      }
+    }
+
+    "be create from Config" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
+        .loadOrThrow[PluginDescription]
+    }
+  }
 
   "Plugin" can {
     "be started" in {
@@ -64,7 +80,7 @@ class PluginSpec extends StreamyTestSystem with MockitoSugar {
       PluginData(
         description,
         conf,
-        Path(".").toDirectory
+        Paths.get(".")
       )
     ))
   }

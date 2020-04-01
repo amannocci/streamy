@@ -26,7 +26,7 @@ package io.techcode.streamy.plugin
 import akka.actor.{ActorRef, PoisonPill, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.StreamyTestSystem
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
 /**
   * PluginManager spec.

@@ -23,12 +23,15 @@
  */
 package io.techcode.streamy.plugin
 
-import akka.actor.{Actor, ActorSystem, DiagnosticActorLogging}
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
-import io.techcode.streamy.event._
-import io.techcode.streamy.util.StreamException
+import java.net.URL
+import java.nio.file.{Files, Path}
 
-import scala.reflect.io.Directory
+import akka.actor.{Actor, ActorRef, ActorSystem, DiagnosticActorLogging}
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
+import com.typesafe.config.Config
+import io.techcode.streamy.event._
+import io.techcode.streamy.plugin.PluginState.PluginState
+import io.techcode.streamy.util.StreamException
 
 /**
   * Abstract plugin implementation based on Actor.
@@ -81,7 +84,13 @@ abstract class Plugin(
     *
     * @return the folder lazily created if needed.
     */
-  def dataFolder: Directory = (data.dataFolder / data.description.name).createDirectory()
+  def dataFolder: Path = {
+    val dataPath = data.dataFolder.resolve(data.description.name)
+    if (Files.notExists(dataPath)) {
+      Files.createDirectory(dataPath)
+    }
+    dataPath
+  }
 
 }
 
@@ -92,3 +101,43 @@ object PluginState extends Enumeration {
   type PluginState = Value
   val Unknown, Loading, Running, Stopping, Stopped = Value
 }
+
+/**
+  * Plugin data informations for loose coupling.
+  *
+  * @param description plugin description.
+  * @param conf        plugin configuration.
+  * @param dataFolder  plugin data folder.
+  */
+case class PluginData(
+  description: PluginDescription,
+  conf: Config,
+  dataFolder: Path
+)
+
+/**
+  * Plugin container for loose coupling.
+  *
+  * @param ref         plugin actor ref.
+  * @param description plugin description.
+  * @param conf        plugin configuration.
+  */
+case class PluginContainer(
+  ref: ActorRef = ActorRef.noSender,
+  description: PluginDescription,
+  conf: Config,
+  state: PluginState = PluginState.Unknown
+)
+
+/**
+  * Represents some plugin informations.
+  */
+case class PluginDescription(
+  name: String,
+  version: String,
+  main: Option[String] = Option.empty,
+  authors: Seq[String] = Seq.empty,
+  website: Option[String] = None,
+  depends: Seq[String] = Seq.empty,
+  file: Option[URL] = None
+)
