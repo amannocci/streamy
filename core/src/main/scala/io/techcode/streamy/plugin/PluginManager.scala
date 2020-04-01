@@ -27,6 +27,7 @@ import java.net.{URL, URLClassLoader}
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
 import java.util.function.BiPredicate
+import java.util.stream.Collectors
 
 import akka.actor.{Actor, DiagnosticActorLogging, Props}
 import akka.pattern.gracefulStop
@@ -163,7 +164,7 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
     */
   private def getPluginDescriptions: mutable.AnyRefMap[String, PluginDescription] = {
     // Retrieve all jar files
-    val jarMatcher: BiPredicate[Path, BasicFileAttributes] = (path, _) => path.endsWith(".jar")
+    val jarMatcher: BiPredicate[Path, BasicFileAttributes] = (path, _) => path.toString.endsWith(".jar")
 
     // Attempt to load all plugins
     val pluginDescriptions = mutable.AnyRefMap.empty[String, PluginDescription]
