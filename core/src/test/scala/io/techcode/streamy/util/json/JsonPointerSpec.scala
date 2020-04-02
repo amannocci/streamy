@@ -79,7 +79,7 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
     }
 
     "return a string representation" in {
-      (Root / "failed" / 0).toString should equal("/failed/0")
+      (Root / "failed" / 0 / "-").toString should equal("/failed/0/-")
     }
 
     "return if this is a root json pointer" in {
@@ -151,6 +151,10 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
 
     "parse correctly a simple indice pointer with escaped character" in {
       JsonPointerParser.parseUnsafe("/0/~0~1") should equal(Root / 0 / "~/")
+    }
+
+    "parse correctly a pointer with minus sign" in {
+      JsonPointerParser.parseUnsafe("/-") should equal(Root / "-")
     }
 
     "parse correctly a complex pointer" in {

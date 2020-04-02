@@ -85,7 +85,11 @@ case class JsonPointer(private[json] val underlying: Array[JsAccessor] = Array.e
   def /(key: String): JsonPointer = {
     val newPath = new Array[JsAccessor](underlying.length + 1)
     Array.copy(underlying, 0, newPath, 0, underlying.length)
-    newPath.update(underlying.length, JsObjectAccessor(key))
+    if (JsAccessor.LastRef.equals(key)) {
+      newPath.update(underlying.length, JsObjectOrArrayAccessor)
+    } else {
+      newPath.update(underlying.length, JsObjectAccessor(key))
+    }
     copy(newPath)
   }
 
@@ -152,49 +156,91 @@ private[json] trait JsAccessor {
 }
 
 /**
-  * Represent an object accessor.
+  * JsAccesor companion.
   */
-private[json] case class JsObjectAccessor(key: String) extends JsAccessor {
+private[json] object JsAccessor {
 
-  def evaluate(json: Json): MaybeJson = json match {
-    case x: JsObject => x(key)
-    case _ => JsUndefined
-  }
+  val LastRef: String = "-"
+
+}
+
+/**
+  * Represent an object or array accessor.
+  */
+private[json] case object JsObjectOrArrayAccessor extends JsObjectLikeAccessor {
+
+  override val key: String = JsAccessor.LastRef
+
+  override def evaluate(json: Json): MaybeJson = super.evaluate(json)
+    .orElse(json.flatMap[JsArray](_.last()))
+
+  override def add(json: Json, value: Json): MaybeJson = super.add(json, value)
+    .orElse(json.flatMap[JsArray] { x =>
+      x.underlying.append(value)
+      x
+    })
+
+  override def replace(json: Json, value: Json): MaybeJson = super.replace(json, value)
+    .orElse(json.flatMap[JsArray] { x =>
+      x.underlying.update(x.underlying.length - 1, value)
+      x
+    })
+
+  override def remove(json: Json, mustExist: Boolean = true): MaybeJson = super.remove(json, mustExist)
+    .orElse(json.flatMap[JsArray] { x =>
+      if (x.underlying.isEmpty) {
+        if (mustExist) {
+          JsUndefined
+        } else {
+          x
+        }
+      } else {
+        x.underlying.remove(x.underlying.length - 1)
+        x
+      }
+    })
+
+  override def repr: String = JsAccessor.LastRef
+
+}
+
+/**
+  * Trait mixin for common json object accessor logic.
+  */
+private[json] trait JsObjectLikeAccessor extends JsAccessor {
+
+  def key: String
+
+  def evaluate(json: Json): MaybeJson = json.flatMap[JsObject](_ (key))
 
   @inline def set(json: Json, value: Json): MaybeJson = add(json, value)
 
-  def add(json: Json, value: Json): MaybeJson = json match {
-    case x: JsObject =>
-      x.underlying.update(key, value)
-      x
-    case _ => JsUndefined
+  def add(json: Json, value: Json): MaybeJson = json.flatMap[JsObject] { x =>
+    x.underlying.update(key, value)
+    x
   }
 
-  def replace(json: Json, value: Json): MaybeJson = json match {
-    case x: JsObject =>
+  def replace(json: Json, value: Json): MaybeJson = json.flatMap[JsObject] { x =>
+    if (x.underlying.contains(key)) {
+      x.underlying.update(key, value)
+      x
+    } else {
+      JsUndefined
+    }
+  }
+
+  def remove(json: Json, mustExist: Boolean = true): MaybeJson = json.flatMap[JsObject] { x =>
+    if (mustExist) {
       if (x.underlying.contains(key)) {
-        x.underlying.update(key, value)
+        x.underlying.remove(key)
         x
       } else {
         JsUndefined
       }
-    case _ => JsUndefined
-  }
-
-  def remove(json: Json, mustExist: Boolean = true): MaybeJson = json match {
-    case x: JsObject =>
-      if (mustExist) {
-        if (x.underlying.contains(key)) {
-          x.underlying.remove(key)
-          x
-        } else {
-          JsUndefined
-        }
-      } else {
-        x.underlying.remove(key)
-        x
-      }
-    case _ => JsUndefined
+    } else {
+      x.underlying.remove(key)
+      x
+    }
   }
 
   def repr: String = key
@@ -202,58 +248,51 @@ private[json] case class JsObjectAccessor(key: String) extends JsAccessor {
 }
 
 /**
+  * Represent an object accessor.
+  */
+private[json] case class JsObjectAccessor(key: String) extends JsObjectLikeAccessor
+
+/**
   * Represent an array accessor.
   */
 private[json] case class JsArrayAccessor(idx: Int) extends JsAccessor {
 
-  def evaluate(json: Json): MaybeJson = json match {
-    case x: JsArray => x(idx)
-    case _ => JsUndefined
-  }
+  def evaluate(json: Json): MaybeJson = json.flatMap[JsArray](_ (idx))
 
   @inline def set(json: Json, value: Json): MaybeJson = replace(json, value)
 
-  def add(json: Json, value: Json): MaybeJson = json match {
-    case x: JsArray =>
-      if (idx > -1 && idx < x.underlying.length) {
-        x.underlying.insert(idx, value)
-        x
-      } else if (idx == -1) {
-        x.underlying.append(value)
-        x
-      } else {
+  def add(json: Json, value: Json): MaybeJson = json.flatMap[JsArray] { x =>
+    if (idx > -1 && idx < x.underlying.length) {
+      x.underlying.insert(idx, value)
+      x
+    } else {
+      JsUndefined
+    }
+  }
+
+  def replace(json: Json, value: Json): MaybeJson = json.flatMap[JsArray] { x =>
+    if (idx > -1 && idx < x.underlying.length) {
+      x.underlying.update(idx, value)
+      x
+    } else {
+      JsUndefined
+    }
+  }
+
+  def remove(json: Json, mustExist: Boolean = true): MaybeJson = json.flatMap[JsArray] { x =>
+    if (idx > -1 && idx < x.underlying.length) {
+      x.underlying.remove(idx)
+      x
+    } else {
+      if (mustExist) {
         JsUndefined
-      }
-    case _ => JsUndefined
-  }
-
-  def replace(json: Json, value: Json): MaybeJson = json match {
-    case x: JsArray =>
-      if (idx > -1 && idx < x.underlying.length) {
-        x.underlying.update(idx, value)
-        x
       } else {
-        JsUndefined
-      }
-    case _ => JsUndefined
-  }
-
-  def remove(json: Json, mustExist: Boolean = true): MaybeJson = json match {
-    case x: JsArray =>
-      if (idx > -1 && idx < x.underlying.length) {
-        x.underlying.remove(idx)
         x
-      } else {
-        if (mustExist) {
-          JsUndefined
-        } else {
-          x
-        }
       }
-    case _ => JsUndefined
+    }
   }
 
-  def repr: String = idx.toString
+  lazy val repr: String = idx.toString
 
 }
 

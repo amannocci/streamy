@@ -85,15 +85,13 @@ object Json {
       var underlying: mutable.HashMap[String, Json] = mutable.HashMap[String, Json]()
 
       override def clear(): Unit =
-        if (underlying.isEmpty) {
-          Json.jsonObjEmpty
-        } else {
+        if (underlying.nonEmpty) {
           underlying = mutable.HashMap[String, Json]()
         }
 
       override def result(): JsObject =
         if (underlying.isEmpty) {
-          Json.jsonObjEmpty
+          jsonObjEmpty
         } else {
           JsObject(underlying)
         }
@@ -121,15 +119,13 @@ object Json {
       var underlying: mutable.ArrayBuffer[Json] = mutable.ArrayBuffer[Json]()
 
       override def clear(): Unit =
-        if (underlying.isEmpty) {
-          Json.jsonArrayEmpty
-        } else {
+        if (underlying.nonEmpty) {
           underlying = mutable.ArrayBuffer[Json]()
         }
 
       override def result(): JsArray =
         if (underlying.isEmpty) {
-          Json.jsonArrayEmpty
+          jsonArrayEmpty
         } else {
           JsArray(underlying)
         }
@@ -331,7 +327,7 @@ sealed trait MaybeJson {
     */
   @inline def exists(p: Json => Boolean): Boolean
 
-  /** Returns this $option if it is nonempty,
+  /** Returns this $alternative if it is nonempty,
     * otherwise return the result of evaluating `alternative`.
     *
     * @param alternative the alternative expression.
@@ -492,7 +488,7 @@ sealed trait Json extends JsDefined {
     * Evaluate the given path in the given json value.
     *
     * @param path path to used.
-    * @return value if founded, otherwise [[None]].
+    * @return value if founded, otherwise [[JsUndefined]].
     */
   def evaluate(path: JsonPointer): MaybeJson = path(this)
 

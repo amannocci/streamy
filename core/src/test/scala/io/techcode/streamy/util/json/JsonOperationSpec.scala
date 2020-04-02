@@ -50,7 +50,7 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "bulk correctly a sequence of operations on json array" in {
       val input = Json.arr("test")
       val result = input.patch(Bulk(Root, Seq(
-        Add(Root / -1, "test"),
+        Add(Root / "-", "test"),
         Replace(Root / 1, "foobar"),
         Copy(Root / 1, Root / 0),
         Remove(Root / 0),
@@ -79,7 +79,7 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "bulk correctly a sequence of operations on deep json array" in {
       val input = Json.arr(Json.arr("test"))
       val result = input.patch(Bulk(Root / 0, Seq(
-        Add(Root / -1, "test"),
+        Add(Root / "-", "test"),
         Replace(Root / 1, "foobar"),
         Copy(Root / 1, Root / 0),
         Remove(Root / 0),
@@ -111,6 +111,15 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
         "foobar" -> "test"
       ))
       input should not equal result
+    }
+
+    "add correctly a field in json object using minus sign" in {
+      val input = Json.obj("test" -> "test")
+      val result = input.patch(Add(Root / "-", "foobar"))
+      result should equal(Json.obj(
+        "test" -> "test",
+        "-" -> "foobar"
+      ))
     }
 
     "add correctly a field in deep json object" in {
@@ -148,7 +157,7 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
 
     "add correctly a value in json array at the end" in {
       val input = Json.arr("test", "test")
-      val result = input.patch(Add(Root / -1, "foobar"))
+      val result = input.patch(Add(Root / "-", "foobar"))
       result should equal(Json.arr("test", "test", "foobar"))
     }
 
@@ -225,6 +234,15 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
       input should not equal result
     }
 
+    "replace correctly a field in json object using minus sign" in {
+      val input = Json.obj("-" -> "test")
+      val result = input.patch(Replace(Root / "-", "foobar"))
+      result should equal(Json.obj(
+        "-" -> "foobar"
+      ))
+      input should not equal result
+    }
+
     "replace correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Replace(Root / "test" / 0 / "test", "foobar"))
@@ -239,6 +257,13 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "replace correctly a value in json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Replace(Root / 1, "foobar"))
+      result should equal(Json.arr("test", "foobar"))
+      input should not equal result
+    }
+
+    "replace correctly a value in json array at the end" in {
+      val input = Json.arr("test", "test")
+      val result = input.patch(Replace(Root / "-", "foobar"))
       result should equal(Json.arr("test", "foobar"))
       input should not equal result
     }
@@ -307,6 +332,13 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
       input should not equal result
     }
 
+    "remove correctly a field in json object using minus sign" in {
+      val input = Json.obj("-" -> "test")
+      val result = input.patch(Remove(Root / "-"))
+      result should equal(Json.obj())
+      input should not equal result
+    }
+
     "remove correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Remove(Root / "test" / 0 / "test"))
@@ -319,6 +351,13 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "remove correctly a value in json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Remove(Root / 1))
+      result should equal(Json.arr("test"))
+      input should not equal result
+    }
+
+    "remove correctly a value in json array at the end" in {
+      val input = Json.arr("test", "test")
+      val result = input.patch(Remove(Root / "-"))
       result should equal(Json.arr("test"))
       input should not equal result
     }
@@ -369,15 +408,33 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
       result should equal(JsUndefined)
     }
 
+    "fail to remove a field in json object using minus sign" in {
+      val input = Json.obj("test" -> "test")
+      val result = input.patch(Remove(Root / "-"))
+      result should equal(JsUndefined)
+    }
+
     "fail to remove a field in json array" in {
       val input = Json.arr("test", "test")
       val result = input.patch(Remove(Root / 2))
       result should equal(JsUndefined)
     }
 
+    "fail to remove a field in json array at the end" in {
+      val input = Json.arr()
+      val result = input.patch(Remove(Root / "-"))
+      result should equal(JsUndefined)
+    }
+
     "fail to remove silently a field in json object" in {
       val input = Json.obj("test" -> "test")
       val result = input.patch(Remove(Root / "fail", mustExist = false))
+      result should equal(Json.obj("test" -> "test"))
+    }
+
+    "fail to remove silently a field in json object using minus" in {
+      val input = Json.obj("test" -> "test")
+      val result = input.patch(Remove(Root / "-", mustExist = false))
       result should equal(Json.obj("test" -> "test"))
     }
 
@@ -391,6 +448,12 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
       val input = Json.arr("test", "test")
       val result = input.patch(Remove(Root / 2, mustExist = false))
       result should equal(Json.arr("test", "test"))
+    }
+
+    "fail to remove silently a value in json array at the end" in {
+      val input = Json.arr()
+      val result = input.patch(Remove(Root / "-", mustExist = false))
+      result should equal(Json.arr())
     }
 
     "fail to remove silently a value in deep json array" in {
@@ -408,6 +471,13 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
       input should not equal result
     }
 
+    "move correctly a field in json object using minus sign" in {
+      val input = Json.obj("test" -> "test")
+      val result = input.patch(Move(Root / "test", Root / "-"))
+      result should equal(Json.obj("-" -> "test"))
+      input should not equal result
+    }
+
     "move correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Move(Root / "test" / 0 / "test", Root / "foobar"))
@@ -421,6 +491,13 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
     "move correctly a value in json array" in {
       val input = Json.arr("test01", "test02")
       val result = input.patch(Move(Root / 1, Root / 0))
+      result should equal(Json.arr("test02", "test01"))
+      input should not equal result
+    }
+
+    "move correctly a value in json array at the end" in {
+      val input = Json.arr("test01", "test02")
+      val result = input.patch(Move(Root / "-", Root / 0))
       result should equal(Json.arr("test02", "test01"))
       input should not equal result
     }
@@ -484,6 +561,16 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
       input should not equal result
     }
 
+    "copy correctly a field in json object using minus sign" in {
+      val input = Json.obj("test" -> "test")
+      val result = input.patch(Copy(Root / "test", Root / "-"))
+      result should equal(Json.obj(
+        "-" -> "test",
+        "test" -> "test"
+      ))
+      input should not equal result
+    }
+
     "copy correctly a field in deep json object" in {
       val input = Json.obj("test" -> Json.arr(Json.obj("test" -> "test")))
       val result = input.patch(Copy(Root / "test" / 0 / "test", Root / "foobar"))
@@ -498,6 +585,13 @@ class JsonOperationSpec extends WordSpecLike with Matchers {
       val input = Json.arr("test01", "test02")
       val result = input.patch(Copy(Root / 1, Root / 0))
       result should equal(Json.arr("test02", "test01", "test02"))
+      input should not equal result
+    }
+
+    "copy correctly a value in json array at the end" in {
+      val input = Json.arr("test01", "test02")
+      val result = input.patch(Copy(Root / 1, Root / "-"))
+      result should equal(Json.arr("test01", "test02", "test02"))
       input should not equal result
     }
 
