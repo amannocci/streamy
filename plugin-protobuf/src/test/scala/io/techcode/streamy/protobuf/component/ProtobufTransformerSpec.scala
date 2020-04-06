@@ -27,7 +27,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing}
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.protobuf.Data
 import io.techcode.streamy.protobuf.Data.{Pkt, Pkts}
 import io.techcode.streamy.util.json._
@@ -71,18 +71,18 @@ object ProtobufTransformerSpec {
 
     object Transformer {
 
-      val Simple: Flow[ByteString, Event[NotUsed], NotUsed] =
+      val Simple: Flow[ByteString, StreamEvent[NotUsed], NotUsed] =
         Framing.simpleFramingProtocolEncoder(Int.MaxValue - 4)
           .via(ProtobufTransformer.parser(ProtobufTransformer.Parser.Config(
             proto = Data.Pkts.getDefaultInstance,
-            decoder = (pkts: Pkts) => Event(Json.obj("test" -> pkts.getPkt(0).getAttrsMap.get("test")))
+            decoder = (pkts: Pkts) => StreamEvent.from(Json.obj("test" -> pkts.getPkt(0).getAttrsMap.get("test")))
           )))
 
     }
 
     object Output {
 
-      val Simple: Event[NotUsed] = Event(Json.obj("test" -> "test"))
+      val Simple: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("test" -> "test"))
 
     }
 
@@ -92,16 +92,16 @@ object ProtobufTransformerSpec {
 
     object Input {
 
-      val Simple: Event[NotUsed] = Event(Json.obj("test" -> "test"))
+      val Simple: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("test" -> "test"))
 
     }
 
     object Transformer {
 
-      val Simple: Flow[Event[NotUsed], ByteString, NotUsed] =
+      val Simple: Flow[StreamEvent[NotUsed], ByteString, NotUsed] =
         ProtobufTransformer.printer(ProtobufTransformer.Printer.Config(
           proto = Data.Pkts.getDefaultInstance,
-          encoder = (evt: Event[NotUsed]) => Pkts.newBuilder().addPkt(Pkt.newBuilder().putAttrs("test", evt.payload.evaluate(Root / "test").get[String])).build()
+          encoder = (evt: StreamEvent[NotUsed]) => Pkts.newBuilder().addPkt(Pkt.newBuilder().putAttrs("test", evt.payload.evaluate(Root / "test").get[String])).build()
         )).via(Framing.simpleFramingProtocolDecoder(Int.MaxValue - 4))
     }
 

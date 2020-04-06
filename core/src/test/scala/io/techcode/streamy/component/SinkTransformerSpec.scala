@@ -29,10 +29,10 @@ import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.util.ByteString
 import io.techcode.streamy.StreamyTestSystem
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.printer.PrintException
+import io.techcode.streamy.util.printer.{ByteStringPrinter, PrintException}
 
 /**
   * Sink transformer spec.
@@ -41,9 +41,13 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
   "Sink transformer" should {
     "handle correctly a json value" in {
-      val sink = SinkTransformer[NotUsed](() => () => ByteString.empty)
+      val sink = new SinkTransformer[Json, NotUsed] {
+        def factory(): ByteStringPrinter[Json] = () => ByteString.empty
 
-      Source.single(Event[NotUsed](Json.obj("foo" -> "bar")))
+        def unpack(event: StreamEvent[NotUsed]): Json = event.payload
+      }
+
+      Source.single(StreamEvent.from(Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .requestNext() should equal(ByteString.empty)
@@ -54,9 +58,13 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val sink = SinkTransformer[NotUsed](() => () => throw new PrintException("Error"))
+      val sink = new SinkTransformer[Json, NotUsed] {
+        def factory(): ByteStringPrinter[Json] = () => throw new PrintException("Error")
 
-      Source.single(Event[NotUsed](Json.obj("foo" -> "bar")))
+        def unpack(event: StreamEvent[NotUsed]): Json = event.payload
+      }
+
+      Source.single(StreamEvent.from(Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .request(1)
@@ -68,13 +76,17 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val sink = SinkTransformer[NotUsed](() => () => throw new PrintException("Error"))
+      val sink = new SinkTransformer[Json, NotUsed] {
+        def factory(): ByteStringPrinter[Json] = () => throw new PrintException("Error")
 
-      Source.single(Event[NotUsed](Json.obj("foo" -> "bar")))
+        def unpack(event: StreamEvent[NotUsed]): Json = event.payload
+      }
+
+      Source.single(StreamEvent.from(Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .request(1)
-        .expectError() should equal(new StreamException("Error", Json.obj("foo" -> "bar")))
+        .expectError() should equal(new StreamException(StreamEvent.from(Json.obj("foo" -> "bar")), new PrintException("Error")))
     }
   }
 

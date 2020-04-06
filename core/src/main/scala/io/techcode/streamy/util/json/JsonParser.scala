@@ -49,7 +49,8 @@ object JsonParser {
     *
     * @return new json parser Rfc4627 compliant.
     */
-  def byteStringParser(config: JsonParser.Config = DefaultConfig): ByteStringParser[Json] = new ByteStringJsonParser(config)
+  def byteStringParser(config: JsonParser.Config = DefaultConfig): ByteStringParser[Json] =
+    new ByteStringJsonParser(config)
 
   /**
     * Create a json parser that transform incoming [[String]] to [[Json]].
@@ -57,7 +58,8 @@ object JsonParser {
     *
     * @return new json parser Rfc4627 compliant.
     */
-  def stringParser(config: JsonParser.Config = DefaultConfig): StringParser[Json] = new StringJsonParser(config)
+  def stringParser(config: JsonParser.Config = DefaultConfig): StringParser[Json] =
+    new StringJsonParser(config)
 
   // Json parser configuration
   case class Config(
@@ -276,7 +278,9 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
   * Json parser that transform incoming [[ByteString]] to [[Json]].
   * This parser is Rfc4627 compliant.
   */
-private class ByteStringJsonParser(conf: JsonParser.Config) extends ByteStringParser[Json] with AbstractJsonParser[ByteString] {
+private class ByteStringJsonParser(
+  conf: JsonParser.Config
+) extends ByteStringParser[Json] with AbstractJsonParser[ByteString] {
 
   def config: JsonParser.Config = conf
 
@@ -329,7 +333,9 @@ private class ByteStringJsonParser(conf: JsonParser.Config) extends ByteStringPa
   * Json parser that transform incoming [[String]] to [[Json]].
   * This parser is Rfc4627 compliant.
   */
-private class StringJsonParser(conf: JsonParser.Config) extends StringParser[Json] with AbstractJsonParser[String] {
+private class StringJsonParser(
+  conf: JsonParser.Config
+) extends StringParser[Json] with AbstractJsonParser[String] {
 
   def config: JsonParser.Config = conf
 

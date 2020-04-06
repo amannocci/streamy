@@ -27,7 +27,7 @@ import akka.{Done, NotUsed}
 import akka.stream.scaladsl.Source
 import io.techcode.streamy.elasticsearch.component.ElasticsearchFlow.HostConfig
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -41,7 +41,7 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
 
   "Elasticsearch sink" should {
     "send data" in {
-      val result = Source.single(Event[NotUsed](Json.obj("foo" -> "bar")))
+      val result = Source.single(StreamEvent.from(Json.obj("foo" -> "bar")))
         .runWith(ElasticsearchSink[NotUsed](ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
@@ -59,7 +59,7 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
     }
 
     "send data with document parsing bypass" in {
-      val result = Source.single(Event[NotUsed](Json.printByteStringUnsafe(Json.obj("foo" -> "bar"))))
+      val result = Source.single(StreamEvent.from(Json.printByteStringUnsafe(Json.obj("foo" -> "bar"))))
         .runWith(ElasticsearchSink[NotUsed](ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
@@ -78,7 +78,7 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
     }
 
     "send data in bulk" in {
-      val result = Source.fromIterator[Event[NotUsed]](() => Seq(Event[NotUsed](Json.obj("foo" -> "bar")), Event[NotUsed](Json.obj("foo" -> "bar"))).iterator)
+      val result = Source.fromIterator[StreamEvent[NotUsed]](() => Seq(StreamEvent.from(Json.obj("foo" -> "bar")), StreamEvent.from(Json.obj("foo" -> "bar"))).iterator)
         .runWith(ElasticsearchSink[NotUsed](ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",

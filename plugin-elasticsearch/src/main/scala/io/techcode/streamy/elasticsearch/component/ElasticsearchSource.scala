@@ -33,7 +33,7 @@ import akka.stream.scaladsl.Source
 import akka.stream.stage.{GraphStage, GraphStageLogic, OutHandler, StageLogging}
 import akka.util.ByteString
 import io.techcode.streamy.elasticsearch.event.ElasticsearchEvent
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
@@ -82,11 +82,11 @@ object ElasticsearchSource {
     *
     * @param config source configuration.
     */
-  def single[T](config: Config)(
+  def single(config: Config)(
     implicit materializer: Materializer,
     system: ActorSystem,
     executionContext: ExecutionContext
-  ): Source[Event[T], NotUsed] = {
+  ): Source[StreamEvent[NotUsed], NotUsed] = {
     val hosts = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
     // Retrieve uri based on scroll id
@@ -115,11 +115,11 @@ object ElasticsearchSource {
     Source.fromFuture(Http().singleRequest(request).flatMap {
       case HttpResponse(StatusCodes.OK, _, entity, _) =>
         entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
-          Event(Json.parseByteStringUnsafe(x))
+          StreamEvent.from(Json.parseByteStringUnsafe(x))
         }
       case resp@HttpResponse(_, _, _, _) =>
         try {
-          throw new StreamException(resp.httpMessage.toString)
+          StreamEvent.Empty.discard(resp.httpMessage.toString)
         } finally {
           resp.discardEntityBytes()(materializer)
         }
@@ -132,11 +132,11 @@ object ElasticsearchSource {
     * @param config source configuration.
     * @return source.
     */
-  def paginate[T](config: Config)(
+  def paginate(config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ): Source[Event[T], NotUsed] =
-    Source.fromGraph(new ElasticsearchPaginateSourceStage[T](config))
+  ): Source[StreamEvent[NotUsed], NotUsed] =
+    Source.fromGraph(new ElasticsearchPaginateSourceStage(config))
       .buffer(config.bulk, OverflowStrategy.backpressure)
 
   /**
@@ -144,19 +144,19 @@ object ElasticsearchSource {
     *
     * @param config source stage configuration.
     */
-  private class ElasticsearchPaginateSourceStage[T](config: Config)(
+  private class ElasticsearchPaginateSourceStage(config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ) extends GraphStage[SourceShape[Event[T]]] {
+  ) extends GraphStage[SourceShape[StreamEvent[NotUsed]]] {
 
     // Outlet
-    val out: Outlet[Event[T]] = Outlet("ElasticsearchPaginateSource.out")
+    val out: Outlet[StreamEvent[NotUsed]] = Outlet("ElasticsearchPaginateSource.out")
 
     // Shape
-    override val shape: SourceShape[Event[T]] = SourceShape(out)
+    override val shape: SourceShape[StreamEvent[NotUsed]] = SourceShape(out)
 
     // Logic generator
-    override def createLogic(attr: Attributes): GraphStageLogic = new ElasticsearchPaginateSourceLogic
+    override def createLogic(attrs: Attributes): GraphStageLogic = new ElasticsearchPaginateSourceLogic
 
     /**
       * Elasticsearch paginate source logic.
@@ -193,7 +193,7 @@ object ElasticsearchSource {
           system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
 
           // Check if we have at least one hit
-          val it = result.get[JsArray].iterator.map[Event[T]](Event(_))
+          val it = result.get[JsArray].iterator.map[StreamEvent[NotUsed]](StreamEvent.from)
           if (it.hasNext) {
             scrollId = data.evaluate(ElasticPath.ScrollId)
             emitMultiple(out, it)
@@ -201,7 +201,7 @@ object ElasticsearchSource {
             completeStage()
           }
         } else {
-          handleFailure(new StreamException("Response doesn't contains hits field"))
+          handleFailure(new StreamException(StreamEvent.Empty, "Response doesn't contains hits field"))
         }
       }
 
@@ -266,7 +266,7 @@ object ElasticsearchSource {
             }
           case resp@HttpResponse(_, _, _, _) =>
             try {
-              failureHandler.invoke(new StreamException(resp.httpMessage.toString))
+              failureHandler.invoke(new StreamException(StreamEvent.Empty, resp.httpMessage.toString))
             } finally {
               resp.discardEntityBytes()(materializer)
             }

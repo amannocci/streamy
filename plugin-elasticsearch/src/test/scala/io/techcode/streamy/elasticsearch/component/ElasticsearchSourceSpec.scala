@@ -28,7 +28,7 @@ import akka.stream.scaladsl.Sink
 import akka.stream.testkit.scaladsl.TestSink
 import io.techcode.streamy.elasticsearch.component.ElasticsearchSource.HostConfig
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 import org.elasticsearch.action.index.IndexRequest
@@ -69,7 +69,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}"""),
         bulk = 1
       )
-      ).runWith(TestSink.probe[Event[NotUsed]])
+      ).runWith(TestSink.probe[StreamEvent[NotUsed]])
 
       // Check
       stream.requestNext(5 seconds).payload.evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
@@ -95,7 +95,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
       )
-      ).runWith(Sink.head[Event[NotUsed]])
+      ).runWith(Sink.head[StreamEvent[NotUsed]])
 
       // Check
       whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
@@ -119,7 +119,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       )
       ).runWith(Sink.ignore)
 
-      assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
+      assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException[NotUsed]])
     }
 
   }

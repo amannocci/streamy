@@ -25,7 +25,7 @@ package io.techcode.streamy.kafka.component
 
 import akka.kafka.ConsumerMessage.CommittableOffset
 import akka.stream.scaladsl.Flow
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.kafka.util.KafkaSpec
 
 /**
@@ -40,7 +40,7 @@ class KafkaSourceSpec extends KafkaSpec {
 
       awaitProduce(produceString(topic, Seq("foobar")))
       KafkaSource.atLeastOnce(KafkaSource.Config(
-        handler = Flow[Event[CommittableOffset]],
+        handler = Flow[StreamEvent[CommittableOffset]],
         bootstrapServers = bootstrapServers,
         groupId = groupId,
         topics = KafkaSource.StaticTopicConfig(Set(topic))

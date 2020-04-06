@@ -31,6 +31,7 @@ import akka.stream.scaladsl.Framing.FramingException
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.stream.{Attributes, FlowShape, Inlet, Outlet}
 import akka.util.ByteString
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 
 import scala.util.{Failure, Success, Try}
@@ -105,7 +106,7 @@ object SyslogFraming {
 
       private def tryPull(): Unit =
         if (isClosed(in)) {
-          failStage(new StreamException("Stream finished but there was a truncated final record in the buffer."))
+          failStage(new StreamException(StreamEvent.Empty, "Stream finished but there was a truncated final record in the buffer."))
         } else {
           pull(in)
         }
@@ -117,7 +118,7 @@ object SyslogFraming {
         val idx = buffer.indexOf(Space, from = lastIndex)
         if (idx < 0) {
           if (buffer.size > maxRecordPrefixLength) {
-            failStage(new StreamException(s"Record size prefix is longer than $maxRecordPrefixLength bytes."))
+            failStage(new StreamException(StreamEvent.Empty, s"Record size prefix is longer than $maxRecordPrefixLength bytes."))
           } else if (isClosed(in) && buffer.isEmpty) {
             completeStage()
           } else {
@@ -131,7 +132,7 @@ object SyslogFraming {
           Try(recordSize.decodeString(StandardCharsets.US_ASCII).toInt) match {
             case Success(length) =>
               if (length > maxRecordLength) {
-                failStage(new StreamException(s"Record of size $length bytes exceeds maximum of $maxRecordLength bytes."))
+                failStage(new StreamException(StreamEvent.Empty, s"Record of size $length bytes exceeds maximum of $maxRecordLength bytes."))
               } else if (length < 0) {
                 failStage(new FramingException(s"Record size prefix $length is negative."))
               } else {

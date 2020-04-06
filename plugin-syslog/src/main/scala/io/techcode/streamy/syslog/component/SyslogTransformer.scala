@@ -27,10 +27,13 @@ import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing => StreamFraming}
 import akka.util.ByteString
 import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.util.parser.{SyslogFraming, SyslogParser}
 import io.techcode.streamy.syslog.util.printer.SyslogPrinter
+import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.parser.ByteStringParser
+import io.techcode.streamy.util.printer.ByteStringPrinter
 import io.techcode.streamy.util.{Binder, NoneBinder}
 
 /**
@@ -42,13 +45,13 @@ object SyslogTransformer {
   private val NewLineDelimiter = ByteString("\n")
 
   /**
-    * Create a syslog flow that transform incoming [[ByteString]] to [[Event]].
+    * Create a syslog flow that transform incoming [[ByteString]] to [[StreamEvent]].
     * This flow is Rfc5424 compliant.
     *
     * @param conf flow configuration.
     * @return new syslog flow Rfc5424 compliant.
     */
-  def parser[T](conf: Rfc5424.Config): Flow[ByteString, Event[T], NotUsed] = {
+  def parser(conf: Rfc5424.Config): Flow[ByteString, StreamEvent[NotUsed], NotUsed] = {
     val framing: Flow[ByteString, ByteString, NotUsed] = {
       if (conf.framing == Framing.Delimiter) {
         StreamFraming.delimiter(NewLineDelimiter, conf.maxSize, allowTruncation = true)
@@ -57,17 +60,21 @@ object SyslogTransformer {
       }
     }
 
-    framing.via(Flow.fromGraph(SourceTransformer[T](() => SyslogParser.rfc5424(conf))))
+    framing.via(Flow.fromGraph(new SourceTransformer[Json, NotUsed] {
+      def factory(): ByteStringParser[Json] = SyslogParser.rfc5424(conf)
+
+      def pack(payload: Json): StreamEvent[NotUsed] = StreamEvent.from(payload)
+    }))
   }
 
   /**
-    * Create a syslog flow that transform incoming [[ByteString]] to [[Event]].
+    * Create a syslog flow that transform incoming [[ByteString]] to [[StreamEvent]].
     * This flow is Rfc3164 compliant.
     *
     * @param conf flow configuration.
     * @return new syslog flow Rfc3164 compliant.
     */
-  def parser[T](conf: Rfc3164.Config): Flow[ByteString, Event[T], NotUsed] = {
+  def parser(conf: Rfc3164.Config): Flow[ByteString, StreamEvent[NotUsed], NotUsed] = {
     val framing: Flow[ByteString, ByteString, NotUsed] = {
       if (conf.framing == Framing.Delimiter) {
         StreamFraming.delimiter(NewLineDelimiter, conf.maxSize, allowTruncation = true)
@@ -76,28 +83,40 @@ object SyslogTransformer {
       }
     }
 
-    framing.via(Flow.fromGraph(SourceTransformer[T](() => SyslogParser.rfc3164(conf))))
+    framing.via(Flow.fromGraph(new SourceTransformer[Json, NotUsed] {
+      def factory(): ByteStringParser[Json] = SyslogParser.rfc3164(conf)
+
+      def pack(payload: Json): StreamEvent[NotUsed] = StreamEvent.from(payload)
+    }))
   }
 
   /**
-    * Create a syslog flow that transform incoming [[Event]] to [[ByteString]].
+    * Create a syslog flow that transform incoming [[StreamEvent]] to [[ByteString]].
     * This flow is Rfc5424 compliant.
     *
     * @param conf flow configuration.
     * @return new syslog flow Rfc5424 compliant.
     */
-  def printer[T](conf: Rfc5424.Config): Flow[Event[T], ByteString, NotUsed] =
-    Flow.fromGraph(SinkTransformer[T](() => SyslogPrinter.rfc5424(conf)))
+  def printer[T](conf: Rfc5424.Config): Flow[StreamEvent[T], ByteString, NotUsed] =
+    Flow.fromGraph(new SinkTransformer[Json, T] {
+      def factory(): ByteStringPrinter[Json] = SyslogPrinter.rfc5424(conf)
+
+      def unpack(event: StreamEvent[T]): Json = event.payload
+    })
 
   /**
-    * Create a syslog flow that transform incoming [[Event]] to [[ByteString]].
+    * Create a syslog flow that transform incoming [[StreamEvent]] to [[ByteString]].
     * This flow is Rfc3164 compliant.
     *
     * @param conf flow configuration.
     * @return new syslog flow Rfc3164 compliant.
     */
-  def printer[T](conf: Rfc3164.Config): Flow[Event[T], ByteString, NotUsed] =
-    Flow.fromGraph(SinkTransformer[T](() => SyslogPrinter.rfc3164(conf)))
+  def printer[T](conf: Rfc3164.Config): Flow[StreamEvent[T], ByteString, NotUsed] =
+    Flow.fromGraph(new SinkTransformer[Json, T] {
+      def factory(): ByteStringPrinter[Json] = SyslogPrinter.rfc3164(conf)
+
+      def unpack(event: StreamEvent[T]): Json = event.payload
+    })
 
   // Common related stuff
   object Framing extends Enumeration {

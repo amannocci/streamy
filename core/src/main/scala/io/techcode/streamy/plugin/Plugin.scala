@@ -45,16 +45,20 @@ abstract class Plugin(
 
   def decider: Supervision.Decider = { ex =>
     ex match {
-      case streamEx: StreamException =>
-        log.mdc(streamEx.meta + ("state" -> streamEx.state.toString))
-        log.error(streamEx.msg)
+      case streamException@StreamException(state, msg, _) =>
+        log.mdc(Map("state" -> state.toString))
+        if (Option(streamException).isDefined) {
+          log.error(streamException, msg)
+        } else {
+          log.error(msg)
+        }
       case _ => log.error(ex, "An error occured")
     }
     Supervision.Resume
   }
 
   def receive: Receive = {
-    case _ => log.info("Plugin can't handle anything")
+    case _ => log.error("Plugin can't handle anything")
   }
 
   override def preStart(): Unit = {

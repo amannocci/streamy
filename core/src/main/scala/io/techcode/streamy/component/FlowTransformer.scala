@@ -24,14 +24,14 @@
 package io.techcode.streamy.component
 
 import akka.stream.ActorAttributes.SupervisionStrategy
+import akka.stream.Supervision.Decider
 import akka.stream._
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
-import com.google.common.base.Throwables
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.{Config, SuccessBehaviour}
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
@@ -42,101 +42,76 @@ import scala.util.control.NonFatal
   * Flow transformer logic abstract implementation that provide
   * a convenient way to process an update on [[Json]].
   */
-abstract class FlowTransformerLogic[T](config: Config) extends (Json => Json) {
+abstract class FlowTransformerLogic(val config: Config) extends (Json => MaybeJson) {
 
-  // Choose right transform function
-  private val function: Json => Json = {
+  // Generic error for this transformer logic
+  protected[component] val errorMsg: String = Transformer.GenericErrorMsg
+
+  // Compute transform function
+  private val function: Json => MaybeJson = {
+    // Base of all transformation
+    val baseTransform: Json => MaybeJson = { payload: Json =>
+      payload.evaluate(config.source).flatMap[Json](transform(_, payload))
+    }
+
     if (config.target.isEmpty || config.source == config.target.get) {
-      // Transform inplace and report error if needed
+      // Only transform inplace
       payload: Json =>
-        payload.evaluate(config.source)
-          .flatMap[Json](transform(_, payload))
+        baseTransform(payload)
           .flatMap[Json](x => payload.patch(Replace(config.source, x)))
-          .getOrElse[Json](error(Transformer.GenericErrorMsg, payload))
-    } else {
-      // Transform inplace and then copy to target
-      payload: Json =>
-        payload.evaluate(config.source)
-          .flatMap[Json](transform(_, payload))
+    } else if (config.target.get == Root) {
+      // Result of transformation is merged at root
+      val mergeTransform: Json => MaybeJson = { payload: Json =>
+        baseTransform(payload)
           .flatMap[Json] { v =>
-            val operated: MaybeJson = {
-              if (config.target.get == Root) {
-                payload.flatMap[JsObject] { x =>
-                  v.map[JsObject] { y =>
-                    x.merge(y)
-                  }
-                }
-              } else {
-                payload
+            payload.flatMap[JsObject] { x =>
+              v.map[JsObject] { y =>
+                x.merge(y)
               }
-            }
+            }.orElse(payload)
+          }
+      }
 
-            // Combine operations if needed
-            var operations = List[JsonOperation]()
-            if (config.target.get != Root) {
-              operations = operations :+ Add(config.target.get, v)
-            }
-            if (config.onSuccess == SuccessBehaviour.Remove) {
-              operations = operations :+ Remove(config.source)
-            }
+      payload: Json =>
+        if (config.onSuccess == SuccessBehaviour.Remove) {
+          mergeTransform(payload).flatMap[Json](_.patch(Remove(config.source)))
+        } else {
+          mergeTransform(payload)
+        }
+    } else {
+      // Result of transformation is added at target
+      payload: Json =>
+        val copyTransform: Json => MaybeJson = { payload: Json =>
+          baseTransform(payload)
+            .flatMap[Json](v => payload.patch(Add(config.target.get, v)))
+        }
 
-            // Perform operations if needed
-            if (operations.isEmpty) {
-              operated
-            } else {
-              operated.flatMap[Json](_.patch(operations))
-            }
-          }.getOrElse[Json](error(Transformer.GenericErrorMsg, payload))
+        if (config.onSuccess == SuccessBehaviour.Remove) {
+          copyTransform(payload).flatMap[Json](_.patch(Remove(config.source)))
+        } else {
+          copyTransform(payload)
+        }
     }
   }
 
   /**
-    * Handle parsing error by discarding or wrapping or skipping.
+    * Handle transform error by discarding or skipping.
     *
     * @param cause exception raised.
-    * @param state value of field when error is raised.
-    * @return result json value.
+    * @return JsUndefined or throw a stream exception.
     */
-  def error(cause: Throwable, state: Json): Json = error(cause, state, Map.empty[String, String])
-
-  /**
-    * Handle parsing error by discarding or wrapping or skipping.
-    *
-    * @param cause exception raised.
-    * @param state value of field when error is raised.
-    * @param meta  extra meta data.
-    * @return result json value.
-    */
-  def error(cause: Throwable, state: Json, meta: Map[String, String]): Json = config.onError match {
-    case ErrorBehaviour.Discard =>
-      throw new StreamException(cause.getMessage, state, meta)
-    case ErrorBehaviour.DiscardAndReport =>
-      throw new StreamException(cause.getMessage, state, meta + ("stacktrace" -> Throwables.getStackTraceAsString(cause)))
-    case ErrorBehaviour.Skip => state
+  def error(cause: Throwable): MaybeJson = config.onError match {
+    case ErrorBehaviour.Discard | ErrorBehaviour.Skip => error(cause.getMessage)
+    case ErrorBehaviour.DiscardAndReport => throw new StreamException(StreamEvent.Empty, cause)
   }
 
   /**
-    * Handle parsing error by discarding or wrapping or skipping.
+    * Handle transform error by discarding or skipping.
     *
-    * @param msg   message exception raised.
-    * @param state value of field when error is raised.
-    * @return result json value.
+    * @param msg message exception raised.
+    * @return JsUndefined or throw a stream exception.
     */
-  def error(msg: String, state: Json): Json = error(msg, state, Map.empty[String, String])
-
-  /**
-    * Handle parsing error by discarding or wrapping or skipping.
-    *
-    * @param msg   message exception raised.
-    * @param state value of field when error is raised.
-    * @param meta  extra meta data.
-    * @return result json value.
-    */
-  def error(msg: String, state: Json, meta: Map[String, String]): Json = config.onError match {
-    case ErrorBehaviour.Discard | ErrorBehaviour.DiscardAndReport =>
-      throw new StreamException(msg, state, meta)
-    case ErrorBehaviour.Skip => state
-  }
+  def error(msg: String): MaybeJson = throw new StreamException(StreamEvent.Empty, msg)
 
   /**
     * Transform only value of given payload.
@@ -156,51 +131,142 @@ abstract class FlowTransformerLogic[T](config: Config) extends (Json => Json) {
   def transform(value: Json): MaybeJson = JsUndefined
 
   /**
-    * Apply transform component on payload.
+    * Apply transform component on event payload.
     *
     * @param payload payload involved.
     * @return payload transformed.
     */
-  @inline def apply(payload: Json): Json = function(payload)
+  @inline def apply(payload: Json): MaybeJson = function(payload)
 
 }
 
 /**
   * Flow transformer abstract implementation that provide
-  * a convenient way to process an update on [[Event]].
+  * a convenient way to process an update on [[StreamEvent]].
+  *
+  * @tparam In  type of the context before transform.
+  * @tparam Out type of the context after transform.
   */
-final case class FlowTransformer[T](factory: () => FlowTransformerLogic[T]) extends GraphStage[FlowShape[Event[T], Event[T]]] {
+abstract class FlowTransformer[In, Out] extends GraphStage[FlowShape[StreamEvent[In], StreamEvent[Out]]] {
 
-  val in: Inlet[Event[T]] = Inlet[Event[T]]("flowTransformer.in")
+  // Inlet
+  val in: Inlet[StreamEvent[In]] = Inlet[StreamEvent[In]]("flowTransformer.in")
 
-  val out: Outlet[Event[T]] = Outlet[Event[T]]("flowTransformer.out")
+  // Outlet
+  val out: Outlet[StreamEvent[Out]] = Outlet[StreamEvent[Out]]("flowTransformer.out")
 
-  override val shape: FlowShape[Event[T], Event[T]] = FlowShape(in, out)
+  override val shape: FlowShape[StreamEvent[In], StreamEvent[Out]] = FlowShape(in, out)
 
-  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
+
+  /**
+    * Factory to create a flow transformer logic.
+    *
+    * @return a flow transformer logic.
+    */
+  def factory(): FlowTransformerLogic
+
+  /**
+    * Unpack a stream event to create a payload.
+    *
+    * @param event event involved.
+    * @return payload.
+    */
+  def unpack(event: StreamEvent[In]): Json
+
+  /**
+    * Pack a payload and current context to create a stream event.
+    *
+    * @param newPayload payload involved.
+    * @param context    current context.
+    * @return streamy event.
+    */
+  def pack(newPayload: Json, context: In): StreamEvent[Out]
+
+  override def createLogic(attrs: Attributes): GraphStageLogic = new FlowTransformerInternal(attrs)
+
+  // Internal flow transformer
+  private class FlowTransformerInternal(
+    attrs: Attributes
+  ) extends GraphStageLogic(shape) with InHandler with OutHandler {
 
     // Set handler
     setHandlers(in, out, this)
 
+    // Logic created from factory
     private val logic = factory()
 
-    private def decider = inheritedAttributes.mandatoryAttribute[SupervisionStrategy].decider
-
-    override def onPush(): Unit = {
-      try {
-        push(out, grab(in).withPayload(logic(_)))
-      } catch {
-        case NonFatal(ex) =>
-          decider(ex) match {
-            case Supervision.Stop => failStage(ex)
-            case _ => pull(in)
-          }
-      }
-    }
+    private def decider: Decider = attrs.mandatoryAttribute[SupervisionStrategy].decider
 
     override def onPull(): Unit = pull(in)
 
+    override def onPush(): Unit = {
+      val event = grab(in)
+      try {
+        var newPayload: MaybeJson = JsUndefined
+        try {
+          newPayload = logic(unpack(event))
+          newPayload.ifExists[Json] { p =>
+            push(out, pack(p, event.context))
+          }
+        } catch {
+          case ex@StreamException(_, _, _) =>
+            // We need to re-add source event
+            handleFailure(event, ex)
+        }
+
+        // We need to handle empty value
+        if (newPayload.isEmpty) {
+          handleMissing(event)
+        }
+      } catch {
+        case NonFatal(ex) => decider(ex) match {
+          case Supervision.Stop => failStage(ex)
+          case _ => pull(in)
+        }
+      }
+    }
+
+    /**
+      * Handle missing value in case of transform failure.
+      *
+      * @param event event involved.
+      */
+    def handleMissing(event: StreamEvent[In]): Unit = logic.config.onError match {
+      case ErrorBehaviour.Discard | ErrorBehaviour.DiscardAndReport => event.discard(logic.errorMsg)
+      case ErrorBehaviour.Skip => push(out, pack(event.payload, event.context))
+    }
+
+    /**
+      * Handle failure throw by an exception.
+      *
+      * @param event event involved.
+      * @param ex    exception fired.
+      */
+    def handleFailure[T](event: StreamEvent[In], ex: StreamException[T]): Unit = logic.config.onError match {
+      case ErrorBehaviour.Discard | ErrorBehaviour.DiscardAndReport =>
+        if (Option(ex.cause).isDefined) {
+          event.discard(ex.cause)
+        } else {
+          event.discard(ex.msg)
+        }
+      case ErrorBehaviour.Skip => push(out, pack(event.payload, event.context))
+    }
+
   }
+
+}
+
+/**
+  * Basic flow transformer abstract implementation that provide
+  * a convenient way to process an update on [[StreamEvent]].
+  *
+  * @tparam T type of the context before and after transform.
+  */
+abstract class IdentifyFlowTransformer[T] extends FlowTransformer[T, T] {
+
+  @inline def unpack(event: StreamEvent[T]): Json = event.payload
+
+  @inline def pack(newPayload: Json, context: T): StreamEvent[T] = StreamEvent[T](newPayload, context)
 
 }
 

@@ -30,8 +30,8 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic, IdentifyFlowTransformer}
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.json.component.JsonTransformer.Bind
 import io.techcode.streamy.json.component.JsonTransformer.Bind.Bind
 import io.techcode.streamy.json.component.JsonTransformer.Mode.Mode
@@ -70,9 +70,13 @@ object JsonTransformer {
     * @param conf flow configuration.
     * @return new json flow.
     */
-  def apply[T](conf: Config): Flow[Event[T], Event[T], NotUsed] = conf.mode match {
-    case Mode.Serialize => Flow.fromGraph(FlowTransformer[T](() => new SerializerTransformerLogic(conf)))
-    case Mode.Deserialize => Flow.fromGraph(FlowTransformer[T](() => new DeserializerTransformerLogic(conf)))
+  def apply[T](conf: Config): Flow[StreamEvent[T], StreamEvent[T], NotUsed] = conf.mode match {
+    case Mode.Serialize => Flow.fromGraph(new IdentifyFlowTransformer[T] {
+      def factory(): FlowTransformerLogic = new SerializerTransformerLogic(conf)
+    })
+    case Mode.Deserialize => Flow.fromGraph(new IdentifyFlowTransformer[T] {
+      def factory(): FlowTransformerLogic = new DeserializerTransformerLogic(conf)
+    })
   }
 
 }
@@ -80,16 +84,16 @@ object JsonTransformer {
 /**
   * Either hanlder for safe conversion.
   */
-private trait EitherHandler[T] {
-  this: FlowTransformerLogic[T] =>
+private trait EitherHandler {
+  this: FlowTransformerLogic =>
 
-  def handleEither[A <: Throwable, B](data: Json, result: Either[A, B]): Json = result match {
+  def handleEither[A <: Throwable, B](data: Json, result: Either[A, B]): MaybeJson = result match {
     case Right(succ) => succ match {
       case v: String => stringToJson(v)
       case v: ByteString => byteStringToJson(v)
       case v: Json => v
     }
-    case Left(ex) => error(ex, data)
+    case Left(ex) => error(ex)
   }
 
 }
@@ -99,7 +103,9 @@ private trait EitherHandler[T] {
   *
   * @param config json transformer configuration.
   */
-private class SerializerTransformerLogic[T](config: JsonTransformer.Config) extends FlowTransformerLogic[T](config) with EitherHandler[T] {
+private class SerializerTransformerLogic(
+  config: JsonTransformer.Config
+) extends FlowTransformerLogic(config) with EitherHandler {
 
   @inline override def transform(value: Json): MaybeJson = config.bind match {
     case Bind.String => handleEither(value, Json.printString(value))
@@ -113,14 +119,16 @@ private class SerializerTransformerLogic[T](config: JsonTransformer.Config) exte
   *
   * @param config json transformer configuration.
   */
-private class DeserializerTransformerLogic[T](config: JsonTransformer.Config) extends FlowTransformerLogic[T](config) with EitherHandler[T] {
+private class DeserializerTransformerLogic(
+  config: JsonTransformer.Config
+) extends FlowTransformerLogic(config) with EitherHandler {
 
   private val byteStringJsonParser = JsonParser.byteStringParser()
   private val stringJsonParser = JsonParser.stringParser()
 
   @inline override def transform(value: Json): MaybeJson = config.bind match {
-    case Bind.String => value.map[String](x => handleEither(value, stringJsonParser.parse(x)))
-    case Bind.Bytes => value.map[ByteString](x => handleEither(value, byteStringJsonParser.parse(x)))
+    case Bind.String => value.flatMap[String](x => handleEither(value, stringJsonParser.parse(x)))
+    case Bind.Bytes => value.flatMap[ByteString](x => handleEither(value, byteStringJsonParser.parse(x)))
   }
 
 }

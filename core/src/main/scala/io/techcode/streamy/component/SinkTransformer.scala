@@ -27,9 +27,7 @@ import akka.stream.ActorAttributes.SupervisionStrategy
 import akka.stream._
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
-import io.techcode.streamy.event.Event
-import io.techcode.streamy.util.StreamException
-import io.techcode.streamy.util.json._
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.printer.ByteStringPrinter
 
 import scala.language.postfixOps
@@ -37,31 +35,52 @@ import scala.util.control.NonFatal
 
 /**
   * Sink transformer abstract implementation that provide
-  * a convenient way to process a convertion from [[Event]] to [[ByteString]].
+  * a convenient way to process a convertion from [[StreamEvent]] to [[ByteString]].
+  *
+  * @tparam T  type of the payload before printing.
+  * @tparam CT type of the context.
   */
-final case class SinkTransformer[T](factory: () => ByteStringPrinter[Json]) extends GraphStage[FlowShape[Event[T], ByteString]] {
+abstract class SinkTransformer[T, CT] extends GraphStage[FlowShape[StreamEvent[CT], ByteString]] {
 
-  val in: Inlet[Event[T]] = Inlet[Event[T]]("sinkTransformer.in")
+  // Inlet
+  val in: Inlet[StreamEvent[CT]] = Inlet[StreamEvent[CT]]("sinkTransformer.in")
 
+  // Outlet
   val out: Outlet[ByteString] = Outlet[ByteString]("sinkTransformer.out")
 
-  override val shape: FlowShape[Event[T], ByteString] = FlowShape(in, out)
+  override val shape: FlowShape[StreamEvent[CT], ByteString] = FlowShape(in, out)
+
+  /**
+    * Factory to create a bytestring printer.
+    *
+    * @return a bytestring parser.
+    */
+  def factory(): ByteStringPrinter[T]
+
+  /**
+    * Unpack a stream event to create a payload.
+    *
+    * @param event event involved.
+    * @return payload.
+    */
+  def unpack(event: StreamEvent[CT]): T
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
 
     // Set handler
     setHandlers(in, out, this)
 
+    // Printer for this logic
     private val printer = factory()
 
     private def decider = inheritedAttributes.mandatoryAttribute[SupervisionStrategy].decider
 
     override def onPush(): Unit = {
+      val evt = grab(in)
       try {
-        val event = grab(in)
-        printer.print(event.payload) match {
+        printer.print(unpack(evt)) match {
           case Right(result) => push(out, result)
-          case Left(ex) => throw new StreamException(ex.getMessage, event.payload, Map.empty)
+          case Left(ex) => evt.discard(ex)
         }
       } catch {
         case NonFatal(ex) => decider(ex) match {

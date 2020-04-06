@@ -26,7 +26,7 @@ package io.techcode.streamy.elasticsearch.component
 import akka.Done
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Keep, Sink}
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,7 +43,7 @@ object ElasticsearchSink {
   def apply[T](config: ElasticsearchFlow.Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ): Sink[Event[T], Future[Done]] =
+  ): Sink[StreamEvent[T], Future[Done]] =
     ElasticsearchFlow(config).toMat(Sink.ignore)(Keep.right)
 
 }

@@ -28,25 +28,28 @@ import java.nio.charset.StandardCharsets
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.google.common.hash.{HashFunction, Hashing}
-import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
+import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic, IdentifyFlowTransformer}
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 
 /**
   * Fingerprint transformer implementation.
   */
-private[component] class FingerprintTransformerLogic[T](config: FingerprintTransformer.Config) extends FlowTransformerLogic[T](config) {
+private[component] class FingerprintTransformerLogic(
+  config: FingerprintTransformer.Config
+) extends FlowTransformerLogic(config) {
+
+  override val errorMsg: String = FingerprintTransformer.genericErrorMsg
 
   // Choose right transform function
   private val hashFunc: HashFunction = FingerprintTransformer.Hashings(config.hashing)
 
   override def transform(value: Json): MaybeJson = value
     .map[String](x => hashFunc.hashString(x, StandardCharsets.UTF_8).toString)
-    .orElse(error("Can't generate fingerprint", value))
 
 }
 
@@ -54,6 +57,9 @@ private[component] class FingerprintTransformerLogic[T](config: FingerprintTrans
   * Fingerprint transformer companion.
   */
 object FingerprintTransformer {
+
+  // Generic error message if transform can't happen
+  private[component] val genericErrorMsg = "Can't generate fingerprint"
 
   // All supported hashing
   val Hashings: Map[String, HashFunction] = Map.newBuilder
@@ -86,7 +92,9 @@ object FingerprintTransformer {
     * @param conf flow configuration.
     * @return new fingerprint flow.
     */
-  def apply[T](conf: Config): Flow[Event[T], Event[T], NotUsed] =
-    Flow.fromGraph(FlowTransformer[T](() => new FingerprintTransformerLogic(conf)))
+  def apply[T](conf: Config): Flow[StreamEvent[T], StreamEvent[T], NotUsed] =
+    Flow.fromGraph(new IdentifyFlowTransformer[T] {
+      def factory(): FlowTransformerLogic = new FingerprintTransformerLogic(conf)
+    })
 
 }

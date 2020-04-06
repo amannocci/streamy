@@ -32,8 +32,7 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.event.Event
-import io.techcode.streamy.util.StreamException
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 
 /**
@@ -41,18 +40,37 @@ import io.techcode.streamy.util.json._
   */
 class FlowTransformerSpec extends StreamyTestSystem {
 
-  class Impl[T](config: ImplConfig) extends FlowTransformerLogic[T](config) {
+  class Impl(config: ImplConfig) extends FlowTransformerLogic(config) {
     override def transform(value: Json): MaybeJson = value match {
       case x: JsString => s"${x.value}bar"
+      case x: JsObject => x
       case _ => JsUndefined
     }
   }
 
-  class ImplParent[T](config: ImplConfig) extends FlowTransformerLogic[T](config) {
+  class ImplParent(config: ImplConfig) extends FlowTransformerLogic(config) {
     override def transform(value: Json, payload: Json): MaybeJson = value match {
       case x: JsString => s"${x.value}bar"
-      case _ => JsUndefined
+      case _ => transform(value)
     }
+  }
+
+  class ImplWithCatchException(config: ImplConfig) extends FlowTransformerLogic(config) {
+    override def transform(value: Json): MaybeJson = value
+      .map[String](x => s"${x}bar")
+      .orElse(error(new IllegalArgumentException))
+  }
+
+  class ImplWithException(config: ImplConfig) extends FlowTransformerLogic(config) {
+    override def transform(value: Json): MaybeJson = value
+      .map[String](x => s"${x}bar")
+      .orElse(throw new IllegalArgumentException)
+  }
+
+  class ImplWithError(config: ImplConfig) extends FlowTransformerLogic(config) {
+    override def transform(value: Json): MaybeJson = value
+      .map[String](x => s"${x}bar")
+      .orElse(error("Error"))
   }
 
   // Component configuration
@@ -63,81 +81,294 @@ class FlowTransformerSpec extends StreamyTestSystem {
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip
   ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
+  def mat(decider: Supervision.Decider): ActorMaterializer =
+    ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+
   "Flow transformer" should {
-    "transform correctly a packet inplace" in {
-      val decider: Supervision.Decider = _ => Supervision.Resume
+    "transform correctly an event inplace" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
 
-      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message"))
+      }
 
-      val transformer = FlowTransformer[NotUsed](() => new Impl(ImplConfig(Root / "message")))
-
-      Source.single(Event[NotUsed](Json.obj("message" -> "foo")))
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> "foo")))
         .via(transformer)
-        .runWith(TestSink.probe[Event[NotUsed]])
-        .requestNext() should equal(Event(Json.obj("message" -> "foobar")))
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> "foobar")))
+      stream.expectComplete()
     }
 
-    "transform correctly a packet with a specific target" in {
-      val decider: Supervision.Decider = _ => Supervision.Resume
+    "transform correctly an event with a specific target" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
 
-      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
+      }
 
-      val transformer = FlowTransformer[NotUsed](() => new Impl(ImplConfig(Root / "message", Some(Root / "target"))))
-
-      Source.single(Event[NotUsed](Json.obj("message" -> "foo")))
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> "foo")))
         .via(transformer)
-        .runWith(TestSink.probe[Event[NotUsed]])
-        .requestNext() should equal(Event(Json.obj(
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj(
         "message" -> "foo",
         "target" -> "foobar"
       )))
+      stream.expectComplete()
     }
 
-    "transform correctly a packet with a specific target and remove source" in {
-      val input = Json.obj("message" -> "foo")
-      val component = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
-      component.apply(input) should equal(Json.obj("target" -> "foobar"))
-    }
+    "transform correctly an event with a specific target and remove source" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
 
-    "transform correctly a packet inplace with parent transform" in {
-      val input = Json.obj("message" -> "foo")
-      val component = new ImplParent(ImplConfig(Root / "message"))
-      component.transform(JsNull) should equal(JsUndefined)
-      component.apply(input) should equal(Json.obj("message" -> "foobar"))
-    }
-
-    "skip correctly a packet with a wrong source field" in {
-      val input = Json.obj("message" -> 1)
-      val component = new Impl(ImplConfig(Root / "message"))
-      component.apply(input) should equal(Json.obj("message" -> 1))
-    }
-
-    "skip correctly a packet with a wrong source field with a specific target" in {
-      val input = Json.obj("message" -> 1)
-      val component = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
-      component.apply(input) should equal(Json.obj("message" -> 1))
-    }
-
-    "skip correctly a packet with a wrong source field with a specific target and remove source" in {
-      val input = Json.obj("message" -> 1)
-      val component = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
-      component.apply(input) should equal(Json.obj("message" -> 1))
-    }
-
-    "discard correctly a packet with a wrong source field by throwing an error" in {
-      val input = Json.obj("message" -> 1)
-      val component = new Impl(ImplConfig(Root / "message", onError = ErrorBehaviour.Discard))
-      assertThrows[StreamException] {
-        component.apply(input)
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
       }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> "foo")))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("target" -> "foobar")))
+      stream.expectComplete()
     }
 
-    "discard correctly a packet with a wrong source field by throwing an error and report" in {
-      val input = Json.obj("message" -> 1)
-      val component = new Impl(ImplConfig(Root / "message", onError = ErrorBehaviour.DiscardAndReport))
-      assertThrows[StreamException] {
-        component.apply(input)
+    "transform correctly an event with a root target" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root)))
       }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> Json.obj("message" -> "foo"))))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> "foo")))
+      stream.expectComplete()
+    }
+
+    "transform correctly an event with a root target and remove source" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root), SuccessBehaviour.Remove))
+      }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> Json.obj("test" -> "foo"))))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("test" -> "foo")))
+      stream.expectComplete()
+    }
+
+    "transform correctly an event inplace with parent transform" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new ImplParent(ImplConfig(Root / "message"))
+      }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> "foo")))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> "foobar")))
+      stream.expectComplete()
+    }
+
+    "skip correctly an event with a wrong source field" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message"))
+      }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> 1)))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> 1)))
+      stream.expectComplete()
+    }
+
+    "skip correctly an event with a wrong source field and parent transform" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new ImplParent(ImplConfig(Root / "message"))
+      }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> 1)))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> 1)))
+      stream.expectComplete()
+    }
+
+    "skip correctly an event with a wrong source field with a specific target" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
+      }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> 1)))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> 1)))
+      stream.expectComplete()
+    }
+
+    "skip correctly an event with a wrong source field with a specific target and remove source" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
+      }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> 1)))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> 1)))
+      stream.expectComplete()
+    }
+
+    "skip correctly an event by throwing an error based on exception" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic =
+          new ImplWithCatchException(ImplConfig(Root / "message"))
+      }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> 1)))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> 1)))
+      stream.expectComplete()
+    }
+
+    "skip correctly an event by throwing an error based on msg" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic =
+          new ImplWithError(ImplConfig(Root / "message"))
+      }
+
+      val stream = Source.single(StreamEvent.from(Json.obj("message" -> 1)))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> 1)))
+      stream.expectComplete()
+    }
+
+    "discard correctly an event by throwing an error based on exception" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new ImplWithCatchException(ImplConfig(Root / "message", onError = ErrorBehaviour.Discard))
+      }
+
+      val stream = Source(Seq(
+        StreamEvent.from(Json.obj("message" -> 1)),
+        StreamEvent.from(Json.obj("message" -> "foo"))
+      )).via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> "foobar")))
+      stream.expectComplete()
+    }
+
+    "discard correctly an event by throwing an error and report based on exception" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new ImplWithCatchException(ImplConfig(Root / "message", onError = ErrorBehaviour.DiscardAndReport))
+      }
+
+      val stream = Source(Seq(
+        StreamEvent.from(Json.obj("message" -> 1)),
+        StreamEvent.from(Json.obj("message" -> "foo"))
+      )).via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> "foobar")))
+      stream.expectComplete()
+    }
+
+    "discard correctly an event by throwing an error based on msg" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new ImplWithError(ImplConfig(Root / "message", onError = ErrorBehaviour.Discard))
+      }
+
+      val stream = Source(Seq(
+        StreamEvent.from(Json.obj("message" -> 1)),
+        StreamEvent.from(Json.obj("message" -> "foo"))
+      )).via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> "foobar")))
+      stream.expectComplete()
+    }
+
+    "discard correctly an event by throwing an error and report based on msg" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic = new ImplWithError(ImplConfig(Root / "message", onError = ErrorBehaviour.DiscardAndReport))
+      }
+
+      val stream = Source(Seq(
+        StreamEvent.from(Json.obj("message" -> 1)),
+        StreamEvent.from(Json.obj("message" -> "foo"))
+      )).via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> "foobar")))
+      stream.expectComplete()
+    }
+
+    "discard correctly an event by throwing an error based on uncatched exception" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic =
+          new ImplWithException(ImplConfig(Root / "message"))
+      }
+
+      val stream = Source(Seq(
+        StreamEvent.from(Json.obj("message" -> 1)),
+        StreamEvent.from(Json.obj("message" -> "foo"))
+      )).via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+
+      stream.requestNext() should equal(StreamEvent.from(Json.obj("message" -> "foobar")))
+      stream.expectComplete()
+    }
+
+    "discard an event and fail correctly by throwing an error based on uncatched exception" in {
+      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Stop)
+
+      val transformer = new IdentifyFlowTransformer[NotUsed] {
+        def factory(): FlowTransformerLogic =
+          new ImplWithException(ImplConfig(Root / "message"))
+      }
+
+      Source.single(StreamEvent.from(Json.obj("message" -> 1)))
+        .via(transformer)
+        .runWith(TestSink.probe[StreamEvent[NotUsed]])
+        .request(1)
+        .expectError()
     }
   }
 

@@ -27,7 +27,6 @@ import java.net.{URL, URLClassLoader}
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
 import java.util.function.BiPredicate
-import java.util.stream.Collectors
 
 import akka.actor.{Actor, DiagnosticActorLogging, Props}
 import akka.pattern.gracefulStop

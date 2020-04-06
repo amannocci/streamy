@@ -23,12 +23,12 @@
  */
 package io.techcode.streamy.component
 
+import akka.NotUsed
 import akka.stream.ActorAttributes.SupervisionStrategy
 import akka.stream._
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
-import io.techcode.streamy.event.Event
-import io.techcode.streamy.util.StreamException
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.ByteStringParser
 
@@ -37,42 +37,64 @@ import scala.util.control.NonFatal
 
 /**
   * Source transformer abstract implementation that provide
-  * a convenient way to process a conversion from [[ByteString]] to [[Event]].
+  * a convenient way to process a conversion from [[ByteString]] to [[StreamEvent]].
+  *
+  * @tparam T  type of the payload after parsing.
+  * @tparam CT type of the context.
   */
-final case class SourceTransformer[T](factory: () => ByteStringParser[Json]) extends GraphStage[FlowShape[ByteString, Event[T]]] {
+abstract class SourceTransformer[T, CT] extends GraphStage[FlowShape[ByteString, StreamEvent[CT]]] {
 
+  // Inlet
   val in: Inlet[ByteString] = Inlet[ByteString]("sourceTransformer.in")
 
-  val out: Outlet[Event[T]] = Outlet[Event[T]]("sourceTransformer.out")
+  // Outlet
+  val out: Outlet[StreamEvent[CT]] = Outlet[StreamEvent[CT]]("sourceTransformer.out")
 
-  override val shape: FlowShape[ByteString, Event[T]] = FlowShape(in, out)
+  override val shape: FlowShape[ByteString, StreamEvent[CT]] = FlowShape(in, out)
 
-  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
+  /**
+    * Factory to create a bytestring parser.
+    *
+    * @return a bytestring parser.
+    */
+  def factory(): ByteStringParser[T]
 
-    // Set handler
-    setHandlers(in, out, this)
+  /**
+    * Pack a payload to create a stream event.
+    *
+    * @param payload payload involved.
+    * @return streamy event.
+    */
+  def pack(payload: T): StreamEvent[CT]
 
-    private val parser = factory()
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+    new GraphStageLogic(shape) with InHandler with OutHandler {
 
-    private def decider = inheritedAttributes.mandatoryAttribute[SupervisionStrategy].decider
+      // Set handler
+      setHandlers(in, out, this)
 
-    override def onPush(): Unit = {
-      try {
-        val data = grab(in)
-        parser.parse(data) match {
-          case Right(result) => push(out, Event[T](result))
-          case Left(ex) => throw new StreamException(ex.getMessage, data, Map.empty)
-        }
-      } catch {
-        case NonFatal(ex) => decider(ex) match {
-          case Supervision.Stop => failStage(ex)
-          case _ => pull(in)
+      // Parser for this logic
+      private val parser = factory()
+
+      private def decider = inheritedAttributes.mandatoryAttribute[SupervisionStrategy].decider
+
+      override def onPush(): Unit = {
+        try {
+          val data = grab(in)
+          parser.parse(data) match {
+            case Right(result) => push(out, pack(result))
+            case Left(ex) => StreamEvent.from(data).discard(ex)
+          }
+        } catch {
+          case NonFatal(ex) => decider(ex) match {
+            case Supervision.Stop => failStage(ex)
+            case _ => pull(in)
+          }
         }
       }
+
+      override def onPull(): Unit = pull(in)
+
     }
-
-    override def onPull(): Unit = pull(in)
-
-  }
 
 }

@@ -24,27 +24,47 @@
 package io.techcode.streamy.util
 
 import com.google.common.base.Objects
-import io.techcode.streamy.util.json._
+import io.techcode.streamy.event.StreamEvent
 
 import scala.util.control.NoStackTrace
 
 /**
   * A stream exception raised when an error occured in a stream.
   *
+  * @param state current event state.
   * @param msg   message error cause.
-  * @param state current pkt state.
-  * @param meta  meta data.
+  * @param cause exception cause.
   */
-class StreamException(val msg: String, val state: Json = JsNull, val meta: Map[String, String] = Map.empty[String, String])
-  extends RuntimeException with NoStackTrace {
+case class StreamException[T](
+  state: StreamEvent[T],
+  msg: String,
+  cause: Throwable
+) extends RuntimeException(msg, cause) with NoStackTrace {
 
-  def canEqual(a: Any): Boolean = a.isInstanceOf[StreamException]
+  // Create using state and exception cause
+  def this(state: StreamEvent[T], cause: Throwable) {
+    this(state, StreamException.defaultMsg, cause)
+  }
+
+  // Create using state and message cause
+  def this(state: StreamEvent[T], msg: String) {
+    this(state, msg, null)
+  }
 
   override def equals(that: Any): Boolean = that match {
-    case that: StreamException => that.canEqual(this) && this.hashCode == that.hashCode
+    case that: StreamException[T] => this.hashCode == that.hashCode
     case _ => false
   }
 
-  override def hashCode: Int = Objects.hashCode(msg, state, meta)
+  override def hashCode: Int = Objects.hashCode(msg, state)
+
+}
+
+/**
+  * Stream exception companion.
+  */
+object StreamException {
+
+  private[StreamException] val defaultMsg: String = "A stream exception occured"
 
 }

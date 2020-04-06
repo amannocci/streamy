@@ -24,7 +24,7 @@
 package io.techcode.streamy.elasticsearch.event
 
 import akka.actor.DeadLetterSuppression
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json.Json
 
 /**
@@ -65,6 +65,6 @@ object ElasticsearchEvent {
     * @param droppedElement droppeed element.
     * @param cause          cause of drop from elasticsearch response.
     */
-  case class Drop[T](droppedElement: Event[T], cause: Json) extends All
+  case class Drop[T](droppedElement: StreamEvent[T], cause: Json) extends All
 
 }

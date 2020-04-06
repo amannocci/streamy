@@ -27,22 +27,23 @@ import java.time.format.DateTimeFormatter
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
-import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic, IdentifyFlowTransformer}
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 
 /**
   * Date transformer implementation.
   */
-private[component] class DateTransformerLogic[T](config: DateTransformer.Config) extends FlowTransformerLogic[T](config) {
+private[component] class DateTransformerLogic(config: DateTransformer.Config) extends FlowTransformerLogic(config) {
+
+  override val errorMsg: String = DateTransformer.genericErrorMsg
 
   override def transform(value: Json): MaybeJson = value
     .map[String](x => config.outputFormatter.format(config.inputFormatter.parse(x)))
-    .orElse(error("Can't transform date", value))
 
 }
 
@@ -50,6 +51,9 @@ private[component] class DateTransformerLogic[T](config: DateTransformer.Config)
   * Date transformer companion.
   */
 object DateTransformer {
+
+  // Generic error message if transform can't happen
+  private[component] val genericErrorMsg = "Can't transform date"
 
   // Iso 8601
   val Iso8601: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
@@ -65,12 +69,14 @@ object DateTransformer {
   ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
   /**
-    * Create a date transformer flow that transform incoming [[Event]] objects.
+    * Create a date transformer flow that transform incoming [[StreamEvent]] objects.
     *
     * @param conf flow configuration.
     * @return new date flow.
     */
-  def apply[T](conf: Config): Flow[Event[T], Event[T], NotUsed] =
-    Flow.fromGraph(FlowTransformer[T](() => new DateTransformerLogic(conf)))
+  def apply[T](conf: Config): Flow[StreamEvent[T], StreamEvent[T], NotUsed] =
+    Flow.fromGraph(new IdentifyFlowTransformer[T] {
+      def factory(): FlowTransformerLogic = new DateTransformerLogic(conf)
+    })
 
 }

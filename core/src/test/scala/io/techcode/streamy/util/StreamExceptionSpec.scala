@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.util
 
-import io.techcode.streamy.util.json._
+import io.techcode.streamy.event.StreamEvent
 import org.scalatest._
 
 /**
@@ -31,7 +31,7 @@ import org.scalatest._
   */
 class StreamExceptionSpec extends WordSpecLike with Matchers {
 
-  val generic = new StreamException("foobar")
+  val generic = new StreamException(StreamEvent.Empty, "foobar")
 
   "StreamException" should {
     "not have a stacktrace" in {

@@ -27,7 +27,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing}
 import akka.util.ByteString
 import com.google.protobuf.MessageLite
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 
 /**
   * Protobuf transformer companion.
@@ -35,23 +35,23 @@ import io.techcode.streamy.event.Event
 object ProtobufTransformer {
 
   /**
-    * Create a protobuf flow that transform incoming [[ByteString]] to [[Event]].
+    * Create a protobuf flow that transform incoming [[ByteString]] to [[StreamEvent]].
     *
     * @param conf flow configuration.
     * @return new protobuf flow.
     */
-  def parser[T, PT <: MessageLite](conf: Parser.Config[T, PT]): Flow[ByteString, Event[T], NotUsed] =
+  def parser[T, PT <: MessageLite](conf: Parser.Config[T, PT]): Flow[ByteString, StreamEvent[T], NotUsed] =
     Framing.simpleFramingProtocolDecoder(conf.maxSize)
       .map(raw => conf.proto.getParserForType.parseFrom(raw.asByteBuffer).asInstanceOf[PT])
       .via(Flow.fromFunction(conf.decoder))
 
   /**
-    * Create a protobuf flow that transform incoming [[Event]] to [[ByteString]].
+    * Create a protobuf flow that transform incoming [[StreamEvent]] to [[ByteString]].
     *
     * @param conf flow configuration.
     * @return new protobuf flow.
     */
-  def printer[T, PT <: MessageLite](conf: Printer.Config[T, PT]): Flow[Event[T], ByteString, NotUsed] =
+  def printer[T, PT <: MessageLite](conf: Printer.Config[T, PT]): Flow[StreamEvent[T], ByteString, NotUsed] =
     Flow.fromFunction(conf.encoder)
       .map(obj => ByteString.fromArrayUnsafe(obj.toByteArray))
       .via(Framing.simpleFramingProtocolEncoder(conf.maxSize))
@@ -63,7 +63,7 @@ object ProtobufTransformer {
     case class Config[T, PT <: MessageLite](
       maxSize: Int = Int.MaxValue - 4,
       proto: MessageLite,
-      decoder: PT => Event[T]
+      decoder: PT => StreamEvent[T]
     )
 
   }
@@ -75,7 +75,7 @@ object ProtobufTransformer {
     case class Config[T, PT <: MessageLite](
       maxSize: Int = Int.MaxValue - 4,
       proto: MessageLite,
-      encoder: Event[T] => PT
+      encoder: StreamEvent[T] => PT
     )
 
   }

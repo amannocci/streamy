@@ -27,7 +27,10 @@ import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
+import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.parser.ByteStringParser
+import io.techcode.streamy.util.printer.ByteStringPrinter
 import io.techcode.streamy.util.{Binder, NoneBinder}
 import io.techcode.streamy.xymon.util.parser.XymonParser
 import io.techcode.streamy.xymon.util.printer.XymonPrinter
@@ -38,20 +41,28 @@ import io.techcode.streamy.xymon.util.printer.XymonPrinter
 object XymonTransformer {
 
   /**
-    * Create a xymon flow that transform incoming [[ByteString]] to [[Event]].
+    * Create a xymon flow that transform incoming [[ByteString]] to [[StreamEvent]].
     *
     * @param conf flow configuration.
     */
-  def parser[T](conf: Parser.Config): Flow[ByteString, Event[T], NotUsed] =
-    Flow.fromGraph(SourceTransformer[T](() => XymonParser.parser(conf)))
+  def parser(conf: Parser.Config): Flow[ByteString, StreamEvent[NotUsed], NotUsed] =
+    Flow.fromGraph(new SourceTransformer[Json, NotUsed] {
+      def factory(): ByteStringParser[Json] = XymonParser.parser(conf)
+
+      def pack(payload: Json): StreamEvent[NotUsed] = StreamEvent.from(payload)
+    })
 
   /**
-    * Create a xymon flow that transform incoming [[Event]] to [[ByteString]].
+    * Create a xymon flow that transform incoming [[StreamEvent]] to [[ByteString]].
     *
     * @param conf flow configuration.
     */
-  def printer[T](conf: Printer.Config): Flow[Event[T], ByteString, NotUsed] =
-    Flow.fromGraph(SinkTransformer[T](() => XymonPrinter.printer(conf)))
+  def printer[T](conf: Printer.Config): Flow[StreamEvent[T], ByteString, NotUsed] =
+    Flow.fromGraph(new SinkTransformer[Json, T] {
+      def factory(): ByteStringPrinter[Json] = XymonPrinter.printer(conf)
+
+      def unpack(event: StreamEvent[T]): Json = event.payload
+    })
 
   object Id {
     val Status = "status"

@@ -32,7 +32,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Keep}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
-import io.techcode.streamy.event.Event
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.{Binder, NoneBinder}
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -45,7 +45,7 @@ object KafkaSource {
 
   // Component configuration
   case class Config(
-    handler: Flow[Event[CommittableOffset], Event[CommittableOffset], NotUsed],
+    handler: Flow[StreamEvent[CommittableOffset], StreamEvent[CommittableOffset], NotUsed],
     bootstrapServers: String,
     groupId: String,
     autoOffsetReset: String = "latest",
@@ -98,7 +98,7 @@ object KafkaSource {
     val committerSettings = CommitterSettings(system)
 
     // Default flow
-    val process: Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]], Event[CommittableOffset], NotUsed] =
+    val process: Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]], StreamEvent[CommittableOffset], NotUsed] =
       Flow[ConsumerMessage.CommittableMessage[String, Array[Byte]]]
         .map { msg =>
           val record = msg.record
@@ -111,7 +111,7 @@ object KafkaSource {
           binding.partition(record.partition())
           binding.topic(record.topic())
           binding.timestamp(record.timestamp())
-          Event(builder.result(), msg.committableOffset)
+          StreamEvent(builder.result(), msg.committableOffset)
         }
 
     // Run source
@@ -119,7 +119,7 @@ object KafkaSource {
       .committableSource(consumerSettings, config.topics.toSubscription)
       .via(process)
       .via(config.handler)
-      .map(_.ctx)
+      .map(_.context)
       .toMat(Committer.sink(committerSettings))(Keep.both)
       .mapMaterializedValue(DrainingControl.apply)
       .run()

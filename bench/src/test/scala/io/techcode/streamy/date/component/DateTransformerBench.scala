@@ -25,7 +25,6 @@ package io.techcode.streamy.date.component
 
 import java.time.format.DateTimeFormatter
 
-import akka.NotUsed
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -34,11 +33,11 @@ import org.openjdk.jmh.annotations.Benchmark
   */
 class DateTransformerBench {
 
-  @Benchmark def idempotent(): Json = DateTransformerBench.Transformer.Idempotent(DateTransformerBench.Sample.Iso8601)
+  @Benchmark def idempotent(): MaybeJson = DateTransformerBench.Transformer.Idempotent(DateTransformerBench.Sample.Iso8601)
 
-  @Benchmark def fromIsoToCustom(): Json = DateTransformerBench.Transformer.FromIsoToCustom(DateTransformerBench.Sample.Iso8601)
+  @Benchmark def fromIsoToCustom(): MaybeJson = DateTransformerBench.Transformer.FromIsoToCustom(DateTransformerBench.Sample.Iso8601)
 
-  @Benchmark def fromCustomToIso(): Json = DateTransformerBench.Transformer.FromCustomToIso(DateTransformerBench.Sample.Custom)
+  @Benchmark def fromCustomToIso(): MaybeJson = DateTransformerBench.Transformer.FromCustomToIso(DateTransformerBench.Sample.Custom)
 
 }
 
@@ -54,19 +53,19 @@ object DateTransformerBench {
 
   object Transformer {
 
-    val Idempotent: DateTransformerLogic[NotUsed] = new DateTransformerLogic(DateTransformer.Config(
+    val Idempotent: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTransformer.Iso8601
     ))
 
-    val FromIsoToCustom: DateTransformerLogic[NotUsed] = new DateTransformerLogic(DateTransformer.Config(
+    val FromIsoToCustom: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy")
     ))
 
-    val FromCustomToIso: DateTransformerLogic[NotUsed] = new DateTransformerLogic(DateTransformer.Config(
+    val FromCustomToIso: DateTransformerLogic = new DateTransformerLogic(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy"),
       outputFormatter = DateTransformer.Iso8601
