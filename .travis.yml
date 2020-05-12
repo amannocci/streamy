@@ -6,7 +6,7 @@ dist: bionic
 # Specify lang
 language: scala
 scala:
-  - 2.13.1
+  - 2.13.2
 
 # Test against various jvm
 jdk:
@@ -35,7 +35,6 @@ before_install:
 script:
   # Env tests
   - bats core/src/test/bash
-  - chmod -R +x scripts/*
   # Application test
   - sbt ++$TRAVIS_SCALA_VERSION clean
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle

@@ -8,7 +8,7 @@ RELATIVE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source "${RELATIVE_DIR}/../../scripts/common.sh"
 
 # Constants
-FILENAME=${BASE_PROJECT}/${1##*/}
+FILENAME=${BASE_PROJECT}/.git/${1##*/}
 
 # Validate commit message prefix
 test "" != "$(grep -E '^\[(Added|Updated|Removed|Improved|Fixed|Released)\]' "${FILENAME}")" || {
