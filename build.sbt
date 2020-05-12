@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,9 +42,7 @@ lazy val commonSettings = Seq(
   // Scala compiler options
   scalacOptions in(Compile, doc) ++= Seq(
     "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
-  ),
-
-  scriptClasspath := Seq("*", "../plugin/*")
+  )
 )
 
 lazy val bench = project
@@ -89,7 +87,7 @@ lazy val core = project
   .settings(Dependencies.core)
   .settings(Packages.settings)
   .settings(Publish.settings)
-  .enablePlugins(JavaServerAppPackaging, SystemVPlugin)
+  .enablePlugins(JavaServerAppPackaging, SystemdPlugin)
   .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-date` = project
