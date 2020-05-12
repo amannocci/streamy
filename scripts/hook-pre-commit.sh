@@ -15,7 +15,6 @@ cd "${BASE_PROJECT}"
 
 # Validate new version
 HOOK_DIR=${BASE_PROJECT}/.git/hooks
-diff "${BASE_PROJECT}/scripts/hook-pre-commit.sh" "${HOOK_DIR}/pre-commit" | wc -l
 if [ "$(diff "${BASE_PROJECT}/scripts/hook-pre-commit.sh" "${HOOK_DIR}/pre-commit" | wc -l)" -ne 0 ]; then
   log_failure "use current version of scripts\nPlease run './scripts/workflow.sh' setup again !"
   exit 1
