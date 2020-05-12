@@ -16,7 +16,7 @@ cd "${BASE_PROJECT}"
 # Validate new version
 HOOK_DIR=${BASE_PROJECT}/.git/hooks
 if [ "$(diff "${BASE_PROJECT}/scripts/hook-pre-commit.sh" "${HOOK_DIR}/pre-commit" | wc -l)" -ne 0 ]; then
-  log_failure "There is a new version of scripts\nPlease run `./scripts/workflow.sh` setup again !"
+  log_failure "use current version of scripts\nPlease run './scripts/workflow.sh' setup again !"
   exit 1
 fi
 
@@ -28,4 +28,4 @@ try "clean project" sbt -batch -mem 2048 clean
 try "lint scala style" sbt -batch -mem 2048 scalastyle
 try "compile project" sbt -batch -mem 2048 compile
 try "test project" sbt -batch -mem 2048 test
-log_success "The project is valid"
+log_success "validate project"

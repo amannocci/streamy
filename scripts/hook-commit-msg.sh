@@ -12,9 +12,9 @@ FILENAME=${BASE_PROJECT}/.git/${1##*/}
 
 # Validate commit message prefix
 test "" != "$(grep -E '^\[(Added|Updated|Removed|Improved|Fixed|Released)\]' "${FILENAME}")" || {
-  log_failure "Use an allowed prefix in commit message (Added|Fixed|Updated|Removed|Improved|Released)"
+  log_failure "validate prefix in commit message (Added|Fixed|Updated|Removed|Improved|Released)"
   exit 1
 }
-log_success "The commit message is correct"
+log_success "check commit message"
 
 exit 0
