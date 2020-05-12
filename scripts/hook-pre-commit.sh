@@ -15,10 +15,13 @@ cd "${BASE_PROJECT}"
 
 # Validate new version
 HOOK_DIR=${BASE_PROJECT}/.git/hooks
+echo $HOOK_DIR
 if [ "$(diff "${BASE_PROJECT}/scripts/hook-pre-commit.sh" "${HOOK_DIR}/pre-commit" | wc -l)" -ne 0 ]; then
   log_failure "use current version of scripts\nPlease run './scripts/workflow.sh' setup again !"
   exit 1
 fi
+
+exit 0
 
 # Validate bash project
 try "validate bash source" bats -t core/src/test/bash
