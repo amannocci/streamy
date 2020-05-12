@@ -1,37 +1,42 @@
 #!/usr/bin/env bash
 
-info() {
-  echo -e "\e[32mo $1\e[0m"
+# Found current script directory
+RELATIVE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export RELATIVE_DIR
+
+# Found project directory
+BASE_PROJECT="$(dirname "${RELATIVE_DIR}")"
+export BASE_PROJECT
+
+function log_action() {
+  echo -e "\033[33m⇒\033[0m $*"
 }
 
-error() {
-  echo -e "\e[31mx $1\e[0m"
+function log_failure() {
+  echo -e "\033[31m✗\033[0m Failed to $*"
 }
 
-is_install() {
-  # set to 1 initially
-  local return_=1
-  # set to 0 if not found
-  type "$1" >/dev/null 2>&1 || { local return_=0; }
-  # return value
-  echo "$return_"
+function log_success() {
+  echo -e "\033[32m✓\033[0m Succeeded to $*"
 }
 
-# Run a command and check for fail
-function try {
-  "$@"
-  if [ $? -ne 0 ]; then
-    error "The project isn't valid"
+function command_is_present() {
+  if ! [ -x "$(command -v "${1}")" ]; then
+    log_failure "locate command '${1}'" >&2
     exit 1
   fi
 }
 
-info "Loading common"
+function try() {
+  "${@:2}"
+  status="$?"
+  if [ "$status" -eq 0 ]; then
+    log_success "${1}"
+  else
+    log_failure "${1}"
+    exit "$status"
+  fi
+}
 
-# Correct path
-info "Correcting working directory"
-cd "$(dirname "$0")"
-BASE_DIR=$PWD
-BASE_PROJECT=$(dirname "$BASE_DIR")
-export BASE_DIR
-export BASE_PROJECT
+log_action "The script you are running has basename $(basename "$0"), dirname $(dirname "$0")"
+log_action "The present working directory is $(pwd)"
