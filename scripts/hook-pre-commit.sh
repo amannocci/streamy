@@ -20,8 +20,6 @@ if [ "$(diff "${BASE_PROJECT}/scripts/hook-pre-commit.sh" "${HOOK_DIR}/pre-commi
   exit 1
 fi
 
-exit 0
-
 # Validate bash project
 try "validate bash source" bats -t core/src/test/bash
 
