@@ -475,7 +475,7 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
 
 // scalastyle:on
 
-abstract class ByteStringParserImpl extends ByteStringParser[Json] {
+abstract class ByteStringParserImpl extends ByteStringParser[Json] with Utf8Support[Json] {
 
   implicit var builder: JsObjectBuilder = Json.objectBuilder()
 

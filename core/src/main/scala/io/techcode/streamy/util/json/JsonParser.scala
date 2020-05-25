@@ -280,7 +280,7 @@ private trait AbstractJsonParser[In] extends Parser[In, Json] {
   */
 private class ByteStringJsonParser(
   conf: JsonParser.Config
-) extends ByteStringParser[Json] with AbstractJsonParser[ByteString] {
+) extends ByteStringParser[Json] with AbstractJsonParser[ByteString] with Utf8Support[Json] {
 
   def config: JsonParser.Config = conf
 
