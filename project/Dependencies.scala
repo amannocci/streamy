@@ -27,19 +27,19 @@ import sbt._
 
 object Dependencies {
 
-  val AkkaHttpVersion = "10.1.11"
-  val AkkaKafkaVersion = "2.0.2"
-  val AkkaStreamKafkaVersion = "2.0.2"
-  val AkkaVersion = "2.5.29"
+  val AkkaHttpVersion = "10.1.12"
+  val AkkaKafkaVersion = "2.0.3"
+  val AkkaStreamKafkaVersion = "2.0.3"
+  val AkkaVersion = "2.5.31"
   val ElasticClientVersion = "7.3.0"
-  val GuavaVersion = "28.2-jre"
+  val GuavaVersion = "29.0-jre"
   val LogbackClassicVersion = "1.2.3"
   val MetricJvmVersion = "4.0.5"
   val MockitoCoreVersion = "2.23.4"
   val PureConfig = "0.12.3"
   val ScalaTest = "3.0.8"
-  val TestContainersScalaVersion = "0.36.1"
-  val TestContainersVersion = "1.13.0"
+  val TestContainersScalaVersion = "0.37.0"
+  val TestContainersVersion = "1.14.2"
 
   object Compile {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % AkkaVersion // Apache 2 License

@@ -121,7 +121,7 @@ object KafkaSource {
       .via(config.handler)
       .map(_.context)
       .toMat(Committer.sink(committerSettings))(Keep.both)
-      .mapMaterializedValue(DrainingControl.apply)
+      .mapMaterializedValue(DrainingControl.apply[Done])
       .run()
   }
 
