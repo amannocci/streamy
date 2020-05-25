@@ -33,7 +33,7 @@ ThisBuild / organization := "io.techcode.streamy"
 ThisBuild / name := "streamy"
 
 // Disable parallel execution
-parallelExecution in ThisBuild := false
+concurrentRestrictions in Global += Tags.limit(Tags.Test, 1)
 
 lazy val commonSettings = Seq(
   // Disable test in assembly
