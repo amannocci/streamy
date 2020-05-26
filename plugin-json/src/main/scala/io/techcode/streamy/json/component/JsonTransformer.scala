@@ -30,7 +30,7 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic, IdentifyFlowTransformer}
+import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.json.component.JsonTransformer.Bind
 import io.techcode.streamy.json.component.JsonTransformer.Bind.Bind
@@ -70,11 +70,11 @@ object JsonTransformer {
     * @param conf flow configuration.
     * @return new json flow.
     */
-  def apply[T](conf: Config): Flow[StreamEvent[T], StreamEvent[T], NotUsed] = conf.mode match {
-    case Mode.Serialize => Flow.fromGraph(new IdentifyFlowTransformer[T] {
+  def apply[T](conf: Config): Flow[StreamEvent, StreamEvent, NotUsed] = conf.mode match {
+    case Mode.Serialize => Flow.fromGraph(new FlowTransformer {
       def factory(): FlowTransformerLogic = new SerializerTransformerLogic(conf)
     })
-    case Mode.Deserialize => Flow.fromGraph(new IdentifyFlowTransformer[T] {
+    case Mode.Deserialize => Flow.fromGraph(new FlowTransformer {
       def factory(): FlowTransformerLogic = new DeserializerTransformerLogic(conf)
     })
   }

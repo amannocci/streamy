@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.component
 
-import akka.NotUsed
 import akka.stream.ActorAttributes.SupervisionStrategy
 import akka.stream._
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
@@ -38,34 +37,23 @@ import scala.util.control.NonFatal
 /**
   * Source transformer abstract implementation that provide
   * a convenient way to process a conversion from [[ByteString]] to [[StreamEvent]].
-  *
-  * @tparam T  type of the payload after parsing.
-  * @tparam CT type of the context.
   */
-abstract class SourceTransformer[T, CT] extends GraphStage[FlowShape[ByteString, StreamEvent[CT]]] {
+abstract class SourceTransformer extends GraphStage[FlowShape[ByteString, StreamEvent]] {
 
   // Inlet
   val in: Inlet[ByteString] = Inlet[ByteString]("sourceTransformer.in")
 
   // Outlet
-  val out: Outlet[StreamEvent[CT]] = Outlet[StreamEvent[CT]]("sourceTransformer.out")
+  val out: Outlet[StreamEvent] = Outlet[StreamEvent]("sourceTransformer.out")
 
-  override val shape: FlowShape[ByteString, StreamEvent[CT]] = FlowShape(in, out)
+  override val shape: FlowShape[ByteString, StreamEvent] = FlowShape(in, out)
 
   /**
     * Factory to create a bytestring parser.
     *
     * @return a bytestring parser.
     */
-  def factory(): ByteStringParser[T]
-
-  /**
-    * Pack a payload to create a stream event.
-    *
-    * @param payload payload involved.
-    * @return streamy event.
-    */
-  def pack(payload: T): StreamEvent[CT]
+  def factory(): ByteStringParser[Json]
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new GraphStageLogic(shape) with InHandler with OutHandler {
@@ -82,8 +70,8 @@ abstract class SourceTransformer[T, CT] extends GraphStage[FlowShape[ByteString,
         try {
           val data = grab(in)
           parser.parse(data) match {
-            case Right(result) => push(out, pack(result))
-            case Left(ex) => StreamEvent.from(data).discard(ex)
+            case Right(result) => push(out, StreamEvent(result))
+            case Left(ex) => StreamEvent(data).discard(ex)
           }
         } catch {
           case NonFatal(ex) => decider(ex) match {

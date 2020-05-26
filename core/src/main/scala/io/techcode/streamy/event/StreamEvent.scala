@@ -23,21 +23,17 @@
  */
 package io.techcode.streamy.event
 
-import akka.NotUsed
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json.{JsNull, Json}
 
-/**
-  * Basic streamy event.
-  *
-  * @param payload json payload.
-  * @param context optional context.
-  * @tparam T type of context.
-  */
-case class StreamEvent[T] private(
-  payload: Json,
-  context: T
-) {
+import scala.reflect.ClassTag
+
+trait StreamEvent {
+
+  /**
+    * Returns payload value.
+    */
+  def payload: Json
 
   /**
     * Create a new stream event based on the current and mutate payload with `newPayload`
@@ -45,44 +41,74 @@ case class StreamEvent[T] private(
     * @param newPayload payload replacement.
     * @return new stream event.
     */
-  def mutate(newPayload: Json): StreamEvent[T] = StreamEvent(newPayload, context)
+  def mutate(newPayload: Json): StreamEvent
 
   /**
-    * Create a new stream event based on the current and mutate context with `newContext`
+    * Create a new stream event based on the current and mutate attributes with `key` and `value`
     *
-    * @param newContext context replacement.
-    * @tparam Out type of the new context.
+    * @param key   attribute key.
+    * @param value value.
     * @return new stream event.
     */
-  def mutate[Out](newContext: Out): StreamEvent[Out] = mutate[Out](payload, newContext)
+  def mutate[T](key: AttributeKey[T], value: T): StreamEvent
 
   /**
-    * Create a new stream event and mutate context and payload.
+    * Create a new stream event based on the current and mutate attributes by removing `key` and associate `value`
     *
-    * @param newPayload payload replacement.
-    * @param newContext context replacement.
-    * @tparam Out type of the new context.
+    * @param key attribute key.
     * @return new stream event.
     */
-  def mutate[Out](newPayload: Json, newContext: Out): StreamEvent[Out] = StreamEvent(newPayload, newContext)
+  def mutate[T](key: AttributeKey[T]): StreamEvent
+
+  /**
+    * Returns attribute value based on attribute key.
+    *
+    * @param key attribute key.
+    * @tparam T type of the value.
+    * @return optional attribute value.
+    */
+  def attribute[T](key: AttributeKey[T]): Option[T]
 
   /**
     * Discard this stream event.
     *
     * @param msg message cause.
-    * @tparam U type of the method.
     * @return nothing.
     */
-  def discard[U](msg: String): U = throw new StreamException[T](this, msg)
+  def discard(msg: String): StreamEvent
 
   /**
     * Discard this stream event.
     *
     * @param cause exception cause.
-    * @tparam U type of the method.
     * @return nothing.
     */
-  def discard[U](cause: Throwable): U = throw new StreamException[T](this, cause)
+  def discard(cause: Throwable): StreamEvent
+
+}
+
+/**
+  * Basic streamy event.
+  *
+  * @param payload    json payload.
+  * @param attributes attributes.
+  */
+private case class StreamEventImpl(
+  payload: Json,
+  private val attributes: Map[AttributeKey[_], _] = Map.empty
+) extends StreamEvent {
+
+  def mutate(newPayload: Json): StreamEvent = StreamEventImpl(newPayload, attributes)
+
+  def mutate[T](key: AttributeKey[T], value: T): StreamEvent = StreamEventImpl(payload, attributes.updated(key, value))
+
+  def mutate[T](key: AttributeKey[T]): StreamEvent = StreamEventImpl(payload, attributes.removed(key))
+
+  def attribute[T](key: AttributeKey[T]): Option[T] = attributes.get(key).map(_.asInstanceOf[T])
+
+  def discard(msg: String): StreamEvent = throw new StreamException(this, msg)
+
+  def discard(cause: Throwable): StreamEvent = throw new StreamException(this, cause)
 
 }
 
@@ -92,7 +118,7 @@ case class StreamEvent[T] private(
 object StreamEvent {
 
   // Empty stream event
-  val Empty: StreamEvent[NotUsed] = StreamEvent[NotUsed](JsNull, NotUsed)
+  val Empty: StreamEvent = StreamEventImpl(JsNull, Map.empty)
 
   /**
     * Create an stream event only using payload.
@@ -100,6 +126,23 @@ object StreamEvent {
     * @param payload payload to wrap.
     * @return new stream event.
     */
-  def from(payload: Json): StreamEvent[NotUsed] = StreamEvent[NotUsed](payload, NotUsed)
+  def apply(payload: Json): StreamEvent = StreamEventImpl(payload, Map.empty)
 
+}
+
+/**
+  * Represent an attribute key.
+  *
+  * @param name  name of the attribute.
+  * @param clazz class type.
+  * @tparam T type of key.
+  */
+case class AttributeKey[T](name: String, private val clazz: Class[_])
+
+/**
+  * Attribute key companion.
+  */
+object AttributeKey {
+  def apply[T: ClassTag](name: String): AttributeKey[T] =
+    new AttributeKey[T](name, implicitly[ClassTag[T]].runtimeClass)
 }

@@ -188,37 +188,37 @@ object JsonTransformerSpec {
 
   object Input {
 
-    val SkipEmptyStringSource: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> ""))
+    val SkipEmptyStringSource: StreamEvent = StreamEvent(Json.obj("message" -> ""))
 
-    val SkipStringSource: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> "foobar"))
+    val SkipStringSource: StreamEvent = StreamEvent(Json.obj("message" -> "foobar"))
 
-    val SkipWrongJsonSource: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> "{foobar}"))
+    val SkipWrongJsonSource: StreamEvent = StreamEvent(Json.obj("message" -> "{foobar}"))
 
-    val SkipEmptyByteStringSource: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> ByteString()))
+    val SkipEmptyByteStringSource: StreamEvent = StreamEvent(Json.obj("message" -> ByteString()))
 
-    val SkipByteStringSource: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> ByteString("foobar")))
+    val SkipByteStringSource: StreamEvent = StreamEvent(Json.obj("message" -> ByteString("foobar")))
 
-    val SkipWrongJsonByteStringSource: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> ByteString("{foobar}")))
+    val SkipWrongJsonByteStringSource: StreamEvent = StreamEvent(Json.obj("message" -> ByteString("{foobar}")))
 
-    val DeserializeInplace: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> """{"message":"foobar"}"""))
+    val DeserializeInplace: StreamEvent = StreamEvent(Json.obj("message" -> """{"message":"foobar"}"""))
 
-    val DeserializeSourceToRoot: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> """{"test":"foobar"}"""))
+    val DeserializeSourceToRoot: StreamEvent = StreamEvent(Json.obj("message" -> """{"test":"foobar"}"""))
 
-    val DeserializeSourceToExistingRoot: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> """{"message":"foobar"}"""))
+    val DeserializeSourceToExistingRoot: StreamEvent = StreamEvent(Json.obj("message" -> """{"message":"foobar"}"""))
 
-    val DeserializeInplaceByteString: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
+    val DeserializeInplaceByteString: StreamEvent = StreamEvent(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
 
-    val DeserializeSourceToRootByteString: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> ByteString("""{"test":"foobar"}""")))
+    val DeserializeSourceToRootByteString: StreamEvent = StreamEvent(Json.obj("message" -> ByteString("""{"test":"foobar"}""")))
 
-    val DeserializeSourceToExistingRootByteString: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
+    val DeserializeSourceToExistingRootByteString: StreamEvent = StreamEvent(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
 
-    val SerializeInplace: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> Json.obj("message" -> "foobar")))
+    val SerializeInplace: StreamEvent = StreamEvent(Json.obj("message" -> Json.obj("message" -> "foobar")))
 
-    val SerializeRootToTarget: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("test" -> "foobar"))
+    val SerializeRootToTarget: StreamEvent = StreamEvent(Json.obj("test" -> "foobar"))
 
-    val SerializeRootToExistingTarget: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("test" -> "foobar"))
+    val SerializeRootToExistingTarget: StreamEvent = StreamEvent(Json.obj("test" -> "foobar"))
 
-    val WrongType: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("test" -> 10))
+    val WrongType: StreamEvent = StreamEvent(Json.obj("test" -> 10))
 
   }
 
@@ -252,30 +252,30 @@ object JsonTransformerSpec {
 
   object Output {
 
-    val DeserializeInplace: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> Json.obj("message" -> "foobar")))
+    val DeserializeInplace: StreamEvent = StreamEvent(Json.obj("message" -> Json.obj("message" -> "foobar")))
 
-    val DeserializeSourceToRoot: StreamEvent[NotUsed] = StreamEvent.from(Json.obj(
+    val DeserializeSourceToRoot: StreamEvent = StreamEvent(Json.obj(
       "message" -> """{"test":"foobar"}""",
       "test" -> "foobar"
     ))
 
-    val DeserializeSourceToRootByteString: StreamEvent[NotUsed] = StreamEvent.from(Json.obj(
+    val DeserializeSourceToRootByteString: StreamEvent = StreamEvent(Json.obj(
       "message" -> ByteString("""{"test":"foobar"}"""),
       "test" -> "foobar"
     ))
 
-    val DeserializeSourceToExistingRoot: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> "foobar"))
+    val DeserializeSourceToExistingRoot: StreamEvent = StreamEvent(Json.obj("message" -> "foobar"))
 
-    val SerializeInplace: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> """{"message":"foobar"}"""))
+    val SerializeInplace: StreamEvent = StreamEvent(Json.obj("message" -> """{"message":"foobar"}"""))
 
-    val SerializeInplaceBytes: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
+    val SerializeInplaceBytes: StreamEvent = StreamEvent(Json.obj("message" -> ByteString("""{"message":"foobar"}""")))
 
-    val SerializeRootToTarget: StreamEvent[NotUsed] = StreamEvent.from(Json.obj(
+    val SerializeRootToTarget: StreamEvent = StreamEvent(Json.obj(
       "message" -> """{"test":"foobar"}""",
       "test" -> "foobar"
     ))
 
-    val SerializeRootToExistingTarget: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("test" -> """{"test":"foobar"}"""))
+    val SerializeRootToExistingTarget: StreamEvent = StreamEvent(Json.obj("test" -> """{"test":"foobar"}"""))
 
   }
 

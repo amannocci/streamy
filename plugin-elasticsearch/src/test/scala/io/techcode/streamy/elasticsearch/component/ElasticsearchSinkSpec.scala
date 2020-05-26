@@ -41,8 +41,8 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
 
   "Elasticsearch sink" should {
     "send data" in {
-      val result = Source.single(StreamEvent.from(Json.obj("foo" -> "bar")))
-        .runWith(ElasticsearchSink[NotUsed](ElasticsearchFlow.Config(
+      val result = Source.single(StreamEvent(Json.obj("foo" -> "bar")))
+        .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
             host = elasticHost,
@@ -59,8 +59,8 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
     }
 
     "send data with document parsing bypass" in {
-      val result = Source.single(StreamEvent.from(Json.printByteStringUnsafe(Json.obj("foo" -> "bar"))))
-        .runWith(ElasticsearchSink[NotUsed](ElasticsearchFlow.Config(
+      val result = Source.single(StreamEvent(Json.printByteStringUnsafe(Json.obj("foo" -> "bar"))))
+        .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
             host = elasticHost,
@@ -78,8 +78,8 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
     }
 
     "send data in bulk" in {
-      val result = Source.fromIterator[StreamEvent[NotUsed]](() => Seq(StreamEvent.from(Json.obj("foo" -> "bar")), StreamEvent.from(Json.obj("foo" -> "bar"))).iterator)
-        .runWith(ElasticsearchSink[NotUsed](ElasticsearchFlow.Config(
+      val result = Source.fromIterator[StreamEvent](() => Seq(StreamEvent(Json.obj("foo" -> "bar")), StreamEvent(Json.obj("foo" -> "bar"))).iterator)
+        .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
             host = elasticHost,

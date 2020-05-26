@@ -72,7 +72,7 @@ object GraphiteTransformerSpec {
       timestamp = LongBinder("timestamp"),
     )
 
-    val Parsing: Flow[ByteString, StreamEvent[NotUsed], NotUsed] = GraphiteTransformer.parser(GraphiteTransformer.Config(
+    val Parsing: Flow[ByteString, StreamEvent, NotUsed] = GraphiteTransformer.parser(GraphiteTransformer.Config(
       binding = Binding
     ))
 
@@ -80,7 +80,7 @@ object GraphiteTransformerSpec {
 
   object Output {
 
-    val Parser: StreamEvent[NotUsed] = StreamEvent.from(Json.obj(
+    val Parser: StreamEvent = StreamEvent(Json.obj(
       "key" -> "gatling.basicsimulation.allRequests.ok.count",
       "value" -> 2F,
       "timestamp" -> 1518123202L

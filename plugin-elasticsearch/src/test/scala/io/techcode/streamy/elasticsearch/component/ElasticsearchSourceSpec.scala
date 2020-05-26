@@ -69,7 +69,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}"""),
         bulk = 1
       )
-      ).runWith(TestSink.probe[StreamEvent[NotUsed]])
+      ).runWith(TestSink.probe[StreamEvent])
 
       // Check
       stream.requestNext(5 seconds).payload.evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
@@ -95,7 +95,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
       )
-      ).runWith(Sink.head[StreamEvent[NotUsed]])
+      ).runWith(Sink.head[StreamEvent])
 
       // Check
       whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
@@ -119,7 +119,7 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       )
       ).runWith(Sink.ignore)
 
-      assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException[NotUsed]])
+      assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
     }
 
   }

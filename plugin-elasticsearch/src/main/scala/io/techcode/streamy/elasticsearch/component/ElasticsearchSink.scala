@@ -40,10 +40,10 @@ object ElasticsearchSink {
     *
     * @param config sink configuration.
     */
-  def apply[T](config: ElasticsearchFlow.Config)(
+  def apply(config: ElasticsearchFlow.Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ): Sink[StreamEvent[T], Future[Done]] =
+  ): Sink[StreamEvent, Future[Done]] =
     ElasticsearchFlow(config).toMat(Sink.ignore)(Keep.right)
 
 }

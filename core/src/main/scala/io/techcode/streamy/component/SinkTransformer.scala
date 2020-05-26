@@ -28,6 +28,7 @@ import akka.stream._
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
 import io.techcode.streamy.event.StreamEvent
+import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.printer.ByteStringPrinter
 
 import scala.language.postfixOps
@@ -36,34 +37,23 @@ import scala.util.control.NonFatal
 /**
   * Sink transformer abstract implementation that provide
   * a convenient way to process a convertion from [[StreamEvent]] to [[ByteString]].
-  *
-  * @tparam T  type of the payload before printing.
-  * @tparam CT type of the context.
   */
-abstract class SinkTransformer[T, CT] extends GraphStage[FlowShape[StreamEvent[CT], ByteString]] {
+abstract class SinkTransformer extends GraphStage[FlowShape[StreamEvent, ByteString]] {
 
   // Inlet
-  val in: Inlet[StreamEvent[CT]] = Inlet[StreamEvent[CT]]("sinkTransformer.in")
+  val in: Inlet[StreamEvent] = Inlet[StreamEvent]("sinkTransformer.in")
 
   // Outlet
   val out: Outlet[ByteString] = Outlet[ByteString]("sinkTransformer.out")
 
-  override val shape: FlowShape[StreamEvent[CT], ByteString] = FlowShape(in, out)
+  override val shape: FlowShape[StreamEvent, ByteString] = FlowShape(in, out)
 
   /**
     * Factory to create a bytestring printer.
     *
     * @return a bytestring parser.
     */
-  def factory(): ByteStringPrinter[T]
-
-  /**
-    * Unpack a stream event to create a payload.
-    *
-    * @param event event involved.
-    * @return payload.
-    */
-  def unpack(event: StreamEvent[CT]): T
+  def factory(): ByteStringPrinter[Json]
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
 
@@ -78,7 +68,7 @@ abstract class SinkTransformer[T, CT] extends GraphStage[FlowShape[StreamEvent[C
     override def onPush(): Unit = {
       val evt = grab(in)
       try {
-        printer.print(unpack(evt)) match {
+        printer.print(evt.payload) match {
           case Right(result) => push(out, result)
           case Left(ex) => evt.discard(ex)
         }

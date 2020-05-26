@@ -45,12 +45,10 @@ object GraphiteTransformer {
     * @param conf flow configuration.
     * @return new graphite flow compliant with Graphite protocol.
     */
-  def parser(conf: Config): Flow[ByteString, StreamEvent[NotUsed], NotUsed] = {
+  def parser(conf: Config): Flow[ByteString, StreamEvent, NotUsed] = {
     StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
-      .via(Flow.fromGraph(new SourceTransformer[Json, NotUsed] {
+      .via(Flow.fromGraph(new SourceTransformer {
         override def factory(): ByteStringParser[Json] = GraphiteParser.parser(conf)
-
-        override def pack(payload: Json): StreamEvent[NotUsed] = StreamEvent.from(payload)
       }))
   }
 

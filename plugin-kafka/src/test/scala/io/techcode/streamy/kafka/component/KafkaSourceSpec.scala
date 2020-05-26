@@ -40,7 +40,7 @@ class KafkaSourceSpec extends KafkaSpec {
 
       awaitProduce(produceString(topic, Seq("foobar")))
       KafkaSource.atLeastOnce(KafkaSource.Config(
-        handler = Flow[StreamEvent[CommittableOffset]],
+        handler = Flow[StreamEvent],
         bootstrapServers = bootstrapServers,
         groupId = groupId,
         topics = KafkaSource.StaticTopicConfig(Set(topic))

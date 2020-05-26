@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,24 +35,24 @@ import scala.util.control.NoStackTrace
   * @param msg   message error cause.
   * @param cause exception cause.
   */
-case class StreamException[T](
-  state: StreamEvent[T],
+case class StreamException(
+  state: StreamEvent,
   msg: String,
   cause: Throwable
 ) extends RuntimeException(msg, cause) with NoStackTrace {
 
   // Create using state and exception cause
-  def this(state: StreamEvent[T], cause: Throwable) {
+  def this(state: StreamEvent, cause: Throwable) {
     this(state, StreamException.defaultMsg, cause)
   }
 
   // Create using state and message cause
-  def this(state: StreamEvent[T], msg: String) {
+  def this(state: StreamEvent, msg: String) {
     this(state, msg, null)
   }
 
   override def equals(that: Any): Boolean = that match {
-    case that: StreamException[T] => this.hashCode == that.hashCode
+    case that: StreamException => this.hashCode == that.hashCode
     case _ => false
   }
 

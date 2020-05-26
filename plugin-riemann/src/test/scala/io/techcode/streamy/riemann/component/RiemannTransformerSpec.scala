@@ -52,7 +52,7 @@ object RiemannTransformerSpec {
 
   private val Time: Long = System.currentTimeMillis()
 
-  val Input: StreamEvent[NotUsed] = StreamEvent.from(Json.obj(
+  val Input: StreamEvent = StreamEvent(Json.obj(
     "ok" -> true,
     "error" -> "test",
     "events" -> Json.arr(
@@ -76,11 +76,11 @@ object RiemannTransformerSpec {
     )
   ))
 
-  val Transformer: Flow[StreamEvent[NotUsed], StreamEvent[NotUsed], NotUsed] =
+  val Transformer: Flow[StreamEvent, StreamEvent, NotUsed] =
     RiemannTransformer.printer(RiemannTransformer.Printer.Config())
       .via(RiemannTransformer.parser(RiemannTransformer.Parser.Config()))
 
-  val Output: StreamEvent[NotUsed] = StreamEvent.from(Json.obj(
+  val Output: StreamEvent = StreamEvent(Json.obj(
     "ok" -> true,
     "error" -> "test",
     "events" -> Json.arr(

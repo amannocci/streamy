@@ -143,20 +143,16 @@ abstract class FlowTransformerLogic(val config: Config) extends (Json => MaybeJs
 /**
   * Flow transformer abstract implementation that provide
   * a convenient way to process an update on [[StreamEvent]].
-  *
-  * @tparam In  type of the context before transform.
-  * @tparam Out type of the context after transform.
   */
-abstract class FlowTransformer[In, Out] extends GraphStage[FlowShape[StreamEvent[In], StreamEvent[Out]]] {
+abstract class FlowTransformer extends GraphStage[FlowShape[StreamEvent, StreamEvent]] {
 
   // Inlet
-  val in: Inlet[StreamEvent[In]] = Inlet[StreamEvent[In]]("flowTransformer.in")
+  val in: Inlet[StreamEvent] = Inlet[StreamEvent]("flowTransformer.in")
 
   // Outlet
-  val out: Outlet[StreamEvent[Out]] = Outlet[StreamEvent[Out]]("flowTransformer.out")
+  val out: Outlet[StreamEvent] = Outlet[StreamEvent]("flowTransformer.out")
 
-  override val shape: FlowShape[StreamEvent[In], StreamEvent[Out]] = FlowShape(in, out)
-
+  override val shape: FlowShape[StreamEvent, StreamEvent] = FlowShape(in, out)
 
   /**
     * Factory to create a flow transformer logic.
@@ -166,21 +162,12 @@ abstract class FlowTransformer[In, Out] extends GraphStage[FlowShape[StreamEvent
   def factory(): FlowTransformerLogic
 
   /**
-    * Unpack a stream event to create a payload.
+    * Mutate current event after logic.
     *
-    * @param event event involved.
-    * @return payload.
+    * @param evt current event after process.
+    * @return new event.
     */
-  def unpack(event: StreamEvent[In]): Json
-
-  /**
-    * Pack a payload and current context to create a stream event.
-    *
-    * @param newPayload payload involved.
-    * @param context    current context.
-    * @return streamy event.
-    */
-  def pack(newPayload: Json, context: In): StreamEvent[Out]
+  def mutate(evt: StreamEvent): StreamEvent = evt
 
   override def createLogic(attrs: Attributes): GraphStageLogic = new FlowTransformerInternal(attrs)
 
@@ -204,9 +191,9 @@ abstract class FlowTransformer[In, Out] extends GraphStage[FlowShape[StreamEvent
       try {
         var newPayload: MaybeJson = JsUndefined
         try {
-          newPayload = logic(unpack(event))
+          newPayload = logic(event.payload)
           newPayload.ifExists[Json] { p =>
-            push(out, pack(p, event.context))
+            push(out, mutate(event.mutate(p)))
           }
         } catch {
           case ex@StreamException(_, _, _) =>
@@ -231,9 +218,9 @@ abstract class FlowTransformer[In, Out] extends GraphStage[FlowShape[StreamEvent
       *
       * @param event event involved.
       */
-    def handleMissing(event: StreamEvent[In]): Unit = logic.config.onError match {
+    def handleMissing(event: StreamEvent): Unit = logic.config.onError match {
       case ErrorBehaviour.Discard | ErrorBehaviour.DiscardAndReport => event.discard(logic.errorMsg)
-      case ErrorBehaviour.Skip => push(out, pack(event.payload, event.context))
+      case ErrorBehaviour.Skip => push(out, event)
     }
 
     /**
@@ -242,31 +229,17 @@ abstract class FlowTransformer[In, Out] extends GraphStage[FlowShape[StreamEvent
       * @param event event involved.
       * @param ex    exception fired.
       */
-    def handleFailure[T](event: StreamEvent[In], ex: StreamException[T]): Unit = logic.config.onError match {
+    def handleFailure(event: StreamEvent, ex: StreamException): Unit = logic.config.onError match {
       case ErrorBehaviour.Discard | ErrorBehaviour.DiscardAndReport =>
         if (Option(ex.cause).isDefined) {
           event.discard(ex.cause)
         } else {
           event.discard(ex.msg)
         }
-      case ErrorBehaviour.Skip => push(out, pack(event.payload, event.context))
+      case ErrorBehaviour.Skip => push(out, event)
     }
 
   }
-
-}
-
-/**
-  * Basic flow transformer abstract implementation that provide
-  * a convenient way to process an update on [[StreamEvent]].
-  *
-  * @tparam T type of the context before and after transform.
-  */
-abstract class IdentifyFlowTransformer[T] extends FlowTransformer[T, T] {
-
-  @inline def unpack(event: StreamEvent[T]): Json = event.payload
-
-  @inline def pack(newPayload: Json, context: T): StreamEvent[T] = StreamEvent[T](newPayload, context)
 
 }
 

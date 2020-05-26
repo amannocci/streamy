@@ -31,7 +31,7 @@ import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
-import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic, IdentifyFlowTransformer}
+import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 
@@ -74,8 +74,8 @@ object DateTransformer {
     * @param conf flow configuration.
     * @return new date flow.
     */
-  def apply[T](conf: Config): Flow[StreamEvent[T], StreamEvent[T], NotUsed] =
-    Flow.fromGraph(new IdentifyFlowTransformer[T] {
+  def apply[T](conf: Config): Flow[StreamEvent, StreamEvent, NotUsed] =
+    Flow.fromGraph(new FlowTransformer {
       def factory(): FlowTransformerLogic = new DateTransformerLogic(conf)
     })
 

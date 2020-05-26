@@ -23,9 +23,8 @@
  */
 package io.techcode.streamy.event
 
-import akka.NotUsed
 import io.techcode.streamy.util.StreamException
-import io.techcode.streamy.util.json.{JsNull, JsUndefined, Json, MaybeJson}
+import io.techcode.streamy.util.json.{JsUndefined, Json, MaybeJson}
 import org.scalatest.{Matchers, WordSpecLike}
 
 /**
@@ -33,34 +32,43 @@ import org.scalatest.{Matchers, WordSpecLike}
   */
 class StreamEventSpec extends WordSpecLike with Matchers {
 
+  // Test attr key
+  private val attrKey = AttributeKey[MaybeJson]("test")
+
   "Stream event" can {
-    "be mutate with only new payload" in {
-      val input = StreamEvent.from(Json.obj()).mutate(Json.obj("test" -> "foobar"))
-      val output = StreamEvent.from(Json.obj("test" -> "foobar"))
+    "be access" in {
+      val value = StreamEvent(Json.obj()).mutate[MaybeJson](attrKey, JsUndefined)
+      value.payload should equal(Json.obj())
+      value.attribute[MaybeJson](attrKey) should equal(Some(JsUndefined))
+    }
+
+    "be mutate with new payload" in {
+      val input = StreamEvent(Json.obj()).mutate(Json.obj("test" -> "foobar"))
+      val output = StreamEvent(Json.obj("test" -> "foobar"))
       input should equal(output)
     }
 
-    "be mutate with only new context" in {
-      val input = StreamEvent(Json.obj(), JsNull).mutate[MaybeJson](JsUndefined)
-      val output = StreamEvent(Json.obj(), JsUndefined)
+    "be mutate with new attr" in {
+      val input = StreamEvent(Json.obj()).mutate[MaybeJson](attrKey, JsUndefined)
+      val output = StreamEventImpl(Json.obj(), Map(attrKey -> JsUndefined))
       input should equal(output)
     }
 
-    "be mutate" in {
-      val input = StreamEvent(Json.obj(), JsNull).mutate[MaybeJson](Json.arr(), JsUndefined)
-      val output = StreamEvent(Json.arr(), JsUndefined)
+    "be mutate by removing attr" in {
+      val input = StreamEvent(Json.obj()).mutate(attrKey)
+      val output = StreamEvent(Json.obj())
       input should equal(output)
     }
 
     "be discard by message" in {
-      assertThrows[StreamException[NotUsed]] {
-        StreamEvent.from(Json.obj()).discard("foobar")
+      assertThrows[StreamException] {
+        StreamEvent(Json.obj()).discard("foobar")
       }
     }
 
     "be discard by exception" in {
-      assertThrows[StreamException[NotUsed]] {
-        StreamEvent.from(Json.obj()).discard(new IllegalArgumentException)
+      assertThrows[StreamException] {
+        StreamEvent(Json.obj()).discard(new IllegalArgumentException)
       }
     }
   }

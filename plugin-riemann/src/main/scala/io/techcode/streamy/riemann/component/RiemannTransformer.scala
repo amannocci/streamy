@@ -42,8 +42,8 @@ object RiemannTransformer {
     * @param conf flow configuration.
     * @return new riemann flow.
     */
-  def parser(conf: Parser.Config): Flow[ByteString, StreamEvent[NotUsed], NotUsed] =
-    ProtobufTransformer.parser[NotUsed, Proto.Msg](ProtobufTransformer.Parser.Config(
+  def parser(conf: Parser.Config): Flow[ByteString, StreamEvent, NotUsed] =
+    ProtobufTransformer.parser[Proto.Msg](ProtobufTransformer.Parser.Config(
       proto = Proto.Msg.getDefaultInstance,
       maxSize = conf.maxSize,
       decoder = new ParserLogic(conf.binding)
@@ -55,19 +55,19 @@ object RiemannTransformer {
     * @param conf flow configuration.
     * @return new riemann flow.
     */
-  def printer[T](conf: Printer.Config): Flow[StreamEvent[T], ByteString, NotUsed] =
-    ProtobufTransformer.printer[T, Proto.Msg](ProtobufTransformer.Printer.Config(
+  def printer(conf: Printer.Config): Flow[StreamEvent, ByteString, NotUsed] =
+    ProtobufTransformer.printer[Proto.Msg](ProtobufTransformer.Printer.Config(
       proto = Proto.Msg.getDefaultInstance,
       maxSize = conf.maxSize,
       encoder = new PrinterLogic(conf.binding)
     ))
 
-  private class ParserLogic(binding: Parser.Binding) extends (Proto.Msg => StreamEvent[NotUsed]) {
+  private class ParserLogic(binding: Parser.Binding) extends (Proto.Msg => StreamEvent) {
 
     val eventBinding: Parser.EventBinding = binding.event
 
     // scalastyle:off cyclomatic.complexity
-    override def apply(pkt: Proto.Msg): StreamEvent[NotUsed] = {
+    override def apply(pkt: Proto.Msg): StreamEvent = {
       val builder = Json.objectBuilder()
       if (pkt.hasOk) builder += (binding.ok -> pkt.getOk)
       if (pkt.hasError) builder += (binding.error -> pkt.getError)
@@ -100,19 +100,19 @@ object RiemannTransformer {
         }
         builder += (binding.events -> events.result())
       }
-      StreamEvent.from(builder.result())
+      StreamEvent(builder.result())
     }
 
     // scalastyle:on cyclomatic.complexity
 
   }
 
-  private class PrinterLogic[T](binding: Printer.Binding) extends (StreamEvent[T] => Proto.Msg) {
+  private class PrinterLogic[T](binding: Printer.Binding) extends (StreamEvent => Proto.Msg) {
 
     val eventBinding: Printer.EventBinding = binding.event
 
     // scalastyle:off cyclomatic.complexity
-    override def apply(event: StreamEvent[T]): Proto.Msg = {
+    override def apply(event: StreamEvent): Proto.Msg = {
       val builder = Proto.Msg.newBuilder()
 
       val payload = event.payload

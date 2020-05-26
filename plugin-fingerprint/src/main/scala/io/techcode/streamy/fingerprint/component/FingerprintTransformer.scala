@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,11 +28,11 @@ import java.nio.charset.StandardCharsets
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.google.common.hash.{HashFunction, Hashing}
-import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic, IdentifyFlowTransformer}
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
+import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 
@@ -92,8 +92,8 @@ object FingerprintTransformer {
     * @param conf flow configuration.
     * @return new fingerprint flow.
     */
-  def apply[T](conf: Config): Flow[StreamEvent[T], StreamEvent[T], NotUsed] =
-    Flow.fromGraph(new IdentifyFlowTransformer[T] {
+  def apply(conf: Config): Flow[StreamEvent, StreamEvent, NotUsed] =
+    Flow.fromGraph(new FlowTransformer {
       def factory(): FlowTransformerLogic = new FingerprintTransformerLogic(conf)
     })
 

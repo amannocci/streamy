@@ -26,8 +26,8 @@ package io.techcode.streamy.elasticsearch.component
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentType, _}
 import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
+import akka.http.scaladsl.model.{ContentType, _}
 import akka.stream._
 import akka.stream.scaladsl.Flow
 import akka.stream.stage._
@@ -128,10 +128,10 @@ object ElasticsearchFlow {
     *
     * @param config flow configuration.
     */
-  def apply[T](config: Config)(
+  def apply(config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ): Flow[StreamEvent[T], StreamEvent[T], NotUsed] = Flow[StreamEvent[T]]
+  ): Flow[StreamEvent, StreamEvent, NotUsed] = Flow[StreamEvent]
     .batch(config.bulk, immutable.Seq(_)) { case (seq, wm) => seq :+ wm }
     .via(Flow.fromGraph(new ElasticsearchFlowStage(config)))
 
@@ -140,19 +140,19 @@ object ElasticsearchFlow {
     *
     * @param config flow stage configuration.
     */
-  private class ElasticsearchFlowStage[T](config: Config)(
+  private class ElasticsearchFlowStage(config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ) extends GraphStage[FlowShape[Seq[StreamEvent[T]], StreamEvent[T]]] {
+  ) extends GraphStage[FlowShape[Seq[StreamEvent], StreamEvent]] {
 
     // Inlet
-    val in: Inlet[Seq[StreamEvent[T]]] = Inlet("ElasticsearchFlow.in")
+    val in: Inlet[Seq[StreamEvent]] = Inlet("ElasticsearchFlow.in")
 
     // Outlet
-    val out: Outlet[StreamEvent[T]] = Outlet("ElasticsearchFlow.out")
+    val out: Outlet[StreamEvent] = Outlet("ElasticsearchFlow.out")
 
     // Shape
-    override val shape: FlowShape[Seq[StreamEvent[T]], StreamEvent[T]] = FlowShape.of(in, out)
+    override val shape: FlowShape[Seq[StreamEvent], StreamEvent] = FlowShape.of(in, out)
 
     // Binding
     val binding: Binding = config.binding
@@ -166,7 +166,7 @@ object ElasticsearchFlow {
       * @param events events to process.
       * @return prepared request in bulk format.
       */
-    private def marshalMessages(events: Seq[StreamEvent[T]]): ByteString = events.map(marshalMessage).reduce((x, y) => x ++ y)
+    private def marshalMessages(events: Seq[StreamEvent]): ByteString = events.map(marshalMessage).reduce((x, y) => x ++ y)
 
     /**
       * Marshal a single packet.
@@ -174,7 +174,7 @@ object ElasticsearchFlow {
       * @param event event to marshal.
       * @return bytestring representation.
       */
-    private def marshalMessage(event: StreamEvent[T]): ByteString = {
+    private def marshalMessage(event: StreamEvent): ByteString = {
       // Retrive header information
       val payload = event.payload
       val id = payload.evaluate(ElasticPath.Id)
@@ -253,10 +253,10 @@ object ElasticsearchFlow {
       private val hosts: Iterator[HostConfig] = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
 
       // Pending message
-      private var messages: Seq[StreamEvent[T]] = Nil
+      private var messages: Seq[StreamEvent] = Nil
 
       // Current processing message
-      private var inProcessMessages: Seq[StreamEvent[T]] = Nil
+      private var inProcessMessages: Seq[StreamEvent] = Nil
 
       /**
         * Handle response success.

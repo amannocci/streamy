@@ -45,11 +45,9 @@ object XymonTransformer {
     *
     * @param conf flow configuration.
     */
-  def parser(conf: Parser.Config): Flow[ByteString, StreamEvent[NotUsed], NotUsed] =
-    Flow.fromGraph(new SourceTransformer[Json, NotUsed] {
+  def parser(conf: Parser.Config): Flow[ByteString, StreamEvent, NotUsed] =
+    Flow.fromGraph(new SourceTransformer {
       def factory(): ByteStringParser[Json] = XymonParser.parser(conf)
-
-      def pack(payload: Json): StreamEvent[NotUsed] = StreamEvent.from(payload)
     })
 
   /**
@@ -57,11 +55,9 @@ object XymonTransformer {
     *
     * @param conf flow configuration.
     */
-  def printer[T](conf: Printer.Config): Flow[StreamEvent[T], ByteString, NotUsed] =
-    Flow.fromGraph(new SinkTransformer[Json, T] {
+  def printer[T](conf: Printer.Config): Flow[StreamEvent, ByteString, NotUsed] =
+    Flow.fromGraph(new SinkTransformer {
       def factory(): ByteStringPrinter[Json] = XymonPrinter.printer(conf)
-
-      def unpack(event: StreamEvent[T]): Json = event.payload
     })
 
   object Id {

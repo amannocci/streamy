@@ -88,37 +88,37 @@ object DateTransformerSpec {
 
   object Input {
 
-    val Iso8601: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("date" -> "2000-10-11T14:32:52Z"))
+    val Iso8601: StreamEvent = StreamEvent(Json.obj("date" -> "2000-10-11T14:32:52Z"))
 
-    val Iso8601Zoned: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("date" -> "2000-10-11T14:32:52+0200"))
+    val Iso8601Zoned: StreamEvent = StreamEvent(Json.obj("date" -> "2000-10-11T14:32:52+0200"))
 
-    val Custom: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("date" -> "Wed Oct 11 14:32:52 2000"))
+    val Custom: StreamEvent = StreamEvent(Json.obj("date" -> "Wed Oct 11 14:32:52 2000"))
 
-    val NotString: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("date" -> 1))
+    val NotString: StreamEvent = StreamEvent(Json.obj("date" -> 1))
 
   }
 
   object Transformer {
 
-    val Idempotent: Flow[StreamEvent[NotUsed], StreamEvent[NotUsed], NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
+    val Idempotent: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTransformer.Iso8601
     ))
 
-    val FromIsoToCustom: Flow[StreamEvent[NotUsed], StreamEvent[NotUsed], NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
+    val FromIsoToCustom: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy")
     ))
 
-    val FromCustomToIso: Flow[StreamEvent[NotUsed], StreamEvent[NotUsed], NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
+    val FromCustomToIso: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy").withZone(ZoneId.of("UTC")),
       outputFormatter = DateTransformer.Iso8601.withZone(ZoneOffset.UTC)
     ))
 
-    val Validation: Flow[StreamEvent[NotUsed], StreamEvent[NotUsed], NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
+    val Validation: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
       source = Root / "date",
       onError = ErrorBehaviour.Discard,
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy").withZone(ZoneId.of("UTC")),
@@ -129,11 +129,11 @@ object DateTransformerSpec {
 
   object Output {
 
-    val Iso8601: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("date" -> "2000-10-11T14:32:52Z"))
+    val Iso8601: StreamEvent = StreamEvent(Json.obj("date" -> "2000-10-11T14:32:52Z"))
 
-    val Iso8601Zoned: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("date" -> "2000-10-11T14:32:52+02"))
+    val Iso8601Zoned: StreamEvent = StreamEvent(Json.obj("date" -> "2000-10-11T14:32:52+02"))
 
-    val Custom: StreamEvent[NotUsed] = StreamEvent.from(Json.obj("date" -> "Wed Oct 11 14:32:52 2000"))
+    val Custom: StreamEvent = StreamEvent(Json.obj("date" -> "Wed Oct 11 14:32:52 2000"))
 
   }
 

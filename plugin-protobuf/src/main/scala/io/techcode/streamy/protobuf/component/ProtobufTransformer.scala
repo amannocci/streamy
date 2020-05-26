@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2018-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,9 +40,9 @@ object ProtobufTransformer {
     * @param conf flow configuration.
     * @return new protobuf flow.
     */
-  def parser[T, PT <: MessageLite](conf: Parser.Config[T, PT]): Flow[ByteString, StreamEvent[T], NotUsed] =
+  def parser[T <: MessageLite](conf: Parser.Config[T]): Flow[ByteString, StreamEvent, NotUsed] =
     Framing.simpleFramingProtocolDecoder(conf.maxSize)
-      .map(raw => conf.proto.getParserForType.parseFrom(raw.asByteBuffer).asInstanceOf[PT])
+      .map(raw => conf.proto.getParserForType.parseFrom(raw.asByteBuffer).asInstanceOf[T])
       .via(Flow.fromFunction(conf.decoder))
 
   /**
@@ -51,7 +51,7 @@ object ProtobufTransformer {
     * @param conf flow configuration.
     * @return new protobuf flow.
     */
-  def printer[T, PT <: MessageLite](conf: Printer.Config[T, PT]): Flow[StreamEvent[T], ByteString, NotUsed] =
+  def printer[T <: MessageLite](conf: Printer.Config[T]): Flow[StreamEvent, ByteString, NotUsed] =
     Flow.fromFunction(conf.encoder)
       .map(obj => ByteString.fromArrayUnsafe(obj.toByteArray))
       .via(Framing.simpleFramingProtocolEncoder(conf.maxSize))
@@ -60,10 +60,10 @@ object ProtobufTransformer {
   object Parser {
 
     // Configuration
-    case class Config[T, PT <: MessageLite](
+    case class Config[T <: MessageLite](
       maxSize: Int = Int.MaxValue - 4,
       proto: MessageLite,
-      decoder: PT => StreamEvent[T]
+      decoder: T => StreamEvent
     )
 
   }
@@ -72,10 +72,10 @@ object ProtobufTransformer {
   object Printer {
 
     // Configuration
-    case class Config[T, PT <: MessageLite](
+    case class Config[T <: MessageLite](
       maxSize: Int = Int.MaxValue - 4,
       proto: MessageLite,
-      encoder: StreamEvent[T] => PT
+      encoder: StreamEvent => T
     )
 
   }

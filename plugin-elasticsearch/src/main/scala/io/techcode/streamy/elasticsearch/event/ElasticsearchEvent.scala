@@ -65,6 +65,6 @@ object ElasticsearchEvent {
     * @param droppedElement droppeed element.
     * @param cause          cause of drop from elasticsearch response.
     */
-  case class Drop[T](droppedElement: StreamEvent[T], cause: Json) extends All
+  case class Drop(droppedElement: StreamEvent, cause: Json) extends All
 
 }

@@ -41,13 +41,11 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
   "Sink transformer" should {
     "handle correctly a json value" in {
-      val sink = new SinkTransformer[Json, NotUsed] {
+      val sink = new SinkTransformer {
         def factory(): ByteStringPrinter[Json] = () => ByteString.empty
-
-        def unpack(event: StreamEvent[NotUsed]): Json = event.payload
       }
 
-      Source.single(StreamEvent.from(Json.obj("foo" -> "bar")))
+      Source.single(StreamEvent(Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .requestNext() should equal(ByteString.empty)
@@ -58,13 +56,11 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val sink = new SinkTransformer[Json, NotUsed] {
+      val sink = new SinkTransformer {
         def factory(): ByteStringPrinter[Json] = () => throw new PrintException("Error")
-
-        def unpack(event: StreamEvent[NotUsed]): Json = event.payload
       }
 
-      Source.single(StreamEvent.from(Json.obj("foo" -> "bar")))
+      Source.single(StreamEvent(Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .request(1)
@@ -76,17 +72,15 @@ class SinkTransformerSpec extends StreamyTestSystem {
 
       implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
 
-      val sink = new SinkTransformer[Json, NotUsed] {
+      val sink = new SinkTransformer {
         def factory(): ByteStringPrinter[Json] = () => throw new PrintException("Error")
-
-        def unpack(event: StreamEvent[NotUsed]): Json = event.payload
       }
 
-      Source.single(StreamEvent.from(Json.obj("foo" -> "bar")))
+      Source.single(StreamEvent(Json.obj("foo" -> "bar")))
         .via(sink)
         .runWith(TestSink.probe[ByteString])
         .request(1)
-        .expectError() should equal(new StreamException(StreamEvent.from(Json.obj("foo" -> "bar")), new PrintException("Error")))
+        .expectError() should equal(new StreamException(StreamEvent(Json.obj("foo" -> "bar")), new PrintException("Error")))
     }
   }
 
