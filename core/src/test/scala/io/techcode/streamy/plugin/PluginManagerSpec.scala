@@ -24,16 +24,20 @@
 package io.techcode.streamy.plugin
 
 import akka.actor.{ActorRef, PoisonPill, Props}
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.StreamyTestSystem
+import io.techcode.streamy.config.StreamyConfig
 import org.scalatestplus.mockito.MockitoSugar
+import pureconfig._
+import pureconfig.generic.auto._
 
 /**
   * PluginManager spec.
   */
 class PluginManagerSpec extends StreamyTestSystem with MockitoSugar {
 
-  val conf: Config = ConfigFactory.load().getConfig("streamy")
+  val conf: StreamyConfig = ConfigSource.fromConfig(ConfigFactory.load()).at("streamy")
+    .loadOrThrow[StreamyConfig]
 
   "Plugin manager" should {
     "be started and stopped" in {

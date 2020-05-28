@@ -24,8 +24,11 @@
 package io.techcode.streamy
 
 import akka.actor.{ActorSystem, Props}
+import io.techcode.streamy.config.StreamyConfig
 import io.techcode.streamy.plugin.PluginManager
-import io.techcode.streamy.util.monitor.DeadLetterMonitor
+import io.techcode.streamy.util.monitor.Monitors
+import pureconfig._
+import pureconfig.generic.auto._
 
 /**
   * Streamy is an high-performance event processor.
@@ -41,16 +44,17 @@ object Streamy extends App {
   // Materializer system
   system.log.info("Initializing actor system")
 
+  // Get streamy configuration
+  system.log.info("Loading configuration with fallback")
+  val appConf = ConfigSource.fromConfig(system.settings.config.resolve())
+    .at("streamy").loadOrThrow[StreamyConfig]
+
   // Register all monitor
   system.log.info("Starting all monitors")
-  val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor], "monitor-dead-letter")
-
-  // Loading configuration
-  system.log.info("Loading configuration with fallback")
-  val conf = system.settings.config.resolve()
+  Monitors.runAll(appConf.monitor)
 
   // Attempt to deploy plugins
-  system.actorOf(Props(classOf[PluginManager], conf.getConfig("streamy")))
+  system.actorOf(Props(classOf[PluginManager], appConf))
 
   // Handle dry run
   if (args.length > 0 && args(0).equals("--dry-run")) {

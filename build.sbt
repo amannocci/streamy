@@ -58,7 +58,6 @@ lazy val bench = project
     `plugin-fingerprint` % "test->test",
     `plugin-graphite` % "test->test",
     `plugin-json` % "test->test",
-    `plugin-metric` % "test->test",
     `plugin-protobuf` % "test->test",
     `plugin-syslog` % "test->test",
     `plugin-tcp` % "test->test",
@@ -200,29 +199,6 @@ lazy val `plugin-kafka` = project
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
-lazy val `plugin-metric` = project
-  .in(file("plugin-metric"))
-  .settings(
-    commonSettings,
-    name := "streamy-" + name.value,
-
-    // Don't include scala in assembly
-    assemblyOption in assembly ~= {
-      _.copy(includeScala = false)
-    },
-
-    // Publish fat jars
-    artifact in(Compile, assembly) := {
-      val art = (artifact in(Compile, assembly)).value
-      art.withClassifier(Some("assembly"))
-    },
-    addArtifact(artifact in(Compile, assembly), assembly)
-  )
-  .settings(Dependencies.metric)
-  .settings(Publish.settings)
-  .dependsOn(core % "provided->compile")
-  .dependsOn(testkit % "test->test")
-
 lazy val `plugin-protobuf` = project
   .in(file("plugin-protobuf"))
   .settings(
@@ -309,7 +285,6 @@ lazy val root = project
     `plugin-graphite`,
     `plugin-json`,
     `plugin-kafka`,
-    `plugin-metric`,
     `plugin-protobuf`,
     `plugin-riemann`,
     `plugin-syslog`,

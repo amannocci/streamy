@@ -31,7 +31,7 @@ import java.util.function.BiPredicate
 import akka.actor.{Actor, DiagnosticActorLogging, Props}
 import akka.pattern.gracefulStop
 import com.typesafe.config.{Config, ConfigFactory}
-import io.techcode.streamy.config.{FolderConfig, LifecycleConfig}
+import io.techcode.streamy.config.StreamyConfig
 import io.techcode.streamy.event._
 import pureconfig._
 import pureconfig.generic.auto._
@@ -45,7 +45,7 @@ import scala.language.postfixOps
 /**
   * The plugin manager that handle all plugins stuff.
   */
-class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with ActorListener {
+class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLogging with ActorListener {
 
   // Actor refs
   private var plugins: Map[String, PluginContainer] = Map.empty
@@ -54,8 +54,8 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
   private var pluginClassLoader: ClassLoader = _
 
   // Configuration
-  private val lifecycleConfig = ConfigSource.fromConfig(conf).at("lifecycle").loadOrThrow[LifecycleConfig]
-  private val folderConfig = ConfigSource.fromConfig(conf).at("folder").loadOrThrow[FolderConfig]
+  private val lifecycleConfig = conf.lifecycle
+  private val folderConfig = conf.folder
 
   // Common mdc
   private val commonMdc = Map("type" -> "application")
@@ -144,8 +144,7 @@ class PluginManager(conf: Config) extends Actor with DiagnosticActorLogging with
     * @return configuration merged.
     */
   private def mergeConfig(description: PluginDescription): Config = {
-    val path = s"plugin.${description.name}"
-    (if (conf.hasPath(path)) conf.getConfig(path) else PluginManager.EmptyPluginConfig).resolve()
+    (if (conf.plugin.hasPath(description.name)) conf.plugin.getConfig(description.name) else PluginManager.EmptyPluginConfig).resolve()
       .withFallback {
         val pluginConf = folderConfig.conf.resolve(s"${description.name}.conf")
         if (Files.exists(pluginConf) && Files.isRegularFile(pluginConf) && Files.isReadable(pluginConf)) {

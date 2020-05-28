@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,24 +21,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.metric.event
+package io.techcode.streamy.util.lang
 
-import akka.actor.DeadLetterSuppression
-import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.StreamyTestSystem
 
 /**
-  * Metric events.
+  * Garbage collectors spec.
   */
-object MetricEvent {
+class GarbageCollectorsSpec extends StreamyTestSystem {
 
-  // Marker interface for metric events
-  sealed trait All extends DeadLetterSuppression
+  "Garbage collectors" should {
+    "return correct name from pool name" in {
+      GarbageCollectors.nameFromPool("PS Eden Space") should equal("young")
+      GarbageCollectors.nameFromPool("PS Survivor Space") should equal("survivor")
+      GarbageCollectors.nameFromPool("Tenured Gen") should equal("old")
+    }
 
-  /**
-    * This event is fire when jvm metrics are emitted.
-    *
-    * @param data jvm metrics data.
-    */
-  case class Jvm(data: Json) extends All
+    "return correct name from garbage collector name" in {
+      GarbageCollectors.nameFromGc("G1 Young Generation") should equal("young")
+      GarbageCollectors.nameFromGc("G1 Old Generation") should equal("old")
+    }
+  }
 
 }

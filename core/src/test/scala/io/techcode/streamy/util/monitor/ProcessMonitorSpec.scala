@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,13 +21,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.config
+package io.techcode.streamy.util.monitor
 
-import java.nio.file.Path
+import akka.actor.{PoisonPill, Props}
+import akka.testkit.TestProbe
+import io.techcode.streamy.StreamyTestSystem
+import io.techcode.streamy.config.StreamyConfig
+import io.techcode.streamy.event.MonitorEvent
 
-// Streamy folder config
-case class FolderConfig(
-  data: Path,
-  conf: Path,
-  plugin: Path
-)
+import scala.concurrent.duration._
+
+/**
+  * Process monitoring spec.
+  */
+class ProcessMonitorSpec extends StreamyTestSystem {
+
+  "Process monitoring" can {
+    "be started and stopped" in {
+      val processMonitor = system.actorOf(Props(classOf[ProcessMonitor], StreamyConfig.ProcessMonitor(
+        enabled = true,
+        0.second
+      )))
+      val probe = TestProbe()
+      probe watch processMonitor
+      processMonitor ! PoisonPill
+      probe.expectTerminated(processMonitor)
+    }
+
+    "monitor correctly process" in {
+      system.eventStream.subscribe(testActor, classOf[MonitorEvent.Process])
+      system.actorOf(Props(classOf[ProcessMonitor], StreamyConfig.ProcessMonitor(
+        enabled = true,
+        0.second
+      )))
+      expectMsgClass(classOf[MonitorEvent.Process])
+    }
+  }
+
+}

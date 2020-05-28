@@ -51,7 +51,6 @@ object Dependencies {
     val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % AkkaVersion // Apache 2 License
     val googleGuava = "com.google.guava" % "guava" % GuavaVersion // Apache 2 License
     val logbackClassic = "ch.qos.logback" % "logback-classic" % LogbackClassicVersion // EPL/LGPL License
-    val metricsJvm = "io.dropwizard.metrics" % "metrics-jvm" % MetricJvmVersion // Apache 2 License
     val mockitoCore = "org.mockito" % "mockito-core" % MockitoCoreVersion
     val pureConfig = "com.github.pureconfig" %% "pureconfig" % PureConfig // Mozilla Public License 2.0
     val scalaTest = "org.scalatest" %% "scalatest" % ScalaTest
@@ -80,8 +79,6 @@ object Dependencies {
   val elasticsearch = libraryDependencies ++= Seq(akkaHttp, elasticClient, testContainers, testContainersElastic)
 
   val kafka = libraryDependencies ++= Seq(akkaStreamKafka, testContainers, testContainersKafka, akkaStreamKafkaTestkit)
-
-  val metric = libraryDependencies ++= Seq(metricsJvm)
 
   val tcp = libraryDependencies ++= Seq(testContainers)
 

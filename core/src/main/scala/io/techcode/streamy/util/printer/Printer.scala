@@ -23,8 +23,6 @@
  */
 package io.techcode.streamy.util.printer
 
-import io.techcode.streamy.util.json.Json
-
 import scala.util.control.NoStackTrace
 
 /**
@@ -36,7 +34,7 @@ trait Printer[In, Out] {
   protected var data: In = null.asInstanceOf[In]
 
   /**
-    * Attempt to print input [[Json]].
+    * Attempt to print input [[In]].
     *
     * @return [[Out]] object result of printing.
     */
@@ -80,6 +78,6 @@ class PrintException(msg: => String) extends RuntimeException(msg) with NoStackT
       case _ => false
     }
 
-  override def hashCode:Int = 31 + msg.hashCode
+  override def hashCode: Int = 31 + msg.hashCode
 
 }

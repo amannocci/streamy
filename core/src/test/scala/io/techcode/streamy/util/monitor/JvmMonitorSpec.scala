@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,38 +23,39 @@
  */
 package io.techcode.streamy.util.monitor
 
-import akka.actor.{Actor, DeadLetter, DiagnosticActorLogging}
-import akka.event.Logging.MDC
-import io.techcode.streamy.event.ActorListener
+import akka.actor.{PoisonPill, Props}
+import akka.testkit.TestProbe
+import io.techcode.streamy.StreamyTestSystem
+import io.techcode.streamy.config.StreamyConfig
+import io.techcode.streamy.event.MonitorEvent
+
+import scala.concurrent.duration._
 
 /**
-  * Dead letter monitoring.
+  * Jvm monitoring spec.
   */
-class DeadLetterMonitor extends Actor with DiagnosticActorLogging with ActorListener {
+class JvmMonitorSpec extends StreamyTestSystem {
 
-  // Common mdc
-  private val commonMdc = Map(
-    "type" -> "monitor",
-    "monitor" -> "dead-letter"
-  )
+  "Jvm monitoring" can {
+    "be started and stopped" in {
+      val jvmMonitor = system.actorOf(Props(classOf[JvmMonitor], StreamyConfig.JvmMonitor(
+        enabled = true,
+        0.second
+      )))
+      val probe = TestProbe()
+      probe watch jvmMonitor
+      jvmMonitor ! PoisonPill
+      probe.expectTerminated(jvmMonitor)
+    }
 
-  override def mdc(currentMessage: Any): MDC = currentMessage match {
-    case evt: DeadLetter => commonMdc ++ Map(
-      "sender" -> evt.sender.toString(),
-      "recipent" -> evt.recipient.toString()
-    )
-    case _ => commonMdc
-  }
-
-  override def preStart(): Unit = {
-    context.system.eventStream.subscribe(self, classOf[DeadLetter])
-  }
-
-  override def receive: Receive = {
-    case dead: DeadLetter =>
-      log.error(dead.message.toString)
-    case _ =>
-      log.warning("Dead letter monitor don't support other messages")
+    "monitor correctly process" in {
+      system.eventStream.subscribe(testActor, classOf[MonitorEvent.Jvm])
+      system.actorOf(Props(classOf[JvmMonitor], StreamyConfig.JvmMonitor(
+        enabled = true,
+        0.second
+      )))
+      expectMsgClass(classOf[MonitorEvent.Jvm])
+    }
   }
 
 }

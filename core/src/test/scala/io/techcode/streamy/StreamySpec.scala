@@ -25,7 +25,7 @@ package io.techcode.streamy
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.testkit.TestKit
+import akka.testkit.{ImplicitSender, TestKit, TestKitBase}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec, WordSpecLike}
 
@@ -45,9 +45,9 @@ class StreamySpec extends WordSpecLike with Matchers {
 /**
   * Helper for system test.
   */
-trait StreamyTestSystem extends WordSpec with Matchers with BeforeAndAfterAll {
+trait StreamyTestSystem extends WordSpec with Matchers with BeforeAndAfterAll with TestKitBase with ImplicitSender {
 
-  protected implicit val system: ActorSystem = {
+  implicit lazy val system: ActorSystem = {
     def systemConfig = ConfigFactory.parseString(s"akka.stream.materializer.auto-fusing=true")
       .withFallback(config)
       .withFallback(ConfigFactory.load())

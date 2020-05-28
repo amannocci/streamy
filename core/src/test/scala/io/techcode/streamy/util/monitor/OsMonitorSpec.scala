@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.streamy.config
+package io.techcode.streamy.util.monitor
 
-import scala.concurrent.duration.FiniteDuration
+import akka.actor.{PoisonPill, Props}
+import akka.testkit.TestProbe
+import io.techcode.streamy.StreamyTestSystem
+import io.techcode.streamy.config.StreamyConfig
+import io.techcode.streamy.event.MonitorEvent
 
-// Streamy lifecycle config
-case class LifecycleConfig(
-  gracefulTimeout: FiniteDuration,
-  shutdownTimeout: FiniteDuration
-)
+import scala.concurrent.duration._
+
+/**
+  * Os monitoring spec.
+  */
+class OsMonitorSpec extends StreamyTestSystem {
+
+  "Os monitoring" can {
+    "be started and stopped" in {
+      val osMonitor = system.actorOf(Props(classOf[OsMonitor], StreamyConfig.OsMonitor(
+        enabled = true,
+        0.second
+      )))
+      val probe = TestProbe()
+      probe watch osMonitor
+      osMonitor ! PoisonPill
+      probe.expectTerminated(osMonitor)
+    }
+
+    "monitor correctly process" in {
+      system.eventStream.subscribe(testActor, classOf[MonitorEvent.Os])
+      system.actorOf(Props(classOf[OsMonitor], StreamyConfig.OsMonitor(
+        enabled = true,
+        0.second
+      )))
+      expectMsgClass(classOf[MonitorEvent.Os])
+    }
+  }
+
+}
