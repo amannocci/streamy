@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.elasticsearch.component
 
+import java.util.concurrent.ThreadLocalRandom
+
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -41,6 +43,7 @@ import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Try
 
 /**
   * Elasticsearch flow companion.
@@ -50,7 +53,11 @@ object ElasticsearchFlow {
   // Default values
   val DefaultBulk: Int = 100
   val DefaultWorker: Int = 1
-  val DefaultRetry: FiniteDuration = 1 second
+  val DefaultRetry: RetryConfig = RetryConfig(
+    minBackoff = 100 millis,
+    maxBackoff = 5 second,
+    randomFactor = 0.3
+  )
 
   // New line delimiter
   private val NewLineDelimiter: ByteString = ByteString("\n")
@@ -92,7 +99,7 @@ object ElasticsearchFlow {
     indexName: String,
     action: String,
     bulk: Int = DefaultBulk,
-    retry: FiniteDuration = DefaultRetry,
+    retry: RetryConfig = DefaultRetry,
     binding: Binding = Binding(),
     bypassDocumentParsing: Boolean = false
   )
@@ -106,6 +113,22 @@ object ElasticsearchFlow {
     index: JsonPointer = ElasticPath.Index,
     document: JsonPointer = ElasticPath.Document
   )
+
+  // Retry configuration
+  case class RetryConfig(
+    minBackoff: FiniteDuration,
+    maxBackoff: FiniteDuration,
+    randomFactor: Double
+  ) {
+    def next(retryNo: Int): FiniteDuration = {
+      val rnd = 1.0 + ThreadLocalRandom.current().nextDouble() * randomFactor
+      val calculatedDuration = Try(maxBackoff.min(minBackoff * math.pow(2, retryNo)) * rnd).getOrElse(maxBackoff)
+      calculatedDuration match {
+        case f: FiniteDuration => f
+        case _ => maxBackoff
+      }
+    }
+  }
 
   case class HostConfig(
     scheme: String,
@@ -244,6 +267,9 @@ object ElasticsearchFlow {
       // Json pointer to status based on configuration
       private val statusPath: JsonPointer = Root / config.action / "status"
 
+      // Next retry
+      private var retryNo: Int = 0
+
       // State
       object State extends Enumeration {
         val Idle, Busy = Value
@@ -290,12 +316,22 @@ object ElasticsearchFlow {
         }
 
       /**
+        * Schedule a retry.
+        */
+      def scheduleRetry(): Unit = {
+        val nextRetry: FiniteDuration = config.retry.next(retryNo)
+        retryNo += 1
+        scheduleOnce(NotUsed, nextRetry)
+      }
+
+      /**
         * Emit messages in order downstream.
         */
       def emitDownstream(): Unit = {
         val results = messages
         messages = Nil
         inProcessMessages = Nil
+        retryNo = 0
         state = State.Idle
         emitMultiple(out, results.iterator, () => checkForCompletion())
       }
@@ -339,8 +375,9 @@ object ElasticsearchFlow {
         inProcessMessages = partialDocuments.getOrElse(1, Nil).map(_._1)
         if (inProcessMessages.nonEmpty) {
           if (backPressure) {
-            scheduleOnce(NotUsed, config.retry)
+            scheduleRetry()
           } else {
+            retryNo = 0
             state = State.Idle
             performRequest()
           }
@@ -357,7 +394,7 @@ object ElasticsearchFlow {
         */
       def processFailure(exceptionMsg: String): Unit = {
         system.eventStream.publish(ElasticsearchEvent.Failure(exceptionMsg, elapsed()))
-        scheduleOnce(NotUsed, config.retry)
+        scheduleRetry()
       }
 
       /**
