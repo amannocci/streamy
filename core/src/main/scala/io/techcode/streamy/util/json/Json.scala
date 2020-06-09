@@ -674,6 +674,8 @@ object JsInt {
     */
   def unapply(value: JsInt): Option[Int] = value match {
     case x: JsIntLiteral => Some(x.value)
+    case x: JsIntBytesRepr => Some(x.value)
+    case x: JsIntStrRepr => Some(x.value)
     case _ => None
   }
 
@@ -803,6 +805,8 @@ object JsLong {
     */
   def unapply(value: JsLong): Option[Long] = value match {
     case x: JsLongLiteral => Some(x.value)
+    case x: JsLongBytesRepr => Some(x.value)
+    case x: JsLongStrRepr => Some(x.value)
     case _ => None
   }
 
@@ -932,6 +936,8 @@ object JsFloat {
     */
   def unapply(value: JsFloat): Option[Float] = value match {
     case x: JsFloatLiteral => Some(x.value)
+    case x: JsFloatBytesRepr => Some(x.value)
+    case x: JsFloatStrRepr => Some(x.value)
     case _ => None
   }
 
@@ -1061,6 +1067,8 @@ object JsDouble {
     */
   def unapply(value: JsDouble): Option[Double] = value match {
     case x: JsDoubleLiteral => Some(x.value)
+    case x: JsDoubleBytesRepr => Some(x.value)
+    case x: JsDoubleStrRepr => Some(x.value)
     case _ => None
   }
 
@@ -1191,6 +1199,8 @@ object JsBigDecimal {
     */
   def unapply(value: JsBigDecimal): Option[BigDecimal] = value match {
     case x: JsBigDecimalLiteral => Some(x.value)
+    case x: JsBigDecimalBytesRepr => Some(x.value)
+    case x: JsBigDecimalStrRepr => Some(x.value)
     case _ => None
   }
 
@@ -1300,6 +1310,7 @@ object JsString {
     */
   def unapply(value: JsString): Option[String] = value match {
     case x: JsStringLiteral => Some(x.value)
+    case x: JsStringBytesRepr => Some(x.value)
     case _ => None
   }
 
@@ -1328,7 +1339,7 @@ sealed trait JsString extends Json {
   *
   * @param value literal value.
   */
-case class JsStringLiteral(value: String) extends JsString {
+private case class JsStringLiteral(value: String) extends JsString {
 
   override val sizeHint: Int = value.length + 2
 
@@ -1392,6 +1403,7 @@ object JsBytes {
     */
   def unapply(value: JsBytes): Option[ByteString] = value match {
     case x: JsBytesLiteral => Some(x.value)
+    case x: JsBytesStrRepr => Some(x.value)
     case _ => None
   }
 
