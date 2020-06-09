@@ -530,8 +530,8 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsFloat.fromLiteral(2.0F) should equal(JsFloat.fromLiteral(2.0F))
       JsFloat.fromLiteral(2.0F) should equal(JsFloat.fromByteStringUnsafe(ByteString("2.0")))
       JsFloat.fromLiteral(2.0F) should equal(JsFloat.fromStringUnsafe("2.0"))
-      JsFloat.fromLiteral(0.0F) should not equal(JsFloat.fromLiteral(2.0F))
-      JsFloat.fromLiteral(0.0F) should not equal(JsInt.fromLiteral(2))
+      JsFloat.fromLiteral(0.0F) should not equal (JsFloat.fromLiteral(2.0F))
+      JsFloat.fromLiteral(0.0F) should not equal (JsInt.fromLiteral(2))
     }
 
     "be equal to hashCode float" in {
@@ -621,8 +621,8 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsDouble.fromLiteral(0.0D) should equal(JsDouble.fromLiteral(0.0F))
       JsDouble.fromLiteral(0.0D) should equal(JsDouble.fromByteStringUnsafe(ByteString("0.0")))
       JsDouble.fromLiteral(0.0D) should equal(JsDouble.fromStringUnsafe("0.0"))
-      JsDouble.fromLiteral(0.0D) should not equal(JsDouble.fromLiteral(2.0D))
-      JsDouble.fromLiteral(0.0D) should not equal(JsInt.fromLiteral(0))
+      JsDouble.fromLiteral(0.0D) should not equal (JsDouble.fromLiteral(2.0D))
+      JsDouble.fromLiteral(0.0D) should not equal (JsInt.fromLiteral(0))
     }
 
     "be equal to hashCode double" in {
@@ -717,8 +717,8 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsInt.fromLiteral(0) should equal(JsInt.fromLiteral(0))
       JsInt.fromLiteral(0) should equal(JsInt.fromByteStringUnsafe(ByteString("0")))
       JsInt.fromLiteral(0) should equal(JsInt.fromStringUnsafe("0"))
-      JsInt.fromLiteral(0) should not equal(JsInt.fromLiteral(2))
-      JsInt.fromLiteral(0) should not equal(JsDouble.fromLiteral(0.0D))
+      JsInt.fromLiteral(0) should not equal (JsInt.fromLiteral(2))
+      JsInt.fromLiteral(0) should not equal (JsDouble.fromLiteral(0.0D))
     }
 
     "be equal to hashCode int" in {
@@ -813,8 +813,8 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsLong.fromLiteral(0L) should equal(JsLong.fromLiteral(0L))
       JsLong.fromLiteral(0L) should equal(JsLong.fromByteStringUnsafe(ByteString("0")))
       JsLong.fromLiteral(0L) should equal(JsLong.fromStringUnsafe("0"))
-      JsLong.fromLiteral(0L) should not equal(JsLong.fromLiteral(2))
-      JsLong.fromLiteral(0) should not equal(JsDouble.fromLiteral(0.0D))
+      JsLong.fromLiteral(0L) should not equal (JsLong.fromLiteral(2))
+      JsLong.fromLiteral(0) should not equal (JsDouble.fromLiteral(0.0D))
     }
 
     "be equal to hashCode long" in {
@@ -893,8 +893,8 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsBigDecimal.fromLiteral(BigDecimal(0)) should equal(JsBigDecimal.fromLiteral(BigDecimal(0)))
       JsBigDecimal.fromLiteral(BigDecimal(0)) should equal(JsBigDecimal.fromByteStringUnsafe(ByteString("0")))
       JsBigDecimal.fromLiteral(BigDecimal(0)) should equal(JsBigDecimal.fromStringUnsafe("0"))
-      JsBigDecimal.fromLiteral(BigDecimal(0)) should not equal(JsBigDecimal.fromLiteral(BigDecimal(2)))
-      JsBigDecimal.fromLiteral(BigDecimal(0)) should not equal(JsInt.fromLiteral(0))
+      JsBigDecimal.fromLiteral(BigDecimal(0)) should not equal (JsBigDecimal.fromLiteral(BigDecimal(2)))
+      JsBigDecimal.fromLiteral(BigDecimal(0)) should not equal (JsInt.fromLiteral(0))
     }
 
     "be equal to hashCode big decimal" in {
@@ -931,8 +931,8 @@ class JsonSpec extends WordSpecLike with Matchers {
     "be equal to string" in {
       JsString.fromLiteral("foobar") should equal(JsString.fromLiteral("foobar"))
       JsString.fromLiteral("foobar") should equal(JsString.fromByteStringUnsafe(ByteString("foobar")))
-      JsString.fromLiteral("foobar") should not equal(JsString.fromLiteral("foo"))
-      JsString.fromLiteral("foobar") should not equal(JsInt.fromLiteral(0))
+      JsString.fromLiteral("foobar") should not equal (JsString.fromLiteral("foo"))
+      JsString.fromLiteral("foobar") should not equal (JsInt.fromLiteral(0))
     }
 
     "be equal to hashCode string" in {
@@ -967,8 +967,8 @@ class JsonSpec extends WordSpecLike with Matchers {
     "be equal to bytes" in {
       JsBytes.fromLiteral(ByteString("foobar")) should equal(JsBytes.fromLiteral(ByteString("foobar")))
       JsBytes.fromLiteral(ByteString("foobar")) should equal(JsBytes.fromStringUnsafe("foobar"))
-      JsBytes.fromLiteral(ByteString("foobar")) should not equal(JsBytes.fromLiteral(ByteString("foo")))
-      JsBytes.fromLiteral(ByteString("foobar")) should not equal(JsInt.fromLiteral(0))
+      JsBytes.fromLiteral(ByteString("foobar")) should not equal (JsBytes.fromLiteral(ByteString("foo")))
+      JsBytes.fromLiteral(ByteString("foobar")) should not equal (JsInt.fromLiteral(0))
     }
 
     "be equal to hashCode bytes" in {
@@ -1461,9 +1461,18 @@ class JsonSpec extends WordSpecLike with Matchers {
       val builder = Json.objectBuilder()
       builder += "foobar" -> 1
       builder ++= Seq(
-        "foobar" -> 1,
+        "foobar" -> 3,
         "foobar2" -> 2
       )
+      builder.result() should equal(Json.obj(
+        "foobar" -> 3,
+        "foobar2" -> 2
+      ))
+      builder.merge(Json.objectBuilder().addOne("foobar3" -> 1)).result() should equal(Json.obj(
+        "foobar" -> 3,
+        "foobar2" -> 2,
+        "foobar3" -> 1
+      ))
       if (builder.knownSize >= 0) {
         builder.clear()
       }
@@ -1479,6 +1488,12 @@ class JsonSpec extends WordSpecLike with Matchers {
       val builder = Json.arrayBuilder()
       builder += "foobar"
       builder ++= Seq(1, 2)
+      builder.result() should equal(Json.arr("foobar", 1, 2))
+      builder.merge(Json.arrayBuilder().addOne("foobar3")).result() should equal(Json.arr(
+        "foobar",
+        1, 2,
+        "foobar3"
+      ))
       if (builder.knownSize >= 0) {
         builder.clear()
       }

@@ -81,7 +81,7 @@ object Json {
     * @return json object builder.
     */
   def objectBuilder(): JsObjectBuilder =
-    new mutable.GrowableBuilder[(String, Json), JsObject](Json.obj()) {
+    new mutable.GrowableBuilder[(String, Json), JsObject](Json.obj()) with JsObjectBuilderMerge {
       var underlying: mutable.HashMap[String, Json] = mutable.HashMap[String, Json]()
 
       override def clear(): Unit =
@@ -115,7 +115,7 @@ object Json {
     * @return json array builder.
     */
   def arrayBuilder(): JsArrayBuilder =
-    new mutable.GrowableBuilder[Json, JsArray](Json.arr()) {
+    new mutable.GrowableBuilder[Json, JsArray](Json.arr()) with JsArrayBuilderMerge {
       var underlying: mutable.ArrayBuffer[Json] = mutable.ArrayBuffer[Json]()
 
       override def clear(): Unit =
