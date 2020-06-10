@@ -50,10 +50,14 @@ object Json {
   private val stringParser = ThreadLocal.withInitial[StringParser[Json]](() => JsonParser.stringParser())
 
   // Singleton json object
-  private val jsonObjEmpty = JsObject(mutable.HashMap())
+  private val jsonObjEmpty = JsObject(mutable.HashMap.empty)
 
   // Singleton json array
-  private val jsonArrayEmpty = JsArray(mutable.ArrayBuffer())
+  private val jsonArrayEmpty = JsArray(mutable.ArrayBuffer.empty)
+
+  // Initial capacity for builders
+  private val initialCapacityObj: Int = mutable.HashMap.defaultInitialCapacity
+  private val initialCapacityArr: Int = mutable.ArrayBuffer.DefaultInitialSize
 
   /**
     * Construct a new JsObject, with the order of fields in the Seq.
@@ -78,11 +82,13 @@ object Json {
   /**
     * Create a new json object builder.
     *
+    * @param initialCapacity initial capacity of builder.
     * @return json object builder.
     */
-  def objectBuilder(): JsObjectBuilder =
+  def objectBuilder(initialCapacity: Int = initialCapacityObj): JsObjectBuilder =
     new mutable.GrowableBuilder[(String, Json), JsObject](Json.obj()) with JsObjectBuilderMerge {
       var underlying: mutable.HashMap[String, Json] = mutable.HashMap[String, Json]()
+      underlying.sizeHint(initialCapacity)
 
       override def clear(): Unit =
         if (underlying.nonEmpty) {
@@ -112,11 +118,13 @@ object Json {
   /**
     * Create a new json array builder.
     *
+    * @param initialCapacity initial capacity of builder.
     * @return json array builder.
     */
-  def arrayBuilder(): JsArrayBuilder =
+  def arrayBuilder(initialCapacity: Int = initialCapacityArr): JsArrayBuilder =
     new mutable.GrowableBuilder[Json, JsArray](Json.arr()) with JsArrayBuilderMerge {
       var underlying: mutable.ArrayBuffer[Json] = mutable.ArrayBuffer[Json]()
+      underlying.sizeHint(initialCapacity)
 
       override def clear(): Unit =
         if (underlying.nonEmpty) {
