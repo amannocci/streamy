@@ -1452,12 +1452,6 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "provide a way to build json object" in {
-      assertThrows[NotImplementedError] {
-        Json.obj().addOne("foobar" -> 1)
-      }
-      assertThrows[NotImplementedError] {
-        Json.obj().clear()
-      }
       val builder = Json.objectBuilder()
       builder += "foobar" -> 1
       builder ++= Seq(
@@ -1479,12 +1473,6 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "provide a way to build json array" in {
-      assertThrows[NotImplementedError] {
-        Json.arr().addOne("foobar")
-      }
-      assertThrows[NotImplementedError] {
-        Json.arr().clear()
-      }
       val builder = Json.arrayBuilder()
       builder += "foobar"
       builder ++= Seq(1, 2)

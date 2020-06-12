@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy.util.json
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Json operations implementation compliant with RFC-6902.
   * https://tools.ietf.org/html/rfc6902
@@ -47,7 +49,7 @@ sealed trait JsonOperation {
 private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOperation {
 
   // Shortcut to underlying data structure
-  val underlying: Array[JsAccessor] = path.underlying
+  val underlying: ArrayBuffer[JsAccessor] = path.underlying
 
   /**
     * Apply operation recursively.

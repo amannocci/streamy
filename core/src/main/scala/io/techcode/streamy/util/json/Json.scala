@@ -55,10 +55,6 @@ object Json {
   // Singleton json array
   private val jsonArrayEmpty = JsArray(mutable.ArrayBuffer.empty)
 
-  // Initial capacity for builders
-  private val initialCapacityObj: Int = mutable.HashMap.defaultInitialCapacity
-  private val initialCapacityArr: Int = mutable.ArrayBuffer.DefaultInitialSize
-
   /**
     * Construct a new JsObject, with the order of fields in the Seq.
     */
@@ -85,35 +81,8 @@ object Json {
     * @param initialCapacity initial capacity of builder.
     * @return json object builder.
     */
-  def objectBuilder(initialCapacity: Int = initialCapacityObj): JsObjectBuilder =
-    new mutable.GrowableBuilder[(String, Json), JsObject](Json.obj()) with JsObjectBuilderMerge {
-      var underlying: mutable.HashMap[String, Json] = mutable.HashMap[String, Json]()
-      underlying.sizeHint(initialCapacity)
-
-      override def clear(): Unit =
-        if (underlying.nonEmpty) {
-          underlying = mutable.HashMap[String, Json]()
-        }
-
-      override def result(): JsObject =
-        if (underlying.isEmpty) {
-          jsonObjEmpty
-        } else {
-          JsObject(underlying)
-        }
-
-      override def addOne(elem: (String, Json)): this.type = {
-        underlying += elem
-        this
-      }
-
-      override def addAll(xs: IterableOnce[(String, Json)]): this.type = {
-        underlying.addAll(xs)
-        this
-      }
-
-      override def knownSize: Int = underlying.knownSize
-    }
+  def objectBuilder(initialCapacity: Int = JsObjectBuilder.DefaultInitialCapacity): JsObjectBuilder =
+    JsObjectBuilder(initialCapacity)
 
   /**
     * Create a new json array builder.
@@ -121,35 +90,8 @@ object Json {
     * @param initialCapacity initial capacity of builder.
     * @return json array builder.
     */
-  def arrayBuilder(initialCapacity: Int = initialCapacityArr): JsArrayBuilder =
-    new mutable.GrowableBuilder[Json, JsArray](Json.arr()) with JsArrayBuilderMerge {
-      var underlying: mutable.ArrayBuffer[Json] = mutable.ArrayBuffer[Json]()
-      underlying.sizeHint(initialCapacity)
-
-      override def clear(): Unit =
-        if (underlying.nonEmpty) {
-          underlying = mutable.ArrayBuffer[Json]()
-        }
-
-      override def result(): JsArray =
-        if (underlying.isEmpty) {
-          jsonArrayEmpty
-        } else {
-          JsArray(underlying)
-        }
-
-      override def addOne(elem: Json): this.type = {
-        underlying += elem
-        this
-      }
-
-      override def addAll(xs: IterableOnce[Json]): this.type = {
-        underlying.addAll(xs)
-        this
-      }
-
-      override def knownSize: Int = underlying.knownSize
-    }
+  def arrayBuilder(initialCapacity: Int = JsArrayBuilder.DefaultInitialCapacity): JsArrayBuilder =
+    JsArrayBuilder(initialCapacity)
 
   /**
     * Parses a bytestring representing a Json input, and returns it as a [[Json]].
@@ -232,6 +174,105 @@ object Json {
   private def eitherToValue[Error <: Throwable, Value](e: Either[Error, Value]) = e match {
     case Right(value) => value
     case Left(ex) => throw ex
+  }
+
+}
+
+/**
+  * Json object builder companion.
+  */
+object JsObjectBuilder {
+  val DefaultInitialCapacity: Int = mutable.HashMap.defaultInitialCapacity
+}
+
+/**
+  * Json object builder implementation.
+  *
+  * @param initialCapacity initial capacity of builder.
+  */
+case class JsObjectBuilder(initialCapacity: Int = JsObjectBuilder.DefaultInitialCapacity)
+  extends mutable.Builder[(String, Json), JsObject] {
+
+  private var underlying: mutable.HashMap[String, Json] = mutable.HashMap[String, Json]()
+  underlying.sizeHint(initialCapacity)
+
+  def merge(builder: JsObjectBuilder): JsObjectBuilder = {
+    underlying.addAll(builder.underlying)
+    this
+  }
+
+  override def clear(): Unit =
+    if (underlying.nonEmpty) {
+      underlying = mutable.HashMap[String, Json]()
+    }
+
+  override def result(): JsObject =
+    if (underlying.isEmpty) {
+      Json.obj()
+    } else {
+      JsObject(underlying)
+    }
+
+  override def addOne(elem: (String, Json)): this.type = {
+    underlying += elem
+    this
+  }
+
+  override def addAll(xs: IterableOnce[(String, Json)]): this.type = {
+    underlying.addAll(xs)
+    this
+  }
+
+  override def knownSize: Int = underlying.knownSize
+
+}
+
+
+/**
+  * Json array builder companion.
+  */
+object JsArrayBuilder {
+  val DefaultInitialCapacity: Int = mutable.ArrayBuffer.DefaultInitialSize
+}
+
+/**
+  * Json array builder implementation.
+  *
+  * @param initialCapacity initial capacity of builder.
+  */
+case class JsArrayBuilder(initialCapacity: Int = JsArrayBuilder.DefaultInitialCapacity)
+  extends mutable.Builder[Json, JsArray] {
+
+  var underlying: mutable.ArrayBuffer[Json] = mutable.ArrayBuffer[Json]()
+  underlying.sizeHint(initialCapacity)
+
+  override def clear(): Unit =
+    if (underlying.nonEmpty) {
+      underlying = mutable.ArrayBuffer[Json]()
+    }
+
+  override def result(): JsArray =
+    if (underlying.isEmpty) {
+      Json.arr()
+    } else {
+      JsArray(underlying)
+    }
+
+  override def addOne(elem: Json): this.type = {
+    underlying += elem
+    this
+  }
+
+  override def addAll(xs: IterableOnce[Json]): this.type = {
+    underlying.addAll(xs)
+    this
+  }
+
+  override def knownSize: Int = underlying.knownSize
+
+  def merge(builder: JsArrayBuilder): JsArrayBuilder = {
+    underlying.addAll(builder.underlying)
+    this
   }
 
 }
@@ -1462,7 +1503,7 @@ private case class JsBytesStrRepr(repr: String) extends JsBytes {
   */
 case class JsArray(
   private[json] val underlying: ArrayBuffer[Json]
-) extends Json with mutable.Growable[Json] {
+) extends Json {
 
   /**
     * Get element at a given index.
@@ -1576,12 +1617,6 @@ case class JsArray(
 
   override lazy val sizeHint: Int = underlying.map(_.sizeHint()).sum + 1 + underlying.size
 
-  // Support Growable interface for JsArray builder
-  def addOne(elem: Json): JsArray.this.type = throw new NotImplementedError("`addOne` on JsArray isn't supported")
-
-  // Support Growable interface for JsArray builder
-  def clear(): Unit = throw new NotImplementedError("`clear` on JsArray isn't supported")
-
 }
 
 /**
@@ -1591,7 +1626,7 @@ case class JsArray(
   */
 case class JsObject(
   private[json] val underlying: mutable.HashMap[String, Json]
-) extends Json with mutable.Growable[(String, Json)] {
+) extends Json {
 
   /**
     * Applies a function f to all elements of this json object.
@@ -1724,11 +1759,5 @@ case class JsObject(
 
   override lazy val sizeHint: Int =
     1 + underlying.keys.map(_.length + 2).sum + underlying.values.map(_.sizeHint()).sum + (underlying.values.size * 2)
-
-  // Support Growable interface for JsObject builder
-  def addOne(elem: (String, Json)): JsObject.this.type = throw new NotImplementedError("`addOne` on JsObject isn't supported")
-
-  // Support Growable interface for JsObject builder
-  def clear(): Unit = throw new NotImplementedError("`clear` on JsObject isn't supported")
 
 }

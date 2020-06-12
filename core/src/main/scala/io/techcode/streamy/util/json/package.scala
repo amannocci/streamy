@@ -25,40 +25,10 @@ package io.techcode.streamy.util
 
 import akka.util.ByteString
 
-import scala.collection.mutable
-
 package object json extends JsonImplicit {
 
   // Root json pointer
   val Root: JsonPointer = JsonPointer()
-
-  // Type alias
-  type JsObjectBuilder = mutable.Builder[(String, Json), JsObject] with JsObjectBuilderMerge
-  type JsArrayBuilder = mutable.Builder[Json, JsArray] with JsArrayBuilderMerge
-
-  // JsObject builder merge
-  trait JsObjectBuilderMerge {
-    self: JsObjectBuilder =>
-
-    def underlying: mutable.HashMap[String, Json]
-
-    def merge(builder: JsObjectBuilder): JsObjectBuilder = {
-      underlying.addAll(builder.underlying)
-      this
-    }
-  }
-
-  // JsArray builder merge
-  trait JsArrayBuilderMerge {
-    self: JsArrayBuilder =>
-
-    def underlying: mutable.ArrayBuffer[Json]
-
-    def merge(builder: JsArrayBuilder): JsArrayBuilder = {
-      underlying.addAll(builder.underlying)
-      this
-    }
-  }
 
   // Json typed wrapper for ifExists implementation
   sealed trait JsTyped[A] {

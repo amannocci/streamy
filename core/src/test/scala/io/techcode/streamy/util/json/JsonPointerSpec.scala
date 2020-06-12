@@ -102,6 +102,16 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
     "be iterable" in {
       (Root / "foobar" / 0).toSeq should equal(Seq(Left("foobar"), Right(0)))
     }
+
+    "return a builder" in {
+      val builder = Root.newBuilder()
+      (builder / "foobar" / 0).result() should equal(Root / "foobar" / 0)
+      builder.clear()
+      builder.merge(Root / "foobar").merge(Root / 0).result() should equal(Root / "foobar" / 0)
+      builder.clear()
+      (builder / "foobar").merge(builder).result() should equal(Root / "foobar" / "foobar")
+      builder.knownSize should equal(2)
+    }
   }
 
   "JsObjectAccessor" should {

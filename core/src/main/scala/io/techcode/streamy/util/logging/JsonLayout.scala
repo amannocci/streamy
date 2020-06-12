@@ -52,7 +52,7 @@ class JsonLayout extends LayoutBase[ILoggingEvent] {
   def setMessage(message: String): Unit = this.message = message
 
   override def doLayout(event: ILoggingEvent): String = {
-    val log: JsObjectBuilder = Json.objectBuilder()
+    val log: JsObjectBuilder = Json.objectBuilder(event.getMDCPropertyMap.size() + 5)
     event.getMDCPropertyMap.forEach((key: String, value: String) => log += (key -> value))
     log += (level -> JsonLayout.levelToString(event.getLevel))
     log += (thread -> event.getThreadName)

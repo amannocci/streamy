@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,9 @@ package io.techcode.streamy.util.json
 import com.google.common.base.CharMatcher
 import io.techcode.streamy.util.parser.{CharMatchers, ParseException, StringParser}
 
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Represent a json pointer.
   * Construction of json pointer can be slow because we compute only one time path.
@@ -33,12 +36,21 @@ import io.techcode.streamy.util.parser.{CharMatchers, ParseException, StringPars
   *
   * @param underlying json pointer path.
   */
-case class JsonPointer(private[json] val underlying: Array[JsAccessor] = Array.empty) extends Iterable[Either[String, Int]] {
+case class JsonPointer(private[json] val underlying: ArrayBuffer[JsAccessor] = ArrayBuffer.empty)
+  extends Iterable[Either[String, Int]] {
 
   /**
     * Returns true if the json pointer is the root json pointer.
     */
   def isRoot: Boolean = underlying.isEmpty
+
+  /**
+    * Returns a new json pointer builder.
+    *
+    * @return a builder.
+    */
+  def newBuilder(initialCapacity: Int = JsonPointerBuilder.DefaultInitialCapacity): JsonPointerBuilder =
+    JsonPointerBuilder(initialCapacity)
 
   /**
     * Apply json pointer to a json value.
@@ -83,14 +95,10 @@ case class JsonPointer(private[json] val underlying: Array[JsAccessor] = Array.e
     * @return new json pointer.
     */
   def /(key: String): JsonPointer = {
-    val newPath = new Array[JsAccessor](underlying.length + 1)
-    Array.copy(underlying, 0, newPath, 0, underlying.length)
-    if (JsAccessor.LastRef.equals(key)) {
-      newPath.update(underlying.length, JsObjectOrArrayAccessor)
-    } else {
-      newPath.update(underlying.length, JsObjectAccessor(key))
-    }
-    copy(newPath)
+    val newPath = newBuilder(underlying.length + 1)
+    newPath.merge(this)
+    newPath / key
+    newPath.result()
   }
 
   // scalastyle:on method.name
@@ -103,10 +111,10 @@ case class JsonPointer(private[json] val underlying: Array[JsAccessor] = Array.e
     * @return new json pointer.
     */
   def /(idx: Int): JsonPointer = {
-    val newPath = new Array[JsAccessor](underlying.length + 1)
-    Array.copy(underlying, 0, newPath, 0, underlying.length)
-    newPath.update(underlying.length, JsArrayAccessor(idx))
-    copy(newPath)
+    val newPath = newBuilder(underlying.length + 1)
+    newPath.merge(this)
+    newPath / idx
+    newPath.result()
   }
 
   // scalastyle:on method.name
@@ -114,9 +122,11 @@ case class JsonPointer(private[json] val underlying: Array[JsAccessor] = Array.e
   override def toString: String = "/" + underlying.map(_.repr).mkString("/")
 
   override def equals(o: Any): Boolean = o match {
-    case obj: JsonPointer => underlying.sameElements(obj.underlying)
+    case obj: JsonPointer => underlying.equals(obj.underlying)
     case _ => false
   }
+
+  override def hashCode(): Int = underlying.hashCode()
 
   override def iterator: Iterator[Either[String, Int]] = new Iterator[Either[String, Int]] {
     var index: Int = 0
@@ -133,6 +143,108 @@ case class JsonPointer(private[json] val underlying: Array[JsAccessor] = Array.e
     }
 
   }
+
+}
+
+/**
+  * Json pointer builder.
+  */
+object JsonPointerBuilder {
+  val DefaultInitialCapacity: Int = mutable.ArrayBuffer.DefaultInitialSize
+}
+
+/**
+  * Json pointer builder implementation.
+  *
+  * @param initialCapacity initial capacity size.
+  */
+case class JsonPointerBuilder(initialCapacity: Int = JsonPointerBuilder.DefaultInitialCapacity) {
+  private var underlying: mutable.ArrayBuffer[JsAccessor] = new mutable.ArrayBuffer[JsAccessor](initialCapacity)
+
+  /**
+    * Clears the contents of this builder.
+    * After execution of this method the builder will contain no elements.
+    */
+  def clear(): Unit =
+    if (underlying.nonEmpty) {
+      underlying = mutable.ArrayBuffer[JsAccessor]()
+    }
+
+  /**
+    * Result collection consisting of all elements appended so far.
+    */
+  def result(): JsonPointer =
+    if (underlying.isEmpty) {
+      Root
+    } else {
+      JsonPointer(underlying)
+    }
+
+  /**
+    * Merge a json pointer builder with another.
+    *
+    * @param builder builder to merge with.
+    */
+  def merge(builder: JsonPointerBuilder): JsonPointerBuilder = {
+    underlying.addAll(builder.underlying)
+    this
+  }
+
+  /**
+    * Merge a json pointer builder with another.
+    *
+    * @param pointer pointer to merge with.
+    */
+  def merge(pointer: JsonPointer): JsonPointerBuilder = {
+    underlying.addAll(pointer.underlying)
+    this
+  }
+
+  // scalastyle:off method.name
+  /**
+    * Add a key a new json pointer.
+    *
+    * @param key access key.
+    * @return new json pointer.
+    */
+  def /(key: String): JsonPointerBuilder = {
+    if (JsAccessor.LastRef.equals(key)) {
+      underlying += JsObjectOrArrayAccessor
+    } else {
+      underlying += JsObjectAccessor(key)
+    }
+    this
+  }
+
+  // scalastyle:on method.name
+
+  // scalastyle:off method.name
+  /**
+    * Create a new json pointer.
+    *
+    * @param idx access idx.
+    * @return new json pointer.
+    */
+  def /(idx: Int): JsonPointerBuilder = {
+    underlying += JsArrayAccessor(idx)
+    this
+  }
+
+  /**
+    * Gives a hint how many elements are expected to be added
+    * when the next `result` is called. Some builder classes
+    * will optimize their representation based on the hint. However,
+    * builder implementations are still required to work correctly even if the hint is
+    * wrong, i.e. a different number of elements is added.
+    *
+    * @param size the hint how many elements will be added.
+    */
+  def sizeHint(size: Int): Unit = underlying.sizeHint(size)
+
+  /** @return The number of elements in the collection under construction, if it can be cheaply computed,
+    *         -1 otherwise. The default implementation always returns -1.
+    */
+  def knownSize: Int = underlying.knownSize
 
 }
 
