@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,6 +53,7 @@ private[parser] trait ParserHelpers {
   @inline def colon(): Boolean = ch(':')
 
   @inline def dot(): Boolean = ch('.')
+
 }
 
 /**
@@ -60,7 +61,8 @@ private[parser] trait ParserHelpers {
   * status[+LIFETIME][/group:GROUP] HOSTNAME.TESTNAME COLOR <additional_text>
   * For more information on the parameters, see the xymon man page
   */
-private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extends ByteStringParser[Json] with ParserHelpers {
+private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
+  extends ByteStringParser[Json] with ParserHelpers {
 
   private val binding = config.binding
 
@@ -88,8 +90,10 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
   def lifetime(): Boolean =
     optional(
       plus() &&
-        capture(duration() && optional(durationUnit())) {
-          binding.lifetime(_)
+        capture(duration() && optional(durationUnit())) { value =>
+          // Unsafe can be use because duration is validate
+          binding.lifetime.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+          true
         }
     )
 
@@ -102,8 +106,10 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
       slash() &&
         oneOrMore(CharMatchers.LowerAlpha) &&
         colon() &&
-        capture(oneOrMore(XymonParser.GroupNameMatcher)) {
-          binding.group(_)
+        capture(oneOrMore(XymonParser.GroupNameMatcher)) { value =>
+          // Unsafe can be use because group is validate
+          binding.group.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+          true
         }
     )
 
@@ -111,25 +117,33 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config) extend
     host && dot() && service()
 
   def host(): Boolean =
-    capture(oneOrMore(XymonParser.HostNameMatcher)) {
-      binding.host(_)
+    capture(oneOrMore(XymonParser.HostNameMatcher)) { value =>
+      // Unsafe can be use because group is validate
+      binding.host.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+      true
     }
 
   def service(): Boolean =
-    capture(oneOrMore(XymonParser.TestNameMatcher)) {
-      binding.service(_)
+    capture(oneOrMore(XymonParser.TestNameMatcher)) { value =>
+      // Unsafe can be use because service is validate
+      binding.service.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+      true
     }
 
   def color(): Boolean =
-    capture(oneOrMore(CharMatchers.LowerAlpha)) {
-      binding.color(_)
+    capture(oneOrMore(CharMatchers.LowerAlpha)) { value =>
+      // Unsafe can be use because service is validate
+      binding.color.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+      true
     }
 
   def additionalText(): Boolean =
     optional(
       sp() &&
-        capture(any()) {
-          binding.message(_)
+        capture(any()) { value =>
+          // Unsafe can be use because message is validate
+          binding.message.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+          true
         }
     )
 

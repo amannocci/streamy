@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 package io.techcode.streamy.xymon.util.printer
 
 import akka.util.ByteString
-import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter}
 import io.techcode.streamy.xymon.component.XymonTransformer
@@ -68,12 +67,12 @@ private class XymonPrinter(conf: XymonTransformer.Printer.Config) extends Printe
     builder.append(XymonTransformer.Id.Status)
 
     // Optionally add lifetime
-    computeValHook(binding.lifetime, XymonPrinter.Empty) {
+    computeValHook(binding.lifetimePointer, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Plus)
     }
 
     // Optionally add group
-    computeValHook(binding.group, XymonPrinter.Empty) {
+    computeValHook(binding.groupPointer, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Slash)
       builder.append(XymonTransformer.Id.Group)
       builder.append(XymonPrinter.Colon)
@@ -83,22 +82,22 @@ private class XymonPrinter(conf: XymonTransformer.Printer.Config) extends Printe
     builder.append(XymonPrinter.Space)
 
     // Hostname and testname
-    computeVal(binding.host, XymonPrinter.Host)
+    computeVal(binding.hostPointer, XymonPrinter.Host)
     builder.append(XymonPrinter.Dot)
-    computeVal(binding.service, XymonPrinter.Service)
+    computeVal(binding.servicePointer, XymonPrinter.Service)
 
     // Space
     builder.append(XymonPrinter.Space)
 
     // Color
-    computeVal(binding.color, XymonPrinter.Color)
+    computeVal(binding.colorPointer, XymonPrinter.Color)
 
     // Optionally add space and message
-    computeValHook(binding.message, XymonPrinter.Empty) {
+    computeValHook(binding.messagePointer, XymonPrinter.Empty) {
       builder.append(XymonPrinter.Space)
     }
 
-    ByteString(builder.toString)
+    builder.toByteString
   }
 }
 
@@ -110,7 +109,7 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
     * @param conf         name of the field.
     * @param defaultValue default value.
     */
-  def computeVal(conf: Binder, defaultValue: String): Unit =
+  def computeVal(conf: Option[JsonPointer], defaultValue: String): Unit =
     computeValHook(conf, defaultValue)((): Unit)
 
   /**
@@ -120,9 +119,12 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
     * @param defaultValue default value.
     * @param hook         hook to trigger if a value is process.
     */
-  def computeValHook(conf: Binder, defaultValue: String)(hook: => Unit): Unit = {
+  def computeValHook(conf: Option[JsonPointer], defaultValue: String)(hook: => Unit): Unit = {
     if (conf.isDefined) {
-      conf.applyString(data, hook)
+      data.evaluate(conf.get).ifExists[String] { result =>
+        hook
+        builder.append(result)
+      }
     } else {
       if (defaultValue.nonEmpty) {
         hook

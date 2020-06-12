@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018-2019
+ * Copyright (c) 2018-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,9 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.{SinkTransformer, SourceTransformer}
 import io.techcode.streamy.event.StreamEvent
-import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.json.{Json, _}
 import io.techcode.streamy.util.parser.ByteStringParser
 import io.techcode.streamy.util.printer.ByteStringPrinter
-import io.techcode.streamy.util.{Binder, NoneBinder}
 import io.techcode.streamy.xymon.util.parser.XymonParser
 import io.techcode.streamy.xymon.util.printer.XymonPrinter
 
@@ -73,12 +72,12 @@ object XymonTransformer {
   object Parser {
 
     case class Binding(
-      lifetime: Binder = NoneBinder,
-      group: Binder = NoneBinder,
-      host: Binder = NoneBinder,
-      service: Binder = NoneBinder,
-      color: Binder = NoneBinder,
-      message: Binder = NoneBinder
+      lifetime: Option[String] = None,
+      group: Option[String] = None,
+      host: Option[String] = None,
+      service: Option[String] = None,
+      color: Option[String] = None,
+      message: Option[String] = None
     )
 
     case class Config(
@@ -90,13 +89,20 @@ object XymonTransformer {
   object Printer {
 
     case class Binding(
-      lifetime: Binder = NoneBinder,
-      group: Binder = NoneBinder,
-      host: Binder = NoneBinder,
-      service: Binder = NoneBinder,
-      color: Binder = NoneBinder,
-      message: Binder = NoneBinder
-    )
+      lifetime: Option[String] = None,
+      group: Option[String] = None,
+      host: Option[String] = None,
+      service: Option[String] = None,
+      color: Option[String] = None,
+      message: Option[String] = None
+    ) {
+      val lifetimePointer: Option[JsonPointer] = lifetime.map(v => Root / v)
+      val groupPointer: Option[JsonPointer] = group.map(v => Root / v)
+      val hostPointer: Option[JsonPointer] = host.map(v => Root / v)
+      val servicePointer: Option[JsonPointer] = service.map(v => Root / v)
+      val colorPointer: Option[JsonPointer] = color.map(v => Root / v)
+      val messagePointer: Option[JsonPointer] = message.map(v => Root / v)
+    }
 
     case class Config(
       binding: Binding = Binding()

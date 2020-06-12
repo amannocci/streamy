@@ -29,7 +29,6 @@ import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.{FloatBinder, LongBinder, StringBinder}
 
 /**
   * Graphite transformer spec.
@@ -67,9 +66,9 @@ object GraphiteTransformerSpec {
 
   object Transformer {
     val Binding = GraphiteTransformer.Binding(
-      path = StringBinder("key"),
-      value = FloatBinder("value"),
-      timestamp = LongBinder("timestamp"),
+      path = Some("key"),
+      value = Some("value"),
+      timestamp = Some("timestamp"),
     )
 
     val Parsing: Flow[ByteString, StreamEvent, NotUsed] = GraphiteTransformer.parser(GraphiteTransformer.Config(

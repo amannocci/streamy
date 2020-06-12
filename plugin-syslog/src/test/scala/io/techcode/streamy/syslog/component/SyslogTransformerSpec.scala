@@ -24,7 +24,6 @@
 package io.techcode.streamy.syslog.component
 
 import java.net.InetAddress
-import java.nio.charset.StandardCharsets
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
@@ -34,7 +33,6 @@ import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing
 import io.techcode.streamy.syslog.component.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.{IntBinder, NoneBinder, StringBinder}
 
 /**
   * Syslog transformer spec.
@@ -343,13 +341,13 @@ object SyslogTransformerSpec {
 
     object Transformer {
       val Binding = SyslogTransformer.Rfc3164.Binding(
-        facility = IntBinder(SyslogTransformer.Rfc3164.Id.Facility),
-        severity = IntBinder(SyslogTransformer.Rfc3164.Id.Severity),
-        timestamp = StringBinder(SyslogTransformer.Rfc3164.Id.Timestamp, StandardCharsets.US_ASCII),
-        hostname = StringBinder(SyslogTransformer.Rfc3164.Id.Hostname, StandardCharsets.US_ASCII),
-        appName = StringBinder(SyslogTransformer.Rfc3164.Id.AppName, StandardCharsets.US_ASCII),
-        procId = StringBinder(SyslogTransformer.Rfc3164.Id.ProcId, StandardCharsets.US_ASCII),
-        message = StringBinder(SyslogTransformer.Rfc3164.Id.Message)
+        facility = Some(SyslogTransformer.Rfc3164.Id.Facility),
+        severity = Some(SyslogTransformer.Rfc3164.Id.Severity),
+        timestamp = Some(SyslogTransformer.Rfc3164.Id.Timestamp),
+        hostname = Some(SyslogTransformer.Rfc3164.Id.Hostname),
+        appName = Some(SyslogTransformer.Rfc3164.Id.AppName),
+        procId = Some(SyslogTransformer.Rfc3164.Id.ProcId),
+        message = Some(SyslogTransformer.Rfc3164.Id.Message)
       )
 
       val ParserStrictDelimiter: Flow[ByteString, StreamEvent, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc3164.Config(
@@ -447,15 +445,15 @@ object SyslogTransformerSpec {
     object Transformer {
 
       private val Binding = SyslogTransformer.Rfc5424.Binding(
-        facility = IntBinder(SyslogTransformer.Rfc5424.Id.Facility),
-        severity = IntBinder(SyslogTransformer.Rfc5424.Id.Severity),
-        timestamp = StringBinder(SyslogTransformer.Rfc5424.Id.Timestamp, StandardCharsets.US_ASCII),
-        hostname = StringBinder(SyslogTransformer.Rfc5424.Id.Hostname, StandardCharsets.US_ASCII),
-        appName = StringBinder(SyslogTransformer.Rfc5424.Id.AppName, StandardCharsets.US_ASCII),
-        procId = StringBinder(SyslogTransformer.Rfc5424.Id.ProcId, StandardCharsets.US_ASCII),
-        msgId = StringBinder(SyslogTransformer.Rfc5424.Id.MsgId, StandardCharsets.US_ASCII),
-        structData = StringBinder(SyslogTransformer.Rfc5424.Id.StructData, StandardCharsets.US_ASCII),
-        message = StringBinder(SyslogTransformer.Rfc5424.Id.Message)
+        facility = Some(SyslogTransformer.Rfc5424.Id.Facility),
+        severity = Some(SyslogTransformer.Rfc5424.Id.Severity),
+        timestamp = Some(SyslogTransformer.Rfc5424.Id.Timestamp),
+        hostname = Some(SyslogTransformer.Rfc5424.Id.Hostname),
+        appName = Some(SyslogTransformer.Rfc5424.Id.AppName),
+        procId = Some(SyslogTransformer.Rfc5424.Id.ProcId),
+        msgId = Some(SyslogTransformer.Rfc5424.Id.MsgId),
+        structData = Some(SyslogTransformer.Rfc5424.Id.StructData),
+        message = Some(SyslogTransformer.Rfc5424.Id.Message)
       )
 
       val ParserStrictDelimiter: Flow[ByteString, StreamEvent, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
@@ -496,9 +494,9 @@ object SyslogTransformerSpec {
 
       val PrinterDefault: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
         binding = Binding.copy(
-          facility = NoneBinder,
-          severity = NoneBinder,
-          procId = NoneBinder
+          facility = None,
+          severity = None,
+          procId = None
         )
       ))
 

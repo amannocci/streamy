@@ -26,7 +26,6 @@ package io.techcode.streamy.graphite.util.parser
 import akka.util.ByteString
 import com.google.common.base.CharMatcher
 import io.techcode.streamy.graphite.component.GraphiteTransformer
-import io.techcode.streamy.util.Binder
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.{ByteStringParser, ParseException}
 
@@ -87,15 +86,25 @@ private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStr
       timestamp() &&
       eoi()
 
-  def path(): Boolean = parseUntilDelimiter(binding.path)
+  def path(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
+    binding.path.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+    true
+  }
 
-  def value(): Boolean = parseUntilDelimiter(binding.value)
+  def value(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
+    binding.value.foreach(bind => builder += bind -> JsFloat.fromByteStringUnsafe(value))
+    true
+  }
 
-  def timestamp(): Boolean = parseUntilDelimiter(binding.timestamp)
+  def timestamp(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
+    binding.timestamp.foreach(bind => builder += bind -> JsLong.fromByteStringUnsafe(value))
+    true
+  }
 
-  @inline private def parseUntilDelimiter(field: Binder): Boolean =
-    capture(oneOrMore(GraphiteParser.DelimiterMatcher)) {
-      field(_)
+  @inline private def parseUntilDelimiter(field: Option[String]): Boolean =
+    capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
+      field.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+      true
     }
 
   override def cleanup(): Unit = {

@@ -31,7 +31,6 @@ import io.techcode.streamy.syslog.component.SyslogTransformer._
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.lang.CharBuilder
 import io.techcode.streamy.util.printer.{ByteStringPrinter, DerivedByteStringPrinter}
-import io.techcode.streamy.util.{Binder, SomeBinder}
 
 /**
   * Syslog printer companion.
@@ -89,7 +88,7 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
     * @param conf         name of the field.
     * @param defaultValue default value.
     */
-  def computeVal(conf: Binder, defaultValue: String): Unit =
+  def computeVal(conf: Option[JsonPointer] = None, defaultValue: String): Unit =
     computeValHook(conf, defaultValue)((): Unit)
 
   /**
@@ -99,9 +98,12 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
     * @param defaultValue default value.
     * @param hook         hook to trigger if a value is process.
     */
-  def computeValHook(conf: Binder, defaultValue: String)(hook: => Unit = (): Unit): Unit = {
+  def computeValHook(conf: Option[JsonPointer] = None, defaultValue: String)(hook: => Unit = (): Unit): Unit = {
     if (conf.isDefined) {
-      conf.applyString(data, hook)
+      data.evaluate(conf.get).ifExists[String] { result =>
+        hook
+        builder.append(result)
+      }
     } else {
       if (defaultValue.nonEmpty) {
         hook
@@ -116,20 +118,14 @@ private abstract class PrinterHelpers extends DerivedByteStringPrinter[Json] {
     * @param facilityConf configuration for facility.
     * @param severityConf configuration for severity.
     */
-  def computePrival(facilityConf: Binder, severityConf: Binder): Unit = {
+  def computePrival(facilityConf: Option[JsonPointer] = None, severityConf: Option[JsonPointer] = None): Unit = {
     var prival: Int = 0
-    severityConf match {
-      case binder: SomeBinder =>
-        prival = data.evaluate(Root / binder.key).getOrElse[Int](SyslogPrinter.Severity)
-      case _ =>
-        prival = SyslogPrinter.Severity
-    }
-    facilityConf match {
-      case binder: SomeBinder =>
-        prival += data.evaluate(Root / binder.key).getOrElse[Int](SyslogPrinter.Facility) << 3
-      case _ =>
-        prival += SyslogPrinter.Facility << 3
-    }
+    prival = severityConf
+      .map(pointer => data.evaluate(pointer).getOrElse[Int](SyslogPrinter.Severity))
+      .getOrElse(SyslogPrinter.Severity)
+    prival += facilityConf
+      .map(pointer => data.evaluate(pointer).getOrElse[Int](SyslogPrinter.Facility))
+      .getOrElse(SyslogPrinter.Facility) << 3
     builder.append(prival)
   }
 
@@ -174,27 +170,27 @@ private class Rfc3164Printer(conf: Rfc3164.Config) extends PrinterHelpers {
     framing(conf.framing) {
       // Add prival
       builder.append(SyslogPrinter.Inf)
-      computePrival(binding.facility, binding.severity)
+      computePrival(binding.facilityPointer, binding.severityPointer)
       builder.append(SyslogPrinter.Sup)
 
       // Add timestamp
-      computeVal(binding.timestamp, SyslogPrinter.DateStamp)
+      computeVal(binding.timestampPointer, SyslogPrinter.DateStamp)
       builder.append(SyslogPrinter.Space)
 
       // Add hostname
-      computeVal(binding.hostname, SyslogPrinter.HostName)
+      computeVal(binding.hostnamePointer, SyslogPrinter.HostName)
       builder.append(SyslogPrinter.Space)
 
       // Add app name
-      computeVal(binding.appName, SyslogPrinter.AppName)
+      computeVal(binding.appNamePointer, SyslogPrinter.AppName)
 
       // Add proc id
       builder.append(SyslogPrinter.OpenBracket)
-      computeVal(binding.procId, SyslogPrinter.ProcId)
+      computeVal(binding.procIdPointer, SyslogPrinter.ProcId)
       builder.append(SyslogPrinter.CloseBracket)
 
       // Add message
-      computeValHook(binding.message, SyslogPrinter.Empty) {
+      computeValHook(binding.messagePointer, SyslogPrinter.Empty) {
         builder.append(SyslogPrinter.SemiColon)
         builder.append(SyslogPrinter.Space)
       }
@@ -219,7 +215,7 @@ private class Rfc5424Printer(conf: Rfc5424.Config) extends PrinterHelpers {
     framing(conf.framing) {
       // Add prival
       builder.append(SyslogPrinter.Inf)
-      computePrival(binding.facility, binding.severity)
+      computePrival(binding.facilityPointer, binding.severityPointer)
       builder.append(SyslogPrinter.Sup)
 
       // Add version
@@ -227,30 +223,30 @@ private class Rfc5424Printer(conf: Rfc5424.Config) extends PrinterHelpers {
       builder.append(SyslogPrinter.Space)
 
       // Add timestamp
-      computeVal(binding.timestamp, SyslogPrinter.Date)
+      computeVal(binding.timestampPointer, SyslogPrinter.Date)
       builder.append(SyslogPrinter.Space)
 
       // Add hostname
-      computeVal(binding.hostname, SyslogPrinter.Nil)
+      computeVal(binding.hostnamePointer, SyslogPrinter.Nil)
       builder.append(SyslogPrinter.Space)
 
       // Add app name
-      computeVal(binding.appName, SyslogPrinter.Nil)
+      computeVal(binding.appNamePointer, SyslogPrinter.Nil)
       builder.append(SyslogPrinter.Space)
 
       // Add proc id
-      computeVal(binding.procId, SyslogPrinter.Nil)
+      computeVal(binding.procIdPointer, SyslogPrinter.Nil)
       builder.append(SyslogPrinter.Space)
 
       // Add message id
-      computeVal(binding.msgId, SyslogPrinter.Nil)
+      computeVal(binding.msgIdPointer, SyslogPrinter.Nil)
       builder.append(SyslogPrinter.Space)
 
       // Skip structured data
       builder.append(SyslogPrinter.Nil)
 
       // Add message
-      computeValHook(binding.message, SyslogPrinter.Empty) {
+      computeValHook(binding.messagePointer, SyslogPrinter.Empty) {
         builder.append(SyslogPrinter.Space)
       }
     }

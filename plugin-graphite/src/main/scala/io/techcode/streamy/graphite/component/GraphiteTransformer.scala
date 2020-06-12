@@ -31,7 +31,6 @@ import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.graphite.util.parser.GraphiteParser
 import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.parser.ByteStringParser
-import io.techcode.streamy.util.{Binder, NoneBinder}
 
 /**
   * Graphite transformer companion.
@@ -54,9 +53,9 @@ object GraphiteTransformer {
 
   // Fields binding
   case class Binding(
-    path: Binder = NoneBinder,
-    value: Binder = NoneBinder,
-    timestamp: Binder = NoneBinder
+    path: Option[String] = None,
+    value: Option[String] = None,
+    timestamp: Option[String] = None
   )
 
   // Configuration

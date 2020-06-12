@@ -25,16 +25,15 @@ package io.techcode.streamy.kafka.component
 
 import akka.actor.ActorSystem
 import akka.kafka.ConsumerMessage.CommittableOffset
+import akka.kafka._
 import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.kafka.scaladsl.{Committer, Consumer}
-import akka.kafka._
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Keep}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
 import io.techcode.streamy.event.{AttributeKey, StreamEvent}
 import io.techcode.streamy.util.json._
-import io.techcode.streamy.util.{Binder, NoneBinder}
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
 
@@ -77,12 +76,12 @@ object KafkaSource {
 
   // Component binding
   case class Binding(
-    key: Binder = NoneBinder,
-    offset: Binder = NoneBinder,
-    value: Binder = NoneBinder,
-    partition: Binder = NoneBinder,
-    topic: Binder = NoneBinder,
-    timestamp: Binder = NoneBinder
+    key: Option[String] = None,
+    offset: Option[String] = None,
+    value: Option[String] = None,
+    partition: Option[String] = None,
+    topic: Option[String] = None,
+    timestamp: Option[String] = None
   )
 
   /**
@@ -108,12 +107,12 @@ object KafkaSource {
           val binding = config.binding
           implicit val builder: JsObjectBuilder = Json.objectBuilder()
 
-          binding.key(record.key())
-          binding.offset(record.offset())
-          binding.value(ByteString.fromArrayUnsafe(record.value()))
-          binding.partition(record.partition())
-          binding.topic(record.topic())
-          binding.timestamp(record.timestamp())
+          binding.key.foreach(bind => builder += bind -> record.key())
+          binding.offset.foreach(bind => builder += bind -> record.offset())
+          binding.value.foreach(bind => builder += bind -> ByteString.fromArrayUnsafe(record.value()))
+          binding.partition.foreach(bind => builder += bind -> record.partition())
+          binding.topic.foreach(bind => builder += bind -> record.topic())
+          binding.timestamp.foreach(bind => builder += bind -> record.timestamp())
           StreamEvent(builder.result()).mutate(CommittableOffsetKey, msg.committableOffset)
         }
 

@@ -28,7 +28,6 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.event.StreamEvent
-import io.techcode.streamy.util.{NoneBinder, StringBinder}
 import io.techcode.streamy.util.json._
 
 
@@ -105,24 +104,24 @@ object XymonTransformerSpec {
     val Transformer: Flow[StreamEvent, ByteString, NotUsed] =
       XymonTransformer.printer(XymonTransformer.Printer.Config(
         binding = XymonTransformer.Printer.Binding(
-          lifetime = StringBinder("lifetime"),
-          host = StringBinder("host"),
-          service = StringBinder("service"),
-          color = StringBinder("color"),
-          group = StringBinder("group"),
-          message = StringBinder("message")
+          lifetime = Some("lifetime"),
+          host = Some("host"),
+          service = Some("service"),
+          color = Some("color"),
+          group = Some("group"),
+          message = Some("message")
         )
       ))
 
     val TransformerWithDefault: Flow[StreamEvent, ByteString, NotUsed] =
       XymonTransformer.printer(XymonTransformer.Printer.Config(
         binding = XymonTransformer.Printer.Binding(
-          lifetime = NoneBinder,
-          host = NoneBinder,
-          service = NoneBinder,
-          color = NoneBinder,
-          group = NoneBinder,
-          message = NoneBinder
+          lifetime = None,
+          host = None,
+          service = None,
+          color = None,
+          group = None,
+          message = None
         )
       ))
 
@@ -141,12 +140,12 @@ object XymonTransformerSpec {
     val Transformer: Flow[ByteString, StreamEvent, NotUsed] =
       XymonTransformer.parser(XymonTransformer.Parser.Config(
         binding = XymonTransformer.Parser.Binding(
-          lifetime = StringBinder("lifetime"),
-          host = StringBinder("host"),
-          service = StringBinder("service"),
-          color = StringBinder("color"),
-          group = StringBinder("group"),
-          message = StringBinder("message")
+          lifetime = Some("lifetime"),
+          host = Some("host"),
+          service = Some("service"),
+          color = Some("color"),
+          group = Some("group"),
+          message = Some("message")
         )
       ))
 

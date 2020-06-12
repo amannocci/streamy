@@ -24,9 +24,8 @@
 package io.techcode.streamy.util.parser
 
 import akka.util.ByteString
-import io.techcode.streamy.util.json.{JsObjectBuilder, Json}
+import io.techcode.streamy.util.json.{JsInt, JsObjectBuilder, JsString, Json}
 import io.techcode.streamy.util.printer.PrintException
-import io.techcode.streamy.util.{IntBinder, NoneBinder, StringBinder}
 import org.scalatest._
 
 /**
@@ -87,8 +86,9 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "capture properly a value if present" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(str("foo")) {
-            StringBinder("test")(_)
+          capture(str("foo")) { value =>
+            builder += "test" -> JsString.fromByteStringUnsafe(value)
+            true
           }
         }
       }
@@ -98,8 +98,8 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture a value if undefined" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(str("foo")) {
-            NoneBinder(_)
+          capture(str("foo")) { _ =>
+            true
           }
         }
       }
@@ -109,8 +109,9 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture properly an optional value if present" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          captureOptional(zeroOrMore(str("1"))) {
-            IntBinder("foobar")(_)
+          captureOptional(oneOrMore(str("1"))) { value =>
+            builder += "foobar" -> JsInt.fromByteStringUnsafe(value)
+            false
           }
         }
       }
@@ -120,8 +121,8 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
     "not capture properly a value if absent" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          capture(zeroOrMore(str("1"))) {
-            IntBinder("foobar")(_)
+          capture(zeroOrMore(str("1"))) { _ =>
+            false
           }
         }
       }
@@ -438,10 +439,16 @@ class ByteStringParserSpec extends WordSpecLike with Matchers {
         val subParsing: ByteStringParserImpl {
           def root(): Boolean
         } = new ByteStringParserImpl {
-          override def root(): Boolean = capture(str("foo"))(StringBinder("foo")(_))
+          override def root(): Boolean = capture(str("foo")) { value =>
+            builder += "foo" -> JsString.fromByteStringUnsafe(value)
+            true
+          }
         }
 
-        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && capture(str("bar"))(StringBinder("bar")(_))
+        override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && capture(str("bar")) { value =>
+          builder += "bar" -> JsString.fromByteStringUnsafe(value)
+          true
+        }
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("foo" -> "foo", "bar" -> "bar")))
     }

@@ -31,10 +31,9 @@ import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing.Framing
 import io.techcode.streamy.syslog.util.parser.{SyslogFraming, SyslogParser}
 import io.techcode.streamy.syslog.util.printer.SyslogPrinter
-import io.techcode.streamy.util.json.Json
+import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.ByteStringParser
 import io.techcode.streamy.util.printer.ByteStringPrinter
-import io.techcode.streamy.util.{Binder, NoneBinder}
 
 /**
   * Syslog transformer companion.
@@ -133,16 +132,26 @@ object SyslogTransformer {
     }
 
     case class Binding(
-      facility: Binder = NoneBinder,
-      severity: Binder = NoneBinder,
-      timestamp: Binder = NoneBinder,
-      hostname: Binder = NoneBinder,
-      appName: Binder = NoneBinder,
-      procId: Binder = NoneBinder,
-      msgId: Binder = NoneBinder,
-      structData: Binder = NoneBinder,
-      message: Binder = NoneBinder
-    )
+      facility: Option[String] = None,
+      severity: Option[String] = None,
+      timestamp: Option[String] = None,
+      hostname: Option[String] = None,
+      appName: Option[String] = None,
+      procId: Option[String] = None,
+      msgId: Option[String] = None,
+      structData: Option[String] = None,
+      message: Option[String] = None
+    ) {
+      val facilityPointer: Option[JsonPointer] = facility.map(Root / _)
+      val severityPointer: Option[JsonPointer] = severity.map(Root / _)
+      val timestampPointer: Option[JsonPointer] = timestamp.map(Root / _)
+      val hostnamePointer: Option[JsonPointer] = hostname.map(Root / _)
+      val appNamePointer: Option[JsonPointer] = appName.map(Root / _)
+      val procIdPointer: Option[JsonPointer] = procId.map(Root / _)
+      val msgIdPointer: Option[JsonPointer] = msgId.map(Root / _)
+      val structDataPointer: Option[JsonPointer] = structData.map(Root / _)
+      val messagePointer: Option[JsonPointer] = message.map(Root / _)
+    }
 
     case class Config(
       mode: Mode = Rfc5424.Mode.Strict,
@@ -198,14 +207,22 @@ object SyslogTransformer {
     }
 
     case class Binding(
-      facility: Binder = NoneBinder,
-      severity: Binder = NoneBinder,
-      timestamp: Binder = NoneBinder,
-      hostname: Binder = NoneBinder,
-      appName: Binder = NoneBinder,
-      procId: Binder = NoneBinder,
-      message: Binder = NoneBinder
-    )
+      facility: Option[String] = None,
+      severity: Option[String] = None,
+      timestamp: Option[String] = None,
+      hostname: Option[String] = None,
+      appName: Option[String] = None,
+      procId: Option[String] = None,
+      message: Option[String] = None
+    ) {
+      val facilityPointer: Option[JsonPointer] = facility.map(Root / _)
+      val severityPointer: Option[JsonPointer] = severity.map(Root / _)
+      val timestampPointer: Option[JsonPointer] = timestamp.map(Root / _)
+      val hostnamePointer: Option[JsonPointer] = hostname.map(Root / _)
+      val appNamePointer: Option[JsonPointer] = appName.map(Root / _)
+      val procIdPointer: Option[JsonPointer] = procId.map(Root / _)
+      val messagePointer: Option[JsonPointer] = message.map(Root / _)
+    }
 
     sealed abstract class Mode(
       val hostname: Int,
