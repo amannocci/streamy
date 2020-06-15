@@ -40,258 +40,238 @@ import io.techcode.streamy.util.json._
 class SyslogTransformerSpec extends TestTransformer {
 
   "Syslog transformer" should {
-    "parser" should {
-      "Rfc3164" should {
-        "with delimiter" should {
-          "handle correctly simple syslog message in strict mode" in {
-            except(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserStrictDelimiter,
-              SyslogTransformerSpec.Rfc3164.Input.ParserSimpleDelimiter,
-              SyslogTransformerSpec.Rfc3164.Output.ParserSimple
-            )
-          }
-
-          "handle correctly simple syslog message in lenient mode" in {
-            except(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientDelimiter,
-              SyslogTransformerSpec.Rfc3164.Input.ParserSimpleDelimiter,
-              SyslogTransformerSpec.Rfc3164.Output.ParserSimple
-            )
-          }
-
-          "throw an error when syslog message is malformed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientDelimiter,
-              SyslogTransformerSpec.Rfc3164.Input.ParserMalformedDelimiter
-            )
-          }
-        }
-
-        "with count" should {
-          "handle correctly simple syslog message in strict mode" in {
-            except(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserStrictCount,
-              SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount,
-              SyslogTransformerSpec.Rfc3164.Output.ParserSimple
-            )
-          }
-
-          "handle correctly simple syslog message in lenient mode" in {
-            except(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount,
-              SyslogTransformerSpec.Rfc3164.Output.ParserSimple
-            )
-          }
-
-          "handle correctly syslog message in multiple parsing" in {
-            except(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount.grouped(2),
-              SyslogTransformerSpec.Rfc3164.Output.ParserSimple
-            )
-          }
-
-          "throw an error when syslog message is malformed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCount
-            )
-          }
-
-          "throw an error when framing is malformed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc3164.Input.ParserMalformedDelimiter
-            )
-          }
-
-          "throw an error when a syslog message is prefix by negative count" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCountNegative
-            )
-          }
-
-          "throw an error when a syslog message count is greater than max allowed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
-              SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCountMax
-            )
-          }
-
-          "throw an error when a prefix syslog message count is truncated" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
-              SyslogTransformerSpec.Rfc3164.Input.ParserTruncated
-            )
-          }
-
-          "throw an error when a prefix syslog message count is greater than max allowed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
-              SyslogTransformerSpec.Rfc3164.Input.ParserMalformedPrefix
-            )
-          }
-        }
-      }
-
-      "Rfc5424" should {
-        "with delimiter" should {
-          "handle correctly simple syslog message in strict mode" in {
-            except(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserStrictDelimiter,
-              SyslogTransformerSpec.Rfc5424.Input.ParserSimpleDelimiter,
-              SyslogTransformerSpec.Rfc5424.Output.ParserSimple
-            )
-          }
-
-          "handle correctly simple syslog message in lenient mode" in {
-            except(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
-              SyslogTransformerSpec.Rfc5424.Input.ParserSimpleDelimiter,
-              SyslogTransformerSpec.Rfc5424.Output.ParserSimple
-            )
-          }
-
-          "handle correctly alternative syslog message" in {
-            except(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
-              SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeDelimiter,
-              SyslogTransformerSpec.Rfc5424.Output.ParserAlternative
-            )
-          }
-
-          "throw an error when syslog message is malformed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
-              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
-            )
-          }
-        }
-
-        "with count" should {
-          "handle correctly simple syslog message in strict mode" in {
-            except(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserStrictCount,
-              SyslogTransformerSpec.Rfc5424.Input.ParserSimpleCount,
-              SyslogTransformerSpec.Rfc5424.Output.ParserSimple
-            )
-          }
-
-          "handle correctly simple syslog message in lenient mode" in {
-            except(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc5424.Input.ParserSimpleCount,
-              SyslogTransformerSpec.Rfc5424.Output.ParserSimple
-            )
-          }
-
-          "handle correctly syslog message in multiple parsing" in {
-            except(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeCount.grouped(2),
-              SyslogTransformerSpec.Rfc5424.Output.ParserAlternative
-            )
-          }
-
-          "handle correctly alternative syslog message" in {
-            except(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeCount,
-              SyslogTransformerSpec.Rfc5424.Output.ParserAlternative
-            )
-          }
-
-          "throw an error when syslog message is malformed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCount
-            )
-          }
-
-          "throw an error when framing is malformed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
-            )
-          }
-
-          "throw an error when a syslog message is prefix by negative count" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
-              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCountNegative
-            )
-          }
-
-          "throw an error when a syslog message count is greater than max allowed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
-              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCountMax
-            )
-          }
-
-          "throw an error when a prefix syslog message count is truncated" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
-              SyslogTransformerSpec.Rfc5424.Input.ParserTruncated
-            )
-          }
-
-          "throw an error when a prefix syslog message count is greater than max allowed" in {
-            exceptError(
-              SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
-              SyslogTransformerSpec.Rfc5424.Input.ParserMalformedPrefix
-            )
-          }
-        }
-      }
+    "parser Rfc3164 with delimiter handle correctly simple syslog message in strict mode" in {
+      except(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserStrictDelimiter,
+        SyslogTransformerSpec.Rfc3164.Input.ParserSimpleDelimiter,
+        SyslogTransformerSpec.Rfc3164.Output.ParserSimple
+      )
     }
 
-    "printer" should {
-      "Rfc3164" should {
-        "with frame delimiter" in {
-          except(
-            SyslogTransformerSpec.Rfc3164.Transformer.PrinterDelimiter,
-            SyslogTransformerSpec.Rfc3164.Input.PrinterSimple,
-            SyslogTransformerSpec.Rfc3164.Output.PrinterSimpleDelimiter
-          )
-        }
+    "parser Rfc3164 with delimiter handle correctly simple syslog message in lenient mode" in {
+      except(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientDelimiter,
+        SyslogTransformerSpec.Rfc3164.Input.ParserSimpleDelimiter,
+        SyslogTransformerSpec.Rfc3164.Output.ParserSimple
+      )
+    }
 
-        "with frame count" in {
-          except(
-            SyslogTransformerSpec.Rfc3164.Transformer.PrinterCount,
-            SyslogTransformerSpec.Rfc3164.Input.PrinterSimple,
-            SyslogTransformerSpec.Rfc3164.Output.PrinterSimpleCount
-          )
-        }
-      }
+    "parser Rfc3164 with delimiter throw an error when syslog message is malformed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientDelimiter,
+        SyslogTransformerSpec.Rfc3164.Input.ParserMalformedDelimiter
+      )
+    }
 
-      "Rfc5424" should {
-        "with frame delimiter" in {
-          except(
-            SyslogTransformerSpec.Rfc5424.Transformer.PrinterDelimiter,
-            SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
-            SyslogTransformerSpec.Rfc5424.Output.PrinterSimpleDelimiter
-          )
-        }
+    "parser Rfc3164 with count handle correctly simple syslog message in strict mode" in {
+      except(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserStrictCount,
+        SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount,
+        SyslogTransformerSpec.Rfc3164.Output.ParserSimple
+      )
+    }
 
-        "with frame count" in {
-          except(
-            SyslogTransformerSpec.Rfc5424.Transformer.PrinterCount,
-            SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
-            SyslogTransformerSpec.Rfc5424.Output.PrinterSimpleCount
-          )
-        }
+    "parser Rfc3164 with count handle correctly simple syslog message in lenient mode" in {
+      except(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount,
+        SyslogTransformerSpec.Rfc3164.Output.ParserSimple
+      )
+    }
 
-        "with default values" in {
-          except(
-            SyslogTransformerSpec.Rfc5424.Transformer.PrinterDefault,
-            SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
-            SyslogTransformerSpec.Rfc5424.Output.PrinterDefault
-          )
-        }
-      }
+    "parser Rfc3164 with count handle correctly syslog message in multiple parsing" in {
+      except(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount.grouped(2),
+        SyslogTransformerSpec.Rfc3164.Output.ParserSimple
+      )
+    }
+
+    "parser Rfc3164 with count throw an error when syslog message is malformed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCount
+      )
+    }
+
+    "parser Rfc3164 with count throw an error when framing is malformed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc3164.Input.ParserMalformedDelimiter
+      )
+    }
+
+    "parser Rfc3164 with count throw an error when a syslog message is prefix by negative count" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCountNegative
+      )
+    }
+
+    "parser Rfc3164 with count throw an error when a syslog message count is greater than max allowed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
+        SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCountMax
+      )
+    }
+
+    "parser Rfc3164 with count throw an error when a prefix syslog message count is truncated" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
+        SyslogTransformerSpec.Rfc3164.Input.ParserTruncated
+      )
+    }
+
+    "parser Rfc3164 with count throw an error when a prefix syslog message count is greater than max allowed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
+        SyslogTransformerSpec.Rfc3164.Input.ParserMalformedPrefix
+      )
+    }
+
+    "parser Rfc5424 with delimiter handle correctly simple syslog message in strict mode" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserStrictDelimiter,
+        SyslogTransformerSpec.Rfc5424.Input.ParserSimpleDelimiter,
+        SyslogTransformerSpec.Rfc5424.Output.ParserSimple
+      )
+    }
+
+    "parser Rfc5424 with delimiter handle correctly simple syslog message in lenient mode" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
+        SyslogTransformerSpec.Rfc5424.Input.ParserSimpleDelimiter,
+        SyslogTransformerSpec.Rfc5424.Output.ParserSimple
+      )
+    }
+
+    "parser Rfc5424 with delimiter handle correctly alternative syslog message" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
+        SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeDelimiter,
+        SyslogTransformerSpec.Rfc5424.Output.ParserAlternative
+      )
+    }
+
+    "parser Rfc5424 with delimiter throw an error when syslog message is malformed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
+        SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
+      )
+    }
+
+    "parser Rfc5424 with count handle correctly simple syslog message in strict mode" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserStrictCount,
+        SyslogTransformerSpec.Rfc5424.Input.ParserSimpleCount,
+        SyslogTransformerSpec.Rfc5424.Output.ParserSimple
+      )
+    }
+
+    "parser Rfc5424 with count handle correctly simple syslog message in lenient mode" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc5424.Input.ParserSimpleCount,
+        SyslogTransformerSpec.Rfc5424.Output.ParserSimple
+      )
+    }
+
+    "parser Rfc5424 with count handle correctly syslog message in multiple parsing" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeCount.grouped(2),
+        SyslogTransformerSpec.Rfc5424.Output.ParserAlternative
+      )
+    }
+
+    "parser Rfc5424 with count handle correctly alternative syslog message" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeCount,
+        SyslogTransformerSpec.Rfc5424.Output.ParserAlternative
+      )
+    }
+
+    "parser Rfc5424 with count throw an error when syslog message is malformed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCount
+      )
+    }
+
+    "parser Rfc5424 with count throw an error when framing is malformed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
+      )
+    }
+
+    "parser Rfc5424 with count throw an error when a syslog message is prefix by negative count" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
+        SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCountNegative
+      )
+    }
+
+    "parser Rfc5424 with count throw an error when a syslog message count is greater than max allowed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
+        SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCountMax
+      )
+    }
+
+    "parser Rfc5424 with count throw an error when a prefix syslog message count is truncated" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
+        SyslogTransformerSpec.Rfc5424.Input.ParserTruncated
+      )
+    }
+
+    "parser Rfc5424 with count throw an error when a prefix syslog message count is greater than max allowed" in {
+      exceptError(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
+        SyslogTransformerSpec.Rfc5424.Input.ParserMalformedPrefix
+      )
+    }
+
+    "printer Rfc3164 with frame delimiter" in {
+      except(
+        SyslogTransformerSpec.Rfc3164.Transformer.PrinterDelimiter,
+        SyslogTransformerSpec.Rfc3164.Input.PrinterSimple,
+        SyslogTransformerSpec.Rfc3164.Output.PrinterSimpleDelimiter
+      )
+    }
+
+    "printer Rfc3164 with frame count" in {
+      except(
+        SyslogTransformerSpec.Rfc3164.Transformer.PrinterCount,
+        SyslogTransformerSpec.Rfc3164.Input.PrinterSimple,
+        SyslogTransformerSpec.Rfc3164.Output.PrinterSimpleCount
+      )
+    }
+
+    "printer Rfc5424 with frame delimiter" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.PrinterDelimiter,
+        SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
+        SyslogTransformerSpec.Rfc5424.Output.PrinterSimpleDelimiter
+      )
+    }
+
+    "printer Rfc5424 with frame count" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.PrinterCount,
+        SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
+        SyslogTransformerSpec.Rfc5424.Output.PrinterSimpleCount
+      )
+    }
+
+    "printer Rfc5424 with default values" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.PrinterDefault,
+        SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
+        SyslogTransformerSpec.Rfc5424.Output.PrinterDefault
+      )
     }
   }
 
@@ -512,7 +492,9 @@ object SyslogTransformerSpec {
         SyslogTransformer.Rfc5424.Id.AppName -> "su",
         SyslogTransformer.Rfc5424.Id.ProcId -> "77042",
         SyslogTransformer.Rfc5424.Id.MsgId -> "ID47",
-        SyslogTransformer.Rfc5424.Id.StructData -> """[sigSig ver="1"]""",
+        SyslogTransformer.Rfc5424.Id.StructData -> Json.obj(
+          "ver" -> "1"
+        ),
         SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
       ))
 

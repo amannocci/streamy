@@ -107,6 +107,7 @@ private trait ParserHelpers {
   *
   * @param config parser configuration.
   */
+// scalastyle:off
 private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Json] with ParserHelpers {
 
   private val binding = config.binding
@@ -114,9 +115,11 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   private val mode = config.mode
 
   private implicit var builder: JsObjectBuilder = Json.objectBuilder()
+  private var structDataBuilder: JsObjectBuilder = Json.objectBuilder()
 
   def run(): Json = {
     if (root()) {
+      binding.structData.foreach(bind => builder += bind -> structDataBuilder.result())
       builder.result()
     } else {
       throw new ParseException(s"Unexpected input at index ${cursor()}:\n${data.utf8String}\n${" " * cursor()}^")
@@ -238,18 +241,21 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
 
   def structuredData(): Boolean = or(
     nilValue(),
-    capture(sdElement()) { value =>
-      // Unsafe can be use because structData is validate
-      binding.structData.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-      true
-    }
+    sdElement()
   )
 
   def sdElement(): Boolean =
     openBracket() && sdName() && zeroOrMore(sp() && sdParam()) && closeBracket()
 
   def sdParam(): Boolean =
-    sdName() && equal() && doubleQuote() && paramValue() && doubleQuote()
+    capture(sdName()) { value =>
+      stack.push(value.utf8String)
+      true
+    } && equal() && doubleQuote() &&
+      capture(paramValue()) { value =>
+        structDataBuilder += stack.pop().asInstanceOf[String] -> JsString.fromByteStringUnsafe(value)
+        true
+      } && doubleQuote()
 
   def paramValue(): Boolean = zeroOrMore(SyslogParser.ParamValueMatcher)
 
@@ -265,11 +271,12 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   override def cleanup(): Unit = {
     super.cleanup()
     builder = Json.objectBuilder()
+    structDataBuilder = Json.objectBuilder()
   }
 
-  // scalastyle:on
-
 }
+
+// scalastyle:on
 
 /**
   * Syslog parser that transform incoming [[ByteString]] to [[Json]].
