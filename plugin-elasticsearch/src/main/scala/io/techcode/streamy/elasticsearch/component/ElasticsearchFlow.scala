@@ -101,6 +101,7 @@ object ElasticsearchFlow {
     bulk: Int = DefaultBulk,
     retry: RetryConfig = DefaultRetry,
     binding: Binding = Binding(),
+    onError: () => ErrorBehaviour = () => DefaultErrorBehaviour,
     bypassDocumentParsing: Boolean = false
   )
 
@@ -130,6 +131,24 @@ object ElasticsearchFlow {
     }
   }
 
+  // Error handler
+  trait ErrorBehaviour {
+
+    /**
+      * Error behaviour definition.
+      *
+      * @param event  current stream event to handle.
+      * @param result result of the elasticsearch action.
+      * @return error handling strategy.
+      */
+    def onError(event: StreamEvent, result: Json): MaybeJson = JsUndefined
+
+  }
+
+  // Default error handler
+  case object DefaultErrorBehaviour extends ErrorBehaviour
+
+  // Host configuration
   case class HostConfig(
     scheme: String,
     host: String,
@@ -270,6 +289,9 @@ object ElasticsearchFlow {
       // Next retry
       private var retryNo: Int = 0
 
+      // Error behaviour handling
+      val errorBehaviour: ErrorBehaviour = config.onError()
+
       // State
       object State extends Enumeration {
         val Idle, Busy = Value
@@ -351,35 +373,42 @@ object ElasticsearchFlow {
         // Handle failed items
         val items = data.evaluate(ElasticPath.Items).get[JsArray]
 
+        // Flag for back pressure
         var backPressure = false
-        val partialDocuments = inProcessMessages.zip(items.toSeq)
-          .filter { case (document, result) =>
+
+        // Create a list of documents to reprocess
+        val partialDocuments = Vector.newBuilder[StreamEvent]
+        partialDocuments.sizeHint(inProcessMessages.size)
+
+        // Map with result and process
+        inProcessMessages.zip(items.toSeq)
+          .foreach { case (document, result) =>
             val status = result.evaluate(statusPath).get[Int]
 
-            // We can't do anything in case of conflict or bad request or not found
+            // We delegate to error behaviour in case of conflict or bad request or not found
             status match {
               case HttpStatus.Conflict | HttpStatus.BadRequest | HttpStatus.NotFound =>
-                system.eventStream.publish(ElasticsearchEvent.Drop(document, result))
-                false
+                val resultBehaviour = errorBehaviour.onError(document, result)
+                if (resultBehaviour.isEmpty) {
+                  system.eventStream.publish(ElasticsearchEvent.Drop(document, result))
+                } else {
+                  partialDocuments += document.mutate(resultBehaviour.get[Json])
+                }
               case HttpStatus.TooManyRequest =>
                 backPressure = true
-                true
-              case _ => true
+                partialDocuments += document
+              case _ => partialDocuments += document
             }
           }
-          .groupBy { case (_, result) =>
-            val status = result.evaluate(statusPath).get[Int]
-            if (status < 300) 0 else 1
-          }
 
-        inProcessMessages = partialDocuments.getOrElse(1, Nil).map(_._1)
+        // Compute reprocess next request
+        inProcessMessages = partialDocuments.result()
         if (inProcessMessages.nonEmpty) {
           if (backPressure) {
             scheduleRetry()
           } else {
             retryNo = 0
-            state = State.Idle
-            performRequest()
+            onTimer(NotUsed)
           }
         } else {
           emitDownstream()
