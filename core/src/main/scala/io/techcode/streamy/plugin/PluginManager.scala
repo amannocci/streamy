@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.plugin
 
-import java.net.{URL, URLClassLoader}
+import java.net.URL
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
 import java.util.function.BiPredicate
@@ -50,12 +50,8 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
   // Actor refs
   private var plugins: Map[String, PluginContainer] = Map.empty
 
-  // Plugin class loader
-  private var pluginClassLoader: ClassLoader = _
-
   // Configuration
   private val lifecycleConfig = conf.lifecycle
-  private val folderConfig = conf.folder
 
   // Common mdc
   private val commonMdc = Map("type" -> "application")
@@ -74,9 +70,6 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
     // Check dependencies & prepare loading
     val toLoads = checkDependencies(pluginDescriptions)
 
-    // Load all valid jars
-    pluginClassLoader = new URLClassLoader(pluginDescriptions.values.map(_.file.get).toArray, getClass.getClassLoader)
-
     // Waiting response list
     toLoads.foreach(pluginDescription => {
       try {
@@ -84,13 +77,13 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
         val pluginConf = mergeConfig(pluginDescription)
 
         // Load main plugin class
-        val typed = Class.forName(pluginDescription.main.get, true, pluginClassLoader)
+        val typed = Class.forName(pluginDescription.main.get)
 
         // Plugin container
         val pluginData = PluginData(
           pluginDescription,
           pluginConf,
-          folderConfig.data
+          StreamyConfig.DataDirectory
         )
 
         // Start plugin
@@ -146,7 +139,7 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
   private def mergeConfig(description: PluginDescription): Config = {
     (if (conf.plugin.hasPath(description.name)) conf.plugin.getConfig(description.name) else PluginManager.EmptyPluginConfig).resolve()
       .withFallback {
-        val pluginConf = folderConfig.conf.resolve(s"${description.name}.conf")
+        val pluginConf = StreamyConfig.ConfigurationDirectory.resolve(s"${description.name}.conf")
         if (Files.exists(pluginConf) && Files.isRegularFile(pluginConf) && Files.isReadable(pluginConf)) {
           ConfigFactory.parseFile(pluginConf.toFile).resolve()
         } else {
@@ -166,7 +159,7 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
 
     // Attempt to load all plugins
     val pluginDescriptions = mutable.AnyRefMap.empty[String, PluginDescription]
-    Files.find(folderConfig.plugin, 1, jarMatcher).forEach { jar =>
+    Files.find(StreamyConfig.PluginDirectory, 1, jarMatcher).forEach { jar =>
       // Retrieve configuration details
       val conf = ConfigFactory.parseURL(new URL(s"jar:file:${jar.toAbsolutePath.toString}!/plugin.conf"))
 

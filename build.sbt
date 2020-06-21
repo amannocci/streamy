@@ -42,7 +42,9 @@ lazy val commonSettings = Seq(
   // Scala compiler options
   scalacOptions in(Compile, doc) ++= Seq(
     "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
-  )
+  ),
+
+  scriptClasspath := Seq("*", "../plugin/*")
 )
 
 lazy val bench = project
@@ -81,7 +83,9 @@ lazy val core = project
         |make_default
         |setup_container
         |make_template
-      """.stripMargin
+      """.stripMargin,
+    fork := true,
+    javaOptions += s"-Duser.dir=${baseDirectory.in(ThisBuild).value}/core/runtime",
   )
   .settings(Dependencies.core)
   .settings(Packages.settings)
