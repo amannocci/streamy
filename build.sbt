@@ -85,7 +85,7 @@ lazy val core = project
         |make_template
       """.stripMargin,
     fork := true,
-    javaOptions += s"-Duser.dir=${baseDirectory.in(ThisBuild).value}/core/runtime",
+    javaOptions in Test += s"-Duser.dir=${baseDirectory.in(ThisBuild).value}/core/runtime"
   )
   .settings(Dependencies.core)
   .settings(Packages.settings)
