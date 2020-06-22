@@ -42,13 +42,28 @@ object Dependencies {
   val TestContainersVersion = "1.14.2"
 
   object Compile {
-    val akkaActor = "com.typesafe.akka" %% "akka-actor" % AkkaVersion // Apache 2 License
-    val akkaHttp = "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion // Apache 2 License
-    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion // Apache 2 License
-    val akkaStream = "com.typesafe.akka" %% "akka-stream" % AkkaVersion // Apache 2 License
-    val akkaStreamKafka = "com.typesafe.akka" %% "akka-stream-kafka" % AkkaStreamKafkaVersion // Apache 2 License
-    val akkaStreamTestkit = "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion // Apache 2 License
-    val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % AkkaVersion // Apache 2 License
+    val akkaActor = ("com.typesafe.akka" %% "akka-actor" % AkkaVersion).excludeAll(
+      ExclusionRule("com.typesafe", "config")
+    ) // Apache 2 License
+    val akkaHttp = ("com.typesafe.akka" %% "akka-http" % AkkaHttpVersion).excludeAll(
+      ExclusionRule("com.typesafe", "config")
+    ) // Apache 2 License
+    val akkaSlf4j = ("com.typesafe.akka" %% "akka-slf4j" % AkkaVersion).excludeAll(
+      ExclusionRule("com.typesafe", "config")
+    ) // Apache 2 License
+    val akkaStream = ("com.typesafe.akka" %% "akka-stream" % AkkaVersion).excludeAll(
+      ExclusionRule("com.typesafe", "config")
+    ) // Apache 2 License
+    val akkaStreamKafka = ("com.typesafe.akka" %% "akka-stream-kafka" % AkkaStreamKafkaVersion).excludeAll(
+      ExclusionRule("com.typesafe.akka", "akka-stream_2.13"),
+      ExclusionRule("org.slf4j", "slf4j-api")
+    ) // Apache 2 License
+    val akkaStreamTestkit = ("com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion).excludeAll(
+      ExclusionRule("com.typesafe", "config")
+    ) // Apache 2 License
+    val akkaTestkit = ("com.typesafe.akka" %% "akka-testkit" % AkkaVersion).excludeAll(
+      ExclusionRule("com.typesafe", "config")
+    ) // Apache 2 License
     val googleGuava = "com.google.guava" % "guava" % GuavaVersion // Apache 2 License
     val logbackClassic = "ch.qos.logback" % "logback-classic" % LogbackClassicVersion // EPL/LGPL License
     val mockitoCore = "org.mockito" % "mockito-core" % MockitoCoreVersion
