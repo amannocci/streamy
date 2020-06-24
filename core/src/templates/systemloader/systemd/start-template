@@ -11,13 +11,11 @@ ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=${{retryTimeout}}
 SuccessExitStatus=${{SuccessExitStatus}}
-TimeoutStopSec=${{TimeoutStopSec}}
+TimeoutStopSec=20
 User=${{daemon_user}}
 ExecStartPre=/bin/mkdir -p /run/${{app_name}}
 ExecStartPre=/bin/chown ${{daemon_user}}:${{daemon_group}} /run/${{app_name}}
 ExecStartPre=/bin/chmod 755 /run/${{app_name}}
-StandardOutput=${{chdir}}/log/${{app_name}}.log
-StandardError=inherit
 PermissionsStartOnly=true
 LimitNOFILE=${{file_descriptor_limit}}
 

@@ -89,12 +89,11 @@ lazy val core = project
 
     maintainer := "Adrien Mannocci <adrien.mannocci@gmail.com>",
     packageSummary := "High Performance events processing",
-    packageDescription := "Transport and process your logs, events, or other data",
-    killTimeout := 20
+    packageDescription := "Transport and process your logs, events, or other data"
   )
   .settings(Dependencies.core)
   .settings(Publish.settings)
-  .enablePlugins(JavaServerAppPackaging, SystemdPlugin)
+  .enablePlugins(JavaServerAppPackaging, SystemdPlugin, SystemloaderPlugin)
   .disablePlugins(AssemblyPlugin)
 
 lazy val `plugin-date` = project
