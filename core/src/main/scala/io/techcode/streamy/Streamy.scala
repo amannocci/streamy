@@ -24,6 +24,7 @@
 package io.techcode.streamy
 
 import akka.actor.{ActorSystem, Props}
+import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.config.StreamyConfig
 import io.techcode.streamy.plugin.PluginManager
 import io.techcode.streamy.util.monitor.Monitors
@@ -38,15 +39,18 @@ object Streamy extends App {
   // Name of application
   val ApplicationName = "streamy"
 
+  // Load configuration
+  val conf = ConfigFactory.load().resolve()
+
   // Actor system
-  implicit val system: ActorSystem = ActorSystem(ApplicationName)
+  implicit val system: ActorSystem = ActorSystem(ApplicationName, conf)
 
   // Materializer system
   system.log.info("Initializing actor system")
 
   // Get streamy configuration
   system.log.info("Loading configuration with fallback")
-  val appConf = ConfigSource.fromConfig(system.settings.config.resolve())
+  val appConf = ConfigSource.fromConfig(conf)
     .at("streamy").loadOrThrow[StreamyConfig]
 
   // Register all monitor

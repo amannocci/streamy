@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,8 @@
  */
 package io.techcode.streamy
 
+import java.time.Duration
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestKit, TestKitBase}
@@ -37,6 +39,17 @@ class StreamySpec extends WordSpecLike with Matchers {
   "Streamy" should {
     "start even if there is no plugin" in {
       Streamy.main(Array("--dry-run"))
+    }
+
+    "use correctly configuration" in {
+      val conf = ConfigFactory.load().resolve()
+      conf.getStringList("akka.loggers").get(0) should equal("akka.event.slf4j.Slf4jLogger")
+      conf.getString("akka.logging-filter") should equal("akka.event.slf4j.Slf4jLoggingFilter")
+      conf.getDuration("akka.logger-startup-timeout") should equal(Duration.ofSeconds(30))
+      conf.getInt("akka.actor.default-dispatcher.fork-join-executor.parallelism-min") should equal(2)
+      conf.getInt("akka.actor.default-dispatcher.fork-join-executor.parallelism-max") should equal(2)
+      conf.getInt("akka.stream.materializer.max-input-buffer-size") should equal(16)
+      conf.getConfig("streamy.plugin").isEmpty should equal(true)
     }
   }
 
