@@ -25,7 +25,7 @@ package io.techcode.streamy
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
-import io.techcode.streamy.config.StreamyConfig
+import io.techcode.streamy.config.{ConfigClassLoader, StreamyConfig}
 import io.techcode.streamy.plugin.PluginManager
 import io.techcode.streamy.util.monitor.Monitors
 import pureconfig._
@@ -40,7 +40,7 @@ object Streamy extends App {
   val ApplicationName = "streamy"
 
   // Load configuration
-  val conf = ConfigFactory.load().resolve()
+  val conf = ConfigFactory.load(new ConfigClassLoader(Thread.currentThread().getContextClassLoader)).resolve()
 
   // Actor system
   implicit val system: ActorSystem = ActorSystem(ApplicationName, conf)
