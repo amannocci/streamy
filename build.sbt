@@ -85,10 +85,14 @@ lazy val core = project
         |make_template
       """.stripMargin,
     fork := true,
-    javaOptions in Test += s"-Duser.dir=${baseDirectory.in(ThisBuild).value}/core/runtime"
+    javaOptions in Test += s"-Duser.dir=${baseDirectory.in(ThisBuild).value}/core/runtime",
+
+    maintainer := "Adrien Mannocci <adrien.mannocci@gmail.com>",
+    packageSummary := "High Performance events processing",
+    packageDescription := "Transport and process your logs, events, or other data",
+    killTimeout := 20
   )
   .settings(Dependencies.core)
-  .settings(Packages.settings)
   .settings(Publish.settings)
   .enablePlugins(JavaServerAppPackaging, SystemdPlugin)
   .disablePlugins(AssemblyPlugin)

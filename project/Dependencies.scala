@@ -34,7 +34,6 @@ object Dependencies {
   val ElasticClientVersion = "7.3.0"
   val GuavaVersion = "29.0-jre"
   val LogbackClassicVersion = "1.2.3"
-  val MetricJvmVersion = "4.0.5"
   val MockitoCoreVersion = "2.23.4"
   val PureConfig = "0.12.3"
   val ScalaTest = "3.0.8"
