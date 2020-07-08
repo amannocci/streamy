@@ -43,7 +43,7 @@ import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
   * Elasticsearch flow companion.
@@ -458,17 +458,21 @@ object ElasticsearchFlow {
           }
 
           // Send request
-          Http().singleRequest(request).map {
-            case HttpResponse(StatusCodes.OK, _, entity, _) =>
-              entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
-                successHandler.invoke(Json.parseByteStringUnsafe(x))
-              }
-            case resp@HttpResponse(_, _, _, _) =>
-              try {
-                failureHandler.invoke(new StreamException(StreamEvent.Empty, resp.httpMessage.toString))
-              } finally {
-                resp.discardEntityBytes()(materializer)
-              }
+          Http().singleRequest(request).onComplete {
+            case Success(response) => response match {
+              case HttpResponse(StatusCodes.OK, _, entity, _) =>
+                entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).foreach { x =>
+                  successHandler.invoke(Json.parseByteStringUnsafe(x))
+                }
+              case HttpResponse(_, _, _, _) =>
+                try {
+                  failureHandler.invoke(new StreamException(StreamEvent.Empty, response.httpMessage.toString))
+                } finally {
+                  response.discardEntityBytes()(materializer)
+                }
+            }
+            case Failure(exception) =>
+              failureHandler.invoke(new StreamException(StreamEvent.Empty, exception))
           }
         }
       }

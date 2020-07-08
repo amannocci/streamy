@@ -23,9 +23,10 @@
  */
 package io.techcode.streamy.elasticsearch.component
 
-import akka.{Done, NotUsed}
+import akka.Done
 import akka.stream.scaladsl.Source
 import io.techcode.streamy.elasticsearch.component.ElasticsearchFlow.HostConfig
+import io.techcode.streamy.elasticsearch.event.ElasticsearchEvent
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
@@ -93,6 +94,24 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
       whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
         x should equal(Done)
       }
+    }
+
+    "try to send data to unresponsive elasticsearch" in {
+      system.eventStream.subscribe(testActor, classOf[ElasticsearchEvent.Failure])
+
+      Source.fromIterator[StreamEvent](() => Seq(StreamEvent(Json.obj("foo" -> "bar")), StreamEvent(Json.obj("foo" -> "bar"))).iterator)
+        .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
+          Seq(HostConfig(
+            scheme = "http",
+            host = elasticHost,
+            port = elasticPort + 1
+          )),
+          randomIndex(),
+          "index",
+          bulk = 1
+        )))
+
+      expectMsgClass(classOf[ElasticsearchEvent.Failure])
     }
   }
 
