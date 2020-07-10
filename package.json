@@ -14,7 +14,7 @@
     "url": "git+https://github.com/amannocci/streamy.git"
   },
   "author": "Mannocci Adrien",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/amannocci/streamy/issues"
   },

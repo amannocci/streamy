@@ -16,7 +16,7 @@ The base type in Streamy is MaybeJson, and has several subtypes representing dif
     - JsString : A Json String.
     - JsBoolean: A Json Boolean.
     - JsNull: A Json Null.
-    - JsBytes : A Json Bytes. 
+    - JsBytes : A Json Bytes.
     - JsNumber : A Json number, represented has several subtypes.
         - JsInt : A Json Int.
         - JsLong : A Json Long.
@@ -24,9 +24,9 @@ The base type in Streamy is MaybeJson, and has several subtypes representing dif
         - JsDouble: A Json Double.
         - JsBigDecimal: A Json Big Decimal.
 
-### Basic reading and writing
+### Reading and writing json
 
-The io.techcode.streamy.util.json._  package has several methods for reading and writing.
+The `io.techcode.streamy.util.json._`  package has several methods for reading and writing json.
 
 #### Reading from ByteString
 
@@ -124,6 +124,12 @@ val result: Either[Throwable, String] = Json.printString(Json.obj(
   "foo" -> "bar"
 ))
 ```
+
+### Manipulating Json AST
+
+#### Evaluatea
+
+#### Patch
 
 ## Parser
 

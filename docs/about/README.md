@@ -2,10 +2,14 @@
 
 ## Principles
 
-* `High performance`: 
-* `Reliability`: Built on top of [Akka](https://akka.io), Streamy's primary design goal is reliability and simplicity.
+* `Unified`: Streamy provide a way to decouple source and sink.
+* `High performance`: Streamy can handle a large amount of events by seconds.
+* `Reliability`: Streamy's primary design goal is reliability and simplicity.
+* `Reactive`: Streamy is based on asynchronous non-blocking stream processing with backpressure.
 
 ## Who should use Streamy ?
 
 * You SHOULD use Streamy to replace Logstash, FluentD, Hindsight, Heka, or similar tools.
-* You SHOULD NOT use Streamy to replace Kafka. Streamy is designed to work with Kafka!
+* You SHOULD use Streamy as an Agent or an ETL.
+* You SHOULD NOT use Streamy to replace Kafka. Streamy is designed to work with Kafka !
+* You SHOULD NOT use Streamy as an heavy distributed system.
