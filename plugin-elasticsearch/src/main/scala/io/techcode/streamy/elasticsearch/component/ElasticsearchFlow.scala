@@ -362,7 +362,7 @@ object ElasticsearchFlow {
         * Process success elements.
         */
       def processSuccess(): Unit = {
-        system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
+        system.eventStream.publish(ElasticsearchEvent.Success(elapsed(), messages.size))
         emitDownstream()
       }
 
@@ -413,7 +413,7 @@ object ElasticsearchFlow {
         } else {
           emitDownstream()
         }
-        system.eventStream.publish(ElasticsearchEvent.Partial(elapsed()))
+        system.eventStream.publish(ElasticsearchEvent.Partial(elapsed(), inProcessMessages.size))
       }
 
       /**

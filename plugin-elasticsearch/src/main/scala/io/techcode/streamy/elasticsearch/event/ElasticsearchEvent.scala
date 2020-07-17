@@ -40,16 +40,18 @@ object ElasticsearchEvent {
   /**
     * This event is fire when elasticsearch response is a success.
     *
-    * @param responseTime time elapsed between request and response.
+    * @param responseTime      time elapsed between request and response.
+    * @param processedElements number of elements processed.
     */
-  case class Success(responseTime: Long) extends All
+  case class Success(responseTime: Long, processedElements: Int) extends All
 
   /**
     * This event is fire when elasticsearch response is a partial success.
     *
-    * @param responseTime time elapsed between request and response.
+    * @param responseTime      time elapsed between request and response.
+    * @param processedElements number of elements processed.
     */
-  case class Partial(responseTime: Long) extends All
+  case class Partial(responseTime: Long, processedElements: Int) extends All
 
   /**
     * This event is fire when elasticsearch response is a failure.
