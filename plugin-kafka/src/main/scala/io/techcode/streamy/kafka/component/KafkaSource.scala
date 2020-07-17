@@ -29,7 +29,7 @@ import akka.kafka._
 import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.kafka.scaladsl.{Committer, Consumer}
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Flow, Keep}
+import akka.stream.scaladsl.{Flow, Sink}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
 import io.techcode.streamy.event.{AttributeKey, StreamEvent}
@@ -52,7 +52,8 @@ object KafkaSource {
     groupId: String,
     autoOffsetReset: String = "latest",
     topics: TopicConfig,
-    binding: Binding = Binding()
+    binding: Binding = Binding(),
+    parallelism: Int = 1
   )
 
   // Generic topic configuration
@@ -118,12 +119,16 @@ object KafkaSource {
 
     // Run source
     Consumer
-      .committableSource(consumerSettings, config.topics.toSubscription)
-      .via(process)
-      .via(config.handler)
-      .map(_.attribute(CommittableOffsetKey).get) // Must exist in any case
-      .toMat(Committer.sink(committerSettings))(Keep.both)
-      .mapMaterializedValue(DrainingControl.apply[Done])
+      .committablePartitionedSource(consumerSettings, config.topics.toSubscription)
+      .mapAsyncUnordered(config.parallelism) {
+        case (topicPartition, source) =>
+          source
+            .via(process)
+            .via(config.handler)
+            .map(_.attribute(CommittableOffsetKey).get) // Must exist in any case
+            .runWith(Committer.sink(committerSettings))
+      }
+      .toMat(Sink.ignore)(DrainingControl.apply)
       .run()
   }
 
