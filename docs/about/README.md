@@ -13,3 +13,21 @@
 * You SHOULD use Streamy as an Agent or an ETL.
 * You SHOULD NOT use Streamy to replace Kafka. Streamy is designed to work with Kafka !
 * You SHOULD NOT use Streamy as an heavy distributed system.
+
+## How It Works
+
+A Streamy application is in fact an Akka based application. If you used Akka before, 
+you will notice the familiar development experience when you are writing or developing 
+custom plugins. 
+
+## Features
+
+
+
+## Why Not ...?
+
+### Logstash
+
+### FluendD
+
+### Rsyslog
