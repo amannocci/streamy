@@ -190,10 +190,10 @@ object ElasticsearchSource {
         // Retrieve hits
         val result = data.evaluate(ElasticPath.Hits)
         if (result.isDefined) {
-          system.eventStream.publish(ElasticsearchEvent.Success(elapsed()))
-
           // Check if we have at least one hit
           val it = result.get[JsArray].iterator.map[StreamEvent](StreamEvent(_))
+          system.eventStream.publish(ElasticsearchEvent.Success(elapsed(), it.size))
+
           if (it.hasNext) {
             scrollId = data.evaluate(ElasticPath.ScrollId)
             emitMultiple(out, it)
