@@ -33,6 +33,7 @@ import akka.stream.scaladsl.{Flow, Sink}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
 import io.techcode.streamy.event.{AttributeKey, StreamEvent}
+import io.techcode.streamy.kafka.event.KafkaEvent
 import io.techcode.streamy.util.json._
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
@@ -41,6 +42,9 @@ import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeser
   * Kafka source companion.
   */
 object KafkaSource {
+
+  // Defaults
+  val DefaultMaxPartition: Int = 1024
 
   // Commitable offset attribute key
   val CommittableOffsetKey: AttributeKey[CommittableOffset] = AttributeKey("kafka-commitable-offset")
@@ -53,7 +57,7 @@ object KafkaSource {
     autoOffsetReset: String = "latest",
     topics: TopicConfig,
     binding: Binding = Binding(),
-    parallelism: Int = 1
+    maxPartitions: Int = DefaultMaxPartition
   )
 
   // Generic topic configuration
@@ -120,12 +124,16 @@ object KafkaSource {
     // Run source
     Consumer
       .committablePartitionedSource(consumerSettings, config.topics.toSubscription)
-      .mapAsyncUnordered(config.parallelism) {
+      .mapAsyncUnordered(config.maxPartitions) {
         case (topicPartition, source) =>
+          system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = true))
           source
             .via(process)
             .via(config.handler)
             .map(_.attribute(CommittableOffsetKey).get) // Must exist in any case
+            .alsoTo(Sink.onComplete { _ =>
+              system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = false))
+            })
             .runWith(Committer.sink(committerSettings))
       }
       .toMat(Sink.ignore)(DrainingControl.apply)
