@@ -48,6 +48,7 @@ class OsMonitor(conf: StreamyConfig.OsMonitor) extends Actor with DiagnosticActo
       cpuPercent = OsMonitor.getSystemCpuPercent,
       cpuLoadAverage = OsMonitor.getSystemLoadAverage,
       memFree = OsMonitor.getFreePhysicalMemorySize,
+      memAvailable = OsMonitor.getAvailablePhysicalMemorySize,
       memTotal = OsMonitor.getTotalPhysicalMemorySize,
       swapFree = OsMonitor.getFreeSwapSpaceSize,
       swapTotal = OsMonitor.getTotalSwapSpaceSize
@@ -125,12 +126,32 @@ object OsMonitor {
   }
 
   /**
+    * Returns the amount of available physical memory in bytes.
+    */
+  def getAvailablePhysicalMemorySize: Long = {
+    if (SystemAccess.isWindows) {
+      0
+    } else {
+      try {
+        Files.readAllLines(Paths.get("/proc/meminfo"))
+          .stream().filter(s => s.startsWith("MemAvailable:"))
+          .findFirst()
+          .map[Array[String]](mem => mem.split("\\s+"))
+          .map[Long](split => split(1).toLong * 1024)
+          .orElse(-1L)
+      } catch {
+        case _: IOException => -1
+      }
+    }
+  }
+
+  /**
     * Returns the amount of free physical memory in bytes.
     */
   def getFreePhysicalMemorySize: Long = OsMonitor.GetFreePhysicalMemorySize
     .map[Long](_.invoke(SystemAccess.OsBean).asInstanceOf[Long])
     .filter(_ >= 0)
-    .getOrElse(0)
+    .getOrElse(-1)
 
   /**
     * Returns the total amount of physical memory in bytes.
@@ -138,7 +159,7 @@ object OsMonitor {
   def getTotalPhysicalMemorySize: Long = OsMonitor.GetTotalPhysicalMemorySize
     .map[Long](_.invoke(SystemAccess.OsBean).asInstanceOf[Long])
     .filter(_ >= 0)
-    .getOrElse(0)
+    .getOrElse(-1)
 
   /**
     * Returns the amount of free swap space in bytes.

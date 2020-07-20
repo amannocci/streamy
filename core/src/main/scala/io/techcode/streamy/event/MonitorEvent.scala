@@ -27,6 +27,7 @@ object MonitorEvent {
     cpuPercent: Short,
     cpuLoadAverage: Array[Double],
     memFree: Long,
+    memAvailable: Long,
     memTotal: Long,
     swapFree: Long,
     swapTotal: Long
