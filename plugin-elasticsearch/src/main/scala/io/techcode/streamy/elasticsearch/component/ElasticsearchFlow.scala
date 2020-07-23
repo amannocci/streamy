@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2018-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,6 @@ import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
-import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -52,7 +51,6 @@ object ElasticsearchFlow {
 
   // Default values
   val DefaultBulk: Int = 100
-  val DefaultWorker: Int = 1
   val DefaultRetry: RetryConfig = RetryConfig(
     minBackoff = 100 millis,
     maxBackoff = 5 second,
@@ -102,6 +100,7 @@ object ElasticsearchFlow {
     retry: RetryConfig = DefaultRetry,
     binding: Binding = Binding(),
     onError: () => ErrorBehaviour = () => DefaultErrorBehaviour,
+    flushTimeout: FiniteDuration = 10 seconds,
     bypassDocumentParsing: Boolean = false
   )
 
@@ -174,7 +173,7 @@ object ElasticsearchFlow {
     implicit system: ActorSystem,
     executionContext: ExecutionContext
   ): Flow[StreamEvent, StreamEvent, NotUsed] = Flow[StreamEvent]
-    .batch(config.bulk, immutable.Seq(_)) { case (seq, wm) => seq :+ wm }
+    .groupedWithin(config.bulk, config.flushTimeout)
     .via(Flow.fromGraph(new ElasticsearchFlowStage(config)))
 
   /**
