@@ -136,11 +136,12 @@ object ElasticsearchFlow {
     /**
       * Error behaviour definition.
       *
+      * @param status http error status.
       * @param event  current stream event to handle.
       * @param result result of the elasticsearch action.
       * @return error handling strategy.
       */
-    def onError(event: StreamEvent, result: Json): MaybeJson = JsUndefined
+    def onError(status: Int, event: StreamEvent, result: Json): MaybeJson = JsUndefined
 
   }
 
@@ -387,7 +388,7 @@ object ElasticsearchFlow {
             // We delegate to error behaviour in case of conflict or bad request or not found
             status match {
               case HttpStatus.Conflict | HttpStatus.BadRequest | HttpStatus.NotFound =>
-                val resultBehaviour = errorBehaviour.onError(document, result)
+                val resultBehaviour = errorBehaviour.onError(status, document, result)
                 if (resultBehaviour.isEmpty) {
                   system.eventStream.publish(ElasticsearchEvent.Drop(document, result))
                 } else {
