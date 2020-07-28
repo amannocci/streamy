@@ -413,20 +413,28 @@ private[json] case class JsArrayAccessor(idx: Int) extends JsAccessor {
   */
 object JsonPointerParser {
 
+  // Unescaped char range
   val Unescaped: CharMatcher = CharMatcher.inRange(0x00.toChar, 0x2E.toChar)
     .or(CharMatcher.inRange(0x30.toChar, 0x7D.toChar))
     .or(CharMatcher.inRange(0x7F.toChar, 0x10FFFF.toChar))
     .precomputed()
 
-  // Json pointer parser
-  private val parser = new JsonPointerParser()
+  // Thread safe string parser
+  private val stringParser = ThreadLocal.withInitial[StringParser[JsonPointer]](() => JsonPointerParser.parser())
+
+  /**
+    * Returns a parser able to parse a string representing a Json pointer input.
+    *
+    * @return json pointer parser.
+    */
+  def parser(): JsonPointerParser = new JsonPointerParser()
 
   /**
     * Parses a string representing a Json pointer input, and returns it as a [[JsonPointer]].
     *
     * @param input the string to parse.
     */
-  def parse(input: String): Either[Throwable, JsonPointer] = parser.parse(input)
+  def parse(input: String): Either[Throwable, JsonPointer] = stringParser.get().parse(input)
 
   /**
     * Parses unsafely a string representing a Json pointer input, and returns it as a [[JsonPointer]].
