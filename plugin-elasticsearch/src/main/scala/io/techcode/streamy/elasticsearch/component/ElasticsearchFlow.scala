@@ -99,7 +99,7 @@ object ElasticsearchFlow {
     bulk: Int = DefaultBulk,
     retry: RetryConfig = DefaultRetry,
     binding: Binding = Binding(),
-    onError: () => ErrorBehaviour = () => DefaultErrorBehaviour,
+    onError: () => ErrorHandler = () => DefaultErrorHandler,
     flushTimeout: FiniteDuration = 10 seconds,
     bypassDocumentParsing: Boolean = false
   )
@@ -131,10 +131,10 @@ object ElasticsearchFlow {
   }
 
   // Error handler
-  trait ErrorBehaviour {
+  trait ErrorHandler {
 
     /**
-      * Error behaviour definition.
+      * Error event definition.
       *
       * @param status http error status.
       * @param event  current stream event to handle.
@@ -146,7 +146,7 @@ object ElasticsearchFlow {
   }
 
   // Default error handler
-  case object DefaultErrorBehaviour extends ErrorBehaviour
+  case object DefaultErrorHandler extends ErrorHandler
 
   // Host configuration
   case class HostConfig(
@@ -290,7 +290,7 @@ object ElasticsearchFlow {
       private var retryNo: Int = 0
 
       // Error behaviour handling
-      val errorBehaviour: ErrorBehaviour = config.onError()
+      val errorBehaviour: ErrorHandler = config.onError()
 
       // State
       object State extends Enumeration {
