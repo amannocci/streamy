@@ -392,7 +392,9 @@ object ElasticsearchFlow {
                 if (resultBehaviour.isEmpty) {
                   system.eventStream.publish(ElasticsearchEvent.Drop(document, result))
                 } else {
-                  partialDocuments += document.mutate(resultBehaviour.get[Json])
+                  partialDocuments += document.mutate(document.payload
+                    .patch(Replace(binding.document, resultBehaviour.get[Json])).get[Json]
+                  )
                 }
               case HttpStatus.TooManyRequest =>
                 backPressure = true
