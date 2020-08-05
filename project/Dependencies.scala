@@ -28,10 +28,9 @@ import sbt._
 object Dependencies {
 
   val AkkaHttpVersion = "10.1.12"
-  val AkkaKafkaVersion = "2.0.3"
-  val AkkaStreamKafkaVersion = "2.0.3"
+  val AkkaStreamKafkaVersion = "2.0.4"
   val AkkaVersion = "2.5.31"
-  val ElasticClientVersion = "7.3.0"
+  val ElasticClientVersion = "7.8.0"
   val GuavaVersion = "29.0-jre"
   val LogbackClassicVersion = "1.2.3"
   val MockitoCoreVersion = "2.23.4"
@@ -71,7 +70,7 @@ object Dependencies {
   }
 
   object Test {
-    val akkaStreamKafkaTestkit = "com.typesafe.akka" %% "akka-stream-kafka-testkit" % AkkaKafkaVersion % "test"
+    val akkaStreamKafkaTestkit = "com.typesafe.akka" %% "akka-stream-kafka-testkit" % AkkaStreamKafkaVersion % "test"
     val akkaStreamTestkit = "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion % "test" // Apache 2 License
     val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test" // Apache 2 License
     val elasticClient = "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % ElasticClientVersion % "test"
