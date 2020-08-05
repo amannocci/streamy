@@ -34,6 +34,7 @@ import akka.stream._
 import akka.stream.scaladsl.Flow
 import akka.stream.stage._
 import akka.util.ByteString
+import com.google.common.base.Throwables
 import io.techcode.streamy.elasticsearch.event._
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
@@ -325,7 +326,7 @@ object ElasticsearchFlow {
         *
         * @param ex exception message.
         */
-      @inline def handleFailure(ex: Throwable): Unit = processFailure(ex.getMessage)
+      @inline def handleFailure(ex: Throwable): Unit = processFailure(Throwables.getStackTraceAsString(ex))
 
       /**
         * Returns true if there is no messages to process.
