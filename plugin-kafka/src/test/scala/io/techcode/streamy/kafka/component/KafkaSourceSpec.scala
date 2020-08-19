@@ -23,10 +23,12 @@
  */
 package io.techcode.streamy.kafka.component
 
-import akka.kafka.ConsumerMessage.CommittableOffset
+import akka.Done
 import akka.stream.scaladsl.Flow
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.kafka.util.KafkaSpec
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /**
   * Kafka source spec.
@@ -39,12 +41,15 @@ class KafkaSourceSpec extends KafkaSpec {
       val groupId = createGroupId()
 
       awaitProduce(produceString(topic, Seq("foobar")))
-      KafkaSource.atLeastOnce(KafkaSource.Config(
+      val control = KafkaSource.atLeastOnce(KafkaSource.Config(
         handler = Flow[StreamEvent],
         bootstrapServers = bootstrapServers,
         groupId = groupId,
         topics = KafkaSource.StaticTopicConfig(Set(topic))
       ))
+      whenReady(control.drainAndShutdown(), timeout(60 seconds), interval(100 millis)) { x =>
+        x should equal(Done)
+      }
     }
   }
 

@@ -101,12 +101,6 @@ private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStr
     true
   }
 
-  @inline private def parseUntilDelimiter(field: Option[String]): Boolean =
-    capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
-      field.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-      true
-    }
-
   override def cleanup(): Unit = {
     super.cleanup()
     builder = Json.objectBuilder()
