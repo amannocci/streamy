@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -143,16 +143,15 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def priVal(): Boolean = times(1, 3, CharMatchers.Digit)
 
   private def capturePrival(rule: => Boolean): Boolean = {
-    mark()
-    if (rule && (binding.facility.isDefined || binding.severity.isDefined)) {
-      val prival = Ints.tryParse(slice().decodeString(StandardCharsets.US_ASCII))
+    capture(rule) { value =>
+      if (binding.facility.isDefined || binding.severity.isDefined) {
+        val prival = Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII))
 
-      // Read severity or facility
-      binding.facility.foreach(bind => builder += bind -> (prival >> 3))
-      binding.severity.foreach(bind => builder += bind -> (prival & 7))
+        // Read severity or facility
+        binding.facility.foreach(bind => builder += bind -> (prival >> 3))
+        binding.severity.foreach(bind => builder += bind -> (prival & 7))
+      }
       true
-    } else {
-      false
     }
   }
 
@@ -316,16 +315,15 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
   def priVal(): Boolean = times(1, 3, CharMatchers.Digit)
 
   private def capturePrival(rule: => Boolean): Boolean = {
-    mark()
-    if (rule && (binding.facility.isDefined || binding.severity.isDefined)) {
-      val prival = Ints.tryParse(slice().decodeString(StandardCharsets.US_ASCII))
+    capture(rule) { value =>
+      if (binding.facility.isDefined || binding.severity.isDefined) {
+        val prival = Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII))
 
-      // Read severity or facility
-      binding.facility.foreach(bind => builder += bind -> (prival >> 3))
-      binding.severity.foreach(bind => builder += bind -> (prival & 7))
+        // Read severity or facility
+        binding.facility.foreach(bind => builder += bind -> (prival >> 3))
+        binding.severity.foreach(bind => builder += bind -> (prival & 7))
+      }
       true
-    } else {
-      false
     }
   }
 
