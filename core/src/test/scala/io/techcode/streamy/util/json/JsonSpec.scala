@@ -575,11 +575,6 @@ class JsonSpec extends WordSpecLike with Matchers {
         case JsFloat(x) => x should equal(2.0F)
         case x: JsFloat => x.value should equal(2.0F)
       }
-      Json.obj() match {
-        case JsFloat(x) => ()
-        case x: JsFloat => ()
-        case _ => ()
-      }
     }
 
     "be equal to float" in {
@@ -670,11 +665,6 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsDouble.fromStringUnsafe("2.0") match {
         case JsDouble(x) => x should equal(2.0D)
         case x: JsDouble => x.value should equal(2.0D)
-      }
-      Json.obj() match {
-        case JsDouble(x) => ()
-        case x: JsDouble => ()
-        case _ => ()
       }
     }
 
@@ -776,11 +766,6 @@ class JsonSpec extends WordSpecLike with Matchers {
         case JsInt(x) => x should equal(1)
         case x: JsInt => x.value should equal(1)
       }
-      Json.obj() match {
-        case JsInt(x) => ()
-        case x: JsInt => ()
-        case _ => ()
-      }
     }
 
     "be equal to int" in {
@@ -881,11 +866,6 @@ class JsonSpec extends WordSpecLike with Matchers {
         case JsLong(x) => x should equal(1L)
         case x: JsLong => x.value should equal(1L)
       }
-      Json.obj() match {
-        case JsLong(x) => ()
-        case x: JsLong => ()
-        case _ => ()
-      }
     }
 
     "be equal to long" in {
@@ -966,11 +946,6 @@ class JsonSpec extends WordSpecLike with Matchers {
         case JsBigDecimal(x) => x should equal(BigDecimal("2e128"))
         case x: JsBigDecimal => x.value should equal(BigDecimal("2e128"))
       }
-      Json.obj() match {
-        case JsBigDecimal(x) => ()
-        case x: JsBigDecimal => ()
-        case _ => ()
-      }
     }
 
     "be equal to big decimal" in {
@@ -1009,11 +984,6 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsString.fromByteStringUnsafe(ByteString("test")) match {
         case JsString(x) => x should equal("test")
         case x: JsString => x.value should equal("test")
-      }
-      Json.obj() match {
-        case JsString(x) => ()
-        case x: JsString => ()
-        case _ => ()
       }
     }
 
@@ -1057,11 +1027,6 @@ class JsonSpec extends WordSpecLike with Matchers {
         case JsBytes(x) => x should equal(ByteString("test"))
         case x: JsBytes => x.value should equal(ByteString("test"))
       }
-      Json.obj() match {
-        case JsBytes(x) => ()
-        case x: JsBytes => ()
-        case _ => ()
-      }
     }
 
     "be equal to bytes" in {
@@ -1084,6 +1049,11 @@ class JsonSpec extends WordSpecLike with Matchers {
     "return correct the size" in {
       JsBytes(ByteString("test")).size() should equal(4)
       JsBytes.fromStringUnsafe("test").size() should equal(4)
+    }
+
+    "return correct the size hint" in {
+      JsBytes(ByteString("test")).sizeHint() should equal(10)
+      JsBytes.fromStringUnsafe("test").sizeHint() should equal(4)
     }
   }
 
