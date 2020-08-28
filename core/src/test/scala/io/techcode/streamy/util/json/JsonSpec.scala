@@ -75,6 +75,11 @@ class JsonSpec extends WordSpecLike with Matchers {
       Json.obj().eq(Json.obj()) should equal(true)
     }
 
+    "return if empty" in {
+      Json.obj().isEmpty should equal(true)
+      Json.obj("foo" -> "bar").isEmpty should equal(false)
+    }
+
     "be iterate using a foreach" in {
       var founded = false
       Json.obj("test" -> "test").foreach(el => founded |= el._2.equals(JsString.fromLiteral("test")))
@@ -83,6 +88,25 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return field set" in {
       Json.obj("test" -> "test").fieldSet should equal(Set("test" -> JsString.fromLiteral("test")))
+    }
+
+    "return if contains key" in {
+      val input = Json.obj("foo" -> "bar")
+      input.contains("foo") should equal(true)
+      input.contains("missing") should equal(false)
+    }
+
+    "return a filtered json object" in {
+      val input = Json.obj("foo" -> "bar")
+      input.filter(_ => false) should equal(Json.obj())
+      input should equal(Json.obj("foo" -> "bar"))
+      input.filterNot { case (_: String, _: Json) => false } should equal(Json.obj("foo" -> "bar"))
+      input should equal(Json.obj("foo" -> "bar"))
+    }
+
+    "return size of instance" in {
+      Json.obj().size() should equal(0)
+      Json.obj("foo" -> "bar").size() should equal(1)
     }
 
     "return values as iterable" in {
@@ -329,10 +353,10 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be filter" in {
-      Json.obj("test" -> "test").filter(v => v.isObject) should equal(Json.obj("test" -> "test"))
-      Json.obj("test" -> "test").filter(v => v.isArray) should equal(JsUndefined)
-      Json.obj("test" -> "test").filterNot(v => v.isObject) should equal(JsUndefined)
-      Json.obj("test" -> "test").filterNot(v => v.isArray) should equal(Json.obj("test" -> "test"))
+      Json.obj("test" -> "test").filter { case (_: String, v: Json) => v.isString } should equal(Json.obj("test" -> "test"))
+      Json.obj("test" -> "test").filter { case (_: String, v: Json) => v.isArray } should equal(Json.obj())
+      Json.obj("test" -> "test").filterNot { case (_: String, v: Json) => v.isString } should equal(Json.obj())
+      Json.obj("test" -> "test").filterNot { case (_: String, v: Json) => v.isArray } should equal(Json.obj("test" -> "test"))
     }
 
     "be execute function if exists" in {
@@ -424,7 +448,29 @@ class JsonSpec extends WordSpecLike with Matchers {
       input.prepend("test03") should equal(Json.arr("test03", "test01", "test02"))
     }
 
+    "be iterable using foreach" in {
+      Json.arr().foreach(_ => false)
+    }
+
+    "be filtrable" in {
+      val input = Json.arr("test", 1)
+      input.filter(el => el.isString) should equal(Json.arr("test"))
+      input should equal(Json.arr("test", 1))
+      input.filterNot(el => el.isString) should equal(Json.arr(1))
+      input should equal(Json.arr("test", 1))
+    }
+
+    "return correctly if a element is present" in {
+      Json.arr("test").contains("test") should equal(true)
+      Json.arr().contains("test") should equal(false)
+    }
+
     "return correct size" in {
+      Json.arr().size() should equal(0)
+      Json.arr("test").size() should equal(1)
+    }
+
+    "return correct size hint" in {
       Json.arr("test", 2, Json.obj("test" -> "test"), 4.0).sizeHint should equal(30) // ["test",2,{"test":"test"},4.0]
     }
   }

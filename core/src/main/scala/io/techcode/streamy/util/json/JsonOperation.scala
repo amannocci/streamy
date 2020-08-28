@@ -60,7 +60,7 @@ private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOp
     * @return json value modified or [[None]].
     */
   private[json] def apply(path: JsonPointer, idx: Int, current: MaybeJson): MaybeJson = {
-    if (current.isEmpty) {
+    if (!current.isDefined) {
       // We fail to evaluate path
       current
     } else if (idx == underlying.length - 1) {
