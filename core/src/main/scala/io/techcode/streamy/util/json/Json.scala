@@ -290,7 +290,7 @@ sealed trait MaybeJson {
   /**
     * Returns true if the option is an instance of JsDefined, false otherwise.
     */
-  def isDefined: Boolean = !isEmpty
+  def isDefined: Boolean
 
   /**
     * Returns the option's value.
@@ -301,26 +301,10 @@ sealed trait MaybeJson {
   def get[T](implicit c: JsTyped[T]): T
 
   /**
-    * Returns this JsDefined if it is nonempty '''and''' applying the predicate $p to
-    * this JsDefined value returns true. Otherwise, return JsUndefined.
-    *
-    * @param  p the predicate used for testing.
-    */
-  @inline def filter(p: Json => Boolean): MaybeJson
-
-  /**
-    * Returns this JsDefined if it is nonempty '''and''' applying the predicate $p to
-    * this JsDefined value returns false. Otherwise, return JsUndefined.
-    *
-    * @param  p the predicate used for testing.
-    */
-  @inline def filterNot(p: Json => Boolean): MaybeJson
-
-  /**
     * Apply the given procedure $f to the option's value,
     * if it is nonempty. Otherwise, do nothing.
     *
-    * @param  f the procedure to apply.
+    * @param f the procedure to apply.
     * @see map
     */
   @inline def ifExists[T](f: T => Unit)(implicit c: JsTyped[T]): Unit
@@ -330,8 +314,8 @@ sealed trait MaybeJson {
     * value if the $option is nonempty.  Otherwise, evaluates
     * expression `ifEmpty`.
     *
-    * @param  ifEmpty the expression to evaluate if empty.
-    * @param  f       the function to apply if nonempty.
+    * @param ifEmpty the expression to evaluate if empty.
+    * @param f       the function to apply if nonempty.
     */
   @inline def fold(ifEmpty: => Json)(f: Json => Json): Json
 
@@ -350,7 +334,7 @@ sealed trait MaybeJson {
     *
     * @note This is similar to `flatMap` except here,
     *       $f does not need to wrap its result in an $option.
-    * @param  f the function to apply
+    * @param f the function to apply
     */
   @inline def map[T](f: T => Json)(implicit c: JsTyped[T]): MaybeJson
 
@@ -361,7 +345,7 @@ sealed trait MaybeJson {
     * Slightly different from `map` in that $f is expected to
     * return an $option (which could be $none).
     *
-    * @param  f the function to apply
+    * @param f the function to apply
     * @see map
     * @see foreach
     */
@@ -372,7 +356,7 @@ sealed trait MaybeJson {
     * $p returns true when applied to this $option's value.
     * Otherwise, returns false.
     *
-    * @param  p the predicate to test
+    * @param p the predicate to test
     */
   @inline def exists(p: Json => Boolean): Boolean
 
@@ -476,9 +460,7 @@ sealed abstract class JsDefined extends MaybeJson {
 
   def isEmpty: Boolean = false
 
-  def filter(p: Json => Boolean): MaybeJson = if (p(this.get[Json])) this else JsUndefined
-
-  def filterNot(p: Json => Boolean): MaybeJson = if (!p(this.get[Json])) this else JsUndefined
+  def isDefined: Boolean = true
 
   def ifExists[T](f: T => Unit)(implicit c: JsTyped[T]): Unit = c.ifExists(this, f)
 
@@ -497,11 +479,36 @@ sealed abstract class JsDefined extends MaybeJson {
 }
 
 /**
-  * Represents an defined json.
+  * Represents a json filtrable.
+  */
+sealed trait JsFiltrable extends JsDefined {
+
+  /**
+    * Returns this JsDefined if it is nonempty '''and''' applying the predicate $p to
+    * this JsDefined value returns true. Otherwise, return JsUndefined.
+    *
+    * @param p the predicate used for testing.
+    */
+  def filter(p: Json => Boolean): MaybeJson = if (p(this.get[Json])) this else JsUndefined
+
+  /**
+    * Returns this JsDefined if it is nonempty '''and''' applying the predicate $p to
+    * this JsDefined value returns false. Otherwise, return JsUndefined.
+    *
+    * @param p the predicate used for testing.
+    */
+  def filterNot(p: Json => Boolean): MaybeJson = if (!p(this.get[Json])) this else JsUndefined
+
+}
+
+/**
+  * Represents an undefined json.
   */
 object JsUndefined extends MaybeJson {
 
   override def isEmpty: Boolean = true
+
+  override def isDefined: Boolean = false
 
   override def get[T](implicit c: JsTyped[T]): T = throw new NoSuchElementException("JsUndefined.get")
 
@@ -589,7 +596,7 @@ sealed trait Json extends JsDefined {
 /**
   * Represent a json null value.
   */
-case object JsNull extends Json {
+case object JsNull extends Json with JsFiltrable {
 
   override val isNull: Boolean = true
 
@@ -604,7 +611,7 @@ case object JsNull extends Json {
   *
   * @param value underlying value.
   */
-sealed abstract class JsBoolean(value: Boolean) extends Json {
+sealed abstract class JsBoolean(value: Boolean) extends Json with JsFiltrable {
 
   override val isBoolean: Boolean = true
 
@@ -633,7 +640,7 @@ case object JsFalse extends JsBoolean(false) {
 /**
   * Represents a Json number value.
   */
-sealed trait JsNumber extends Json {
+sealed trait JsNumber extends Json with JsFiltrable {
 
   override val isNumber: Boolean = true
 
@@ -725,7 +732,6 @@ object JsInt {
     case x: JsIntLiteral => Some(x.value)
     case x: JsIntBytesRepr => Some(x.value)
     case x: JsIntStrRepr => Some(x.value)
-    case _ => None
   }
 
 }
@@ -856,7 +862,6 @@ object JsLong {
     case x: JsLongLiteral => Some(x.value)
     case x: JsLongBytesRepr => Some(x.value)
     case x: JsLongStrRepr => Some(x.value)
-    case _ => None
   }
 
 }
@@ -909,7 +914,7 @@ private[json] case class JsLongBytesRepr(repr: ByteString) extends JsLong {
 
   lazy val value: Long = Longs.tryParse(repr.decodeString(StandardCharsets.US_ASCII))
 
-  override lazy val sizeHint: Int = repr.size
+  override def sizeHint(): Int = repr.size
 
 }
 
@@ -922,7 +927,7 @@ private case class JsLongStrRepr(repr: String) extends JsLong {
 
   lazy val value: Long = Longs.tryParse(repr)
 
-  override lazy val sizeHint: Int = repr.length
+  override def sizeHint(): Int = repr.length
 
 }
 
@@ -987,7 +992,6 @@ object JsFloat {
     case x: JsFloatLiteral => Some(x.value)
     case x: JsFloatBytesRepr => Some(x.value)
     case x: JsFloatStrRepr => Some(x.value)
-    case _ => None
   }
 
 }
@@ -1040,7 +1044,7 @@ private case class JsFloatBytesRepr(repr: ByteString) extends JsFloat {
 
   lazy val value: Float = Floats.tryParse(repr.decodeString(StandardCharsets.US_ASCII))
 
-  override lazy val sizeHint: Int = repr.size
+  override def sizeHint(): Int = repr.size
 
 }
 
@@ -1053,7 +1057,7 @@ private case class JsFloatStrRepr(repr: String) extends JsFloat {
 
   lazy val value: Float = Floats.tryParse(repr)
 
-  override lazy val sizeHint: Int = repr.length
+  override def sizeHint(): Int = repr.length
 
 }
 
@@ -1118,7 +1122,6 @@ object JsDouble {
     case x: JsDoubleLiteral => Some(x.value)
     case x: JsDoubleBytesRepr => Some(x.value)
     case x: JsDoubleStrRepr => Some(x.value)
-    case _ => None
   }
 
 }
@@ -1172,7 +1175,7 @@ private case class JsDoubleBytesRepr(repr: ByteString) extends JsDouble {
 
   lazy val value: Double = Doubles.tryParse(repr.decodeString(StandardCharsets.US_ASCII))
 
-  override lazy val sizeHint: Int = repr.size
+  override def sizeHint(): Int = repr.size
 
 }
 
@@ -1185,7 +1188,7 @@ private case class JsDoubleStrRepr(repr: String) extends JsDouble {
 
   lazy val value: Double = Doubles.tryParse(repr)
 
-  override lazy val sizeHint: Int = repr.length
+  override def sizeHint(): Int = repr.length
 
 }
 
@@ -1250,7 +1253,6 @@ object JsBigDecimal {
     case x: JsBigDecimalLiteral => Some(x.value)
     case x: JsBigDecimalBytesRepr => Some(x.value)
     case x: JsBigDecimalStrRepr => Some(x.value)
-    case _ => None
   }
 
 }
@@ -1298,7 +1300,7 @@ private case class JsBigDecimalBytesRepr(repr: ByteString) extends JsBigDecimal 
 
   lazy val value: BigDecimal = BigDecimal(repr.decodeString(StandardCharsets.US_ASCII))
 
-  override lazy val sizeHint: Int = repr.size
+  override def sizeHint(): Int = repr.size
 
 }
 
@@ -1311,7 +1313,7 @@ private case class JsBigDecimalStrRepr(repr: String) extends JsBigDecimal {
 
   lazy val value: BigDecimal = BigDecimal(repr)
 
-  override lazy val sizeHint: Int = repr.length
+  override def sizeHint(): Int = repr.length
 
 }
 
@@ -1360,7 +1362,6 @@ object JsString {
   def unapply(value: JsString): Option[String] = value match {
     case x: JsStringLiteral => Some(x.value)
     case x: JsStringBytesRepr => Some(x.value)
-    case _ => None
   }
 
 }
@@ -1368,9 +1369,16 @@ object JsString {
 /**
   * Represent a json string value.
   */
-sealed trait JsString extends Json {
+sealed trait JsString extends Json with JsFiltrable {
 
   def value: String
+
+  /**
+    * The length of this json string.
+    *
+    * @return length of this json string.
+    */
+  def length(): Int
 
   override val isString: Boolean = true
 
@@ -1390,7 +1398,9 @@ sealed trait JsString extends Json {
   */
 private case class JsStringLiteral(value: String) extends JsString {
 
-  override val sizeHint: Int = value.length + 2
+  override def length(): Int = value.length
+
+  override def sizeHint(): Int = length + 2
 
 }
 
@@ -1403,7 +1413,9 @@ private case class JsStringBytesRepr(repr: ByteString) extends JsString {
 
   lazy val value: String = repr.utf8String
 
-  override lazy val sizeHint: Int = repr.size + 2
+  override def length(): Int = repr.size
+
+  override def sizeHint(): Int = length + 2
 
 }
 
@@ -1419,7 +1431,6 @@ object JsBytes {
     * @return json byte string value.
     */
   def fromLiteral(value: ByteString): JsBytes = JsBytesLiteral(value)
-
 
   /**
     * Unsafe API: Use only in situations you are completely confident that this is what
@@ -1453,7 +1464,6 @@ object JsBytes {
   def unapply(value: JsBytes): Option[ByteString] = value match {
     case x: JsBytesLiteral => Some(x.value)
     case x: JsBytesStrRepr => Some(x.value)
-    case _ => None
   }
 
 }
@@ -1461,9 +1471,16 @@ object JsBytes {
 /**
   * Represent a json bytes value.
   */
-sealed trait JsBytes extends Json {
+sealed trait JsBytes extends Json with JsFiltrable {
 
   def value: ByteString
+
+  /**
+    * The size of the json bytes.
+    *
+    * @return size of the json bytes.
+    */
+  def size(): Int
 
   override val isBytes: Boolean = true
 
@@ -1481,7 +1498,11 @@ sealed trait JsBytes extends Json {
   *
   * @param value literal value.
   */
-private case class JsBytesLiteral(value: ByteString) extends JsBytes
+private case class JsBytesLiteral(value: ByteString) extends JsBytes {
+
+  override def size(): Int = value.size
+
+}
 
 /**
   * Represent a json bytes value as a repr value.
@@ -1492,7 +1513,9 @@ private case class JsBytesStrRepr(repr: String) extends JsBytes {
 
   lazy val value: ByteString = ByteString(repr)
 
-  override lazy val sizeHint: Int = repr.length
+  override def size(): Int = repr.length
+
+  override def sizeHint(): Int = size()
 
 }
 
@@ -1505,45 +1528,44 @@ case class JsArray(
   private[json] val underlying: ArrayBuffer[Json]
 ) extends Json {
 
+  override def isEmpty: Boolean = underlying.isEmpty
+
   /**
     * Get element at a given index.
     *
     * @param idx index to use.
     * @return element at given index.
     */
-  def apply(idx: Int): MaybeJson = {
+  def apply(idx: Int): MaybeJson =
     if (idx >= 0 && idx < underlying.length) {
       underlying(idx)
     } else {
       JsUndefined
     }
-  }
 
   /**
     * Retrieve the head element of this json array.
     *
     * @return head element of this json array.
     */
-  def head(): MaybeJson = {
+  def head(): MaybeJson =
     if (underlying.nonEmpty) {
       underlying(0)
     } else {
       JsUndefined
     }
-  }
 
   /**
     * Retrieve the last element of this json array.
     *
     * @return last element of this json array.
     */
-  def last(): MaybeJson = {
+  def last(): MaybeJson =
     if (underlying.nonEmpty) {
       underlying(underlying.length - 1)
     } else {
       JsUndefined
     }
-  }
 
   /**
     * Append an other array with the elements of this array.
@@ -1605,6 +1627,51 @@ case class JsArray(
   def iterator: Iterator[Json] = underlying.view.iterator
 
   /**
+    * Test whether this json array contains an element.
+    *
+    * @param el the element to test.
+    * @return true if this json array has an element that is equal
+    *         to el, false otherwise.
+    */
+  def contains(el: Json): Boolean = underlying.contains(el)
+
+  /**
+    * Selects all elements of this json array which satisfy a predicate.
+    *
+    * @param pred predicate to use.
+    * @return a new json array consisting of all elements of this json
+    *         object that satisfy the given predicate pred.
+    */
+  def filter(pred: Json => Boolean): JsArray =
+    JsArray(underlying.filter(pred))
+
+  /**
+    * Selects all elements of this json array which do not satisfy a predicate.
+    *
+    * @param pred predicate to use.
+    * @return a new json array consisting of all elements of this json
+    *         array that do not satisfy the given predicate pred.
+    */
+  def filterNot(pred: Json => Boolean): JsArray =
+    JsArray(underlying.filterNot(pred))
+
+  /**
+    * Returns the size of the json array.
+    *
+    * @return size of the json array.
+    */
+  def size(): Int = underlying.size
+
+  /**
+    * Applies a function f to all elements of this json array.
+    *
+    * @param f the function that is applied.
+    */
+  def foreach(f: Json => Unit): Unit = for (el <- underlying) {
+    f(el)
+  }
+
+  /**
     * Returns a Seq containing all elements in this JsArray.
     *
     * @return a Seq containing all elements of this JsArray.
@@ -1628,12 +1695,50 @@ case class JsObject(
   private[json] val underlying: mutable.HashMap[String, Json]
 ) extends Json {
 
+  override def isEmpty: Boolean = underlying.isEmpty
+
   /**
     * Applies a function f to all elements of this json object.
     *
     * @param f the function that is applied.
     */
   def foreach(f: ((String, Json)) => Unit): Unit = underlying.foreach[Unit](f)
+
+  /**
+    * Test whether this json object contains a binding for a key.
+    *
+    * @param key the key to test.
+    * @return true if there is a binding for key in json object, false otherwise.
+    */
+  def contains(key: String): Boolean = underlying.contains(key)
+
+  /**
+    * Selects all elements of this json object which satisfy a predicate.
+    *
+    * @param pred predicate to use.
+    * @return a new json object consisting of all elements of this json
+    *         object that satisfy the given predicate pred.
+    */
+  def filter(pred: ((String, Json)) => Boolean): JsObject = {
+    JsObject(underlying.filter(pred))
+  }
+
+  /**
+    * Selects all elements of this json object which do not satisfy a predicate.
+    *
+    * @param pred predicate to use.
+    * @return a new json object consisting of all elements of this json
+    *         object that do not satisfy the given predicate pred.
+    */
+  def filterNot(pred: ((String, Json)) => Boolean): JsObject =
+    JsObject(underlying.filterNot(pred))
+
+  /**
+    * Returns the size of the json object.
+    *
+    * @return size of the json object.
+    */
+  def size(): Int = underlying.size
 
   /**
     * Return all fields as a seq.
@@ -1681,7 +1786,7 @@ case class JsObject(
     def merge(left: JsObject, right: JsObject): JsObject = {
       val result = left.underlying.clone()
 
-      right.underlying.foreach {
+      right.foreach {
         case (rightKey, rightValue) =>
           val maybeExistingValue = left.underlying.get(rightKey)
 
@@ -1706,7 +1811,7 @@ case class JsObject(
     * @return new json object.
     */
   def remove(key: String): JsObject =
-    if (underlying.contains(key)) {
+    if (contains(key)) {
       JsObject(underlying.clone() -= key)
     } else {
       this

@@ -21,6 +21,9 @@ function check() {
   log_action "Checking if needed commands are installs"
   command_is_present "java"
   command_is_present "sbt"
+  if [ "${1}" == "test" ]; then
+    command_is_present "bats"
+  fi
   if [ "${1}" == "package" ]; then
     command_is_present "dpkg-deb"
   fi

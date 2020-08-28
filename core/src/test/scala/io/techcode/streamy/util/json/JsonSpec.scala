@@ -75,6 +75,11 @@ class JsonSpec extends WordSpecLike with Matchers {
       Json.obj().eq(Json.obj()) should equal(true)
     }
 
+    "return if empty" in {
+      Json.obj().isEmpty should equal(true)
+      Json.obj("foo" -> "bar").isEmpty should equal(false)
+    }
+
     "be iterate using a foreach" in {
       var founded = false
       Json.obj("test" -> "test").foreach(el => founded |= el._2.equals(JsString.fromLiteral("test")))
@@ -83,6 +88,25 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "return field set" in {
       Json.obj("test" -> "test").fieldSet should equal(Set("test" -> JsString.fromLiteral("test")))
+    }
+
+    "return if contains key" in {
+      val input = Json.obj("foo" -> "bar")
+      input.contains("foo") should equal(true)
+      input.contains("missing") should equal(false)
+    }
+
+    "return a filtered json object" in {
+      val input = Json.obj("foo" -> "bar")
+      input.filter(_ => false) should equal(Json.obj())
+      input should equal(Json.obj("foo" -> "bar"))
+      input.filterNot { case (_: String, _: Json) => false } should equal(Json.obj("foo" -> "bar"))
+      input should equal(Json.obj("foo" -> "bar"))
+    }
+
+    "return size of instance" in {
+      Json.obj().size() should equal(0)
+      Json.obj("foo" -> "bar").size() should equal(1)
     }
 
     "return values as iterable" in {
@@ -329,10 +353,10 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "be filter" in {
-      Json.obj("test" -> "test").filter(v => v.isObject) should equal(Json.obj("test" -> "test"))
-      Json.obj("test" -> "test").filter(v => v.isArray) should equal(JsUndefined)
-      Json.obj("test" -> "test").filterNot(v => v.isObject) should equal(JsUndefined)
-      Json.obj("test" -> "test").filterNot(v => v.isArray) should equal(Json.obj("test" -> "test"))
+      Json.obj("test" -> "test").filter { case (_: String, v: Json) => v.isString } should equal(Json.obj("test" -> "test"))
+      Json.obj("test" -> "test").filter { case (_: String, v: Json) => v.isArray } should equal(Json.obj())
+      Json.obj("test" -> "test").filterNot { case (_: String, v: Json) => v.isString } should equal(Json.obj())
+      Json.obj("test" -> "test").filterNot { case (_: String, v: Json) => v.isArray } should equal(Json.obj("test" -> "test"))
     }
 
     "be execute function if exists" in {
@@ -384,6 +408,11 @@ class JsonSpec extends WordSpecLike with Matchers {
       Json.arr().eq(Json.arr()) should equal(true)
     }
 
+    "return correctly if empty" in {
+      Json.arr().isEmpty should equal(true)
+      Json.arr("test").isEmpty should equal(false)
+    }
+
     "return head of json array if present" in {
       val input = Json.arr("test", "foobar")
       input.head() should equal(JsString.fromLiteral("test"))
@@ -424,7 +453,29 @@ class JsonSpec extends WordSpecLike with Matchers {
       input.prepend("test03") should equal(Json.arr("test03", "test01", "test02"))
     }
 
+    "be iterable using foreach" in {
+      Json.arr("test").foreach(_ => false)
+    }
+
+    "be filtrable" in {
+      val input = Json.arr("test", 1)
+      input.filter(el => el.isString) should equal(Json.arr("test"))
+      input should equal(Json.arr("test", 1))
+      input.filterNot(el => el.isString) should equal(Json.arr(1))
+      input should equal(Json.arr("test", 1))
+    }
+
+    "return correctly if a element is present" in {
+      Json.arr("test").contains("test") should equal(true)
+      Json.arr().contains("test") should equal(false)
+    }
+
     "return correct size" in {
+      Json.arr().size() should equal(0)
+      Json.arr("test").size() should equal(1)
+    }
+
+    "return correct size hint" in {
       Json.arr("test", 2, Json.obj("test" -> "test"), 4.0).sizeHint should equal(30) // ["test",2,{"test":"test"},4.0]
     }
   }
@@ -656,14 +707,18 @@ class JsonSpec extends WordSpecLike with Matchers {
       // Positive cases
       var size = 1
       for (i <- 0 until String.valueOf(Int.MaxValue).length) {
-        JsInt.fromLiteral(1 * IntMath.pow(10, i)).sizeHint should equal(size)
+        JsInt(IntMath.pow(10, i)).sizeHint should equal(size)
+        JsInt.fromStringUnsafe(IntMath.pow(10, i).toString).sizeHint should equal(size)
+        JsInt.fromByteStringUnsafe(ByteString(IntMath.pow(10, i).toString)).sizeHint should equal(size)
         size += 1
       }
 
       // Negative cases
       size = 2
       for (i <- 0 until String.valueOf(Int.MaxValue).length) {
-        JsInt.fromLiteral(-1 * IntMath.pow(10, i)).sizeHint should equal(size)
+        JsInt(-1 * IntMath.pow(10, i)).sizeHint should equal(size)
+        JsInt.fromStringUnsafe((-1 * IntMath.pow(10, i)).toString).sizeHint should equal(size)
+        JsInt.fromByteStringUnsafe(ByteString((-1 * IntMath.pow(10, i)).toString)).sizeHint should equal(size)
         size += 1
       }
     }
@@ -752,7 +807,9 @@ class JsonSpec extends WordSpecLike with Matchers {
       // Positive cases
       var size = 1
       for (i <- 0 until String.valueOf(Long.MaxValue).length) {
-        JsLong.fromLiteral(1 * LongMath.pow(10, i)).sizeHint should equal(size)
+        JsLong.fromLiteral(LongMath.pow(10, i)).sizeHint should equal(size)
+        JsLong.fromStringUnsafe(LongMath.pow(10, i).toString).sizeHint should equal(size)
+        JsLong.fromByteStringUnsafe(ByteString(LongMath.pow(10, i).toString)).sizeHint should equal(size)
         size += 1
       }
 
@@ -760,6 +817,8 @@ class JsonSpec extends WordSpecLike with Matchers {
       size = 2
       for (i <- 0 until String.valueOf(Long.MaxValue).length) {
         JsLong.fromLiteral(-1 * LongMath.pow(10, i)).sizeHint should equal(size)
+        JsLong.fromStringUnsafe((-1 * LongMath.pow(10, i)).toString).sizeHint should equal(size)
+        JsLong.fromByteStringUnsafe(ByteString((-1 * LongMath.pow(10, i)).toString)).sizeHint should equal(size)
         size += 1
       }
     }
@@ -837,7 +896,7 @@ class JsonSpec extends WordSpecLike with Matchers {
   }
 
   "Json big decimal" should {
-    "return correct size for big decimal" in {
+    "return correct size hint for big decimal" in {
       JsBigDecimal(BigDecimal("2e128")).sizeHint should equal(6)
       JsBigDecimal.fromLiteral(BigDecimal("2e128")).sizeHint should equal(6)
       JsBigDecimal.fromByteStringUnsafe(ByteString("2e128")).sizeHint should equal(5)
@@ -911,7 +970,7 @@ class JsonSpec extends WordSpecLike with Matchers {
   }
 
   "Json string" should {
-    "return correct size for string" in {
+    "return correct size hint" in {
       JsString("test").sizeHint should equal(6) // "test"
       JsString.fromLiteral("test").sizeHint should equal(6) // "test"
       JsString.fromByteStringUnsafe(ByteString("test")).sizeHint should equal(6) // "test"
@@ -926,6 +985,12 @@ class JsonSpec extends WordSpecLike with Matchers {
         case JsString(x) => x should equal("test")
         case x: JsString => x.value should equal("test")
       }
+    }
+
+    "return correct length" in {
+      JsString("test").length() should equal(4)
+      JsString.fromLiteral("test").length() should equal(4)
+      JsString.fromByteStringUnsafe(ByteString("test")).length should equal(4)
     }
 
     "be equal to string" in {
@@ -980,6 +1045,16 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsBytes.fromLiteral(ByteString.empty).isBytes should equal(true)
       JsBytes.fromStringUnsafe("").isBytes should equal(true)
     }
+
+    "return correct the size" in {
+      JsBytes(ByteString("test")).size() should equal(4)
+      JsBytes.fromStringUnsafe("test").size() should equal(4)
+    }
+
+    "return correct the size hint" in {
+      JsBytes(ByteString("test")).sizeHint() should equal(10)
+      JsBytes.fromStringUnsafe("test").sizeHint() should equal(4)
+    }
   }
 
   "Json null" should {
@@ -1010,6 +1085,13 @@ class JsonSpec extends WordSpecLike with Matchers {
       assertThrows[ClassCastException] {
         JsNull.get[Boolean]
       }
+    }
+
+    "be filtrable" in {
+      JsTrue.filter(_.isBoolean) should equal(JsTrue)
+      JsTrue.filterNot(_.isObject) should equal(JsTrue)
+      JsTrue.filter(_.isObject) should equal(JsUndefined)
+      JsTrue.filterNot(_.isBoolean) should equal(JsUndefined)
     }
 
     "return correct size for boolean" in {
@@ -1485,6 +1567,7 @@ class JsonSpec extends WordSpecLike with Matchers {
       if (builder.knownSize >= 0) {
         builder.clear()
       }
+      builder.result() should equal(Json.arr())
     }
   }
 
