@@ -32,6 +32,7 @@ import akka.stream.scaladsl.{Flow, Sink}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
 import io.techcode.streamy.event.{AttributeKey, StreamEvent}
+import io.techcode.streamy.kafka.event.KafkaEvent
 import io.techcode.streamy.util.json._
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
@@ -128,13 +129,13 @@ object KafkaSource {
       .committablePartitionedSource(consumerSettings, config.topics.toSubscription)
       .mapAsyncUnordered(config.maxPartitions) {
         case (topicPartition, source) =>
-          //system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = true))
+          system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = true))
           source
             .via(process)
             .via(config.handler)
             .map(_.attribute(CommittableOffsetKey).get) // Must exist in any case
             .alsoTo(Sink.onComplete { _ =>
-              //system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = false))
+              system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = false))
             })
             .runWith(Committer.sink(committerSettings))
       }
