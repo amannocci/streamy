@@ -32,6 +32,7 @@ import io.techcode.streamy.event.MonitorEvent.Jvm.{BufferPool, GarbageCollector}
 import io.techcode.streamy.util.monitor.GarbageCollectorMonitorSpec.GarbageCollectorMonitorImpl
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /**
   * Garbage collector monitoring spec.
@@ -42,7 +43,7 @@ class GarbageCollectorMonitorSpec extends StreamyTestSystem {
     "be started and stopped" in {
       val garbageCollectorMonitor = system.actorOf(Props(classOf[GarbageCollectorMonitor], StreamyConfig.GarbageCollectorMonitor(
         enabled = true,
-        0.second,
+        10 minutes,
         50, 25, 10
       )))
       val probe = TestProbe()

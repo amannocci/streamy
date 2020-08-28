@@ -40,7 +40,7 @@ class JsonImplicitSpec extends WordSpecLike with Matchers {
         doc: Json,
         pointer: JsonPointer
       )
-      val test = loadConfigOrThrow[Test](ConfigFactory.parseString("""{"doc":"{\"test\":\"test\"}", "pointer":"/key"}"""))
+      val test = ConfigSource.fromConfig(ConfigFactory.parseString("""{"doc":"{\"test\":\"test\"}", "pointer":"/key"}""")).loadOrThrow[Test]
       test.doc should equal(Json.obj("test" -> "test"))
       test.pointer should equal(Root / "key")
     }

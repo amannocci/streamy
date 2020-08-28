@@ -27,7 +27,7 @@ import java.net.URL
 import java.nio.file.{Files, Path}
 
 import akka.actor.{Actor, ActorRef, ActorSystem, DiagnosticActorLogging}
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
+import akka.stream.Supervision
 import com.typesafe.config.Config
 import io.techcode.streamy.event._
 import io.techcode.streamy.plugin.PluginState.PluginState
@@ -41,7 +41,6 @@ abstract class Plugin(
 ) extends Actor with DiagnosticActorLogging {
 
   implicit final val system: ActorSystem = context.system
-  implicit final val materializer: Materializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))(context)
 
   def decider: Supervision.Decider = { ex =>
     ex match {

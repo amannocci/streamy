@@ -23,10 +23,10 @@
  */
 package io.techcode.streamy.component
 
-import akka.NotUsed
+import akka.stream.ActorAttributes.supervisionStrategy
+import akka.stream.Supervision
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
@@ -81,19 +81,15 @@ class FlowTransformerSpec extends StreamyTestSystem {
     override val onError: ErrorBehaviour = ErrorBehaviour.Skip
   ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
-  def mat(decider: Supervision.Decider): ActorMaterializer =
-    ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
-
   "Flow transformer" should {
     "transform correctly an event inplace" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message"))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> "foo")))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foobar")))
@@ -101,14 +97,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "transform correctly an event with a specific target" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> "foo")))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj(
@@ -119,14 +114,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "transform correctly an event with a specific target and remove source" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> "foo")))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("target" -> "foobar")))
@@ -134,14 +128,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "transform correctly an event with a root target" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root)))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> Json.obj("message" -> "foo"))))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foo")))
@@ -149,14 +142,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "transform correctly an event with a root target and remove source" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root), SuccessBehaviour.Remove))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> Json.obj("test" -> "foo"))))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("test" -> "foo")))
@@ -164,14 +156,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "transform correctly an event inplace with parent transform" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new ImplParent(ImplConfig(Root / "message"))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> "foo")))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foobar")))
@@ -179,14 +170,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "skip correctly an event with a wrong source field" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message"))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> 1)))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> 1)))
@@ -194,14 +184,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "skip correctly an event with a wrong source field and parent transform" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new ImplParent(ImplConfig(Root / "message"))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> 1)))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> 1)))
@@ -209,14 +198,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "skip correctly an event with a wrong source field with a specific target" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root / "target")))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> 1)))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> 1)))
@@ -224,14 +212,13 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "skip correctly an event with a wrong source field with a specific target and remove source" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message", Some(Root / "target"), onSuccess = SuccessBehaviour.Remove))
       }
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> 1)))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> 1)))
@@ -239,8 +226,6 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "skip correctly an event by throwing an error based on exception" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic =
           new ImplWithCatchException(ImplConfig(Root / "message"))
@@ -248,6 +233,7 @@ class FlowTransformerSpec extends StreamyTestSystem {
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> 1)))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> 1)))
@@ -255,8 +241,6 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "skip correctly an event by throwing an error based on msg" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic =
           new ImplWithError(ImplConfig(Root / "message"))
@@ -264,6 +248,7 @@ class FlowTransformerSpec extends StreamyTestSystem {
 
       val stream = Source.single(StreamEvent(Json.obj("message" -> 1)))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> 1)))
@@ -271,8 +256,6 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "discard correctly an event by throwing an error based on exception" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new ImplWithCatchException(ImplConfig(Root / "message", onError = ErrorBehaviour.Discard))
       }
@@ -281,6 +264,7 @@ class FlowTransformerSpec extends StreamyTestSystem {
         StreamEvent(Json.obj("message" -> 1)),
         StreamEvent(Json.obj("message" -> "foo"))
       )).via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foobar")))
@@ -288,8 +272,6 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "discard correctly an event by throwing an error and report based on exception" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new ImplWithCatchException(ImplConfig(Root / "message", onError = ErrorBehaviour.DiscardAndReport))
       }
@@ -298,6 +280,7 @@ class FlowTransformerSpec extends StreamyTestSystem {
         StreamEvent(Json.obj("message" -> 1)),
         StreamEvent(Json.obj("message" -> "foo"))
       )).via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foobar")))
@@ -305,8 +288,6 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "discard correctly an event by throwing an error based on msg" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new ImplWithError(ImplConfig(Root / "message", onError = ErrorBehaviour.Discard))
       }
@@ -315,6 +296,7 @@ class FlowTransformerSpec extends StreamyTestSystem {
         StreamEvent(Json.obj("message" -> 1)),
         StreamEvent(Json.obj("message" -> "foo"))
       )).via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foobar")))
@@ -322,8 +304,6 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "discard correctly an event by throwing an error and report based on msg" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new ImplWithError(ImplConfig(Root / "message", onError = ErrorBehaviour.DiscardAndReport))
       }
@@ -332,6 +312,7 @@ class FlowTransformerSpec extends StreamyTestSystem {
         StreamEvent(Json.obj("message" -> 1)),
         StreamEvent(Json.obj("message" -> "foo"))
       )).via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foobar")))
@@ -339,8 +320,6 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "discard correctly an event by throwing an error based on uncatched exception" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Resume)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic =
           new ImplWithException(ImplConfig(Root / "message"))
@@ -350,6 +329,7 @@ class FlowTransformerSpec extends StreamyTestSystem {
         StreamEvent(Json.obj("message" -> 1)),
         StreamEvent(Json.obj("message" -> "foo"))
       )).via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foobar")))
@@ -357,8 +337,6 @@ class FlowTransformerSpec extends StreamyTestSystem {
     }
 
     "discard an event and fail correctly by throwing an error based on uncatched exception" in {
-      implicit val materializer: ActorMaterializer = mat(_ => Supervision.Stop)
-
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic =
           new ImplWithException(ImplConfig(Root / "message"))
@@ -366,6 +344,7 @@ class FlowTransformerSpec extends StreamyTestSystem {
 
       Source.single(StreamEvent(Json.obj("message" -> 1)))
         .via(transformer)
+        .addAttributes(supervisionStrategy(_ => Supervision.Stop))
         .runWith(TestSink.probe[StreamEvent])
         .request(1)
         .expectError()

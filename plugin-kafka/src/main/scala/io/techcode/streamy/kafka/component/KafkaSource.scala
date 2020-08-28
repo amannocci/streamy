@@ -28,15 +28,16 @@ import akka.kafka.ConsumerMessage.CommittableOffset
 import akka.kafka._
 import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.kafka.scaladsl.{Committer, Consumer}
-import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Sink}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
 import io.techcode.streamy.event.{AttributeKey, StreamEvent}
-import io.techcode.streamy.kafka.event.KafkaEvent
 import io.techcode.streamy.util.json._
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
+
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /**
   * Kafka source companion.
@@ -94,11 +95,12 @@ object KafkaSource {
     *
     * @param config source configuration.
     */
-  def atLeastOnce(config: Config)(implicit system: ActorSystem, materializer: Materializer): Consumer.DrainingControl[Done] = {
+  def atLeastOnce(config: Config)(implicit system: ActorSystem): Consumer.DrainingControl[Done] = {
     // Set consumer settings
     val consumerSettings = ConsumerSettings(system, new StringDeserializer, new ByteArrayDeserializer)
       .withBootstrapServers(config.bootstrapServers)
       .withGroupId(config.groupId)
+      .withStopTimeout(Duration.Zero)
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, config.autoOffsetReset)
 
     // Set committer settings
@@ -126,13 +128,13 @@ object KafkaSource {
       .committablePartitionedSource(consumerSettings, config.topics.toSubscription)
       .mapAsyncUnordered(config.maxPartitions) {
         case (topicPartition, source) =>
-          system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = true))
+          //system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = true))
           source
             .via(process)
             .via(config.handler)
             .map(_.attribute(CommittableOffsetKey).get) // Must exist in any case
             .alsoTo(Sink.onComplete { _ =>
-              system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = false))
+              //system.eventStream.publish(KafkaEvent.Consumer.TopicPartitionConsume(topicPartition, running = false))
             })
             .runWith(Committer.sink(committerSettings))
       }

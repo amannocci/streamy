@@ -25,7 +25,6 @@ package io.techcode.streamy.tcp.component
 
 import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
-import akka.stream.Materializer
 import akka.stream.scaladsl.Tcp.{IncomingConnection, ServerBinding}
 import akka.stream.scaladsl.{Flow, Sink, Source, Tcp}
 import akka.util.ByteString
@@ -64,7 +63,7 @@ object TcpSource {
     *
     * @param config flow configuration.
     */
-  def server(config: Server.Config)(implicit system: ActorSystem, materializer: Materializer): Future[ServerBinding] = {
+  def server(config: Server.Config)(implicit system: ActorSystem): Future[ServerBinding] = {
     {
       if (config.secured) {
         tlsServer(config)

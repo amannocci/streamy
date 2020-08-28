@@ -26,7 +26,6 @@ package io.techcode.streamy
 import java.time.Duration
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestKit, TestKitBase}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec, WordSpecLike}
@@ -68,10 +67,8 @@ trait StreamyTestSystem extends WordSpec with Matchers with BeforeAndAfterAll wi
     ActorSystem(getClass.getSimpleName, systemConfig)
   }
 
-  protected implicit val materializer: ActorMaterializer = ActorMaterializer()
-
   override protected def afterAll(): Unit = {
-    TestKit.shutdownActorSystem(system)
+    TestKit.shutdownActorSystem(system, verifySystemShutdown = true)
     super.afterAll()
   }
 

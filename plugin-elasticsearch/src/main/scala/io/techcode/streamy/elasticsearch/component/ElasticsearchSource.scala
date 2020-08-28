@@ -83,8 +83,7 @@ object ElasticsearchSource {
     * @param config source configuration.
     */
   def single(config: Config)(
-    implicit materializer: Materializer,
-    system: ActorSystem,
+    implicit system: ActorSystem,
     executionContext: ExecutionContext
   ): Source[StreamEvent, NotUsed] = {
     val hosts = LazyList.continually(config.hosts.to(LazyList)).flatten.iterator
@@ -112,16 +111,16 @@ object ElasticsearchSource {
       request
     }
 
-    Source.fromFuture(Http().singleRequest(request).flatMap {
+    Source.future(Http().singleRequest(request).flatMap {
       case HttpResponse(StatusCodes.OK, _, entity, _) =>
-        entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
+        entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map { x =>
           StreamEvent(Json.parseByteStringUnsafe(x))
         }
       case resp@HttpResponse(_, _, _, _) =>
         try {
           Future.successful(StreamEvent.Empty.discard(resp.httpMessage.toString))
         } finally {
-          resp.discardEntityBytes()(materializer)
+          resp.discardEntityBytes()
         }
     })
   }
@@ -261,14 +260,14 @@ object ElasticsearchSource {
 
         Http().singleRequest(request).map {
           case HttpResponse(StatusCodes.OK, _, entity, _) =>
-            entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).map { x =>
+            entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map { x =>
               successHandler.invoke(Json.parseByteStringUnsafe(x))
             }
           case resp@HttpResponse(_, _, _, _) =>
             try {
               failureHandler.invoke(new StreamException(StreamEvent.Empty, resp.httpMessage.toString))
             } finally {
-              resp.discardEntityBytes()(materializer)
+              resp.discardEntityBytes()
             }
         }
       }
