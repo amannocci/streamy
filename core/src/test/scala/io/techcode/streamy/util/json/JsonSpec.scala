@@ -1089,7 +1089,9 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "be filtrable" in {
       JsTrue.filter(_.isBoolean) should equal(JsTrue)
+      JsTrue.filterNot(_.isObject) should equal(JsTrue)
       JsTrue.filter(_.isObject) should equal(JsUndefined)
+      JsTrue.filterNot(_.isBoolean) should equal(JsUndefined)
     }
 
     "return correct size for boolean" in {
