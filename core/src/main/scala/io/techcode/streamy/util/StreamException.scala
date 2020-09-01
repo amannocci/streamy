@@ -42,12 +42,12 @@ case class StreamException(
 ) extends RuntimeException(msg, cause) with NoStackTrace {
 
   // Create using state and exception cause
-  def this(state: StreamEvent, cause: Throwable) {
+  def this(state: StreamEvent, cause: Throwable) = {
     this(state, StreamException.defaultMsg, cause)
   }
 
   // Create using state and message cause
-  def this(state: StreamEvent, msg: String) {
+  def this(state: StreamEvent, msg: String) = {
     this(state, msg, null)
   }
 

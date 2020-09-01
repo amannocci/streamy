@@ -30,6 +30,7 @@ import io.techcode.streamy.config.StreamyConfig
 import io.techcode.streamy.event.MonitorEvent
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /**
   * Jvm monitoring spec.
@@ -40,7 +41,7 @@ class JvmMonitorSpec extends StreamyTestSystem {
     "be started and stopped" in {
       val jvmMonitor = system.actorOf(Props(classOf[JvmMonitor], StreamyConfig.JvmMonitor(
         enabled = true,
-        0.second
+        10 minutes
       )))
       val probe = TestProbe()
       probe watch jvmMonitor
@@ -52,7 +53,7 @@ class JvmMonitorSpec extends StreamyTestSystem {
       system.eventStream.subscribe(testActor, classOf[MonitorEvent.Jvm])
       system.actorOf(Props(classOf[JvmMonitor], StreamyConfig.JvmMonitor(
         enabled = true,
-        0.second
+        0 seconds
       )))
       expectMsgClass(classOf[MonitorEvent.Jvm])
     }

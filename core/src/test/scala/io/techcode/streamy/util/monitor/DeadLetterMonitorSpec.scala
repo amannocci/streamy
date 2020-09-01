@@ -52,30 +52,18 @@ class DeadLetterMonitorSpec extends StreamyTestSystem {
 
     "handle correctly dead letter" in {
       val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor])
-      val probe = TestProbe()
-      probe watch deadLetterMonitor
       system.eventStream.subscribe(deadLetterMonitor, classOf[DeadLetter])
       system.eventStream.publish(DeadLetter("Test", deadLetterMonitor, deadLetterMonitor))
-      deadLetterMonitor ! PoisonPill
-      probe.expectTerminated(deadLetterMonitor)
     }
 
     "handle correctly restart" in {
       val deadLetterMonitor = system.actorOf(Props[Impl])
-      val probe = TestProbe()
-      probe watch deadLetterMonitor
       deadLetterMonitor ! "fatal"
-      deadLetterMonitor ! PoisonPill
-      probe.expectTerminated(deadLetterMonitor)
     }
 
     "not receive message by default" in {
       val deadLetterMonitor = system.actorOf(Props[DeadLetterMonitor])
-      val probe = TestProbe()
-      probe watch deadLetterMonitor
       deadLetterMonitor ! "test"
-      deadLetterMonitor ! PoisonPill
-      probe.expectTerminated(deadLetterMonitor)
     }
   }
 

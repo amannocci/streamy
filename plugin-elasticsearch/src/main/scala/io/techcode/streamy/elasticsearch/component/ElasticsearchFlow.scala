@@ -464,14 +464,14 @@ object ElasticsearchFlow {
           Http().singleRequest(request).onComplete {
             case Success(response) => response match {
               case HttpResponse(StatusCodes.OK, _, entity, _) =>
-                entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(materializer).foreach { x =>
+                entity.dataBytes.runFold(ByteString.empty)(_ ++ _).foreach { x =>
                   successHandler.invoke(Json.parseByteStringUnsafe(x))
                 }
               case HttpResponse(_, _, _, _) =>
                 try {
                   failureHandler.invoke(new StreamException(StreamEvent.Empty, response.httpMessage.toString))
                 } finally {
-                  response.discardEntityBytes()(materializer)
+                  response.discardEntityBytes()
                 }
             }
             case Failure(exception) =>

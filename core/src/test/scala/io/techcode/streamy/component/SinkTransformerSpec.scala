@@ -23,10 +23,10 @@
  */
 package io.techcode.streamy.component
 
-import akka.NotUsed
+import akka.stream.ActorAttributes.supervisionStrategy
+import akka.stream.Supervision
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.util.ByteString
 import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.event.StreamEvent
@@ -52,32 +52,26 @@ class SinkTransformerSpec extends StreamyTestSystem {
     }
 
     "handle correctly a json value with skipped error" in {
-      val decider: Supervision.Decider = _ => Supervision.Resume
-
-      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
-
       val sink = new SinkTransformer {
         def factory(): ByteStringPrinter[Json] = () => throw new PrintException("Error")
       }
 
       Source.single(StreamEvent(Json.obj("foo" -> "bar")))
         .via(sink)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[ByteString])
         .request(1)
         .expectComplete()
     }
 
     "handle correctly a json value with error" in {
-      val decider: Supervision.Decider = _ => Supervision.Stop
-
-      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
-
       val sink = new SinkTransformer {
         def factory(): ByteStringPrinter[Json] = () => throw new PrintException("Error")
       }
 
       Source.single(StreamEvent(Json.obj("foo" -> "bar")))
         .via(sink)
+        .addAttributes(supervisionStrategy(_ => Supervision.Stop))
         .runWith(TestSink.probe[ByteString])
         .request(1)
         .expectError() should equal(new StreamException(StreamEvent(Json.obj("foo" -> "bar")), new PrintException("Error")))

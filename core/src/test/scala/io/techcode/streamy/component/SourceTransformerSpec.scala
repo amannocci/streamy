@@ -23,9 +23,10 @@
  */
 package io.techcode.streamy.component
 
+import akka.stream.ActorAttributes.supervisionStrategy
+import akka.stream.Supervision
 import akka.stream.scaladsl.{Flow, Source}
 import akka.stream.testkit.scaladsl.TestSink
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.util.ByteString
 import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.event.StreamEvent
@@ -55,10 +56,6 @@ class SourceTransformerSpec extends StreamyTestSystem {
     }
 
     "handle correctly a bytestring with skipped error" in {
-      val decider: Supervision.Decider = _ => Supervision.Resume
-
-      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
-
       val source = Flow.fromGraph(new SourceTransformer {
         def factory(): ByteStringParser[Json] = new ByteStringParser[Json] {
           override def run() = throw new ParseException("Error")
@@ -69,17 +66,13 @@ class SourceTransformerSpec extends StreamyTestSystem {
 
       Source.single(ByteString.empty)
         .via(source)
+        .addAttributes(supervisionStrategy(_ => Supervision.Resume))
         .runWith(TestSink.probe[StreamEvent])
         .request(1)
         .expectComplete()
     }
 
     "handle correctly a bytestring with error" in {
-      val decider: Supervision.Decider = _ => Supervision.Stop
-
-      implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system)
-        .withSupervisionStrategy(decider))
-
       val source = Flow.fromGraph(new SourceTransformer {
         def factory(): ByteStringParser[Json] = new ByteStringParser[Json] {
           override def run() = throw new ParseException("Error")
@@ -90,6 +83,7 @@ class SourceTransformerSpec extends StreamyTestSystem {
 
       Source.single(ByteString.empty)
         .via(source)
+        .addAttributes(supervisionStrategy(_ => Supervision.Stop))
         .runWith(TestSink.probe[StreamEvent])
         .request(1)
         .expectError() should equal(new StreamException(StreamEvent(ByteString.empty), new ParseException("Error")))

@@ -26,7 +26,9 @@ package io.techcode.streamy.kafka.component
 import akka.Done
 import akka.stream.scaladsl.Flow
 import io.techcode.streamy.event.StreamEvent
+import io.techcode.streamy.kafka.event.KafkaEvent
 import io.techcode.streamy.kafka.util.KafkaSpec
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
 

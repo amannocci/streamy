@@ -39,7 +39,7 @@ import scala.jdk.CollectionConverters._
 class JvmMonitor(conf: StreamyConfig.JvmMonitor) extends Actor with ActorListener with Timers {
 
   override def preStart(): Unit = {
-    timers.startPeriodicTimer(JvmMonitor.TickKey, JvmMonitor.Tick, conf.refreshInterval)
+    timers.startTimerWithFixedDelay(JvmMonitor.TickKey, JvmMonitor.Tick, conf.refreshInterval)
   }
 
   override def receive: Receive = {

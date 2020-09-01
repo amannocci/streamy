@@ -39,7 +39,7 @@ import io.techcode.streamy.util.monitor.OsMonitor.Tick
 class OsMonitor(conf: StreamyConfig.OsMonitor) extends Actor with DiagnosticActorLogging with ActorListener with Timers {
 
   override def preStart(): Unit = {
-    timers.startPeriodicTimer(OsMonitor.TickKey, OsMonitor.Tick, conf.refreshInterval)
+    timers.startTimerWithFixedDelay(OsMonitor.TickKey, OsMonitor.Tick, conf.refreshInterval)
   }
 
   override def receive: Receive = {

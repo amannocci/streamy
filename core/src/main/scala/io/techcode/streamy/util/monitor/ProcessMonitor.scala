@@ -37,7 +37,7 @@ import io.techcode.streamy.util.monitor.ProcessMonitor.Tick
 class ProcessMonitor(conf: StreamyConfig.ProcessMonitor) extends Actor with DiagnosticActorLogging with ActorListener with Timers {
 
   override def preStart(): Unit = {
-    timers.startPeriodicTimer(ProcessMonitor.TickKey, ProcessMonitor.Tick, conf.refreshInterval)
+    timers.startTimerWithFixedDelay(ProcessMonitor.TickKey, ProcessMonitor.Tick, conf.refreshInterval)
   }
 
   override def receive: Receive = {

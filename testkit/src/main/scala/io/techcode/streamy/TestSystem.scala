@@ -24,7 +24,6 @@
 package io.techcode.streamy
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -34,8 +33,6 @@ import org.scalatest.concurrent.ScalaFutures
   */
 abstract class TestSystem extends TestKit(ActorSystem())
   with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with ScalaFutures with ImplicitSender {
-
-  protected implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)

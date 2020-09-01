@@ -30,6 +30,7 @@ import io.techcode.streamy.config.StreamyConfig
 import io.techcode.streamy.event.MonitorEvent
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /**
   * Os monitoring spec.
@@ -40,7 +41,7 @@ class OsMonitorSpec extends StreamyTestSystem {
     "be started and stopped" in {
       val osMonitor = system.actorOf(Props(classOf[OsMonitor], StreamyConfig.OsMonitor(
         enabled = true,
-        0.second
+        10 minutes
       )))
       val probe = TestProbe()
       probe watch osMonitor
