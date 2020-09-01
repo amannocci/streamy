@@ -40,6 +40,7 @@ import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
 
+import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -57,6 +58,7 @@ object ElasticsearchFlow {
     maxBackoff = 5 second,
     randomFactor = 0.3
   )
+  val DefaultFlushTimeout: FiniteDuration = 10 seconds
 
   // New line delimiter
   private val NewLineDelimiter: ByteString = ByteString("\n")
@@ -101,7 +103,7 @@ object ElasticsearchFlow {
     retry: RetryConfig = DefaultRetry,
     binding: Binding = Binding(),
     onError: () => ErrorHandler = () => DefaultErrorHandler,
-    flushTimeout: FiniteDuration = 10 seconds,
+    flushTimeout: FiniteDuration = DefaultFlushTimeout,
     bypassDocumentParsing: Boolean = false
   )
 
@@ -174,8 +176,14 @@ object ElasticsearchFlow {
   def apply(config: Config)(
     implicit system: ActorSystem,
     executionContext: ExecutionContext
-  ): Flow[StreamEvent, StreamEvent, NotUsed] = Flow[StreamEvent]
-    .groupedWithin(config.bulk, config.flushTimeout)
+  ): Flow[StreamEvent, StreamEvent, NotUsed] =
+    {
+      if (config.flushTimeout == Duration.Zero) {
+        Flow[StreamEvent].batch(config.bulk, immutable.Seq(_)) { case (seq, wm) => seq :+ wm }
+      } else {
+        Flow[StreamEvent].groupedWithin(config.bulk, config.flushTimeout)
+      }
+    }
     .via(Flow.fromGraph(new ElasticsearchFlowStage(config)))
 
   /**
