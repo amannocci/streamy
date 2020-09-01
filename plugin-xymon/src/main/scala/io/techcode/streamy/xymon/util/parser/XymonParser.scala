@@ -114,7 +114,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
     )
 
   def hostAndService(): Boolean =
-    host && dot() && service()
+    host() && dot() && service()
 
   def host(): Boolean =
     capture(oneOrMore(XymonParser.HostNameMatcher)) { value =>

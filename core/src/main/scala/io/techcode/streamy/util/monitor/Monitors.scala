@@ -41,7 +41,7 @@ object Monitors {
     * @param system actor system.
     */
   def runAll(conf: StreamyConfig.Monitor)(implicit system: ActorSystem): Unit = {
-    system.actorOf(Props[DeadLetterMonitor], "monitor-dead-letter")
+    system.actorOf(Props[DeadLetterMonitor](), "monitor-dead-letter")
     if (conf.process.enabled) {
       val actorProps = Props(classOf[ProcessMonitor], conf.process).withDispatcher(monitorDispatcher)
       system.actorOf(actorProps, "monitor-process")

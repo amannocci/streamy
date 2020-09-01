@@ -1400,7 +1400,7 @@ private case class JsStringLiteral(value: String) extends JsString {
 
   override def length(): Int = value.length
 
-  override def sizeHint(): Int = length + 2
+  override def sizeHint(): Int = length() + 2
 
 }
 
@@ -1415,7 +1415,7 @@ private case class JsStringBytesRepr(repr: ByteString) extends JsString {
 
   override def length(): Int = repr.size
 
-  override def sizeHint(): Int = length + 2
+  override def sizeHint(): Int = length() + 2
 
 }
 

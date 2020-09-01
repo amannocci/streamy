@@ -26,6 +26,8 @@ package io.techcode.streamy.tcp.component
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.techcode.streamy.TestSystem
+import io.techcode.streamy.tcp.component.TcpFlow.Client
+import io.techcode.streamy.tcp.component.TcpSource.Server
 import io.techcode.streamy.tcp.event.TcpEvent
 
 import scala.concurrent.duration._
@@ -41,7 +43,7 @@ class TcpSourceSpec extends TestSystem {
   import system.dispatcher
 
   "Tcp source" when {
-    "tls is enabled" should {
+    "tls is disabled" should {
       "receive event correctly" in {
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionCreated])
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionClosed])
@@ -55,20 +57,20 @@ class TcpSourceSpec extends TestSystem {
         expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionClosed])
       }
     }
-  }
 
-  "tls is disabled" should {
-    "receive event correctly" in {
-      system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionCreated])
-      system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionClosed])
-      TcpSource.server(TcpSourceSpec.Source.Secure).onComplete {
-        case Success(_) =>
-          Source.single(TcpSourceSpec.Input)
-            .runWith(TcpSink.client(TcpSourceSpec.Flow.Secure))
-        case Failure(ex) => ex.printStackTrace()
+    "tls is enabled" should {
+      "receive event correctly" in {
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionCreated])
+        system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionClosed])
+        TcpSource.server(TcpSourceSpec.Source.Secure).onComplete {
+          case Success(_) =>
+            Source.single(TcpSourceSpec.Input)
+              .runWith(TcpSink.client(TcpSourceSpec.Flow.Secure))
+          case Failure(ex) => ex.printStackTrace()
+        }
+        expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionCreated])
+        expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionClosed])
       }
-      expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionCreated])
-      expectMsgClass(1 minute, classOf[TcpEvent.Server.ConnectionClosed])
     }
   }
 
@@ -76,17 +78,17 @@ class TcpSourceSpec extends TestSystem {
 
 object TcpSourceSpec {
 
-  val Input = ByteString("Hello world !")
+  val Input: ByteString = ByteString("Hello world !")
 
   object Source {
 
-    val Simple = TcpSource.Server.Config(
+    val Simple: Server.Config = TcpSource.Server.Config(
       akka.stream.scaladsl.Flow[ByteString],
       host = "localhost",
       port = 4998
     )
 
-    val Secure = TcpSource.Server.Config(
+    val Secure: Server.Config = TcpSource.Server.Config(
       akka.stream.scaladsl.Flow[ByteString],
       host = "localhost",
       port = 4999,
@@ -96,12 +98,12 @@ object TcpSourceSpec {
 
   object Flow {
 
-    val Simple = TcpFlow.Client.Config(
+    val Simple: Client.Config = TcpFlow.Client.Config(
       host = "localhost",
       port = 4998
     )
 
-    val Secure = TcpFlow.Client.Config(
+    val Secure: Client.Config = TcpFlow.Client.Config(
       host = "localhost",
       port = 4999,
       secured = true

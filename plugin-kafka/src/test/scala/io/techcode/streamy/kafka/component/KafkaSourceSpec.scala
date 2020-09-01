@@ -26,7 +26,9 @@ package io.techcode.streamy.kafka.component
 import akka.Done
 import akka.stream.scaladsl.Flow
 import io.techcode.streamy.event.StreamEvent
+import io.techcode.streamy.kafka.event.KafkaEvent
 import io.techcode.streamy.kafka.util.KafkaSpec
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -37,6 +39,8 @@ class KafkaSourceSpec extends KafkaSpec {
 
   "Kafka source" should {
     "retrieve data from topic" in {
+      system.eventStream.subscribe(testActor, classOf[KafkaEvent.Consumer.TopicPartitionConsume])
+
       val topic = createTopic()
       val groupId = createGroupId()
 
@@ -47,9 +51,11 @@ class KafkaSourceSpec extends KafkaSpec {
         groupId = groupId,
         topics = KafkaSource.StaticTopicConfig(Set(topic))
       ))
+      Thread.sleep(1000L)
       whenReady(control.drainAndShutdown(), timeout(60 seconds), interval(100 millis)) { x =>
         x should equal(Done)
       }
+      expectMsgClass(1 minute, classOf[KafkaEvent.Consumer.TopicPartitionConsume])
     }
   }
 

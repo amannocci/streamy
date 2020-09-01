@@ -25,6 +25,7 @@ package io.techcode.streamy.tcp.component
 
 import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
+import akka.stream.IgnoreComplete
 import akka.stream.scaladsl.Tcp.{IncomingConnection, ServerBinding}
 import akka.stream.scaladsl.{Flow, Sink, Source, Tcp}
 import akka.util.ByteString
@@ -34,6 +35,7 @@ import io.techcode.streamy.tcp.util.TlsContext
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+import scala.util.Success
 
 /**
   * Tcp source companion.
@@ -53,7 +55,7 @@ object TcpSource {
       secured: Boolean = false,
       idleTimeout: Duration = Duration.Inf,
       backlog: Int = DefaultBacklog,
-      options: immutable.Iterable[SocketOption] = Nil
+      options: Seq[SocketOption] = Nil
     )
 
   }
@@ -74,7 +76,7 @@ object TcpSource {
       system.eventStream.publish(TcpEvent.Server.ConnectionCreated(conn.localAddress, conn.remoteAddress))
       conn.flow.alsoTo(Sink.onComplete { _ =>
         system.eventStream.publish(TcpEvent.Server.ConnectionClosed(conn.localAddress, conn.remoteAddress))
-      }).join(Flow.lazyInitAsync { () =>
+      }).join(Flow.lazyFutureFlow { () =>
         Future.successful(config.handler)
       }).run()
     }).run()
@@ -103,17 +105,22 @@ object TcpSource {
     * @return tcp tls server.
     */
   private def tlsServer(config: Server.Config)(implicit system: ActorSystem): Source[IncomingConnection, Future[ServerBinding]] = {
-    val ctx = TlsContext.create()
+    val ctx = TlsContext.newSSLContext()
 
     // Tls connection
-    Tcp().bindTls(
-      config.host,
-      config.port,
-      ctx.sslContext,
-      ctx.negotiateNewSession,
-      config.backlog,
-      config.options,
-      config.idleTimeout
+    Tcp().bindWithTls(
+      interface = config.host,
+      port = config.port,
+      createSSLEngine = () => {
+        val engine = ctx.createSSLEngine()
+        engine.setUseClientMode(false)
+        engine
+      },
+      backlog = config.backlog,
+      options = config.options,
+      idleTimeout = config.idleTimeout,
+      verifySession = _ => Success(()),
+      closing = IgnoreComplete
     )
   }
 

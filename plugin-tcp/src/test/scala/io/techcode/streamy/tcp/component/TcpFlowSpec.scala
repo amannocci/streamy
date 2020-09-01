@@ -27,6 +27,7 @@ import akka.Done
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
 import io.techcode.streamy.TestSystem
+import io.techcode.streamy.tcp.component.TcpFlow.Client
 import io.techcode.streamy.tcp.event.TcpEvent
 import io.techcode.streamy.tcp.util.TcpSpec
 
@@ -125,10 +126,10 @@ class TcpFlowSpec extends TestSystem with TcpSpec {
 
 object TcpFlowSpec {
 
-  val Input = ByteString("Hello world !")
+  val Input: ByteString = ByteString("Hello world !")
 
   object Flow {
-    val Simple = TcpFlow.Client.Config(
+    val Simple: Client.Config = TcpFlow.Client.Config(
       host = "localhost",
       port = -1
     )
@@ -141,7 +142,7 @@ object TcpFlowSpec {
       ))
     )
 
-    val Secure = TcpFlow.Client.Config(
+    val Secure: Client.Config = TcpFlow.Client.Config(
       host = "localhost",
       port = -1,
       secured = true

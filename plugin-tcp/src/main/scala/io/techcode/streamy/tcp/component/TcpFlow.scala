@@ -27,14 +27,15 @@ import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
+import akka.stream.{IgnoreComplete, TLSClientAuth, TLSProtocol}
 import akka.stream.scaladsl.{Flow, RestartFlow, Sink, Tcp}
 import akka.util.ByteString
 import io.techcode.streamy.tcp.event.TcpEvent
 import io.techcode.streamy.tcp.util.TlsContext
 
-import scala.collection.immutable
 import scala.concurrent.Future
 import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.util.Success
 
 /**
   * Tcp flow companion.
@@ -51,7 +52,7 @@ object TcpFlow {
       idleTimeout: Duration = Duration.Inf,
       connectTimeout: Duration = Duration.Inf,
       reconnect: Option[ReconnectConfig] = None,
-      options: immutable.Iterable[SocketOption] = Nil
+      options: Seq[SocketOption] = Nil
     )
 
     // Reconnect component configuration
@@ -70,7 +71,7 @@ object TcpFlow {
     */
   def client(config: Client.Config)(implicit system: ActorSystem): Flow[ByteString, ByteString, Any] = {
     // Connection configuration
-    val connection: Flow[ByteString, ByteString, Any] = Flow.lazyInitAsync[ByteString, ByteString, Any] { () =>
+    val connection: Flow[ByteString, ByteString, Any] = Flow.lazyFutureFlow[ByteString, ByteString, Any] { () =>
       // Lazily create a connection on first element
       system.eventStream.publish(TcpEvent.Client.ConnectionCreated(config))
       Future.successful(
@@ -122,16 +123,22 @@ object TcpFlow {
     * @return tcp tls connection.
     */
   private def tlsConnection(config: Client.Config)(implicit system: ActorSystem): Flow[ByteString, ByteString, Any] = {
-    val ctx = TlsContext.create()
+    val ctx = TlsContext.newSSLContext()
 
     // Tls connection
-    Tcp().outgoingTlsConnection(
+    Tcp().outgoingConnectionWithTls(
       InetSocketAddress.createUnresolved(config.host, config.port),
-      sslContext = ctx.sslContext,
-      negotiateNewSession = ctx.negotiateNewSession,
+      createSSLEngine = () => {
+        val engine = ctx.createSSLEngine()
+        engine.setUseClientMode(true)
+        engine
+      },
+      localAddress = None,
       connectTimeout = config.connectTimeout,
       idleTimeout = config.idleTimeout,
-      options = config.options
+      options = config.options,
+      verifySession = _ => Success(()),
+      closing = IgnoreComplete
     )
   }
 
