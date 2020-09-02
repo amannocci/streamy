@@ -34,10 +34,21 @@ import io.techcode.streamy.util.printer.ByteStringPrinter
 import io.techcode.streamy.xymon.util.parser.XymonParser
 import io.techcode.streamy.xymon.util.printer.XymonPrinter
 
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 /**
   * Xymon transformer companion.
   */
 object XymonTransformer {
+
+  // Default values
+  val DefaultBulk: Int = 50
+  val DefaultFlushTimeout: FiniteDuration = 10 seconds
+
+  // Combo instructions
+  private val ComboHeader: ByteString = ByteString("combo\n")
+  private val ComboDelimiter: ByteString = ByteString("\n\n")
 
   /**
     * Create a xymon flow that transform incoming [[ByteString]] to [[StreamEvent]].
@@ -54,10 +65,20 @@ object XymonTransformer {
     *
     * @param conf flow configuration.
     */
-  def printer[T](conf: Printer.Config): Flow[StreamEvent, ByteString, NotUsed] =
-    Flow.fromGraph(new SinkTransformer {
+  def printer(conf: Printer.Config): Flow[StreamEvent, ByteString, NotUsed] = {
+    val printer = Flow.fromGraph(new SinkTransformer {
       def factory(): ByteStringPrinter[Json] = XymonPrinter.printer(conf)
     })
+    if (conf.flushTimeout == Duration.Zero) {
+      printer.batch(conf.bulk, ComboHeader ++ _ ++ ComboDelimiter) {
+        case (msgs, msg) => msgs ++ msg ++ ComboDelimiter
+      }
+    } else {
+      printer.groupedWithin(conf.bulk, conf.flushTimeout).map { msgs =>
+        msgs.fold(ComboHeader)((acc, current) => acc ++ current ++ ComboDelimiter)
+      }
+    }
+  }
 
   object Id {
     val Status = "status"
@@ -105,7 +126,9 @@ object XymonTransformer {
     }
 
     case class Config(
-      binding: Binding = Binding()
+      binding: Binding = Binding(),
+      bulk: Int = DefaultBulk,
+      flushTimeout: FiniteDuration = DefaultFlushTimeout
     )
 
   }
