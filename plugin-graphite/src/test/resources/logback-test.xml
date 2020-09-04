@@ -1,2 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration />
+<configuration>
+    <!-- Stdout appender -->
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="io.techcode.streamy.util.logging.JsonLayout">
+                <timestamp>timestamp</timestamp>
+                <level>level</level>
+                <thread>thread</thread>
+                <stacktrace>stacktrace</stacktrace>
+                <message>message</message>
+            </layout>
+        </encoder>
+    </appender>
+
+    <!-- Async appenders -->
+    <appender name="async-console" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>8192</queueSize>
+        <appender-ref ref="stdout"/>
+    </appender>
+
+    <!-- Root -->
+    <root level="error">
+        <appender-ref ref="async-console"/>
+    </root>
+
+    <!-- Shutdown Hook -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+</configuration>
