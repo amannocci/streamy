@@ -1511,14 +1511,33 @@ class JsonSpec extends WordSpecLike with Matchers {
     }
 
     "handle patch with operations" in {
-      val input = Json.obj()
-      val result = input.patch(
-        Add(Root / "foobar", "foobar"),
-        Add(Root / "test", "test")
+      val input = Json.obj(
+        "simple" -> "test",
+        "obj" -> Json.obj(
+          "test" -> "test"
+        ),
+        "arr" -> Json.arr("1")
       )
+
+      val result = input.patch(
+        Add(Root / "simple", "foobar"),
+        Add(Root / "obj" / "test", "foobar"),
+        Replace(Root / "arr" / 0, "foobar"),
+      )
+
+      input should equal(Json.obj(
+        "simple" -> "test",
+        "obj" -> Json.obj(
+          "test" -> "test"
+        ),
+        "arr" -> Json.arr("1")
+      ))
       result should equal(Json.obj(
-        "foobar" -> "foobar",
-        "test" -> "test"
+        "simple" -> "foobar",
+        "obj" -> Json.obj(
+          "test" -> "foobar"
+        ),
+        "arr" -> Json.arr("foobar")
       ))
     }
 
@@ -1531,6 +1550,44 @@ class JsonSpec extends WordSpecLike with Matchers {
       result should equal(Json.obj(
         "foobar" -> "test"
       ))
+    }
+
+    "handle mutate on json object" in {
+      val input = Json.obj(
+        "simple" -> "test",
+        "obj" -> Json.obj(
+          "test" -> "test"
+        ),
+        "arr" -> Json.arr("1")
+      )
+
+      val result = input.mutate[JsObject](Root / "obj") { _ =>
+        Json.obj("foo" -> "bar", "test" -> "test")
+      }.flatMap[Json](_.mutate[JsArray](Root / "arr") { _ =>
+        Json.arr("foobar")
+      }).flatMap[Json](_.mutate[Json](Root / "simple") { _ =>
+        "foobar"
+      })
+
+      input should equal(Json.obj(
+        "simple" -> "test",
+        "obj" -> Json.obj(
+          "test" -> "test"
+        ),
+        "arr" -> Json.arr("1")
+      ))
+      result should equal(Json.obj(
+        "simple" -> "foobar",
+        "obj" -> Json.obj(
+          "test" -> "test",
+          "foo" -> "bar"
+        ),
+        "arr" -> Json.arr("foobar")
+      ))
+    }
+
+    "handle mutate on json value" in {
+      Json.obj().mutate[Json](Root)(identity[Json]) should equal(Json.obj())
     }
 
     "provide a way to build json object" in {

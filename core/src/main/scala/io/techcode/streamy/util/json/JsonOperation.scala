@@ -49,7 +49,7 @@ sealed trait JsonOperation {
 private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOperation {
 
   // Shortcut to underlying data structure
-  val underlying: ArrayBuffer[JsAccessor] = path.underlying
+  val underlying: ArrayBuffer[JsModifier] = path.underlying
 
   /**
     * Apply operation recursively.
@@ -57,25 +57,25 @@ private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOp
     * @param path    json path to use.
     * @param idx     current position in json path.
     * @param current current value explored.
-    * @return json value modified or [[None]].
+    * @return json value modified or [[JsUndefined]].
     */
-  private[json] def apply(path: JsonPointer, idx: Int, current: MaybeJson): MaybeJson = {
-    if (!current.isDefined) {
-      // We fail to evaluate path
-      current
-    } else if (idx == underlying.length - 1) {
-      // Always exist
-      val ref = current.get[Json]
+  private[json] def apply(
+    path: JsonPointer,
+    idx: Int,
+    current: MaybeJson
+  ): MaybeJson = {
+    // We fail to evaluate path if not mapped
+    current.flatMap[Json] { ref =>
+      val modifier = underlying(idx)
 
       // We are in final state
-      operate(underlying(idx), ref.copy())
-    } else {
-      // Recursive call until final state
-      val result = apply(path, idx + 1, underlying(idx).evaluate(current.get[Json]))
-      if (result.isDefined) {
-        underlying(idx).set(current.get[Json].copy(), result.get[Json])
+      if (idx == underlying.length - 1) {
+        operate(modifier, ref.copy())
       } else {
-        result
+        // Recursive call until final state
+        apply(path, idx + 1, modifier.get(ref)).flatMap[Json] { result =>
+          modifier.set(ref.copy(), result)
+        }
       }
     }
   }
@@ -84,67 +84,30 @@ private[json] abstract class AbstractOperation(path: JsonPointer) extends JsonOp
     * Apply operation on current json value.
     *
     * @param accessor json value accessor.
-    * @param current  curren json value.
-    * @return json value modified or [[None]].
+    * @param current  current json value.
+    * @return json value modified or [[JsUndefined]].
     */
-  def operate(accessor: JsAccessor, current: Json): MaybeJson
+  def operate(accessor: JsModifier, current: Json): MaybeJson
 
 }
 
 /**
-  * Bulk a sequence of operations at pointed location.
+  * Set a json value at pointed location based on an arbitrary function.
   *
   * @param path json path.
-  * @param ops  sequence of operations.
+  * @param f    arbitrary function.
   */
-case class Bulk(path: JsonPointer = Root, ops: Seq[JsonOperation]) extends AbstractOperation(path) {
+private[json] case class SetFunc[T](path: JsonPointer, f: T => Json)(implicit c: JsTyped[T]) extends AbstractOperation(path) {
 
-  def apply(json: Json): MaybeJson = {
-    if (path.underlying.isEmpty) {
-      process(json)
+  override def apply(json: Json): MaybeJson =
+    if (path.isEmpty) {
+      f(json.get[T])
     } else {
       apply(path, 0, json)
     }
-  }
 
-  def operate(accessor: JsAccessor, current: Json): MaybeJson = {
-    val result = process(accessor.evaluate(current))
-    if (result.isDefined) {
-      accessor.set(current, result.get[Json])
-    } else {
-      result
-    }
-  }
-
-  /**
-    * Process all sub operations.
-    *
-    * @param current current value.
-    * @return result of all operations.
-    */
-  private def process(current: MaybeJson): MaybeJson = {
-    // Current computation
-    var idx = 0
-    var result: MaybeJson = current
-
-    result.ifExists[Json] { rs =>
-      // Iterate over operations
-      while (idx < ops.length) {
-        // Result of sub operation
-        val subResult = ops(idx)(result.get[Json])
-        if (subResult.isDefined) {
-          idx += 1
-          result = subResult
-        } else {
-          idx = ops.length
-          result = JsUndefined
-        }
-      }
-    }
-
-    // Result of computation
-    result
-  }
+  def operate(modifier: JsModifier, current: Json): MaybeJson =
+    modifier.get(current).flatMap[T](v => modifier.set(current, f(v)))
 
 }
 
@@ -156,16 +119,15 @@ case class Bulk(path: JsonPointer = Root, ops: Seq[JsonOperation]) extends Abstr
   */
 case class Add(path: JsonPointer, value: Json) extends AbstractOperation(path) {
 
-  override def apply(json: Json): MaybeJson = {
+  override def apply(json: Json): MaybeJson =
     if (path.isEmpty) {
       value
     } else {
       apply(path, 0, json)
     }
-  }
 
-  def operate(accessor: JsAccessor, current: Json): MaybeJson =
-    accessor.add(current, value)
+  def operate(modifier: JsModifier, current: Json): MaybeJson =
+    modifier.add(current, value)
 
 }
 
@@ -177,16 +139,15 @@ case class Add(path: JsonPointer, value: Json) extends AbstractOperation(path) {
   */
 case class Replace(path: JsonPointer, value: Json) extends AbstractOperation(path) {
 
-  override def apply(json: Json): MaybeJson = {
+  override def apply(json: Json): MaybeJson =
     if (path.isEmpty) {
       value
     } else {
       apply(path, 0, json)
     }
-  }
 
-  def operate(accessor: JsAccessor, current: Json): MaybeJson =
-    accessor.replace(current, value)
+  def operate(modifier: JsModifier, current: Json): MaybeJson =
+    modifier.replace(current, value)
 
 }
 
@@ -198,7 +159,7 @@ case class Replace(path: JsonPointer, value: Json) extends AbstractOperation(pat
   */
 case class Remove(path: JsonPointer, mustExist: Boolean = true) extends AbstractOperation(path) {
 
-  override def apply(json: Json): MaybeJson = {
+  override def apply(json: Json): MaybeJson =
     if (path.isEmpty) {
       json
     } else {
@@ -209,10 +170,9 @@ case class Remove(path: JsonPointer, mustExist: Boolean = true) extends Abstract
         result.orElse(json)
       }
     }
-  }
 
-  def operate(accessor: JsAccessor, current: Json): MaybeJson =
-    accessor.remove(current, mustExist)
+  def operate(modifier: JsModifier, current: Json): MaybeJson =
+    modifier.remove(current, mustExist)
 
 }
 
@@ -250,12 +210,13 @@ case class Copy(from: JsonPointer, to: JsonPointer) extends JsonOperation {
   */
 case class Test(path: JsonPointer, value: Json) extends JsonOperation {
 
-  def apply(json: Json): MaybeJson = path(json).flatMap[Json] { x =>
-    if (x.equals(value)) {
-      json
-    } else {
-      JsUndefined
+  def apply(json: Json): MaybeJson =
+    json.evaluate(path).flatMap[Json] { x =>
+      if (x.equals(value)) {
+        json
+      } else {
+        JsUndefined
+      }
     }
-  }
 
 }

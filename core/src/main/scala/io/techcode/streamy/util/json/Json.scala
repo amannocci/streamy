@@ -543,31 +543,71 @@ sealed trait Json extends JsDefined {
   /**
     * Evaluate the given path in the given json value.
     *
-    * @param path path to used.
+    * @param path path to use.
     * @return value if founded, otherwise [[JsUndefined]].
     */
-  def evaluate(path: JsonPointer): MaybeJson = path(this)
+  def evaluate(path: JsonPointer): MaybeJson = {
+    val underlying = path.underlying
+    if (underlying.isEmpty) {
+      this
+    } else {
+      // Current computation
+      var idx = 0
+      var result: MaybeJson = this
 
-  /**
-    * Patch given json value by applying all json operations in a transactionnal way.
-    *
-    * @param op  operation to apply first.
-    * @param ops seq of operations to apply.
-    * @return json value patched or original.
-    */
-  def patch(op: JsonOperation, ops: JsonOperation*): MaybeJson = {
-    var result: MaybeJson = op(this)
-    ops.takeWhile(_ => result.isDefined).foreach(op => result = op(result.get[Json]))
-    result
+      // Iterate over path accessor
+      while (idx < underlying.length) {
+        // Retrieve current accessor
+        val accessor = underlying(idx)
+
+        // Result of access
+        val access = accessor.get(result.get[Json])
+        if (access.isDefined) {
+          idx += 1
+          result = access
+        } else {
+          idx = underlying.length
+          result = JsUndefined
+        }
+      }
+
+      // Result of computation
+      result
+    }
   }
 
   /**
+    * Mutate the given path with the value returned by arbitrary function.
+    *
+    * @param path path to use.
+    * @param f    arbitrary function to use.
+    * @return value if founded and mutate, otherwise [[JsUndefined]].
+    */
+  @inline def mutate[T](path: JsonPointer)(f: T => Json)(implicit c: JsTyped[T]): MaybeJson = patch(SetFunc(path, f))
+
+  /**
+    * Patch given json value by applying a json operation.
+    *
+    * @param op operation to apply.
+    * @return json value patched or original.
+    */
+  def patch(op: JsonOperation): MaybeJson = op(this)
+
+  /**
     * Patch given json value by applying all json operations in a transactionnal way.
     *
     * @param ops seq of operations to apply.
     * @return json value patched or original.
     */
-  def patch(ops: Seq[JsonOperation]): MaybeJson = {
+  def patch(ops: JsonOperation*): MaybeJson = patch(ops)
+
+  /**
+    * Patch given json value by applying all json operations in a transactionnal way.
+    *
+    * @param ops seq of operations to apply.
+    * @return json value patched or original.
+    */
+  def patch(ops: Iterable[JsonOperation]): MaybeJson = {
     var result: MaybeJson = this
     ops.takeWhile(_ => result.isDefined).foreach(op => result = op(result.get[Json]))
     result
@@ -1719,9 +1759,8 @@ case class JsObject(
     * @return a new json object consisting of all elements of this json
     *         object that satisfy the given predicate pred.
     */
-  def filter(pred: ((String, Json)) => Boolean): JsObject = {
+  def filter(pred: ((String, Json)) => Boolean): JsObject =
     JsObject(underlying.filter(pred))
-  }
 
   /**
     * Selects all elements of this json object which do not satisfy a predicate.

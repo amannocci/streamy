@@ -116,29 +116,29 @@ class JsonPointerSpec extends WordSpecLike with Matchers {
 
   "JsObjectAccessor" should {
     "be equal to the same accessor" in {
-      JsObjectAccessor("foobar") should equal(JsObjectAccessor("foobar"))
+      JsObjectModifier("foobar") should equal(JsObjectModifier("foobar"))
     }
 
     "be not equal to a different accessor" in {
-      JsObjectAccessor("foobar") should not equal JsObjectAccessor("foo")
+      JsObjectModifier("foobar") should not equal JsObjectModifier("foo")
     }
 
     "be not equal to an array accessor" in {
-      JsObjectAccessor("foobar") should not equal JsArrayAccessor(0)
+      JsObjectModifier("foobar") should not equal JsArrayModifier(0)
     }
   }
 
   "JsArrayAccessor" should {
     "be equal to the same accessor" in {
-      JsArrayAccessor(0) should equal(JsArrayAccessor(0))
+      JsArrayModifier(0) should equal(JsArrayModifier(0))
     }
 
     "be not equal to a different accessor" in {
-      JsArrayAccessor(0) should not equal JsArrayAccessor(1)
+      JsArrayModifier(0) should not equal JsArrayModifier(1)
     }
 
     "be not equal to an array accessor" in {
-      JsArrayAccessor(0) should not equal JsObjectAccessor("foobar")
+      JsArrayModifier(0) should not equal JsObjectModifier("foobar")
     }
   }
 

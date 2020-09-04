@@ -36,7 +36,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * @param underlying json pointer path.
   */
-case class JsonPointer(private[json] val underlying: ArrayBuffer[JsAccessor] = ArrayBuffer.empty)
+case class JsonPointer(private[json] val underlying: ArrayBuffer[JsModifier] = ArrayBuffer.empty)
   extends Iterable[Either[String, Int]] {
 
   /**
@@ -51,41 +51,6 @@ case class JsonPointer(private[json] val underlying: ArrayBuffer[JsAccessor] = A
     */
   def newBuilder(initialCapacity: Int = JsonPointerBuilder.DefaultInitialCapacity): JsonPointerBuilder =
     JsonPointerBuilder(initialCapacity)
-
-  /**
-    * Apply json pointer to a json value.
-    *
-    * @param json json value to evaluate.
-    * @return optional json value.
-    */
-  private[json] def apply(json: Json): MaybeJson = {
-    if (underlying.isEmpty) {
-      json
-    } else {
-      // Current computation
-      var idx = 0
-      var result: MaybeJson = json
-
-      // Iterate over path accessor
-      while (idx < underlying.length) {
-        // Retrieve current accessor
-        val accessor = underlying(idx)
-
-        // Result of access
-        val access = accessor.evaluate(result.get[Json])
-        if (access.isDefined) {
-          idx += 1
-          result = access
-        } else {
-          idx = underlying.length
-          result = JsUndefined
-        }
-      }
-
-      // Result of computation
-      result
-    }
-  }
 
   // scalastyle:off method.name
   /**
@@ -137,8 +102,8 @@ case class JsonPointer(private[json] val underlying: ArrayBuffer[JsAccessor] = A
       val el = underlying(index)
       index += 1
       el match {
-        case JsObjectAccessor(key) => Left(key)
-        case JsArrayAccessor(idx) => Right(idx)
+        case JsObjectModifier(key) => Left(key)
+        case JsArrayModifier(idx) => Right(idx)
       }
     }
 
@@ -159,7 +124,7 @@ object JsonPointerBuilder {
   * @param initialCapacity initial capacity size.
   */
 case class JsonPointerBuilder(initialCapacity: Int = JsonPointerBuilder.DefaultInitialCapacity) {
-  private var underlying: mutable.ArrayBuffer[JsAccessor] = new mutable.ArrayBuffer[JsAccessor](initialCapacity)
+  private var underlying: mutable.ArrayBuffer[JsModifier] = new mutable.ArrayBuffer[JsModifier](initialCapacity)
 
   /**
     * Clears the contents of this builder.
@@ -167,7 +132,7 @@ case class JsonPointerBuilder(initialCapacity: Int = JsonPointerBuilder.DefaultI
     */
   def clear(): Unit =
     if (underlying.nonEmpty) {
-      underlying = mutable.ArrayBuffer[JsAccessor]()
+      underlying = mutable.ArrayBuffer[JsModifier]()
     }
 
   /**
@@ -208,10 +173,10 @@ case class JsonPointerBuilder(initialCapacity: Int = JsonPointerBuilder.DefaultI
     * @return new json pointer.
     */
   def /(key: String): JsonPointerBuilder = {
-    if (JsAccessor.LastRef.equals(key)) {
-      underlying += JsObjectOrArrayAccessor
+    if (JsModifier.LastRef.equals(key)) {
+      underlying += JsObjectOrArrayModifier
     } else {
-      underlying += JsObjectAccessor(key)
+      underlying += JsObjectModifier(key)
     }
     this
   }
@@ -226,7 +191,7 @@ case class JsonPointerBuilder(initialCapacity: Int = JsonPointerBuilder.DefaultI
     * @return new json pointer.
     */
   def /(idx: Int): JsonPointerBuilder = {
-    underlying += JsArrayAccessor(idx)
+    underlying += JsArrayModifier(idx)
     this
   }
 
@@ -251,9 +216,9 @@ case class JsonPointerBuilder(initialCapacity: Int = JsonPointerBuilder.DefaultI
 /**
   * Represent an abstract json accessor.
   */
-private[json] trait JsAccessor {
+private[json] trait JsModifier {
 
-  def evaluate(json: Json): MaybeJson
+  def get(json: Json): MaybeJson
 
   def set(json: Json, value: Json): MaybeJson
 
@@ -270,7 +235,7 @@ private[json] trait JsAccessor {
 /**
   * JsAccesor companion.
   */
-private[json] object JsAccessor {
+private[json] object JsModifier {
 
   val LastRef: String = "-"
 
@@ -279,11 +244,11 @@ private[json] object JsAccessor {
 /**
   * Represent an object or array accessor.
   */
-private[json] case object JsObjectOrArrayAccessor extends JsObjectLikeAccessor {
+private[json] case object JsObjectOrArrayModifier extends JsObjectLikeModifier {
 
-  override val key: String = JsAccessor.LastRef
+  override val key: String = JsModifier.LastRef
 
-  override def evaluate(json: Json): MaybeJson = super.evaluate(json)
+  override def get(json: Json): MaybeJson = super.get(json)
     .orElse(json.flatMap[JsArray](_.last()))
 
   override def add(json: Json, value: Json): MaybeJson = super.add(json, value)
@@ -312,18 +277,18 @@ private[json] case object JsObjectOrArrayAccessor extends JsObjectLikeAccessor {
       }
     })
 
-  override def repr: String = JsAccessor.LastRef
+  override def repr: String = JsModifier.LastRef
 
 }
 
 /**
   * Trait mixin for common json object accessor logic.
   */
-private[json] trait JsObjectLikeAccessor extends JsAccessor {
+private[json] trait JsObjectLikeModifier extends JsModifier {
 
   def key: String
 
-  def evaluate(json: Json): MaybeJson = json.flatMap[JsObject](_ (key))
+  def get(json: Json): MaybeJson = json.flatMap[JsObject](_ (key))
 
   @inline def set(json: Json, value: Json): MaybeJson = add(json, value)
 
@@ -362,14 +327,14 @@ private[json] trait JsObjectLikeAccessor extends JsAccessor {
 /**
   * Represent an object accessor.
   */
-private[json] case class JsObjectAccessor(key: String) extends JsObjectLikeAccessor
+private[json] case class JsObjectModifier(key: String) extends JsObjectLikeModifier
 
 /**
   * Represent an array accessor.
   */
-private[json] case class JsArrayAccessor(idx: Int) extends JsAccessor {
+private[json] case class JsArrayModifier(idx: Int) extends JsModifier {
 
-  def evaluate(json: Json): MaybeJson = json.flatMap[JsArray](_ (idx))
+  def get(json: Json): MaybeJson = json.flatMap[JsArray](_ (idx))
 
   @inline def set(json: Json, value: Json): MaybeJson = replace(json, value)
 
