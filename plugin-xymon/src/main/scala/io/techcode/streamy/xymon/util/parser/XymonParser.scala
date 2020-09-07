@@ -92,8 +92,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
       plus() &&
         capture(duration() && optional(durationUnit())) { value =>
           // Unsafe can be use because duration is validate
-          binding.lifetime.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-          true
+          binding.lifetime.bind(JsString.fromByteStringUnsafe(value))
         }
     )
 
@@ -108,8 +107,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
         colon() &&
         capture(oneOrMore(XymonParser.GroupNameMatcher)) { value =>
           // Unsafe can be use because group is validate
-          binding.group.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-          true
+          binding.group.bind(JsString.fromByteStringUnsafe(value))
         }
     )
 
@@ -119,22 +117,19 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
   def host(): Boolean =
     capture(oneOrMore(XymonParser.HostNameMatcher)) { value =>
       // Unsafe can be use because group is validate
-      binding.host.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-      true
+      binding.host.bind(JsString.fromByteStringUnsafe(value))
     }
 
   def service(): Boolean =
     capture(oneOrMore(XymonParser.TestNameMatcher)) { value =>
       // Unsafe can be use because service is validate
-      binding.service.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-      true
+      binding.service.bind(JsString.fromByteStringUnsafe(value))
     }
 
   def color(): Boolean =
     capture(oneOrMore(CharMatchers.LowerAlpha)) { value =>
       // Unsafe can be use because service is validate
-      binding.color.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-      true
+      binding.color.bind(JsString.fromByteStringUnsafe(value))
     }
 
   def additionalText(): Boolean =
@@ -142,8 +137,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
       sp() &&
         capture(any()) { value =>
           // Unsafe can be use because message is validate
-          binding.message.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-          true
+          binding.message.bind(JsString.fromByteStringUnsafe(value))
         }
     )
 

@@ -293,6 +293,47 @@ sealed trait MaybeJson {
   def isDefined: Boolean
 
   /**
+    * Evaluate the given path in the given json value.
+    *
+    * @param path path to use.
+    * @return value if founded, otherwise [[JsUndefined]].
+    */
+  def evaluate(path: JsonPointer): MaybeJson
+
+  /**
+    * Mutate the given path with the value returned by arbitrary function.
+    *
+    * @param path path to use.
+    * @param f    arbitrary function to use.
+    * @return value if founded and mutate, otherwise [[JsUndefined]].
+    */
+  @inline def mutate[T](path: JsonPointer)(f: T => Json)(implicit c: JsTyped[T]): MaybeJson
+
+  /**
+    * Patch given json value by applying a json operation.
+    *
+    * @param op operation to apply.
+    * @return json value patched or original.
+    */
+  def patch(op: JsonOperation): MaybeJson
+
+  /**
+    * Patch given json value by applying all json operations in a transactionnal way.
+    *
+    * @param ops seq of operations to apply.
+    * @return json value patched or original.
+    */
+  def patch(ops: JsonOperation*): MaybeJson
+
+  /**
+    * Patch given json value by applying all json operations in a transactionnal way.
+    *
+    * @param ops seq of operations to apply.
+    * @return json value patched or original.
+    */
+  def patch(ops: Iterable[JsonOperation]): MaybeJson
+
+  /**
     * Returns the option's value.
     *
     * @note The option must be nonEmpty.
@@ -479,29 +520,6 @@ sealed abstract class JsDefined extends MaybeJson {
 }
 
 /**
-  * Represents a json filtrable.
-  */
-sealed trait JsFiltrable extends JsDefined {
-
-  /**
-    * Returns this JsDefined if it is nonempty '''and''' applying the predicate $p to
-    * this JsDefined value returns true. Otherwise, return JsUndefined.
-    *
-    * @param p the predicate used for testing.
-    */
-  def filter(p: Json => Boolean): MaybeJson = if (p(this.get[Json])) this else JsUndefined
-
-  /**
-    * Returns this JsDefined if it is nonempty '''and''' applying the predicate $p to
-    * this JsDefined value returns false. Otherwise, return JsUndefined.
-    *
-    * @param p the predicate used for testing.
-    */
-  def filterNot(p: Json => Boolean): MaybeJson = if (!p(this.get[Json])) this else JsUndefined
-
-}
-
-/**
   * Represents an undefined json.
   */
 object JsUndefined extends MaybeJson {
@@ -511,6 +529,16 @@ object JsUndefined extends MaybeJson {
   override def isDefined: Boolean = false
 
   override def get[T](implicit c: JsTyped[T]): T = throw new NoSuchElementException("JsUndefined.get")
+
+  def evaluate(path: JsonPointer): MaybeJson = JsUndefined
+
+  def mutate[T](path: JsonPointer)(f: T => Json)(implicit c: JsTyped[T]): MaybeJson = JsUndefined
+
+  def patch(op: JsonOperation): MaybeJson = JsUndefined
+
+  def patch(ops: JsonOperation*): MaybeJson = JsUndefined
+
+  def patch(ops: Iterable[JsonOperation]): MaybeJson = JsUndefined
 
   def filter(p: Json => Boolean): MaybeJson = JsUndefined
 
@@ -540,12 +568,6 @@ sealed trait Json extends JsDefined {
 
   def get[T](implicit c: JsTyped[T]): T = c.get(this)
 
-  /**
-    * Evaluate the given path in the given json value.
-    *
-    * @param path path to use.
-    * @return value if founded, otherwise [[JsUndefined]].
-    */
   def evaluate(path: JsonPointer): MaybeJson = {
     val underlying = path.underlying
     if (underlying.isEmpty) {
@@ -557,11 +579,11 @@ sealed trait Json extends JsDefined {
 
       // Iterate over path accessor
       while (idx < underlying.length) {
-        // Retrieve current accessor
-        val accessor = underlying(idx)
+        // Retrieve current modifier
+        val modifier = underlying(idx)
 
         // Result of access
-        val access = accessor.get(result.get[Json])
+        val access = modifier.get(result.get[Json])
         if (access.isDefined) {
           idx += 1
           result = access
@@ -576,37 +598,12 @@ sealed trait Json extends JsDefined {
     }
   }
 
-  /**
-    * Mutate the given path with the value returned by arbitrary function.
-    *
-    * @param path path to use.
-    * @param f    arbitrary function to use.
-    * @return value if founded and mutate, otherwise [[JsUndefined]].
-    */
-  @inline def mutate[T](path: JsonPointer)(f: T => Json)(implicit c: JsTyped[T]): MaybeJson = patch(SetFunc(path, f))
+  def mutate[T](path: JsonPointer)(f: T => Json)(implicit c: JsTyped[T]): MaybeJson = patch(SetFunc(path, f))
 
-  /**
-    * Patch given json value by applying a json operation.
-    *
-    * @param op operation to apply.
-    * @return json value patched or original.
-    */
   def patch(op: JsonOperation): MaybeJson = op(this)
 
-  /**
-    * Patch given json value by applying all json operations in a transactionnal way.
-    *
-    * @param ops seq of operations to apply.
-    * @return json value patched or original.
-    */
   def patch(ops: JsonOperation*): MaybeJson = patch(ops)
 
-  /**
-    * Patch given json value by applying all json operations in a transactionnal way.
-    *
-    * @param ops seq of operations to apply.
-    * @return json value patched or original.
-    */
   def patch(ops: Iterable[JsonOperation]): MaybeJson = {
     var result: MaybeJson = this
     ops.takeWhile(_ => result.isDefined).foreach(op => result = op(result.get[Json]))
@@ -631,12 +628,35 @@ sealed trait Json extends JsDefined {
 
 }
 
+/**
+  * Represents a json value.
+  */
+sealed trait JsValue extends Json {
+
+  /**
+    * Returns this JsValue if it is nonempty '''and''' applying the predicate $p to
+    * this JsValue value returns true. Otherwise, return JsUndefined.
+    *
+    * @param p the predicate used for testing.
+    */
+  def filter(p: Json => Boolean): MaybeJson = if (p(this.get[Json])) this else JsUndefined
+
+  /**
+    * Returns this JsValue if it is nonempty '''and''' applying the predicate $p to
+    * this JsValue value returns false. Otherwise, return JsUndefined.
+    *
+    * @param p the predicate used for testing.
+    */
+  def filterNot(p: Json => Boolean): MaybeJson = if (!p(this.get[Json])) this else JsUndefined
+
+}
+
 // scalastyle:on
 
 /**
   * Represent a json null value.
   */
-case object JsNull extends Json with JsFiltrable {
+case object JsNull extends JsValue {
 
   override val isNull: Boolean = true
 
@@ -651,7 +671,7 @@ case object JsNull extends Json with JsFiltrable {
   *
   * @param value underlying value.
   */
-sealed abstract class JsBoolean(value: Boolean) extends Json with JsFiltrable {
+sealed abstract class JsBoolean(value: Boolean) extends JsValue {
 
   override val isBoolean: Boolean = true
 
@@ -680,7 +700,7 @@ case object JsFalse extends JsBoolean(false) {
 /**
   * Represents a Json number value.
   */
-sealed trait JsNumber extends Json with JsFiltrable {
+sealed trait JsNumber extends JsValue {
 
   override val isNumber: Boolean = true
 
@@ -1409,7 +1429,7 @@ object JsString {
 /**
   * Represent a json string value.
   */
-sealed trait JsString extends Json with JsFiltrable {
+sealed trait JsString extends JsValue {
 
   def value: String
 
@@ -1511,7 +1531,7 @@ object JsBytes {
 /**
   * Represent a json bytes value.
   */
-sealed trait JsBytes extends Json with JsFiltrable {
+sealed trait JsBytes extends JsValue {
 
   def value: ByteString
 

@@ -115,12 +115,12 @@ object KafkaSource {
           val binding = config.binding
           implicit val builder: JsObjectBuilder = Json.objectBuilder()
 
-          binding.key.foreach(bind => builder += bind -> record.key())
-          binding.offset.foreach(bind => builder += bind -> record.offset())
-          binding.value.foreach(bind => builder += bind -> ByteString.fromArrayUnsafe(record.value()))
-          binding.partition.foreach(bind => builder += bind -> record.partition())
-          binding.topic.foreach(bind => builder += bind -> record.topic())
-          binding.timestamp.foreach(bind => builder += bind -> record.timestamp())
+          binding.key.bind(record.key())
+          binding.offset.bind(record.offset())
+          binding.value.bind(ByteString.fromArrayUnsafe(record.value()))
+          binding.partition.bind(record.partition())
+          binding.topic.bind(record.topic())
+          binding.timestamp.bind(record.timestamp())
           StreamEvent(builder.result()).mutate(CommittableOffsetKey, msg.committableOffset)
         }
 

@@ -148,8 +148,8 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
         val prival = Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII))
 
         // Read severity or facility
-        binding.facility.foreach(bind => builder += bind -> (prival >> 3))
-        binding.severity.foreach(bind => builder += bind -> (prival & 7))
+        binding.facility.bind(prival >> 3)
+        binding.severity.bind(prival & 7)
       }
       true
     }
@@ -163,8 +163,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
       nilValue(),
       capture(times(1, mode.hostname, CharMatchers.PrintUsAscii)) { value =>
         // Unsafe can be use because hostname is validate
-        binding.hostname.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-        true
+        binding.hostname.bind(JsString.fromByteStringUnsafe(value))
       }
     )
 
@@ -173,8 +172,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
       nilValue(),
       capture(times(1, mode.appName, CharMatchers.PrintUsAscii)) { value =>
         // Unsafe can be use because appName is validate
-        binding.appName.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-        true
+        binding.appName.bind(JsString.fromByteStringUnsafe(value))
       }
     )
 
@@ -183,8 +181,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
       nilValue(),
       capture(times(1, mode.procId, CharMatchers.PrintUsAscii)) { value =>
         // Unsafe can be use because procId is validate
-        binding.procId.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-        true
+        binding.procId.bind(JsString.fromByteStringUnsafe(value))
       }
     )
 
@@ -193,8 +190,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
       nilValue(),
       capture(times(1, mode.msgId, CharMatchers.PrintUsAscii)) { value =>
         // Unsafe can be use because msgId is validate
-        binding.msgId.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-        true
+        binding.msgId.bind(JsString.fromByteStringUnsafe(value))
       }
     )
 
@@ -203,8 +199,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
       nilValue(),
       capture(fullDate() && ch('T') && fullTime()) { value =>
         // Unsafe can be use because timestamp is validate
-        binding.timestamp.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-        true
+        binding.timestamp.bind(JsString.fromByteStringUnsafe(value))
       }
     )
 
@@ -263,7 +258,7 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def msg(): Boolean =
     sp() && capture(any()) { value =>
       // Unsafe can be use because message is validate
-      binding.message.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+      binding.message.bind(JsString.fromByteStringUnsafe(value))
       true
     }
 
@@ -320,8 +315,8 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
         val prival = Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII))
 
         // Read severity or facility
-        binding.facility.foreach(bind => builder += bind -> (prival >> 3))
-        binding.severity.foreach(bind => builder += bind -> (prival & 7))
+        binding.facility.bind(prival >> 3)
+        binding.severity.bind(prival & 7)
       }
       true
     }
@@ -330,31 +325,27 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
   def hostname(): Boolean =
     capture(times(1, mode.hostname, CharMatchers.PrintUsAscii)) { value =>
       // Unsafe can be use because hostname is validate
-      binding.hostname.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-      true
+      binding.hostname.bind(JsString.fromByteStringUnsafe(value))
     }
 
   def appName(): Boolean =
     capture(times(1, mode.appName, SyslogParser.AppNameMatcher)) { value =>
       // Unsafe can be use because appName is validate
-      binding.appName.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-      true
+      binding.appName.bind(JsString.fromByteStringUnsafe(value))
     }
 
   def procId(): Boolean =
     openBracket() &&
       capture(times(1, mode.procId, SyslogParser.ProcIdMatcher)) { value =>
         // Unsafe can be use because procId is validate
-        binding.procId.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-        true
+        binding.procId.bind(JsString.fromByteStringUnsafe(value))
       } &&
       closeBracket()
 
   def timestamp(): Boolean =
     capture(fullDate()) { value =>
       // Unsafe can be use because timestamp is validate
-      binding.timestamp.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-      true
+      binding.timestamp.bind(JsString.fromByteStringUnsafe(value))
     }
 
   def fullDate(): Boolean =
@@ -375,7 +366,7 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
   def msg(): Boolean =
     sp() && capture(any()) { value =>
       // Unsafe can be use because message is validate
-      binding.message.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
+      binding.message.bind(JsString.fromByteStringUnsafe(value))
       true
     }
 

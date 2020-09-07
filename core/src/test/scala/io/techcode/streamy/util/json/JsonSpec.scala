@@ -1068,6 +1068,26 @@ class JsonSpec extends WordSpecLike with Matchers {
   }
 
   "Json undefined" should {
+    "be evaluate at any path" in {
+      JsUndefined.evaluate(Root) should equal(JsUndefined)
+    }
+
+    "be mutate with identify function" in {
+      JsUndefined.mutate[Json](Root)(identity[Json]) should equal(JsUndefined)
+    }
+
+    "be patch with simple operation" in {
+      JsUndefined.patch(Add(Root, JsNull)) should equal(JsUndefined)
+    }
+
+    "be patch with operations" in {
+      JsUndefined.patch(Add(Root, JsNull), Add(Root, JsNull)) should equal(JsUndefined)
+    }
+
+    "be patch with iterable operations" in {
+      JsUndefined.patch(Seq(Add(Root, JsNull), Add(Root, JsNull))) should equal(JsUndefined)
+    }
+
     "be used with a predicate for validation" in {
       JsUndefined.exists(v => v.isDefined) should equal(false)
     }
@@ -1563,11 +1583,11 @@ class JsonSpec extends WordSpecLike with Matchers {
 
       val result = input.mutate[JsObject](Root / "obj") { _ =>
         Json.obj("foo" -> "bar", "test" -> "test")
-      }.flatMap[Json](_.mutate[JsArray](Root / "arr") { _ =>
+      }.mutate[JsArray](Root / "arr") { _ =>
         Json.arr("foobar")
-      }).flatMap[Json](_.mutate[Json](Root / "simple") { _ =>
+      }.mutate[Json](Root / "simple") { _ =>
         "foobar"
-      })
+      }
 
       input should equal(Json.obj(
         "simple" -> "test",

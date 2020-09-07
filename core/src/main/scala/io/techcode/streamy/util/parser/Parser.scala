@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.util.parser
 
-import akka.util.ByteString
 import com.google.common.base.CharMatcher
 
 import scala.collection.mutable
@@ -47,7 +46,7 @@ trait Parser[In, Out] {
   protected var _length: Int = -1
 
   /**
-    * Attempt to parse input [[ByteString]].
+    * Attempt to parse input [[In]].
     *
     * @return [[In]] object result of parsing.
     */
@@ -277,7 +276,7 @@ trait Parser[In, Out] {
   }
 
   /**
-    * Set current cursor position to the end of [[ByteString]]
+    * Set current cursor position to the end of [[In]]
     *
     * @return always true.
     */

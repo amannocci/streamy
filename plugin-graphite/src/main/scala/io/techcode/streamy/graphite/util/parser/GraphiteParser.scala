@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.graphite.util.parser
 
-import akka.util.ByteString
 import com.google.common.base.CharMatcher
 import io.techcode.streamy.graphite.component.GraphiteTransformer
 import io.techcode.streamy.util.json._
@@ -38,7 +37,7 @@ object GraphiteParser {
   private[parser] val DelimiterMatcher: CharMatcher = CharMatcher.noneOf(" ").precomputed()
 
   /**
-    * Create a graphite parser that transform incoming [[ByteString]] to [[Json]].
+    * Create a graphite parser that transform incoming [[akka.util.ByteString]] to [[Json]].
     * This parser is compliant with Graphite protocol.
     *
     * @param config parser configuration.
@@ -59,7 +58,7 @@ private trait ParserHelpers {
 }
 
 /**
-  * Graphite parser that transform incoming [[ByteString]] to [[Json]].
+  * Graphite parser that transform incoming [[akka.util.ByteString]] to [[Json]].
   * This parser is compliant with Graphite protocol.
   *
   * @param config parser configuration.
@@ -87,18 +86,15 @@ private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStr
       eoi()
 
   def path(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
-    binding.path.foreach(bind => builder += bind -> JsString.fromByteStringUnsafe(value))
-    true
+    binding.path.bind(JsString.fromByteStringUnsafe(value))
   }
 
   def value(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
-    binding.value.foreach(bind => builder += bind -> JsFloat.fromByteStringUnsafe(value))
-    true
+    binding.value.bind(JsFloat.fromByteStringUnsafe(value))
   }
 
   def timestamp(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
-    binding.timestamp.foreach(bind => builder += bind -> JsLong.fromByteStringUnsafe(value))
-    true
+    binding.timestamp.bind(JsLong.fromByteStringUnsafe(value))
   }
 
   override def cleanup(): Unit = {

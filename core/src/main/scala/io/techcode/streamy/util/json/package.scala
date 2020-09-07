@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -288,6 +288,16 @@ package object json extends JsonImplicit {
       } else {
         JsUndefined
       }
+  }
+
+  // Json binder
+  implicit class JsBinder(val self: Option[String]) extends AnyVal {
+
+    def bind(value: Json)(implicit builder: JsObjectBuilder): Boolean = {
+      self.foreach(k => builder += k -> value)
+      true
+    }
+
   }
 
 }
