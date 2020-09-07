@@ -258,8 +258,13 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def msg(): Boolean =
     sp() && capture(any()) { value =>
       // Unsafe can be use because message is validate
-      binding.message.bind(JsString.fromByteStringUnsafe(value))
-      true
+      binding.message.bind {
+        if (config.bypassMessageParsing) {
+          JsBytes(value)
+        } else {
+          JsString.fromByteStringUnsafe(value)
+        }
+      }
     }
 
   override def cleanup(): Unit = {
@@ -365,9 +370,14 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
 
   def msg(): Boolean =
     sp() && capture(any()) { value =>
-      // Unsafe can be use because message is validate
-      binding.message.bind(JsString.fromByteStringUnsafe(value))
-      true
+      binding.message.bind {
+        if (config.bypassMessageParsing) {
+          JsBytes(value)
+        } else {
+          // Unsafe can be use because message will be validate on conversion
+          JsString.fromByteStringUnsafe(value)
+        }
+      }
     }
 
   override def cleanup(): Unit = {

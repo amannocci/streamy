@@ -157,7 +157,8 @@ object SyslogTransformer {
       mode: Mode = Rfc5424.Mode.Strict,
       maxSize: Int = Int.MaxValue,
       framing: Framing = Framing.Delimiter,
-      binding: Binding = Binding()
+      binding: Binding = Binding(),
+      bypassMessageParsing: Boolean = false
     )
 
     sealed abstract class Mode(
@@ -255,7 +256,8 @@ object SyslogTransformer {
       mode: Mode = Rfc3164.Mode.Strict,
       maxSize: Int = Int.MaxValue,
       framing: Framing = Framing.Delimiter,
-      binding: Binding = Binding()
+      binding: Binding = Binding(),
+      bypassMessageParsing: Boolean = false
     )
 
   }

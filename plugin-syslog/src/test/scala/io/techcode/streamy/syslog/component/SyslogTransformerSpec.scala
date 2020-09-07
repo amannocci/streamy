@@ -40,7 +40,7 @@ import io.techcode.streamy.util.json._
 class SyslogTransformerSpec extends TestTransformer {
 
   "Syslog transformer" should {
-    "parser Rfc3164 with delimiter handle correctly simple syslog message in strict mode" in {
+    "parse Rfc3164 with delimiter handle correctly simple syslog message in strict mode" in {
       except(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserStrictDelimiter,
         SyslogTransformerSpec.Rfc3164.Input.ParserSimpleDelimiter,
@@ -48,7 +48,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc3164 with delimiter handle correctly simple syslog message in lenient mode" in {
+    "parse Rfc3164 with delimiter handle correctly simple syslog message in lenient mode" in {
       except(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientDelimiter,
         SyslogTransformerSpec.Rfc3164.Input.ParserSimpleDelimiter,
@@ -56,14 +56,14 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc3164 with delimiter throw an error when syslog message is malformed" in {
+    "parse Rfc3164 with delimiter throw an error when syslog message is malformed" in {
       exceptError(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientDelimiter,
         SyslogTransformerSpec.Rfc3164.Input.ParserMalformedDelimiter
       )
     }
 
-    "parser Rfc3164 with count handle correctly simple syslog message in strict mode" in {
+    "parse Rfc3164 with count handle correctly simple syslog message in strict mode" in {
       except(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserStrictCount,
         SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount,
@@ -71,7 +71,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc3164 with count handle correctly simple syslog message in lenient mode" in {
+    "parse Rfc3164 with count handle correctly simple syslog message in lenient mode" in {
       except(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount,
@@ -79,7 +79,15 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc3164 with count handle correctly syslog message in multiple parsing" in {
+    "parse Rfc3164 with bypass message parsing" in {
+      except(
+        SyslogTransformerSpec.Rfc3164.Transformer.ParserBypass,
+        SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount,
+        SyslogTransformerSpec.Rfc3164.Output.ParserSimpleBytes
+      )
+    }
+
+    "parse Rfc3164 with count handle correctly syslog message in multiple parsing" in {
       except(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc3164.Input.ParserSimpleCount.grouped(2),
@@ -87,49 +95,49 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc3164 with count throw an error when syslog message is malformed" in {
+    "parse Rfc3164 with count throw an error when syslog message is malformed" in {
       exceptError(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCount
       )
     }
 
-    "parser Rfc3164 with count throw an error when framing is malformed" in {
+    "parse Rfc3164 with count throw an error when framing is malformed" in {
       exceptError(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc3164.Input.ParserMalformedDelimiter
       )
     }
 
-    "parser Rfc3164 with count throw an error when a syslog message is prefix by negative count" in {
+    "parse Rfc3164 with count throw an error when a syslog message is prefix by negative count" in {
       exceptError(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCountNegative
       )
     }
 
-    "parser Rfc3164 with count throw an error when a syslog message count is greater than max allowed" in {
+    "parse Rfc3164 with count throw an error when a syslog message count is greater than max allowed" in {
       exceptError(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
         SyslogTransformerSpec.Rfc3164.Input.ParserMalformedCountMax
       )
     }
 
-    "parser Rfc3164 with count throw an error when a prefix syslog message count is truncated" in {
+    "parse Rfc3164 with count throw an error when a prefix syslog message count is truncated" in {
       exceptError(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
         SyslogTransformerSpec.Rfc3164.Input.ParserTruncated
       )
     }
 
-    "parser Rfc3164 with count throw an error when a prefix syslog message count is greater than max allowed" in {
+    "parse Rfc3164 with count throw an error when a prefix syslog message count is greater than max allowed" in {
       exceptError(
         SyslogTransformerSpec.Rfc3164.Transformer.ParserLenientCountMax,
         SyslogTransformerSpec.Rfc3164.Input.ParserMalformedPrefix
       )
     }
 
-    "parser Rfc5424 with delimiter handle correctly simple syslog message in strict mode" in {
+    "parse Rfc5424 with delimiter handle correctly simple syslog message in strict mode" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserStrictDelimiter,
         SyslogTransformerSpec.Rfc5424.Input.ParserSimpleDelimiter,
@@ -137,7 +145,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc5424 with delimiter handle correctly simple syslog message in lenient mode" in {
+    "parse Rfc5424 with delimiter handle correctly simple syslog message in lenient mode" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
         SyslogTransformerSpec.Rfc5424.Input.ParserSimpleDelimiter,
@@ -145,7 +153,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc5424 with delimiter handle correctly alternative syslog message" in {
+    "parse Rfc5424 with delimiter handle correctly alternative syslog message" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
         SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeDelimiter,
@@ -153,14 +161,14 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc5424 with delimiter throw an error when syslog message is malformed" in {
+    "parse Rfc5424 with delimiter throw an error when syslog message is malformed" in {
       exceptError(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientDelimiter,
         SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
       )
     }
 
-    "parser Rfc5424 with count handle correctly simple syslog message in strict mode" in {
+    "parse Rfc5424 with count handle correctly simple syslog message in strict mode" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserStrictCount,
         SyslogTransformerSpec.Rfc5424.Input.ParserSimpleCount,
@@ -168,7 +176,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc5424 with count handle correctly simple syslog message in lenient mode" in {
+    "parse Rfc5424 with count handle correctly simple syslog message in lenient mode" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc5424.Input.ParserSimpleCount,
@@ -176,7 +184,15 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc5424 with count handle correctly syslog message in multiple parsing" in {
+    "parse Rfc5424 with bypass message parsing" in {
+      except(
+        SyslogTransformerSpec.Rfc5424.Transformer.ParserBypass,
+        SyslogTransformerSpec.Rfc5424.Input.ParserSimpleCount,
+        SyslogTransformerSpec.Rfc5424.Output.ParserBypass
+      )
+    }
+
+    "parse Rfc5424 with count handle correctly syslog message in multiple parsing" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeCount.grouped(2),
@@ -184,7 +200,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc5424 with count handle correctly alternative syslog message" in {
+    "parse Rfc5424 with count handle correctly alternative syslog message" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc5424.Input.ParserAlternativeCount,
@@ -192,49 +208,49 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "parser Rfc5424 with count throw an error when syslog message is malformed" in {
+    "parse Rfc5424 with count throw an error when syslog message is malformed" in {
       exceptError(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCount
       )
     }
 
-    "parser Rfc5424 with count throw an error when framing is malformed" in {
+    "parse Rfc5424 with count throw an error when framing is malformed" in {
       exceptError(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc5424.Input.ParserMalformedDelimiter
       )
     }
 
-    "parser Rfc5424 with count throw an error when a syslog message is prefix by negative count" in {
+    "parse Rfc5424 with count throw an error when a syslog message is prefix by negative count" in {
       exceptError(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCount,
         SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCountNegative
       )
     }
 
-    "parser Rfc5424 with count throw an error when a syslog message count is greater than max allowed" in {
+    "parse Rfc5424 with count throw an error when a syslog message count is greater than max allowed" in {
       exceptError(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
         SyslogTransformerSpec.Rfc5424.Input.ParserMalformedCountMax
       )
     }
 
-    "parser Rfc5424 with count throw an error when a prefix syslog message count is truncated" in {
+    "parse Rfc5424 with count throw an error when a prefix syslog message count is truncated" in {
       exceptError(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
         SyslogTransformerSpec.Rfc5424.Input.ParserTruncated
       )
     }
 
-    "parser Rfc5424 with count throw an error when a prefix syslog message count is greater than max allowed" in {
+    "parse Rfc5424 with count throw an error when a prefix syslog message count is greater than max allowed" in {
       exceptError(
         SyslogTransformerSpec.Rfc5424.Transformer.ParserLenientCountMax,
         SyslogTransformerSpec.Rfc5424.Input.ParserMalformedPrefix
       )
     }
 
-    "printer Rfc3164 with frame delimiter" in {
+    "print Rfc3164 with frame delimiter" in {
       except(
         SyslogTransformerSpec.Rfc3164.Transformer.PrinterDelimiter,
         SyslogTransformerSpec.Rfc3164.Input.PrinterSimple,
@@ -242,7 +258,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "printer Rfc3164 with frame count" in {
+    "print Rfc3164 with frame count" in {
       except(
         SyslogTransformerSpec.Rfc3164.Transformer.PrinterCount,
         SyslogTransformerSpec.Rfc3164.Input.PrinterSimple,
@@ -250,7 +266,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "printer Rfc5424 with frame delimiter" in {
+    "print Rfc5424 with frame delimiter" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.PrinterDelimiter,
         SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
@@ -258,7 +274,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "printer Rfc5424 with frame count" in {
+    "print Rfc5424 with frame count" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.PrinterCount,
         SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
@@ -266,7 +282,7 @@ class SyslogTransformerSpec extends TestTransformer {
       )
     }
 
-    "printer Rfc5424 with default values" in {
+    "print Rfc5424 with default values" in {
       except(
         SyslogTransformerSpec.Rfc5424.Transformer.PrinterDefault,
         SyslogTransformerSpec.Rfc5424.Input.PrinterSimple,
@@ -357,6 +373,14 @@ object SyslogTransformerSpec {
         binding = Binding
       ))
 
+      val ParserBypass: Flow[ByteString, StreamEvent, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc3164.Config(
+        mode = SyslogTransformer.Rfc3164.Mode.Lenient,
+        framing = Framing.Count,
+        maxSize = 1024,
+        binding = Binding,
+        bypassMessageParsing = true
+      ))
+
       val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc3164.Config(
         binding = Binding
       ))
@@ -379,6 +403,10 @@ object SyslogTransformerSpec {
         SyslogTransformer.Rfc3164.Id.ProcId -> "77042",
         SyslogTransformer.Rfc3164.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
       ))
+
+      val ParserSimpleBytes: StreamEvent = StreamEvent(ParserSimple.payload.mutate[String](Root / SyslogTransformer.Rfc3164.Id.Message) { ref =>
+        ByteString(ref)
+      }.get[Json])
 
       val PrinterSimple: ByteString = ByteString("<34>Aug 24 05:34:00 mymachine.example.com su[77042]: 'su root' failed for lonvick on /dev/pts/8")
 
@@ -463,6 +491,14 @@ object SyslogTransformerSpec {
         binding = Binding
       ))
 
+      val ParserBypass: Flow[ByteString, StreamEvent, NotUsed] = SyslogTransformer.parser(SyslogTransformer.Rfc5424.Config(
+        mode = Mode.Lenient,
+        framing = Framing.Count,
+        maxSize = 1024,
+        binding = Binding,
+        bypassMessageParsing = true
+      ))
+
       val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
         binding = Binding
       ))
@@ -498,7 +534,15 @@ object SyslogTransformerSpec {
         SyslogTransformer.Rfc5424.Id.Message -> "'su root' failed for lonvick on /dev/pts/8"
       ))
 
+      val ParserSimpleBytes: StreamEvent = StreamEvent(ParserSimple.payload.mutate[String](Root / SyslogTransformer.Rfc5424.Id.Message) { ref =>
+        ByteString(ref)
+      }.get[Json])
+
       val ParserAlternative: StreamEvent = StreamEvent(ParserSimple.payload.patch(Replace(Root / SyslogTransformer.Rfc5424.Id.Timestamp, "1985-04-12T19:20:50.52-04:00")).get[Json])
+
+      val ParserBypass: StreamEvent = StreamEvent(ParserSimple.payload.mutate[String](Root / SyslogTransformer.Rfc5424.Id.Message) { ref =>
+        JsBytes.fromStringUnsafe(ref)
+      }.get[Json])
 
       val PrinterSimple: ByteString = ByteString("<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su 77042 ID47 - 'su root' failed for lonvick on /dev/pts/8")
 
