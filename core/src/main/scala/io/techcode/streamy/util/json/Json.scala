@@ -50,7 +50,7 @@ object Json {
   private val stringParser = ThreadLocal.withInitial[StringParser[Json]](() => JsonParser.stringParser())
 
   // Singleton json object
-  private val jsonObjEmpty = JsObject(mutable.HashMap.empty)
+  private val jsonObjEmpty = JsObject(mutable.AnyRefMap.empty)
 
   // Singleton json array
   private val jsonArrayEmpty = JsArray(mutable.ArrayBuffer.empty)
@@ -62,7 +62,7 @@ object Json {
     if (fields.isEmpty) {
       jsonObjEmpty
     } else {
-      JsObject(mutable.HashMap(fields: _*))
+      JsObject(mutable.AnyRefMap(fields: _*))
     }
 
   /**
@@ -182,7 +182,7 @@ object Json {
   * Json object builder companion.
   */
 object JsObjectBuilder {
-  val DefaultInitialCapacity: Int = mutable.HashMap.defaultInitialCapacity
+  val DefaultInitialCapacity: Int = 16
 }
 
 /**
@@ -193,8 +193,7 @@ object JsObjectBuilder {
 case class JsObjectBuilder(initialCapacity: Int = JsObjectBuilder.DefaultInitialCapacity)
   extends mutable.Builder[(String, Json), JsObject] {
 
-  private var underlying: mutable.HashMap[String, Json] = mutable.HashMap[String, Json]()
-  underlying.sizeHint(initialCapacity)
+  private var underlying: mutable.AnyRefMap[String, Json] = new mutable.AnyRefMap[String, Json](initialCapacity)
 
   def merge(builder: JsObjectBuilder): JsObjectBuilder = {
     underlying.addAll(builder.underlying)
@@ -203,7 +202,7 @@ case class JsObjectBuilder(initialCapacity: Int = JsObjectBuilder.DefaultInitial
 
   override def clear(): Unit =
     if (underlying.nonEmpty) {
-      underlying = mutable.HashMap[String, Json]()
+      underlying = new mutable.AnyRefMap[String, Json](initialCapacity)
     }
 
   override def result(): JsObject =
@@ -1752,7 +1751,7 @@ case class JsArray(
   * @param underlying underlying structure.
   */
 case class JsObject(
-  private[json] val underlying: mutable.HashMap[String, Json]
+  private[json] val underlying: mutable.AnyRefMap[String, Json]
 ) extends Json {
 
   override def isEmpty: Boolean = underlying.isEmpty
