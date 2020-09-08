@@ -25,6 +25,7 @@ package io.techcode.streamy.tcp.util
 
 import java.security.KeyStore
 import java.security.cert.CertPathValidatorException
+import java.util
 
 import akka.actor.ActorSystem
 import akka.stream.{TLSClientAuth, TLSProtocol}
@@ -109,7 +110,7 @@ object TlsContext {
         configuredProtocols.filter(existingProtocols.contains).toArray
       case None =>
         // Otherwise, we return the default protocols in the given list.
-        Protocols.recommendedProtocols.filter(existingProtocols.contains).toArray
+        Protocols.recommendedProtocols.filter(existingProtocols.contains)
     }
 
     if (!sslConfig.loose.allowWeakProtocols) {
