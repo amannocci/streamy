@@ -50,10 +50,10 @@ object Json {
   private val stringParser = ThreadLocal.withInitial[StringParser[Json]](() => JsonParser.stringParser())
 
   // Singleton json object
-  private val jsonObjEmpty = JsObject(mutable.AnyRefMap.empty)
+  private val jsonObjEmpty = JsObject(new mutable.AnyRefMap(0))
 
   // Singleton json array
-  private val jsonArrayEmpty = JsArray(mutable.ArrayBuffer.empty)
+  private val jsonArrayEmpty = JsArray(new mutable.ArrayBuffer(0))
 
   /**
     * Construct a new JsObject, with the order of fields in the Seq.
