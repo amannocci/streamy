@@ -58,6 +58,7 @@ lazy val bench = project
     `plugin-date` % "test->test",
     `plugin-elasticsearch` % "test->test",
     `plugin-fingerprint` % "test->test",
+    `plugin-gelf` % "test->test",
     `plugin-graphite` % "test->test",
     `plugin-json` % "test->test",
     `plugin-protobuf` % "test->test",
@@ -139,6 +140,17 @@ lazy val `plugin-elasticsearch` = project
 
 lazy val `plugin-fingerprint` = project
   .in(file("plugin-fingerprint"))
+  .settings(
+    commonSettings,
+    name := "streamy-" + name.value
+  )
+  .settings(Publish.settings)
+  .dependsOn(core % "provided->compile")
+  .dependsOn(testkit % "test->test")
+  .disablePlugins(AssemblyPlugin)
+
+lazy val `plugin-gelf` = project
+  .in(file("plugin-gelf"))
   .settings(
     commonSettings,
     name := "streamy-" + name.value
@@ -289,6 +301,7 @@ lazy val root = project
     `plugin-date`,
     `plugin-elasticsearch`,
     `plugin-fingerprint`,
+    `plugin-gelf`,
     `plugin-graphite`,
     `plugin-json`,
     `plugin-kafka`,
