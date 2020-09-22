@@ -24,6 +24,7 @@
 package io.techcode.streamy.fingerprint.component
 
 import akka.NotUsed
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -62,7 +63,7 @@ object FingerprintTransformerBench {
 
   object Sample {
 
-    val Simple: Json = Json.parseStringUnsafe("""{"message":"test"}""")
+    val Simple: StreamEvent = StreamEvent(Json.parseStringUnsafe("""{"message":"test"}"""))
 
   }
 

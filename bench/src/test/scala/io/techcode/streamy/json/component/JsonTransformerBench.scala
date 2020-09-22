@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.json.component
 
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -32,13 +33,13 @@ import org.openjdk.jmh.annotations.Benchmark
 class JsonTransformerBench {
 
   @Benchmark def benchSimpleSource(): MaybeJson =
-    JsonTransformerBench.Source(Json.obj("message" -> """{"test":"test"}"""))
+    JsonTransformerBench.Source(StreamEvent(Json.obj("message" -> """{"test":"test"}""")))
 
   @Benchmark def benchSimpleSourceAndTarget(): MaybeJson =
-    JsonTransformerBench.SourceAndTarget(Json.obj("message" -> """{"test":"test"}"""))
+    JsonTransformerBench.SourceAndTarget(StreamEvent(Json.obj("message" -> """{"test":"test"}""")))
 
   @Benchmark def benchSimpleFailure(): MaybeJson =
-    JsonTransformerBench.Failure(Json.obj("message" -> "test"))
+    JsonTransformerBench.Failure(StreamEvent(Json.obj("message" -> "test")))
 
 }
 

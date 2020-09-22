@@ -25,6 +25,7 @@ package io.techcode.streamy.date.component
 
 import java.time.format.DateTimeFormatter
 
+import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
 import org.openjdk.jmh.annotations.Benchmark
 
@@ -45,9 +46,9 @@ object DateTransformerBench {
 
   object Sample {
 
-    val Iso8601: Json = Json.parseStringUnsafe("""{"date":"2018-10-01T15:10:30Z"}""")
+    val Iso8601: StreamEvent = StreamEvent(Json.parseStringUnsafe("""{"date":"2018-10-01T15:10:30Z"}"""))
 
-    val Custom: Json = Json.parseStringUnsafe("""{"date":"Wed Oct 11 14:32:52 2000"}""")
+    val Custom: StreamEvent = StreamEvent(Json.parseStringUnsafe("""{"date":"Wed Oct 11 14:32:52 2000"}"""))
 
   }
 

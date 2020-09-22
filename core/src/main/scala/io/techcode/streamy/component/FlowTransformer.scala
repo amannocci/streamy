@@ -40,56 +40,56 @@ import scala.util.control.NonFatal
 
 /**
   * Flow transformer logic abstract implementation that provide
-  * a convenient way to process an update on [[Json]].
+  * a convenient way to process an update on [[StreamEvent]].
   */
-abstract class FlowTransformerLogic(val config: Config) extends (Json => MaybeJson) {
+abstract class FlowTransformerLogic(val config: Config) extends (StreamEvent => MaybeJson) {
 
   // Generic error for this transformer logic
   protected[component] val errorMsg: String = Transformer.GenericErrorMsg
 
   // Compute transform function
-  private val function: Json => MaybeJson = {
+  private val function: StreamEvent => MaybeJson = {
     // Base of all transformation
-    val baseTransform: Json => MaybeJson = { payload: Json =>
-      payload.evaluate(config.source).flatMap[Json](transform(_, payload))
+    val baseTransform: StreamEvent => MaybeJson = { evt: StreamEvent =>
+      evt.payload.evaluate(config.source).flatMap[Json](transform(_, evt))
     }
 
     if (config.target.isEmpty || config.source == config.target.get) {
       // Only transform inplace
-      payload: Json =>
-        baseTransform(payload)
-          .flatMap[Json](x => payload.patch(Replace(config.source, x)))
+      evt: StreamEvent =>
+        baseTransform(evt)
+          .flatMap[Json](x => evt.payload.patch(Replace(config.source, x)))
     } else if (config.target.get == Root) {
       // Result of transformation is merged at root
-      val mergeTransform: Json => MaybeJson = { payload: Json =>
-        baseTransform(payload)
+      val mergeTransform: StreamEvent => MaybeJson = { evt: StreamEvent =>
+        baseTransform(evt)
           .flatMap[Json] { v =>
-            payload.flatMap[JsObject] { x =>
+            evt.payload.flatMap[JsObject] { x =>
               v.map[JsObject] { y =>
                 x.merge(y)
               }
-            }.orElse(payload)
+            }.orElse(evt.payload)
           }
       }
 
-      payload: Json =>
+      evt: StreamEvent =>
         if (config.onSuccess == SuccessBehaviour.Remove) {
-          mergeTransform(payload).flatMap[Json](_.patch(Remove(config.source)))
+          mergeTransform(evt).flatMap[Json](_.patch(Remove(config.source)))
         } else {
-          mergeTransform(payload)
+          mergeTransform(evt)
         }
     } else {
       // Result of transformation is added at target
-      payload: Json =>
-        val copyTransform: Json => MaybeJson = { payload: Json =>
-          baseTransform(payload)
-            .flatMap[Json](v => payload.patch(Add(config.target.get, v)))
+      evt: StreamEvent =>
+        val copyTransform: StreamEvent => MaybeJson = { evt: StreamEvent =>
+          baseTransform(evt)
+            .flatMap[Json](v => evt.payload.patch(Add(config.target.get, v)))
         }
 
         if (config.onSuccess == SuccessBehaviour.Remove) {
-          copyTransform(payload).flatMap[Json](_.patch(Remove(config.source)))
+          copyTransform(evt).flatMap[Json](_.patch(Remove(config.source)))
         } else {
-          copyTransform(payload)
+          copyTransform(evt)
         }
     }
   }
@@ -117,6 +117,15 @@ abstract class FlowTransformerLogic(val config: Config) extends (Json => MaybeJs
     * Transform only value of given payload.
     *
     * @param value   value to transform.
+    * @param evt original event.
+    * @return json structure.
+    */
+  @inline def transform(value: Json, evt: StreamEvent): MaybeJson = transform(value, evt.payload)
+
+  /**
+    * Transform only value of given payload.
+    *
+    * @param value   value to transform.
     * @param payload original payload.
     * @return json structure.
     */
@@ -133,10 +142,10 @@ abstract class FlowTransformerLogic(val config: Config) extends (Json => MaybeJs
   /**
     * Apply transform component on event payload.
     *
-    * @param payload payload involved.
+    * @param evt stream event involved.
     * @return payload transformed.
     */
-  @inline def apply(payload: Json): MaybeJson = function(payload)
+  @inline def apply(evt: StreamEvent): MaybeJson = function(evt)
 
 }
 
@@ -191,7 +200,7 @@ abstract class FlowTransformer extends GraphStage[FlowShape[StreamEvent, StreamE
       try {
         var newPayload: MaybeJson = JsUndefined
         try {
-          newPayload = logic(event.payload)
+          newPayload = logic(event)
           newPayload.ifExists[Json] { p =>
             push(out, mutate(event.mutate(p)))
           }
