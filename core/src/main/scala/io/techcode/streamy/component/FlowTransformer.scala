@@ -201,18 +201,15 @@ abstract class FlowTransformer extends GraphStage[FlowShape[StreamEvent, StreamE
         var newPayload: MaybeJson = JsUndefined
         try {
           newPayload = logic(event)
-          newPayload.ifExists[Json] { p =>
-            push(out, mutate(event.mutate(p)))
+          if (newPayload.isDefined) {
+            push(out, mutate(event.mutate(newPayload.get[Json])))
+          } else {
+            event.discard(logic.errorMsg)
           }
         } catch {
           case ex@StreamException(_, _, _) =>
             // We need to re-add source event
             handleFailure(event, ex)
-        }
-
-        // We need to handle empty value
-        if (newPayload.isEmpty) {
-          handleMissing(event)
         }
       } catch {
         case NonFatal(ex) => decider(ex) match {
@@ -223,22 +220,12 @@ abstract class FlowTransformer extends GraphStage[FlowShape[StreamEvent, StreamE
     }
 
     /**
-      * Handle missing value in case of transform failure.
-      *
-      * @param event event involved.
-      */
-    def handleMissing(event: StreamEvent): Unit = logic.config.onError match {
-      case ErrorBehaviour.Discard | ErrorBehaviour.DiscardAndReport => event.discard(logic.errorMsg)
-      case ErrorBehaviour.Skip => push(out, event)
-    }
-
-    /**
       * Handle failure throw by an exception.
       *
       * @param event event involved.
       * @param ex    exception fired.
       */
-    def handleFailure(event: StreamEvent, ex: StreamException): Unit = logic.config.onError match {
+    private def handleFailure(event: StreamEvent, ex: StreamException): Unit = logic.config.onError match {
       case ErrorBehaviour.Discard | ErrorBehaviour.DiscardAndReport =>
         if (Option(ex.cause).isDefined) {
           event.discard(ex.cause)
