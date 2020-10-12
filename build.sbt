@@ -30,7 +30,6 @@ import sbt._
 ThisBuild / version := "0.12.0"
 ThisBuild / scalaVersion := "2.13.3"
 ThisBuild / organization := "io.techcode.streamy"
-ThisBuild / name := "streamy"
 
 // Disable parallel execution
 concurrentRestrictions in Global += Tags.limit(Tags.Test, 1)
