@@ -408,6 +408,11 @@ sealed trait MaybeJson {
   @inline def orElse(alternative: => MaybeJson): MaybeJson
 
   /**
+    * Returns None if this is a JsUndefined or a Some containing the value if this is a Json.
+    */
+  def toOption: Option[Json]
+
+  /**
     * Returns true if the current json value is a json object.
     *
     * @return true if the current json value is a json object, otherwise false.
@@ -557,6 +562,8 @@ object JsUndefined extends MaybeJson {
 
   def orElse(alternative: => MaybeJson): MaybeJson = alternative
 
+  def toOption: Option[Json] = None
+
 }
 
 // scalastyle:off
@@ -564,6 +571,8 @@ object JsUndefined extends MaybeJson {
   * Generic json value.
   */
 sealed trait Json extends JsDefined {
+
+  def toOption: Option[Json] = Some(this)
 
   def get[T](implicit c: JsTyped[T]): T = c.get(this)
 

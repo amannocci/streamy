@@ -1096,6 +1096,10 @@ class JsonSpec extends WordSpecLike with Matchers {
       JsUndefined.isDefined should equal(false)
       JsUndefined.isEmpty should equal(true)
     }
+
+    "be convert to option" in {
+      JsUndefined.toOption should equal(None)
+    }
   }
 
   "Json boolean" should {
@@ -1269,6 +1273,10 @@ class JsonSpec extends WordSpecLike with Matchers {
 
     "flatMap json undefined correctly" in {
       JsUndefined.flatMap[Json](_ => JsNull) should equal(JsUndefined)
+    }
+
+    "be convert to option" in {
+      Json.obj().toOption should equal(Some(Json.obj()))
     }
 
     "get json correctly" in {
