@@ -48,7 +48,7 @@ class KafkaSourceSpec extends KafkaSpec {
         bootstrapServers = bootstrapServers,
         groupId = groupId,
         topics = KafkaSource.StaticTopicConfig(Set(topic))
-      ))
+      )).run()
       whenReady(control.drainAndShutdown(), timeout(60 seconds), interval(100 millis)) { x =>
         x should equal(Done)
       }

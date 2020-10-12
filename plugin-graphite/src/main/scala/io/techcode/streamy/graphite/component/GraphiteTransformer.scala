@@ -37,6 +37,9 @@ import io.techcode.streamy.util.parser.ByteStringParser
   */
 object GraphiteTransformer {
 
+  // New line byte delimiter
+  private val NewLineDelimiter: ByteString = ByteString("\n")
+
   /**
     * Create a graphite flow that transform incoming [[ByteString]] to [[StreamEvent]].
     * This parser is compliant with Graphite protocol.
@@ -45,7 +48,7 @@ object GraphiteTransformer {
     * @return new graphite flow compliant with Graphite protocol.
     */
   def parser(conf: Config): Flow[ByteString, StreamEvent, NotUsed] = {
-    StreamFraming.delimiter(ByteString("\n"), conf.maxSize, allowTruncation = true)
+    StreamFraming.delimiter(NewLineDelimiter, conf.maxSize, allowTruncation = true)
       .via(Flow.fromGraph(new SourceTransformer {
         override def factory(): ByteStringParser[Json] = GraphiteParser.parser(conf)
       }))

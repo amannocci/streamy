@@ -47,7 +47,7 @@ class TcpSourceSpec extends TestSystem {
       "receive event correctly" in {
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionCreated])
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionClosed])
-        TcpSource.server(TcpSourceSpec.Source.Simple).onComplete {
+        TcpSource.server(TcpSourceSpec.Source.Simple).run().onComplete {
           case Success(_) =>
             Source.single(TcpSourceSpec.Input)
               .runWith(TcpSink.client(TcpSourceSpec.Flow.Simple))
@@ -62,7 +62,7 @@ class TcpSourceSpec extends TestSystem {
       "receive event correctly" in {
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionCreated])
         system.eventStream.subscribe(testActor, classOf[TcpEvent.Server.ConnectionClosed])
-        TcpSource.server(TcpSourceSpec.Source.Secure).onComplete {
+        TcpSource.server(TcpSourceSpec.Source.Secure).run().onComplete {
           case Success(_) =>
             Source.single(TcpSourceSpec.Input)
               .runWith(TcpSink.client(TcpSourceSpec.Flow.Secure))

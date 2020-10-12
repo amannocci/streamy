@@ -27,12 +27,11 @@ import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
 import akka.stream.IgnoreComplete
 import akka.stream.scaladsl.Tcp.{IncomingConnection, ServerBinding}
-import akka.stream.scaladsl.{Flow, Sink, Source, Tcp}
+import akka.stream.scaladsl.{Flow, RunnableGraph, Sink, Source, Tcp}
 import akka.util.ByteString
 import io.techcode.streamy.tcp.event.TcpEvent
 import io.techcode.streamy.tcp.util.TlsContext
 
-import scala.collection.immutable
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Success
@@ -65,7 +64,7 @@ object TcpSource {
     *
     * @param config flow configuration.
     */
-  def server(config: Server.Config)(implicit system: ActorSystem): Future[ServerBinding] = {
+  def server(config: Server.Config)(implicit system: ActorSystem): RunnableGraph[Future[ServerBinding]] = {
     {
       if (config.secured) {
         tlsServer(config)
@@ -79,7 +78,7 @@ object TcpSource {
       }).join(Flow.lazyFutureFlow { () =>
         Future.successful(config.handler)
       }).run()
-    }).run()
+    })
   }
 
   /**
@@ -123,6 +122,5 @@ object TcpSource {
       closing = IgnoreComplete
     )
   }
-
 
 }

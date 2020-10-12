@@ -28,7 +28,7 @@ import akka.kafka.ConsumerMessage.CommittableOffset
 import akka.kafka._
 import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.kafka.scaladsl.{Committer, Consumer}
-import akka.stream.scaladsl.{Flow, Sink}
+import akka.stream.scaladsl.{Flow, RunnableGraph, Sink}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
 import io.techcode.streamy.event.{AttributeKey, StreamEvent}
@@ -96,7 +96,7 @@ object KafkaSource {
     *
     * @param config source configuration.
     */
-  def atLeastOnce(config: Config)(implicit system: ActorSystem): Consumer.DrainingControl[Done] = {
+  def atLeastOnce(config: Config)(implicit system: ActorSystem): RunnableGraph[Consumer.DrainingControl[Done]] = {
     // Set consumer settings
     val consumerSettings = ConsumerSettings(system, new StringDeserializer, new ByteArrayDeserializer)
       .withBootstrapServers(config.bootstrapServers)
@@ -140,7 +140,6 @@ object KafkaSource {
             .runWith(Committer.sink(committerSettings))
       }
       .toMat(Sink.ignore)(DrainingControl.apply)
-      .run()
   }
 
 }
