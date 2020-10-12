@@ -24,7 +24,7 @@
 package io.techcode.streamy.event
 
 import io.techcode.streamy.util.StreamException
-import io.techcode.streamy.util.json.{JsUndefined, Json, MaybeJson}
+import io.techcode.streamy.util.json.{JsNull, JsUndefined, Json, MaybeJson}
 import org.scalatest.{Matchers, WordSpecLike}
 
 /**
@@ -36,10 +36,17 @@ class StreamEventSpec extends WordSpecLike with Matchers {
   private val attrKey = AttributeKey[MaybeJson]("test")
 
   "Stream event" can {
-    "be access" in {
-      val value = StreamEvent(Json.obj()).mutate[MaybeJson](attrKey, JsUndefined)
+    "be created from payload and attributes map" in {
+      val value = StreamEvent.from(Json.obj(), Map(attrKey -> JsUndefined))
       value.payload should equal(Json.obj())
       value.attribute[MaybeJson](attrKey) should equal(Some(JsUndefined))
+    }
+
+    "be access" in {
+      val value = StreamEvent(Json.obj()).mutate(attrKey, JsUndefined)
+      value.payload should equal(Json.obj())
+      value.attribute[MaybeJson](attrKey) should equal(Some(JsUndefined))
+      value.attributes().get(attrKey) should equal(Some(JsUndefined))
     }
 
     "be mutate with new payload" in {
@@ -49,7 +56,7 @@ class StreamEventSpec extends WordSpecLike with Matchers {
     }
 
     "be mutate with new attr" in {
-      val input = StreamEvent(Json.obj()).mutate[MaybeJson](attrKey, JsUndefined)
+      val input = StreamEvent(Json.obj()).mutate(attrKey, JsUndefined)
       val output = StreamEventImpl(Json.obj(), Map(attrKey -> JsUndefined))
       input should equal(output)
     }
@@ -57,6 +64,13 @@ class StreamEventSpec extends WordSpecLike with Matchers {
     "be mutate by removing attr" in {
       val input = StreamEvent(Json.obj()).mutate(attrKey)
       val output = StreamEvent(Json.obj())
+      input should equal(output)
+    }
+
+    "be mutate with new attributes map" in {
+      val map: Map[AttributeKey[_], _] = Map(attrKey -> JsUndefined)
+      val input = StreamEvent(Json.obj()).mutate(map)
+      val output = StreamEventImpl(Json.obj(), Map(attrKey -> JsUndefined))
       input should equal(output)
     }
 

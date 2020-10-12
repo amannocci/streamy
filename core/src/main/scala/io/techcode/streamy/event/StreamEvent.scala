@@ -61,6 +61,21 @@ trait StreamEvent {
   def mutate[T](key: AttributeKey[T]): StreamEvent
 
   /**
+    * Create a new stream event based on the current and mutate attributes by replacing map.
+    *
+    * @param attributes new attributes map.
+    * @return new stream event.
+    */
+  def mutate(attributes: Map[AttributeKey[_], _]): StreamEvent
+
+  /**
+    * Returns attributes map.
+    *
+    * @return attributes map.
+    */
+  def attributes(): Map[AttributeKey[_], _]
+
+  /**
     * Returns attribute value based on attribute key.
     *
     * @param key attribute key.
@@ -95,7 +110,7 @@ trait StreamEvent {
   */
 private case class StreamEventImpl(
   payload: Json,
-  private val attributes: Map[AttributeKey[_], _] = Map.empty
+  attributes: Map[AttributeKey[_], _] = Map.empty
 ) extends StreamEvent {
 
   def mutate(newPayload: Json): StreamEvent = StreamEventImpl(newPayload, attributes)
@@ -103,6 +118,8 @@ private case class StreamEventImpl(
   def mutate[T](key: AttributeKey[T], value: T): StreamEvent = StreamEventImpl(payload, attributes.updated(key, value))
 
   def mutate[T](key: AttributeKey[T]): StreamEvent = StreamEventImpl(payload, attributes.removed(key))
+
+  def mutate(attributes: Map[AttributeKey[_], _]): StreamEvent = StreamEventImpl(payload, attributes)
 
   def attribute[T](key: AttributeKey[T]): Option[T] = attributes.get(key).map(_.asInstanceOf[T])
 
@@ -121,12 +138,21 @@ object StreamEvent {
   val Empty: StreamEvent = StreamEventImpl(JsNull, Map.empty)
 
   /**
-    * Create an stream event only using payload.
+    * Create a stream event only using payload.
     *
     * @param payload payload to wrap.
     * @return new stream event.
     */
   def apply(payload: Json): StreamEvent = StreamEventImpl(payload, Map.empty)
+
+  /**
+    * Create a stream event using payload and attributes map.
+    *
+    * @param payload    payload to wrap.
+    * @param attributes attributes map to use.
+    * @return new stream event.
+    */
+  def from(payload: Json, attributes: Map[AttributeKey[_], _]): StreamEvent = StreamEventImpl(payload, attributes)
 
 }
 
