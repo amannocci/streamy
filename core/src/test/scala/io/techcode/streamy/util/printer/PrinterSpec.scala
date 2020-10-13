@@ -25,12 +25,13 @@ package io.techcode.streamy.util.printer
 
 import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.parser.ParseException
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Abstract printer spec.
   */
-class PrinterSpec extends WordSpecLike with Matchers {
+class PrinterSpec extends AnyWordSpecLike with Matchers {
 
   "Abstract printer" should {
     "be cleaned after print" in {

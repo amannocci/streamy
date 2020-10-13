@@ -25,12 +25,13 @@ package io.techcode.streamy.util.json
 
 import akka.util.ByteString
 import com.google.common.math.{IntMath, LongMath}
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Json spec.
   */
-class JsonSpec extends WordSpecLike with Matchers {
+class JsonSpec extends AnyWordSpecLike with Matchers {
 
   "Json object" should {
     "equals JsObject independently of field order" in {

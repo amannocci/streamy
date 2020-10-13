@@ -25,12 +25,13 @@ package io.techcode.streamy.util.printer
 
 import akka.util.ByteString
 import io.techcode.streamy.util.json.Json
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Direct bytestring printer spec.
   */
-class DirectByteStringPrinterSpec extends WordSpecLike with Matchers {
+class DirectByteStringPrinterSpec extends AnyWordSpecLike with Matchers {
 
   "Direct byteString printer" should {
     "print correctly a json value when success" in {

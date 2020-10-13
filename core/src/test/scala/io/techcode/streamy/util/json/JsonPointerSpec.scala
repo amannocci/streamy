@@ -24,12 +24,13 @@
 package io.techcode.streamy.util.json
 
 import io.techcode.streamy.util.parser.ParseException
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * JsonPointer spec.
   */
-class JsonPointerSpec extends WordSpecLike with Matchers {
+class JsonPointerSpec extends AnyWordSpecLike with Matchers {
 
   "JsonPointer" should {
     "return same json value for root pointer" in {

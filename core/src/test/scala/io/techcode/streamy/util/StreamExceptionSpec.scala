@@ -24,12 +24,13 @@
 package io.techcode.streamy.util
 
 import io.techcode.streamy.event.StreamEvent
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Stream exception spec.
   */
-class StreamExceptionSpec extends WordSpecLike with Matchers {
+class StreamExceptionSpec extends AnyWordSpecLike with Matchers {
 
   val generic = new StreamException(StreamEvent.Empty, "foobar")
 

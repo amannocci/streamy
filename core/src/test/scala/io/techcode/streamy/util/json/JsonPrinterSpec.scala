@@ -24,12 +24,13 @@
 package io.techcode.streamy.util.json
 
 import akka.util.ByteString
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Json printer spec.
   */
-class JsonPrinterSpec extends WordSpecLike with Matchers {
+class JsonPrinterSpec extends AnyWordSpecLike with Matchers {
 
   "Json printer" should {
     "print an json boolean set to false correctly" in {

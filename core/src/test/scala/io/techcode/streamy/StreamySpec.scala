@@ -28,12 +28,14 @@ import java.time.Duration
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit, TestKitBase}
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec, WordSpecLike}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Streamy spec.
   */
-class StreamySpec extends WordSpecLike with Matchers {
+class StreamySpec extends AnyWordSpecLike with Matchers {
 
   "Streamy" should {
     "start even if there is no plugin" in {
@@ -57,7 +59,7 @@ class StreamySpec extends WordSpecLike with Matchers {
 /**
   * Helper for system test.
   */
-trait StreamyTestSystem extends WordSpec with Matchers with BeforeAndAfterAll with TestKitBase with ImplicitSender {
+trait StreamyTestSystem extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with TestKitBase with ImplicitSender {
 
   implicit lazy val system: ActorSystem = {
     def systemConfig = ConfigFactory.parseString(s"akka.stream.materializer.auto-fusing=true")

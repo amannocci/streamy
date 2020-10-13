@@ -24,12 +24,13 @@
 package io.techcode.streamy.event
 
 import io.techcode.streamy.plugin.PluginState
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Plugin event spec.
   */
-class PluginEventSpec extends WordSpecLike with Matchers {
+class PluginEventSpec extends AnyWordSpecLike with Matchers {
 
   "Plugin event" can {
     "be converted to plugin loading state" in {

@@ -25,14 +25,15 @@ package io.techcode.streamy.util.json
 
 import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import pureconfig._
 import pureconfig.generic.auto._
 
 /**
   * JsonImplicit spec.
   */
-class JsonImplicitSpec extends WordSpecLike with Matchers {
+class JsonImplicitSpec extends AnyWordSpecLike with Matchers {
 
   "JsonImplicit" should {
     "support pureconfig integration" in {

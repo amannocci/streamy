@@ -24,11 +24,13 @@
 package io.techcode.streamy.util.json
 
 import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * JsonPointer spec.
   */
-class JsonOperationSpec extends WordSpecLike with Matchers {
+class JsonOperationSpec extends AnyWordSpecLike with Matchers {
 
   "Json add operation" should {
     "add correctly a field in json object" in {

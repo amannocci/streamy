@@ -25,14 +25,15 @@ package io.techcode.streamy.util.json
 
 import akka.util.ByteString
 import io.techcode.streamy.util.parser.ParseException
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.util.control.NonFatal
 
 /**
   * Json parser spec.
   */
-class JsonParserSpec extends WordSpecLike with Matchers {
+class JsonParserSpec extends AnyWordSpecLike with Matchers {
 
   "Json parser" should {
     "parse an json boolean set to false correctly" in {

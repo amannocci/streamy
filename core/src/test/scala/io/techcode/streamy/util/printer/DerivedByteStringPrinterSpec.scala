@@ -25,13 +25,13 @@ package io.techcode.streamy.util.printer
 
 import akka.util.ByteString
 import io.techcode.streamy.util.json.Json
-import io.techcode.streamy.util.parser.ParseException
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Derived bytestring printer spec.
   */
-class DerivedByteStringPrinterSpec extends WordSpecLike with Matchers {
+class DerivedByteStringPrinterSpec extends AnyWordSpecLike with Matchers {
 
   "Derived byteString printer" should {
     "print correctly a json value when success" in {

@@ -26,11 +26,13 @@ package io.techcode.streamy.util.printer
 import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.parser.ParseException
 import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * String printer spec.
   */
-class StringPrinterSpec extends WordSpecLike with Matchers {
+class StringPrinterSpec extends AnyWordSpecLike with Matchers {
 
   "String printer" should {
     "print correctly a json value when success" in {

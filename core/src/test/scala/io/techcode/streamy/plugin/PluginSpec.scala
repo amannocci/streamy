@@ -29,14 +29,13 @@ import akka.actor.{ActorRef, Kill, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.StreamyTestSystem
 import org.scalatest.{Inside, PrivateMethodTester}
-import org.scalatestplus.mockito.MockitoSugar
 import pureconfig._
 import pureconfig.generic.auto._
 
 /**
   * Plugin spec.
   */
-class PluginSpec extends StreamyTestSystem with MockitoSugar with Inside with PrivateMethodTester {
+class PluginSpec extends StreamyTestSystem with Inside with PrivateMethodTester {
 
   "PluginDescription" should {
     "contains all informations" in {
@@ -73,7 +72,7 @@ class PluginSpec extends StreamyTestSystem with MockitoSugar with Inside with Pr
 
   private def create(): ActorRef = {
     val conf: Config = ConfigFactory.empty()
-    val description: PluginDescription = loadConfigOrThrow[PluginDescription](ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
+    val description: PluginDescription = ConfigSource.fromConfig(ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}""")).loadOrThrow[PluginDescription]
     val typed: Class[_] = classOf[Impl]
     system.actorOf(Props(
       typed,

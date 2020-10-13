@@ -25,12 +25,13 @@ package io.techcode.streamy.tcp.util
 
 import akka.actor.ActorSystem
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Tls context spec.
   */
-class TlsContextSpec extends WordSpecLike with Matchers {
+class TlsContextSpec extends AnyWordSpecLike with Matchers {
 
   "Tls context" should {
     "be able to validate default trust manager" in {

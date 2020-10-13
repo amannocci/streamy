@@ -25,13 +25,14 @@ package io.techcode.streamy.kafka.util
 
 import akka.kafka.testkit.scaladsl.{ScalatestKafkaSpec, TestcontainersKafkaLike}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Helper for kafka spec.
   */
 abstract class KafkaSpec(kafkaPort: Int) extends ScalatestKafkaSpec(kafkaPort) with TestcontainersKafkaLike
-  with WordSpecLike with Matchers with ScalaFutures with Eventually {
+  with AnyWordSpecLike with Matchers with ScalaFutures with Eventually {
 
   protected def this() = this(kafkaPort = -1)
 

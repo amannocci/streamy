@@ -26,13 +26,14 @@ package io.techcode.streamy.util.parser
 import akka.util.ByteString
 import io.techcode.streamy.util.json.{JsInt, JsObjectBuilder, JsString, Json}
 import io.techcode.streamy.util.printer.PrintException
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * ByteString parser spec.
   */
 // scalastyle:off
-class ByteStringParserSpec extends WordSpecLike with Matchers {
+class ByteStringParserSpec extends AnyWordSpecLike with Matchers {
 
   "ByteString parser" should {
     "compute correctly error message for input" in {

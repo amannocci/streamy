@@ -24,13 +24,14 @@
 package io.techcode.streamy.event
 
 import io.techcode.streamy.util.StreamException
-import io.techcode.streamy.util.json.{JsNull, JsUndefined, Json, MaybeJson}
-import org.scalatest.{Matchers, WordSpecLike}
+import io.techcode.streamy.util.json.{JsUndefined, Json, MaybeJson}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 /**
   * Stream event spec.
   */
-class StreamEventSpec extends WordSpecLike with Matchers {
+class StreamEventSpec extends AnyWordSpecLike with Matchers {
 
   // Test attr key
   private val attrKey = AttributeKey[MaybeJson]("test")
