@@ -24,13 +24,20 @@
 package io.techcode.streamy.util.json
 
 import akka.util.ByteString
+import io.bullet.borer.Dom.Element
+import io.bullet.borer.compat.akka._
 import io.techcode.streamy.util.parser.{ByteStringParser, ParseException, StringParser}
 import org.openjdk.jmh.annotations.Benchmark
+
+import scala.io.Source
 
 /**
   * Json parser bench.
   */
 class JsonParserBench {
+
+  @Benchmark def parseBorerByteString(): Element =
+    io.bullet.borer.Json.decode(JsonParserBench.Sample.ByteStringImpl).to[Element].value
 
   @Benchmark def parseByteString(): Either[ParseException, Json] =
     JsonParserBench.ByteStringJsonParser.parse(JsonParserBench.Sample.ByteStringImpl)
@@ -51,15 +58,7 @@ object JsonParserBench {
 
   object Sample {
 
-    val JsonObjImpl: JsObject = Json.obj(
-      "int" -> 0,
-      "long" -> 0L,
-      "float" -> 0F,
-      "double" -> 0D,
-      "string" -> "string"
-    )
-
-    val StringImpl: String = JsonObjImpl.toString
+    val StringImpl: String = Source.fromResource("twitter_api_response.json").mkString
 
     val ByteStringImpl: ByteString = ByteString(StringImpl).compact
 

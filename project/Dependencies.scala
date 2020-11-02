@@ -34,7 +34,8 @@ object Dependencies {
   val GuavaVersion = "29.0-jre"
   val LogbackClassicVersion = "1.2.3"
   val MockitoCoreVersion = "3.5.13"
-  val PureConfig = "0.14.0"
+  val PureConfigVersion = "0.14.0"
+  val BorerVersion = "1.6.2"
   val ScalaTest = "3.2.2"
   val TestContainersScalaVersion = "0.38.4"
   val TestContainersVersion = "1.14.3"
@@ -65,8 +66,11 @@ object Dependencies {
     val googleGuava = "com.google.guava" % "guava" % GuavaVersion // Apache 2 License
     val logbackClassic = "ch.qos.logback" % "logback-classic" % LogbackClassicVersion // EPL/LGPL License
     val mockitoCore = "org.mockito" % "mockito-core" % MockitoCoreVersion
-    val pureConfig = "com.github.pureconfig" %% "pureconfig" % PureConfig // Mozilla Public License 2.0
+    val pureConfig = "com.github.pureconfig" %% "pureconfig" % PureConfigVersion // Mozilla Public License 2.0
     val scalaTest = "org.scalatest" %% "scalatest" % ScalaTest
+    val borer = "io.bullet" %% "borer-core" % BorerVersion
+    val borerDerivation = "io.bullet" %% "borer-derivation" % BorerVersion
+    val borerCompatAkka = "io.bullet" %% "borer-compat-akka" % BorerVersion
   }
 
   object Test {
@@ -87,6 +91,10 @@ object Dependencies {
   val core = libraryDependencies ++= Seq(
     akkaActor, akkaStream, akkaSlf4j, logbackClassic, googleGuava, pureConfig,
     Test.akkaTestkit, Test.akkaStreamTestkit, Test.mockitoCore, Test.scalaTest
+  )
+
+  val bench = libraryDependencies ++= Seq(
+    borer, borerDerivation, borerCompatAkka
   )
 
   val elasticsearch = libraryDependencies ++= Seq(akkaHttp, elasticClient, testContainers, testContainersElastic)

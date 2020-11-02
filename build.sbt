@@ -65,6 +65,7 @@ lazy val bench = project
     `plugin-tcp` % "test->test",
     `plugin-xymon` % "test->test"
   )
+  .settings(Dependencies.bench)
   .settings(Benchs.settings)
   .disablePlugins(AssemblyPlugin)
   .enablePlugins(JmhPlugin)
