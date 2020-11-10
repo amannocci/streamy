@@ -430,7 +430,7 @@ class JsonPointerParser extends StringParser[JsonPointer] {
     if (root()) {
       pointer
     } else {
-      throw new ParseException(s"Unexpected input at index ${cursor()}")
+      throw new ParseException(s"Unexpected input at index $cursor")
     }
   }
 

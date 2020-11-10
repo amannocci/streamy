@@ -99,6 +99,28 @@ final class CharBuilder {
   }
 
   /**
+    * Gives a hint how many chars are expected to be added.
+    *
+    * @param size the hint how many chars will be added.
+    * @return this object for chaining.
+    */
+  def sizeHint(size: Int): CharBuilder = {
+    resizeIfNecessary(len + size)
+    this
+  }
+
+  /**
+    * Drop the `n` last chars from this builder.
+    *
+    * @param n number of chars to drop.
+    * @return this object for chaining.
+    */
+  def dropRight(n: Int): CharBuilder = {
+    len = Math.max(0, len - n)
+    this
+  }
+
+  /**
     * Reset char builder.
     *
     * @return this object for chaining.
@@ -149,8 +171,19 @@ final class CharBuilder {
     require(begin <= end, "Begin param must be inferior or equal to end param")
     val totalLen = len + (end - begin)
     resizeIfNecessary(totalLen)
-    str.getChars(0, end, buf, len)
+    str.getChars(begin, end, buf, len)
     len = totalLen
+    this
+  }
+
+  /**
+    * Appends a bytestring part as a sequence of byte interpreted as 7-bit char.
+    * @param byteStr bytestring.
+    * @return this object for chaining.
+    */
+  def append(byteStr: ByteString): CharBuilder = {
+    resizeIfNecessary(len + byteStr.length)
+    byteStr.foreach(b => append((b & 0xFF).toChar))
     this
   }
 

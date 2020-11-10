@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2018-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,13 +28,14 @@ import com.google.common.base.CharMatcher
 import scala.collection.mutable
 import scala.util.control.NoStackTrace
 
+// scalastyle:off number.of.methods
 trait Parser[In, Out] {
 
   // Safe cursor position
   protected var _mark: Int = 0
 
   // Current cursor position
-  protected var _cursor: Int = 0
+  protected[util] var _cursor: Int = 0
 
   // Local access
   protected var data: In = null.asInstanceOf[In]
@@ -43,7 +44,7 @@ trait Parser[In, Out] {
   protected val stack: mutable.Stack[Any] = mutable.Stack[Any]()
 
   // Cache length of data
-  protected var _length: Int = -1
+  protected[util] var _length: Int = -1
 
   /**
     * Attempt to parse input [[In]].
@@ -92,7 +93,7 @@ trait Parser[In, Out] {
     *
     * @return current character.
     */
-  def current(): Char
+  @inline def current(): Char
 
   /**
     * Returns the length of the input data to parse.
@@ -106,7 +107,7 @@ trait Parser[In, Out] {
     *
     * @return index of the next character.
     */
-  final def cursor(): Int = _cursor
+  final def cursor: Int = _cursor
 
   /**
     * Mark current cursor position.
@@ -119,6 +120,20 @@ trait Parser[In, Out] {
   final def unmark(): Unit = _cursor = _mark
 
   /**
+    * Returns remaining number of data elements.
+    *
+    * @return remaining number of data elements.
+    */
+  @inline def hasRemaining: Boolean = _cursor < _length
+
+  /**
+    * Returns number of remaining data elements.
+    *
+    * @return number of remaining data elements.
+    */
+  @inline def remainingSize: Int = _length - _cursor
+
+  /**
     * Create a slice of data based on mark and cursor.
     *
     * @return slice of data.
@@ -126,10 +141,34 @@ trait Parser[In, Out] {
   def slice(): In
 
   /**
-    * Advance cursor by n where n is consumed data.
+    * Skip one element.
     */
-  def advance(): Boolean = {
-    _cursor += 1
+  @inline final def skip(): Boolean = skip(1)
+
+  /**
+    * Skip n elements.
+    *
+    * @param numElems number of elements to skip.
+    */
+  @inline def skip(numElems: Int): Boolean = {
+    _cursor += numElems
+    true
+  }
+
+  /**
+    * Unskip one element.
+    */
+  @inline final def unskip(): Boolean = unskip(1)
+
+  /**
+    * Unskip n elements.
+    *
+    * @param numElems number of elements to unskip.
+    */
+  @inline def unskip(numElems: Int): Boolean = {
+    require(numElems >= 0, "Number of elements to unskip must be superior or equal to zero")
+    _cursor -= numElems
+    _cursor = Math.max(0, _cursor)
     true
   }
 
@@ -138,10 +177,10 @@ trait Parser[In, Out] {
     *
     * @return true if parsing succeeded, otherwise false.
     */
-  final def eoi(): Boolean = _cursor == length
+  final def eoi(): Boolean = _cursor == _length
 
   /**
-    * Runs the inner rule and capture a [[In]] if field is defined.
+    * Runs the inner rule and capture a [[In]] if rule is a success.
     *
     * @param inner inner rule.
     * @param field field to populate if success.
@@ -149,25 +188,44 @@ trait Parser[In, Out] {
     */
   def capture(inner: => Boolean)(field: In => Boolean): Boolean = {
     mark()
-    if (inner) {
-      field(slice())
-    } else {
-      false
-    }
+    inner && field(slice())
   }
 
   /**
-    * Runs the inner rule and capture a [[In]] if field is defined optionally.
+    * Runs the inner rule and capture a [[In]] if bind is defined and rule is a success.
+    *
+    * @param bind   optional bind.
+    * @param inner  inner rule.
+    * @param fields fields to populate if success.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  def capture(bind: Option[String], inner: => Boolean)(fields: (String, In) => Boolean): Boolean = {
+    mark()
+    inner && bind.forall(k => fields(k, slice()))
+  }
+
+  /**
+    * Runs the inner rule and capture a [[In]] if rule is a success optionally.
     *
     * @param inner inner rule.
     * @param field field to populate if success.
     * @return true if parsing succeeded, otherwise false.
     */
   def captureOptional(inner: => Boolean)(field: In => Boolean): Boolean = {
-    mark()
-    if (inner) {
-      field(slice())
-    }
+    capture(inner)(field)
+    true
+  }
+
+  /**
+    * Runs the inner rule and capture a [[In]] if bind is defined and rule is a success optionally.
+    *
+    * @param bind   optional bind.
+    * @param inner  inner rule.
+    * @param fields field to populate if success.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  def captureOptional(bind: Option[String], inner: => Boolean)(fields: (String, In) => Boolean): Boolean = {
+    capture(bind, inner)(fields)
     true
   }
 
@@ -177,7 +235,7 @@ trait Parser[In, Out] {
     * @param ch character excepted.
     * @return true if parsing succeeded, otherwise false.
     */
-  final def ch(ch: Char): Boolean = (_cursor < length && ch == current()) && advance()
+  final def ch(ch: Char): Boolean = hasRemaining && ch == current() && skip()
 
   /**
     * Except to match a sequence of characters.
@@ -185,44 +243,46 @@ trait Parser[In, Out] {
     * @param str characters sequence.
     * @return true if parsing succeeded, otherwise false.
     */
-  final def str(str: String): Boolean = {
-    if (_cursor + str.length <= length) {
-      var i = 0
-      var state = true
-      while (state && i < str.length) {
-        if (str(i) == current()) {
-          advance()
-          i += 1
-        } else {
-          state = false
-        }
-      }
-      state
-    } else {
-      false
+  final def str(str: String): Boolean = str.length <= remainingSize && {
+    var i = 0
+    var state = true
+    while (state && i < str.length) {
+      state = str.charAt(i) == current()
+      skip()
+      i += 1
     }
+    state
   }
 
   /**
-    * Runs the matcher until it fails or count is exceeded.
+    * Runs the inner rule until it fails or end range is exceeded.
     *
-    * @param count   target count.
+    * @param start start of the range include.
+    * @param end   end of the range include.
+    * @param rule  inner rule.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  final def times(start: Int, end: Int)(rule: => Boolean): Boolean = {
+    require(start > 0 && start <= end)
+    var c = 0
+    while (c < end && rule) {
+      c += 1
+    }
+    c >= start && c <= end
+  }
+
+  /**
+    * Runs the matcher until it fails or end range is exceeded.
+    *
+    * @param start   start of the range include.
+    * @param end     end of the range include.
     * @param matcher character matcher.
     * @return true if parsing succeeded, otherwise false.
     */
-  final def times(count: Int, matcher: CharMatcher): Boolean = {
-    require(count > 0)
-    if (_cursor + count <= length) {
-      var c = 0
-      while (c < count && matcher.matches(current())) {
-        advance()
-        c += 1
-      }
-      count == c
-    } else {
-      false
+  final def times(start: Int, end: Int, matcher: CharMatcher): Boolean = start <= remainingSize &&
+    times(start, Math.min(_cursor + end, remainingSize)) {
+      matcher.matches(current()) && skip()
     }
-  }
 
   /**
     * Runs the inner rule until it fails or count is exceeded.
@@ -231,47 +291,70 @@ trait Parser[In, Out] {
     * @param rule  inner rule.
     * @return true if parsing succeeded, otherwise false.
     */
-  final def times(count: Int)(rule: => Boolean): Boolean = {
-    require(count > 0)
-    var c = 0
-    var state = true
-    while (_cursor < length && c < count && state) {
-      if (rule) {
-        c += 1
-      } else {
-        state = false
-      }
-    }
-    count == c
-  }
+  final def times(count: Int)(rule: => Boolean): Boolean = times(count, count)(rule)
 
   /**
-    * Runs the matcher until it fails or end range is exceeded.
+    * Runs the matcher until it fails or count is exceeded.
     *
-    * @param start   start of the range.
-    * @param end     end of the range.
+    * @param count   target count.
     * @param matcher character matcher.
     * @return true if parsing succeeded, otherwise false.
     */
-  final def times(start: Int, end: Int, matcher: CharMatcher): Boolean = {
-    require(start > 0)
-    if (_cursor + end < length) {
-      var c = 0
-      while (matcher.matches(current())) {
-        advance()
-        c += 1
-      }
-      c >= start
-    } else if (_cursor + start < length) {
-      val bound = length - _cursor
-      var c = 0
-      while (c < bound && matcher.matches(current())) {
-        advance()
-        c += 1
-      }
-      c >= start
-    } else {
-      false
+  final def times(count: Int, matcher: CharMatcher): Boolean = count <= remainingSize &&
+    times(count) {
+      matcher.matches(current()) && skip()
+    }
+
+  /**
+    * Runs the inner rule until it fails, always succeeds.
+    *
+    * @param rule inner rule.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  final def zeroOrMore(rule: => Boolean): Boolean = {
+    while (rule) ()
+    true
+  }
+
+  /**
+    * Runs the matcher until it fails, always succeeds.
+    *
+    * @param matcher character matcher.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  final def zeroOrMore(matcher: CharMatcher): Boolean = zeroOrMore {
+    hasRemaining && matcher.matches(current()) && skip()
+  }
+
+  /**
+    * Runs the inner rule until it fails, succeeds if the matcher succeeded at least once.
+    *
+    * @param rule inner rule.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  final def oneOrMore(rule: => Boolean): Boolean = rule && zeroOrMore(rule)
+
+  /**
+    * Runs the matcher until it fails, succeeds if the matcher succeeded at least once.
+    *
+    * @param matcher character matcher.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  final def oneOrMore(matcher: CharMatcher): Boolean = oneOrMore {
+    hasRemaining && matcher.matches(current()) && skip()
+  }
+
+  /**
+    * Runs the inner rule, succeeds even if the inner rule is failed.
+    *
+    * @param rule inner rule.
+    * @return true if parsing succeeded, otherwise false.
+    */
+  final def optional(rule: => Boolean): Boolean = {
+    val start = _cursor
+    rule || {
+      _cursor = start
+      true
     }
   }
 
@@ -286,73 +369,6 @@ trait Parser[In, Out] {
   }
 
   /**
-    * Runs the matcher until it fails, always succeeds.
-    *
-    * @param matcher character matcher.
-    * @return true if parsing succeeded, otherwise false.
-    */
-  final def zeroOrMore(matcher: CharMatcher): Boolean = {
-    while (_cursor < length && matcher.matches(current())) advance()
-    true
-  }
-
-  /**
-    * Runs the inner rule until it fails, always succeeds.
-    *
-    * @param rule inner rule.
-    * @return true if parsing succeeded, otherwise false.
-    */
-  final def zeroOrMore(rule: => Boolean): Boolean = {
-    while (_cursor < length && rule) ()
-    true
-  }
-
-  /**
-    * Runs the matcher until it fails, succeeds if the matcher succeeded at least once.
-    *
-    * @param matcher character matcher.
-    * @return true if parsing succeeded, otherwise false.
-    */
-  final def oneOrMore(matcher: CharMatcher): Boolean = {
-    val start = _cursor
-    while (_cursor < length && matcher.matches(current())) advance()
-    start != _cursor
-  }
-
-  /**
-    * Runs the inner rule until it fails, succeeds if the matcher succeeded at least once.
-    *
-    * @param rule inner rule.
-    * @return true if parsing succeeded, otherwise false.
-    */
-  final def oneOrMore(rule: => Boolean): Boolean = {
-    var c = 0
-    var state = true
-    while (_cursor < length && state) {
-      if (rule) {
-        c += 1
-      } else {
-        state = false
-      }
-    }
-    c > 0
-  }
-
-  /**
-    * Runs the inner rule, succeeds even if the inner rule is failed.
-    *
-    * @param rule inner rule.
-    * @return true if parsing succeeded, otherwise false.
-    */
-  final def optional(rule: => Boolean): Boolean = {
-    val start = _cursor
-    if (!rule) {
-      _cursor = start
-    }
-    true
-  }
-
-  /**
     * Runs the first inner rule and the second inner rule if the first failed.
     * Failed when the first and second inner rule are failed.
     *
@@ -362,9 +378,7 @@ trait Parser[In, Out] {
     */
   final def or(x: => Boolean, y: => Boolean): Boolean = {
     val start = _cursor
-    if (x) {
-      true
-    } else {
+    x || {
       _cursor = start
       y
     }
@@ -382,12 +396,7 @@ trait Parser[In, Out] {
     parser._cursor = _cursor
     parser._length = _length
     parser.data = data
-    if (action(parser)) {
-      merge(parser)
-      true
-    } else {
-      false
-    }
+    action(parser) && merge(parser)
   }
 
   /**
@@ -396,12 +405,15 @@ trait Parser[In, Out] {
     * @param parser parser to result to merge.
     * @tparam T sub type parser.
     */
-  def merge[T <: Parser[In, Out]](parser: T): Unit = {
+  def merge[T <: Parser[In, Out]](parser: T): Boolean = {
     _cursor = parser._cursor
     stack ++= parser.stack
+    true
   }
 
 }
+
+// scalastyle:on number.of.methods
 
 /**
   * Parse exception.

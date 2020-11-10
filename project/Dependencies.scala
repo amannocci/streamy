@@ -36,6 +36,8 @@ object Dependencies {
   val MockitoCoreVersion = "3.5.13"
   val PureConfigVersion = "0.14.0"
   val BorerVersion = "1.6.2"
+  val CirceVersion = "0.13.0"
+  val JacksonVersion = "2.11.3"
   val ScalaTest = "3.2.2"
   val TestContainersScalaVersion = "0.38.4"
   val TestContainersVersion = "1.14.3"
@@ -71,6 +73,11 @@ object Dependencies {
     val borer = "io.bullet" %% "borer-core" % BorerVersion
     val borerDerivation = "io.bullet" %% "borer-derivation" % BorerVersion
     val borerCompatAkka = "io.bullet" %% "borer-compat-akka" % BorerVersion
+    val circeCore = "io.circe" %% "circe-core" % CirceVersion
+    val circeGeneric = "io.circe" %% "circe-generic" % CirceVersion
+    val circeParser = "io.circe" %% "circe-parser" % CirceVersion
+    val jacksonCore = "com.fasterxml.jackson.core" % "jackson-core" % JacksonVersion
+    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % JacksonVersion
   }
 
   object Test {
@@ -94,7 +101,7 @@ object Dependencies {
   )
 
   val bench = libraryDependencies ++= Seq(
-    borer, borerDerivation, borerCompatAkka
+    borer, borerDerivation, borerCompatAkka, circeCore, circeGeneric, circeParser, jacksonCore, jacksonDatabind
   )
 
   val elasticsearch = libraryDependencies ++= Seq(akkaHttp, elasticClient, testContainers, testContainersElastic)

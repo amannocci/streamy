@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.util.lang
 
+import akka.util.ByteString
 import io.techcode.streamy.StreamyTestSystem
 
 /**
@@ -45,10 +46,34 @@ class CharBuilderSpec extends StreamyTestSystem {
       builder.length() should equal(0)
     }
 
+    "be able to grow based on size hint" in {
+      val builder = new CharBuilder
+      builder.sizeHint(2)
+      builder.length() should equal(0)
+    }
+
+    "be able to drop last characters" in {
+      val builder = new CharBuilder
+      builder.append("0123456789").dropRight(5)
+      builder.toString should equal("01234")
+    }
+
     "be able to append sequence" in {
       val builder = new CharBuilder
       builder.append("foo").append("bar")
       builder.toString should equal("foobar")
+    }
+
+    "be able to append string slice" in {
+      val builder = new CharBuilder
+      builder.append("foobar", 0,3)
+      builder.toString should equal("foo")
+    }
+
+    "be able to append bytestring" in {
+      val builder = new CharBuilder
+      builder.append(ByteString("foobar123-"))
+      builder.toString should equal("foobar123-")
     }
 
     "be able to append char" in {
@@ -59,14 +84,14 @@ class CharBuilderSpec extends StreamyTestSystem {
 
     "be able to append an int" in {
       val builder = new CharBuilder
-      builder.append(-10).append(50).append(Int.MinValue)
-      builder.toString should equal("-1050-2147483648")
+      builder.append(-10).append(50).append(65536).append(Int.MinValue)
+      builder.toString should equal("-105065536-2147483648")
     }
 
     "be able to append a long" in {
       val builder = new CharBuilder
-      builder.append(9223372036854775800L).append(Long.MinValue)
-      builder.toString should equal("9223372036854775800-9223372036854775808")
+      builder.append(-10L).append(9223372036854775800L).append(Long.MinValue)
+      builder.toString should equal("-109223372036854775800-9223372036854775808")
     }
 
     "be able to append a float" in {
@@ -99,8 +124,11 @@ class CharBuilderSpec extends StreamyTestSystem {
     "be able to grow until error" in {
       val builder = new CharBuilder
       assertThrows[OutOfMemoryError] {
-        for (i <- 0 until Int.MaxValue) {
-          builder.append('a')
+        var i = 0L
+        val value = 'a' * 10000000
+        while (i < Long.MaxValue) {
+          builder.append(value)
+          i += 10000000
         }
       }
     }

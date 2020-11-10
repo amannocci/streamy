@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,14 @@ class ByteStringParserSpec extends AnyWordSpecLike with Matchers {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = true
       }
-      parser.cursor() should equal(0)
+      parser.cursor should equal(0)
+    }
+
+    "return current cursor position after skip and unskip" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = skip(2) && skip() && unskip(2) && unskip()
+      }
+      parser.cursor should equal(0)
     }
 
     "return slice of data" in {
@@ -88,8 +95,29 @@ class ByteStringParserSpec extends AnyWordSpecLike with Matchers {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           capture(str("foo")) { value =>
-            builder += "test" -> JsString.fromByteStringUnsafe(value)
-            true
+            builder.bind("test", JsString.fromByteStringUnsafe(value))
+          }
+        }
+      }
+      parser.parse(ByteString("foobar")) should equal(Right(Json.obj("test" -> "foo")))
+    }
+
+    "capture properly a value if present and bind is defined" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = {
+          capture(Option("test"), str("foo")) { (key, value) =>
+            builder.bind(key, JsString.fromByteStringUnsafe(value))
+          }
+        }
+      }
+      parser.parse(ByteString("foobar")) should equal(Right(Json.obj("test" -> "foo")))
+    }
+
+    "capture properly an optional value if present and bind is defined" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = {
+          captureOptional(Option("test"), str("foo")) { (key, value) =>
+            builder.bind(key, JsString.fromByteStringUnsafe(value))
           }
         }
       }
@@ -111,8 +139,18 @@ class ByteStringParserSpec extends AnyWordSpecLike with Matchers {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
           captureOptional(oneOrMore(str("1"))) { value =>
-            builder += "foobar" -> JsInt.fromByteStringUnsafe(value)
-            false
+            builder.bind("foobar", JsInt.fromByteStringUnsafe(value))
+          }
+        }
+      }
+      parser.parse(ByteString("foobar")) should equal(Right(Json.obj()))
+    }
+
+    "not capture properly an optional value if present and bind is defined" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = {
+          captureOptional(Option("bind"), oneOrMore(str("1"))) { (key, value) =>
+            builder.bind(key, JsInt.fromByteStringUnsafe(value))
           }
         }
       }
@@ -213,12 +251,12 @@ class ByteStringParserSpec extends AnyWordSpecLike with Matchers {
     "process a number of time an inner rule if possible" in {
       val parser = new ByteStringParserImpl() {
         override def root(): Boolean = {
-          times(1) {
+          times(2) {
             str("foo")
           }
         }
       }
-      parser.parse(ByteString("foo")).isRight should equal(true)
+      parser.parse(ByteString("foofoo")).isRight should equal(true)
     }
 
     "process a number of time an inner rule if impossible" in {
@@ -441,14 +479,12 @@ class ByteStringParserSpec extends AnyWordSpecLike with Matchers {
           def root(): Boolean
         } = new ByteStringParserImpl {
           override def root(): Boolean = capture(str("foo")) { value =>
-            builder += "foo" -> JsString.fromByteStringUnsafe(value)
-            true
+            builder.bind("foo", JsString.fromByteStringUnsafe(value))
           }
         }
 
         override def root(): Boolean = subParser[ByteStringParserImpl](subParsing)(_.root()) && capture(str("bar")) { value =>
-          builder += "bar" -> JsString.fromByteStringUnsafe(value)
-          true
+          builder.bind("bar", JsString.fromByteStringUnsafe(value))
         }
       }
       parser.parse(ByteString("foobar")) should equal(Right(Json.obj("foo" -> "foo", "bar" -> "bar")))
@@ -470,6 +506,96 @@ class ByteStringParserSpec extends AnyWordSpecLike with Matchers {
       }
       parser.parse(ByteString("123123")).isRight should equal(true)
     }
+
+    "read byte correctly" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = readByte() == 1
+      }
+      parser.parse(ByteString(1)).isRight should equal(true)
+    }
+
+    "read byte padded correctly" in {
+      var output: Byte = -1
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = readBytePadded() == output
+      }
+      parser.parse(ByteString.empty).isRight should equal(true)
+      output = 1
+      parser.parse(ByteString(1)).isRight should equal(true)
+    }
+
+    "read double bytes correctly" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = readDoubleByte() == (1 << 8).toChar
+      }
+      parser.parse(ByteString(1, 0)).isRight should equal(true)
+    }
+
+    "read double bytes padded correctly" in {
+      var output: Char = '\uffff'
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = readDoubleBytePadded() == output
+      }
+      parser.parse(ByteString.empty).isRight should equal(true)
+      output = 511.toChar
+      parser.parse(ByteString(1)).isRight should equal(true)
+      output = (1 << 8).toChar
+      parser.parse(ByteString(1, 0)).isRight should equal(true)
+    }
+
+    "read quad bytes correctly" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = readQuadByte() == (1 << 24)
+      }
+      parser.parse(ByteString(1, 0, 0, 0)).isRight should equal(true)
+    }
+
+    "read quad bytes padded correctly" in {
+      var output: Int = 0xFFFFFFFF
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = readQuadBytePadded() == output
+      }
+      parser.parse(ByteString.empty).isRight should equal(true)
+      output = 33554431
+      parser.parse(ByteString(1)).isRight should equal(true)
+      output = 16842751
+      parser.parse(ByteString(1, 0)).isRight should equal(true)
+      output = 16777471
+      parser.parse(ByteString(1, 0, 0)).isRight should equal(true)
+      output = 16777216
+      parser.parse(ByteString(1, 0, 0, 0)).isRight should equal(true)
+    }
+
+    "read octa bytes correctly" in {
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = readOctaByte() == (1L << 56)
+      }
+      parser.parse(ByteString(1, 0, 0, 0, 0, 0, 0, 0)).isRight should equal(true)
+    }
+
+    "read octa bytes padded correctly" in {
+      var output: Long = 0xFFFFFFFFFFFFFFFFL
+      val parser = new ByteStringParserImpl() {
+        override def root(): Boolean = readOctaBytePadded() == output
+      }
+      parser.parse(ByteString.empty).isRight should equal(true)
+      output = 144115188075855871L
+      parser.parse(ByteString(1)).isRight should equal(true)
+      output = 72339069014638591L
+      parser.parse(ByteString(1, 0)).isRight should equal(true)
+      output = 72058693549555711L
+      parser.parse(ByteString(1, 0, 0)).isRight should equal(true)
+      output = 72057598332895231L
+      parser.parse(ByteString(1, 0, 0, 0)).isRight should equal(true)
+      output = 72057594054705151L
+      parser.parse(ByteString(1, 0, 0, 0, 0)).isRight should equal(true)
+      output = 72057594037993471L
+      parser.parse(ByteString(1, 0, 0, 0, 0, 0)).isRight should equal(true)
+      output = 72057594037928191L
+      parser.parse(ByteString(1, 0, 0, 0, 0, 0, 0)).isRight should equal(true)
+      output = 72057594037927936L
+      parser.parse(ByteString(1, 0, 0, 0, 0, 0, 0, 0)).isRight should equal(true)
+    }
   }
 
   "Parser exception" should {
@@ -483,7 +609,7 @@ class ByteStringParserSpec extends AnyWordSpecLike with Matchers {
 
 // scalastyle:on
 
-abstract class ByteStringParserImpl extends ByteStringParser[Json] with Utf8Support[Json] {
+abstract class ByteStringParserImpl extends ByteStringParser[Json] with Utf8ByteStringParser[Json] {
 
   implicit var builder: JsObjectBuilder = Json.objectBuilder()
 
@@ -491,7 +617,7 @@ abstract class ByteStringParserImpl extends ByteStringParser[Json] with Utf8Supp
     if (root()) {
       builder.result()
     } else {
-      throw new ParseException(s"Unexpected input at index ${cursor()}")
+      throw new ParseException(s"Unexpected input at index ${cursor}")
     }
   }
 
@@ -500,11 +626,12 @@ abstract class ByteStringParserImpl extends ByteStringParser[Json] with Utf8Supp
     builder = Json.objectBuilder()
   }
 
-  override def merge[T <: Parser[ByteString, Json]](parser: T): Unit = {
+  override def merge[T <: Parser[ByteString, Json]](parser: T): Boolean = {
     super.merge(parser)
     parser match {
       case p: ByteStringParserImpl => builder ++= p.builder.result().fields
     }
+    true
   }
 
 }

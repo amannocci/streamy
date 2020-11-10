@@ -114,15 +114,15 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
 
   private val mode = config.mode
 
-  private implicit var builder: JsObjectBuilder = Json.objectBuilder()
-  private var structDataBuilder: JsObjectBuilder = Json.objectBuilder()
+  private implicit val builder: JsObjectBuilder = Json.objectBuilder()
+  private val structDataBuilder: JsObjectBuilder = Json.objectBuilder()
 
   def run(): Json = {
     if (root()) {
       binding.structData.foreach(bind => builder += bind -> structDataBuilder.result())
       builder.result()
     } else {
-      throw new ParseException(s"Unexpected input at index ${cursor()}:\n${data.utf8String}\n${" " * cursor()}^")
+      throw new ParseException(s"Unexpected input at index ${cursor}:\n${data.utf8String}\n${" " * cursor}^")
     }
   }
 
@@ -148,8 +148,8 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
         val prival = Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII))
 
         // Read severity or facility
-        binding.facility.bind(prival >> 3)
-        binding.severity.bind(prival & 7)
+        binding.facility.foreach(k => builder += k -> (prival >> 3))
+        binding.severity.foreach(k => builder += k -> (prival & 7))
       }
       true
     }
@@ -161,45 +161,45 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def hostname(): Boolean =
     sp() && or(
       nilValue(),
-      capture(times(1, mode.hostname, CharMatchers.PrintUsAscii)) { value =>
+      capture(binding.hostname, times(1, mode.hostname, CharMatchers.PrintUsAscii)) { (key, value) =>
         // Unsafe can be use because hostname is validate
-        binding.hostname.bind(JsString.fromByteStringUnsafe(value))
+        builder.bind(key, JsString.fromByteStringUnsafe(value))
       }
     )
 
   def appName(): Boolean =
     sp() && or(
       nilValue(),
-      capture(times(1, mode.appName, CharMatchers.PrintUsAscii)) { value =>
+      capture(binding.appName, times(1, mode.appName, CharMatchers.PrintUsAscii)) { (key, value) =>
         // Unsafe can be use because appName is validate
-        binding.appName.bind(JsString.fromByteStringUnsafe(value))
+        builder.bind(key, JsString.fromByteStringUnsafe(value))
       }
     )
 
   def procId(): Boolean =
     sp() && or(
       nilValue(),
-      capture(times(1, mode.procId, CharMatchers.PrintUsAscii)) { value =>
+      capture(binding.procId, times(1, mode.procId, CharMatchers.PrintUsAscii)) { (key, value) =>
         // Unsafe can be use because procId is validate
-        binding.procId.bind(JsString.fromByteStringUnsafe(value))
+        builder.bind(key, JsString.fromByteStringUnsafe(value))
       }
     )
 
   def msgId(): Boolean =
     sp() && or(
       nilValue(),
-      capture(times(1, mode.msgId, CharMatchers.PrintUsAscii)) { value =>
+      capture(binding.msgId, times(1, mode.msgId, CharMatchers.PrintUsAscii)) { (key, value) =>
         // Unsafe can be use because msgId is validate
-        binding.msgId.bind(JsString.fromByteStringUnsafe(value))
+        builder.bind(key, JsString.fromByteStringUnsafe(value))
       }
     )
 
   def timestamp(): Boolean =
     sp() && or(
       nilValue(),
-      capture(fullDate() && ch('T') && fullTime()) { value =>
+      capture(binding.timestamp, fullDate() && ch('T') && fullTime()) { (key, value) =>
         // Unsafe can be use because timestamp is validate
-        binding.timestamp.bind(JsString.fromByteStringUnsafe(value))
+        builder.bind(key, JsString.fromByteStringUnsafe(value))
       }
     )
 
@@ -242,13 +242,12 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
     openBracket() && sdName() && zeroOrMore(sp() && sdParam()) && closeBracket()
 
   def sdParam(): Boolean =
-    capture(sdName()) { value =>
+    capture(binding.structData, sdName()) { (_, value) =>
       stack.push(value.utf8String)
       true
     } && equal() && doubleQuote() &&
-      capture(paramValue()) { value =>
-        structDataBuilder += stack.pop().asInstanceOf[String] -> JsString.fromByteStringUnsafe(value)
-        true
+      capture(binding.structData, paramValue()) { (_, value) =>
+        structDataBuilder.bind(stack.pop().asInstanceOf[String], JsString.fromByteStringUnsafe(value))
       } && doubleQuote()
 
   def paramValue(): Boolean = zeroOrMore(SyslogParser.ParamValueMatcher)
@@ -256,21 +255,21 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
   def sdName(): Boolean = times(1, 32, SyslogParser.SdNameMatcher)
 
   def msg(): Boolean =
-    sp() && capture(any()) { value =>
+    sp() && capture(binding.message, any()) { (key, value) =>
       // Unsafe can be use because message is validate
-      binding.message.bind {
+      builder.bind(key, {
         if (config.bypassMessageParsing) {
           JsBytes(value)
         } else {
           JsString.fromByteStringUnsafe(value)
         }
-      }
+      })
     }
 
   override def cleanup(): Unit = {
     super.cleanup()
-    builder = Json.objectBuilder()
-    structDataBuilder = Json.objectBuilder()
+    builder.clear()
+    structDataBuilder.clear()
   }
 
 }
@@ -295,7 +294,7 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
     if (root()) {
       builder.result()
     } else {
-      throw new ParseException(s"Unexpected input at index ${cursor()}:\n${data.utf8String}\n${" " * cursor()}^")
+      throw new ParseException(s"Unexpected input at index $cursor:\n${data.utf8String}\n${" " * cursor}^")
     }
   }
 
@@ -320,37 +319,37 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
         val prival = Ints.tryParse(value.decodeString(StandardCharsets.US_ASCII))
 
         // Read severity or facility
-        binding.facility.bind(prival >> 3)
-        binding.severity.bind(prival & 7)
+        binding.facility.foreach(k => builder += k -> (prival >> 3))
+        binding.severity.foreach(k => builder += k -> (prival & 7))
       }
       true
     }
   }
 
   def hostname(): Boolean =
-    capture(times(1, mode.hostname, CharMatchers.PrintUsAscii)) { value =>
+    capture(binding.hostname, times(1, mode.hostname, CharMatchers.PrintUsAscii)) { (key, value) =>
       // Unsafe can be use because hostname is validate
-      binding.hostname.bind(JsString.fromByteStringUnsafe(value))
+      builder.bind(key, JsString.fromByteStringUnsafe(value))
     }
 
   def appName(): Boolean =
-    capture(times(1, mode.appName, SyslogParser.AppNameMatcher)) { value =>
+    capture(binding.appName, times(1, mode.appName, SyslogParser.AppNameMatcher)) { (key, value) =>
       // Unsafe can be use because appName is validate
-      binding.appName.bind(JsString.fromByteStringUnsafe(value))
+      builder.bind(key, JsString.fromByteStringUnsafe(value))
     }
 
   def procId(): Boolean =
     openBracket() &&
-      capture(times(1, mode.procId, SyslogParser.ProcIdMatcher)) { value =>
+      capture(binding.procId, times(1, mode.procId, SyslogParser.ProcIdMatcher)) { (key, value) =>
         // Unsafe can be use because procId is validate
-        binding.procId.bind(JsString.fromByteStringUnsafe(value))
+        builder.bind(key, JsString.fromByteStringUnsafe(value))
       } &&
       closeBracket()
 
   def timestamp(): Boolean =
-    capture(fullDate()) { value =>
+    capture(binding.timestamp, fullDate()) { (key, value) =>
       // Unsafe can be use because timestamp is validate
-      binding.timestamp.bind(JsString.fromByteStringUnsafe(value))
+      builder.bind(key, JsString.fromByteStringUnsafe(value))
     }
 
   def fullDate(): Boolean =
@@ -369,20 +368,18 @@ private class Rfc3164Parser(config: Rfc3164.Config) extends ByteStringParser[Jso
   def timeSecond(): Boolean = times(2, CharMatchers.Digit)
 
   def msg(): Boolean =
-    sp() && capture(any()) { value =>
-      binding.message.bind {
-        if (config.bypassMessageParsing) {
-          JsBytes(value)
-        } else {
-          // Unsafe can be use because message will be validate on conversion
-          JsString.fromByteStringUnsafe(value)
-        }
+    sp() && capture(binding.message, any()) { (key, value) =>
+      if (config.bypassMessageParsing) {
+        builder.bind(key, JsBytes(value))
+      } else {
+        // Unsafe can be use because message will be validate on conversion
+        builder.bind(key, JsString.fromByteStringUnsafe(value))
       }
     }
 
   override def cleanup(): Unit = {
     super.cleanup()
-    builder = Json.objectBuilder()
+    builder.clear()
   }
 
   // scalastyle:on

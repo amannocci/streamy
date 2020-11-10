@@ -67,7 +67,7 @@ private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStr
 
   private val binding = config.binding
 
-  private implicit var builder: JsObjectBuilder = Json.objectBuilder()
+  private implicit val builder: JsObjectBuilder = Json.objectBuilder()
 
   def run(): Json = {
     if (root()) {
@@ -85,21 +85,21 @@ private class GraphiteParser(config: GraphiteTransformer.Config) extends ByteStr
       timestamp() &&
       eoi()
 
-  def path(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
-    binding.path.bind(JsString.fromByteStringUnsafe(value))
+  def path(): Boolean = capture(binding.path, oneOrMore(GraphiteParser.DelimiterMatcher)) { (key, value) =>
+    builder.bind(key, JsString.fromByteStringUnsafe(value))
   }
 
-  def value(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
-    binding.value.bind(JsFloat.fromByteStringUnsafe(value))
+  def value(): Boolean = capture(binding.value, oneOrMore(GraphiteParser.DelimiterMatcher)) { (key, value) =>
+    builder.bind(key, JsFloat.fromByteStringUnsafe(value))
   }
 
-  def timestamp(): Boolean = capture(oneOrMore(GraphiteParser.DelimiterMatcher)) { value =>
-    binding.timestamp.bind(JsLong.fromByteStringUnsafe(value))
+  def timestamp(): Boolean = capture(binding.timestamp, oneOrMore(GraphiteParser.DelimiterMatcher)) { (key, value) =>
+    builder.bind(key, JsLong.fromByteStringUnsafe(value))
   }
 
   override def cleanup(): Unit = {
     super.cleanup()
-    builder = Json.objectBuilder()
+    builder.clear()
   }
 
 }

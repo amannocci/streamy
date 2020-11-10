@@ -66,7 +66,7 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
 
   private val binding = config.binding
 
-  private implicit var builder: JsObjectBuilder = Json.objectBuilder()
+  private implicit val builder: JsObjectBuilder = Json.objectBuilder()
 
   def run(): Json = {
     if (root()) {
@@ -90,9 +90,9 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
   def lifetime(): Boolean =
     optional(
       plus() &&
-        capture(duration() && optional(durationUnit())) { value =>
+        capture(binding.lifetime, duration() && optional(durationUnit())) { (key, value) =>
           // Unsafe can be use because duration is validate
-          binding.lifetime.bind(JsString.fromByteStringUnsafe(value))
+          builder.bind(key, JsString.fromByteStringUnsafe(value))
         }
     )
 
@@ -105,9 +105,9 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
       slash() &&
         oneOrMore(CharMatchers.LowerAlpha) &&
         colon() &&
-        capture(oneOrMore(XymonParser.GroupNameMatcher)) { value =>
+        capture(binding.group, oneOrMore(XymonParser.GroupNameMatcher)) { (key, value) =>
           // Unsafe can be use because group is validate
-          binding.group.bind(JsString.fromByteStringUnsafe(value))
+          builder.bind(key, JsString.fromByteStringUnsafe(value))
         }
     )
 
@@ -115,35 +115,35 @@ private[parser] class XymonParser(config: XymonTransformer.Parser.Config)
     host() && dot() && service()
 
   def host(): Boolean =
-    capture(oneOrMore(XymonParser.HostNameMatcher)) { value =>
+    capture(binding.host, oneOrMore(XymonParser.HostNameMatcher)) { (key, value) =>
       // Unsafe can be use because group is validate
-      binding.host.bind(JsString.fromByteStringUnsafe(value))
+      builder.bind(key, JsString.fromByteStringUnsafe(value))
     }
 
   def service(): Boolean =
-    capture(oneOrMore(XymonParser.TestNameMatcher)) { value =>
+    capture(binding.service, oneOrMore(XymonParser.TestNameMatcher)) { (key, value) =>
       // Unsafe can be use because service is validate
-      binding.service.bind(JsString.fromByteStringUnsafe(value))
+      builder.bind(key, JsString.fromByteStringUnsafe(value))
     }
 
   def color(): Boolean =
-    capture(oneOrMore(CharMatchers.LowerAlpha)) { value =>
+    capture(binding.color, oneOrMore(CharMatchers.LowerAlpha)) { (key, value) =>
       // Unsafe can be use because service is validate
-      binding.color.bind(JsString.fromByteStringUnsafe(value))
+      builder.bind(key, JsString.fromByteStringUnsafe(value))
     }
 
   def additionalText(): Boolean =
     optional(
       sp() &&
-        capture(any()) { value =>
+        capture(binding.message, any()) { (key, value) =>
           // Unsafe can be use because message is validate
-          binding.message.bind(JsString.fromByteStringUnsafe(value))
+          builder.bind(key, JsString.fromByteStringUnsafe(value))
         }
     )
 
   override def cleanup(): Unit = {
     super.cleanup()
-    builder = Json.objectBuilder()
+    builder.clear()
   }
 
 }

@@ -290,11 +290,11 @@ package object json extends JsonImplicit {
       }
   }
 
-  // Json binder
-  implicit class JsBinder(val self: Option[String]) extends AnyVal {
+  // Json obj binder
+  implicit class JsObjBinder(val self: JsObjectBuilder) extends AnyVal {
 
-    def bind(value: Json)(implicit builder: JsObjectBuilder): Boolean = {
-      self.foreach(k => builder += k -> value)
+    def bind(key: String, value: Json): Boolean = {
+      self += key -> value
       true
     }
 

@@ -23,47 +23,94 @@
  */
 package io.techcode.streamy.util.json
 
+import java.util.concurrent.TimeUnit
+
 import akka.util.ByteString
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import io.bullet.borer.Dom.Element
 import io.bullet.borer.compat.akka._
+import io.circe
+import io.circe.ParsingFailure
 import io.techcode.streamy.util.parser.{ByteStringParser, ParseException, StringParser}
-import org.openjdk.jmh.annotations.Benchmark
+import io.circe.parser._
+import io.techcode.streamy.util.json.JsonParserBench.JacksonMapper
+import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Mode, OutputTimeUnit, Param, Scope, Setup, State}
 
 import scala.io.Source
 
 /**
   * Json parser bench.
   */
+@State(Scope.Thread)
+@BenchmarkMode(Array(Mode.Throughput))
+@OutputTimeUnit(TimeUnit.SECONDS)
 class JsonParserBench {
 
-  @Benchmark def parseBorerByteString(): Element =
-    io.bullet.borer.Json.decode(JsonParserBench.Sample.ByteStringImpl).to[Element].value
+  // Data
+  private var string: String = _
+  private var bytes: Array[Byte] = _
+  private var byteString: ByteString = _
 
-  @Benchmark def parseByteString(): Either[ParseException, Json] =
-    JsonParserBench.ByteStringJsonParser.parse(JsonParserBench.Sample.ByteStringImpl)
+  @Param(
+    Array(
+      /*"australia-abc.json",
+      "bitcoin.json",*/
+      "doj-blog.json"/*,
+      "eu-lobby-country.json",
+      "eu-lobby-financial.json",
+      "eu-lobby-repr.json",
+      "github-events.json",
+      "github-gists.json",
+      "json-generator.json",
+      "meteorites.json",
+      "movies.json",
+      "reddit-scala.json",
+      "rick-morty.json",
+      "temp-anomaly.json",
+      "thai-cinemas.json",
+      "turkish.json",
+      "twitter_api_compact_response.json",
+      "twitter_api_response.json"*/))
+  var fileName: String = _
 
-  @Benchmark def parseBytes(): Either[ParseException, Json] =
-    JsonParserBench.ByteStringJsonParser.parse(ByteString.fromArrayUnsafe(JsonParserBench.Sample.BytesImpl))
+  @Setup
+  def setup(): Unit = {
+    string = Source.fromResource(fileName).mkString
+    byteString = ByteString(string).compact
+    bytes = byteString.toArray[Byte]
+  }
 
-  @Benchmark def parseString(): Either[ParseException, Json] =
-    JsonParserBench.StringJsonParser.parse(JsonParserBench.Sample.StringImpl)
+  @Benchmark def borerByteString(): Element =
+    io.bullet.borer.Json.decode(byteString).to[Element].value
+
+  @Benchmark def borerBytes(): Element =
+    io.bullet.borer.Json.decode(bytes).to[Element].value
+
+  @Benchmark def streamyByteString(): Either[ParseException, Json] =
+    JsonParserBench.StreamyByteStringJsonParser.parse(byteString)
+
+  @Benchmark def streamyBytes(): Either[ParseException, Json] =
+    JsonParserBench.StreamyByteStringJsonParser.parse(ByteString.fromArrayUnsafe(bytes))
+
+  @Benchmark def streamyString(): Either[ParseException, Json] =
+    JsonParserBench.StreamyStringJsonParser.parse(string)
+
+  @Benchmark def circeString(): Either[ParsingFailure, circe.Json] =
+    io.circe.parser.parse(string)
+
+  @Benchmark def jacksonBytes(): JsonNode = JacksonMapper.readTree(bytes)
+
+  @Benchmark def jacksonString(): JsonNode = JacksonMapper.readTree(string)
+
 
 }
 
 object JsonParserBench {
 
-  val ByteStringJsonParser: ByteStringParser[Json] = JsonParser.byteStringParser()
+  val StreamyByteStringJsonParser: ByteStringParser[Json] = JsonParser.byteStringParser()
 
-  val StringJsonParser: StringParser[Json] = JsonParser.stringParser()
+  val StreamyStringJsonParser: StringParser[Json] = JsonParser.stringParser()
 
-  object Sample {
-
-    val StringImpl: String = Source.fromResource("twitter_api_response.json").mkString
-
-    val ByteStringImpl: ByteString = ByteString(StringImpl).compact
-
-    val BytesImpl: Array[Byte] = ByteStringImpl.toArray[Byte]
-
-  }
+  val JacksonMapper: ObjectMapper = new ObjectMapper()
 
 }

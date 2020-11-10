@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018-2020
+ * Copyright (c) 2017-2019
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,20 +23,36 @@
  */
 package io.techcode.streamy.util.parser
 
-import scala.language.implicitConversions
+import akka.util.ByteString
+import io.techcode.streamy.util.parser.ByteStringParserBench.{Str, Times}
+import org.openjdk.jmh.annotations._
 
 /**
-  * Represent a [[String]] parser that provide an efficient way to parse [[String]].
+  * Bytestring parser bench.
   */
-trait StringParser[Out] extends Parser[String, Out] {
+class ByteStringParserBench {
 
-  override def parse(raw: String): Either[ParseException, Out] = {
-    _length = raw.length
-    super.parse(raw)
+  @Benchmark def str(): Either[ParseException, Boolean] = Str.parse(ByteStringParserBench.Lorem)
+
+  @Benchmark def times(): Either[ParseException, Boolean] = Times.parse(ByteStringParserBench.Lorem)
+
+}
+
+private object ByteStringParserBench {
+
+  val LoremStr: String = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+  val Lorem: ByteString = ByteString(LoremStr)
+
+  val Str: ByteStringParser[Boolean] = new ByteStringParser[Boolean]() {
+    def run(): Boolean = root()
+
+    def root(): Boolean = str(LoremStr)
   }
 
-  final def current(): Char = data.charAt(_cursor)
+  val Times: ByteStringParser[Boolean] = new ByteStringParser[Boolean]() {
+    def run(): Boolean = root()
 
-  final def slice(): String = data.slice(_mark, _cursor)
+    def root(): Boolean = times(LoremStr.length, CharMatchers.All)
+  }
 
 }

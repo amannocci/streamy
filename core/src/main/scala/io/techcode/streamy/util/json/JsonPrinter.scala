@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018-2019
+ * Copyright (c) 2018-2020
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -148,19 +148,19 @@ private trait AbstractJsonPrinter[Out] extends Printer[Json, Out] {
     */
   protected def printJsNumber(value: JsNumber): Unit = value match {
     case x: JsIntLiteral => builder.append(x.value)
-    case x: JsIntBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsIntBytesRepr => builder.append(x.repr)
     case x: JsIntStrRepr => builder.append(x.repr)
     case x: JsLongLiteral => builder.append(x.value)
-    case x: JsLongBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsLongBytesRepr => builder.append(x.repr)
     case x: JsLongStrRepr => builder.append(x.repr)
     case x: JsFloatLiteral => builder.append(x.value)
-    case x: JsFloatBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsFloatBytesRepr => builder.append(x.repr)
     case x: JsFloatStrRepr => builder.append(x.repr)
     case x: JsDoubleLiteral => builder.append(x.value)
-    case x: JsDoubleBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsDoubleBytesRepr => builder.append(x.repr)
     case x: JsDoubleStrRepr => builder.append(x.repr)
     case x: JsBigDecimalLiteral => builder.append(x.value.toString())
-    case x: JsBigDecimalBytesRepr => builder.append(x.repr.decodeString(StandardCharsets.US_ASCII))
+    case x: JsBigDecimalBytesRepr => builder.append(x.repr)
     case x: JsBigDecimalStrRepr => builder.append(x.repr)
   }
 

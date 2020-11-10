@@ -25,6 +25,7 @@ package io.techcode.streamy.util.json
 
 import akka.util.ByteString
 import io.techcode.streamy.util.parser.ParseException
+import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -37,74 +38,72 @@ class JsonParserSpec extends AnyWordSpecLike with Matchers {
 
   "Json parser" should {
     "parse an json boolean set to false correctly" in {
-      Json.parseByteStringUnsafe(ByteString("false")) should equal(JsFalse)
+      except("false", JsFalse)
     }
 
     "parse an json boolean set to true correctly" in {
-      Json.parseByteStringUnsafe(ByteString("true")) should equal(JsTrue)
+      except("true", JsTrue)
     }
 
     "parse an json null correctly" in {
-      Json.parseByteStringUnsafe(ByteString("null")) should equal(JsNull)
+      except("null", JsNull)
     }
 
     "parse an json int zero correctly" in {
-      Json.parseByteStringUnsafe(ByteString("0")) should equal(JsInt.fromLiteral(0))
+      except("0", JsInt(0))
     }
 
     "parse an json int correctly" in {
-      Json.parseByteStringUnsafe(ByteString("-12345678")) should equal(JsInt.fromLiteral(-12345678))
+      except("-12345678", JsInt(-12345678))
     }
 
     "parse an json long correctly" in {
-      Json.parseByteStringUnsafe(ByteString(Long.MinValue.toString)) should equal(JsLong.fromLiteral(Long.MinValue))
+      except(Long.MinValue.toString, JsLong(Long.MinValue))
     }
 
     "parse an json float correctly" in {
-      Json.parseByteStringUnsafe(ByteString(Float.MinValue.toString)) should equal(JsBigDecimal.fromLiteral(BigDecimal(Float.MinValue.toString)))
+      except(Float.MinValue.toString, JsBigDecimal(BigDecimal(Float.MinValue.toString)))
     }
 
     "parse an json float 1.23 correctly" in {
-      Json.parseByteStringUnsafe(ByteString("1.23")) should equal(JsBigDecimal.fromLiteral(BigDecimal("1.23")))
+      except("1.23", JsBigDecimal(BigDecimal("1.23")))
     }
 
     "parse an json double correctly" in {
-      Json.parseByteStringUnsafe(ByteString(Double.MinValue.toString)) should equal(JsBigDecimal.fromLiteral(BigDecimal(Double.MinValue.toString)))
+      except(Double.MinValue.toString, JsBigDecimal(BigDecimal(Double.MinValue.toString)))
     }
 
     "parse an json big decimal correctly" in {
-      Json.parseByteStringUnsafe(ByteString("1e20")) should equal(JsBigDecimal.fromLiteral(BigDecimal("1e20")))
+      except("1e20", JsBigDecimal(BigDecimal("1e20")))
     }
 
     "parse an json big decimal -1E10 correctly" in {
-      Json.parseByteStringUnsafe(ByteString("-1E10")) should equal(JsBigDecimal.fromLiteral(BigDecimal("-1E10")))
+      except("-1E10", JsBigDecimal(BigDecimal("-1E10")))
     }
 
     "parse an json big decimal 12.34e-10 correctly" in {
-      Json.parseByteStringUnsafe(ByteString("12.34e-10")) should equal(JsBigDecimal.fromLiteral(BigDecimal("1.234E-9")))
+      except("12.34e-10", JsBigDecimal(BigDecimal("1.234E-9")))
     }
 
     "parse an json string correctly" in {
-      Json.parseByteStringUnsafe(ByteString(""""foobar"""")) should equal(JsString.fromLiteral("foobar"))
+      except(""""foobar"""", JsString("foobar"))
     }
 
     "parse an json string from encoded bytes correctly" in {
-      Json.parseByteStringUnsafe(ByteString("\"4-byte UTF-8 chars like \uD801\uDC37\"")) should equal(JsString.fromLiteral("4-byte UTF-8 chars like \uD801\uDC37"))
+      except("\"4-byte UTF-8 chars like \uD801\uDC37\"", JsString("4-byte UTF-8 chars like \uD801\uDC37"))
     }
 
     "parse an json string escape correctly" in {
-      Json.parseByteStringUnsafe(ByteString(""""\"\\/\b\f\n\r\t"""")) should equal(JsString.fromLiteral("\"\\/\b\f\n\r\t"))
-      Json.parseByteStringUnsafe(ByteString("\"L\\" + "u00e4nder\"")) should equal(JsString.fromLiteral("Länder"))
+      except(""""\"\\/\b\f\n\r\t"""", JsString("\"\\/\b\f\n\r\t"))
+      except("\"L\\" + "u00e4nder\"", JsString("Länder"))
     }
 
     "parse an json string of the slash (SOLIDUS) character correctly" in {
-      Json.parseByteStringUnsafe(ByteString("\"" + "/\\/\\u002f" + "\"")) should equal(JsString.fromLiteral("///"))
+      except("\"" + "/\\/\\u002f" + "\"", JsString("///"))
     }
 
     "parse a json object correctly" in {
-      Json.parseByteStringUnsafe(ByteString(
-        """{"string":"string","int":10,"float":1.0}"""
-      )) should equal(Json.obj(
+      except("""{"string":"string","int":10,"float":1.0}""", Json.obj(
         "string" -> "string",
         "int" -> 10,
         "float" -> BigDecimal(1.0F)
@@ -112,9 +111,7 @@ class JsonParserSpec extends AnyWordSpecLike with Matchers {
     }
 
     "parse a json array correctly" in {
-      Json.parseByteStringUnsafe(ByteString(
-        """[null, 1.23, {"key":true }]"""
-      )) should equal(Json.arr(
+      except("""[null, 1.23, {"key":true }]""", Json.arr(
         JsNull,
         JsBigDecimal.fromLiteral(BigDecimal("1.23")),
         Json.obj("key" -> JsTrue)
@@ -128,56 +125,46 @@ class JsonParserSpec extends AnyWordSpecLike with Matchers {
         "3-bytes" -> "3-byte UTF-8 chars like ﾖ, ᄅ or ᐁ.",
         "4-bytes" -> "4-byte UTF-8 chars like \uD801\uDC37, \uD852\uDF62 or \uD83D\uDE01."
       )
-      Json.parseStringUnsafe(json.toString) should equal(json)
+      except(json.toString, json)
     }
 
     "parse directly from UTF-8 encoded bytes when string starts with a multi-byte character" in {
-      Json.parseByteStringUnsafe(ByteString(""""£0.99"""")) should equal(JsString.fromLiteral("£0.99"))
+      except(""""£0.99"""", JsString("£0.99"))
+      except(""""飞机因此受到损伤"""", JsString("飞机因此受到损伤"))
+      except(""""เอสds飞机hu เอฟ到a ซ'ีเ$นม่า เอ็#ม损บีเ00因0ค เซ็นเbตอร์"""", JsString("เอสds飞机hu เอฟ到a ซ'ีเ$นม่า เอ็#ม损บีเ00因0ค เซ็นเbตอร์"))
     }
 
     "parse a json object with whitespace correctly" in {
-      Json.parseByteStringUnsafe(ByteString("""    {   "foo" : "bar" , "key"    :   true   }"""
-      )) should equal(Json.obj(
+      except("""           {   "foo" :        "bar" , "key"    :   true   }""", Json.obj(
         "foo" -> "bar",
         "key" -> JsTrue
       ))
     }
 
     "parse a json array with whitespace correctly" in {
-      Json.parseByteStringUnsafe(ByteString("""    [   {"foo" : "bar"} ,  null   ]"""
-      )) should equal(Json.arr(
+      except("""               [   {"foo" : "bar"} ,  null   ]""", Json.arr(
         Json.obj("foo" -> "bar"),
         JsNull
       ))
     }
 
     "be reentrant" in {
-      val parser = JsonParser.byteStringParser()
-      parser.parse(ByteString("""{"string":"string","int":10,"float":1.0}""")) should equal(Right(Json.obj(
-        "string" -> "string",
-        "int" -> 10,
-        "float" -> BigDecimal(1.0F)
-      )))
-      parser.parse(ByteString("""{"string":"string","int":10,"float":1.0}""")) should equal(Right(Json.obj(
-        "string" -> "string",
-        "int" -> 10,
-        "float" -> BigDecimal(1.0F)
-      )))
-      parser.parse(ByteString("""{"string":"string","int":10,"float":1.0}""")) should equal(Right(Json.obj(
-        "string" -> "string",
-        "int" -> 10,
-        "float" -> BigDecimal(1.0F)
-      )))
-      parser.parse(ByteString("""{"string":"string","int":10,"float":1.0}""")) should equal(Right(Json.obj(
-        "string" -> "string",
-        "int" -> 10,
-        "float" -> BigDecimal(1.0F)
-      )))
-      parser.parse(ByteString("""{"string":"string","int":10,"float":1.0}""")) should equal(Right(Json.obj(
-        "string" -> "string",
-        "int" -> 10,
-        "float" -> BigDecimal(1.0F)
-      )))
+      val byteStringParser = JsonParser.byteStringParser()
+      for (_ <- 0 to 5) {
+        byteStringParser.parse(ByteString("""{"string":"string","int":10,"float":1.0}""")) should equal(Right(Json.obj(
+          "string" -> "string",
+          "int" -> 10,
+          "float" -> BigDecimal(1.0F)
+        )))
+      }
+      val stringParser = JsonParser.stringParser()
+      for (_ <- 0 to 5) {
+        stringParser.parse("""{"string":"string","int":10,"float":1.0}""") should equal(Right(Json.obj(
+          "string" -> "string",
+          "int" -> 10,
+          "float" -> BigDecimal(1.0F)
+        )))
+      }
     }
 
     "fail gracefully for deeply nested structures" in {
@@ -208,8 +195,44 @@ class JsonParserSpec extends AnyWordSpecLike with Matchers {
 
     "fail to parse invalid json object" in {
       assertThrows[ParseException] {
-        Json.parseStringUnsafe("""{"query":{"match_all"}""")
+        except("""{"query":{"match_all"}""", JsNull)
       }
+    }
+
+    "fail to parse control char" in {
+      exceptError(""""\u0000"""")
+      exceptError(""""\u0001"""")
+      exceptError(""""\u0010"""")
+      exceptError(""""\u001e"""")
+    }
+
+    "fail to parse bad escape" in {
+      exceptError(""""\a"""")
+    }
+  }
+
+  /**
+    * Except all parsers to parse an input into an output.
+    *
+    * @param input  input to parse.
+    * @param output excepted output.
+    */
+  private def except(input: String, output: Json): Assertion = {
+    Json.parseByteStringUnsafe(ByteString(input)) should equal(output)
+    Json.parseStringUnsafe(input) should equal(output)
+  }
+
+  /**
+    * Except all parsers to parse an input and throw an parsing exception.
+    *
+    * @param input input to parse.
+    */
+  private def exceptError(input: String): Assertion = {
+    assertThrows[ParseException] {
+      Json.parseByteStringUnsafe(ByteString(input))
+    }
+    assertThrows[ParseException] {
+      Json.parseStringUnsafe(input)
     }
   }
 
