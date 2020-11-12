@@ -632,7 +632,7 @@ sealed trait Json extends JsDefined {
     */
   def sizeHint(): Int = toString.length
 
-  override lazy val toString: String = Json.printStringUnsafe(this)
+  override def toString: String = Json.printStringUnsafe(this)
 
 }
 

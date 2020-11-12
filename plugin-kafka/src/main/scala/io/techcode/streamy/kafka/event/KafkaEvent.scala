@@ -31,17 +31,38 @@ import org.apache.kafka.common.TopicPartition
   */
 object KafkaEvent {
 
-  // Marker interface for tcp events
+  // Marker interface for kafka events
   sealed trait All extends DeadLetterSuppression
 
   object Consumer {
 
     /**
-      * This event is fired when a partition topic is consumed or not.
+      * This event is fired when a partition topic is revoked.
       *
-      * @param topicPartition partition topic consumed or not.
+      * @param topicPartition partition topic is revoked.
       */
-    case class TopicPartitionConsume(topicPartition: TopicPartition, running: Boolean) extends All
+    case class TopicPartitionRevoke(topicPartition: TopicPartition) extends All
+
+    /**
+      * This event is fired when a partition topic is assigned.
+      *
+      * @param topicPartition partition topic is assigned.
+      */
+    case class TopicPartitionAssign(topicPartition: TopicPartition) extends All
+
+    /**
+      * This event is fired when a partition topic is losted.
+      *
+      * @param topicPartition partition topic is losted.
+      */
+    case class TopicPartitionLost(topicPartition: TopicPartition) extends All
+
+    /**
+      * This event is fired when a partition topic is stopped.
+      *
+      * @param topicPartition partition topic is stopped.
+      */
+    case class TopicPartitionStop(topicPartition: TopicPartition) extends All
 
   }
 

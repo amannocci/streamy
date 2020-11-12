@@ -36,4 +36,10 @@ abstract class KafkaSpec(kafkaPort: Int) extends ScalatestKafkaSpec(kafkaPort) w
 
   protected def this() = this(kafkaPort = -1)
 
+  def sleep(): Unit = Thread.sleep(KafkaSpec.TestSleep)
+
+}
+
+object KafkaSpec {
+  val TestSleep: Long = 10000L
 }

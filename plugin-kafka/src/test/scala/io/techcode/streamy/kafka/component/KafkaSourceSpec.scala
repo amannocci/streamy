@@ -24,8 +24,10 @@
 package io.techcode.streamy.kafka.component
 
 import akka.Done
-import akka.stream.scaladsl.Flow
-import io.techcode.streamy.event.StreamEvent
+import akka.kafka.scaladsl.Committer
+import akka.kafka.scaladsl.Consumer.DrainingControl
+import akka.stream.scaladsl.Sink
+import io.techcode.streamy.kafka.component.KafkaSource.{AutoOffsetReset, Binding}
 import io.techcode.streamy.kafka.event.KafkaEvent
 import io.techcode.streamy.kafka.util.KafkaSpec
 
@@ -38,18 +40,136 @@ import scala.language.postfixOps
 class KafkaSourceSpec extends KafkaSpec {
 
   "Kafka source" should {
-    "retrieve data from topic" in {
+    "retrieve data using plain source" in {
       val topic = createTopic()
       val groupId = createGroupId()
+      system.eventStream.subscribe(testActor, classOf[KafkaEvent.All])
 
-      awaitProduce(produceString(topic, Seq("foobar")))
-      val control = KafkaSource.atLeastOnce(KafkaSource.Config(
-        handler = Flow[StreamEvent],
+      awaitProduce(produce(topic, 1 to 100))
+
+      val control = KafkaSource.plain(KafkaSource.Config(
         bootstrapServers = bootstrapServers,
         groupId = groupId,
-        topics = KafkaSource.StaticTopicConfig(Set(topic))
-      )).run()
-      whenReady(control.drainAndShutdown(), timeout(60 seconds), interval(100 millis)) { x =>
+        topics = KafkaSource.PatternTopicConfig(topic),
+        autoOffsetReset = AutoOffsetReset.Earliest,
+        binding = Binding(
+          key = Some("key"),
+          offset = Some("offset"),
+          value = Some("value"),
+          partition = Some("partition"),
+          topic = Some("topic"),
+          timestamp = Some("timestamp")
+        )
+      )).toMat(Sink.ignore)(DrainingControl.apply)
+        .run()
+
+      // Wait for topic consumer and then drain
+      receiveOne(1 minute)
+      sleep()
+      val streamComplete = control.drainAndShutdown()
+      whenReady(streamComplete, timeout(120 seconds), interval(100 millis)) { x =>
+        receiveOne(1 minute)
+        x should equal(Done)
+      }
+    }
+
+    "retrieve data using plain partitioned source" in {
+      val topic = createTopic()
+      val groupId = createGroupId()
+      system.eventStream.subscribe(testActor, classOf[KafkaEvent.All])
+
+      awaitProduce(produce(topic, 1 to 100))
+
+      val control = KafkaSource.plainPartitioned(KafkaSource.Config(
+        bootstrapServers = bootstrapServers,
+        groupId = groupId,
+        topics = KafkaSource.PatternTopicConfig(topic),
+        autoOffsetReset = AutoOffsetReset.Earliest,
+        binding = Binding(
+          key = Some("key"),
+          offset = Some("offset"),
+          value = Some("value"),
+          partition = Some("partition"),
+          topic = Some("topic"),
+          timestamp = Some("timestamp")
+        )
+      )).flatMapMerge(10, _._2)
+        .toMat(Sink.ignore)(DrainingControl.apply)
+        .run()
+
+      // Wait for topic consumer and then drain
+      receiveOne(1 minute)
+      sleep()
+      val streamComplete = control.drainAndShutdown()
+      whenReady(streamComplete, timeout(120 seconds), interval(100 millis)) { x =>
+        receiveOne(1 minute)
+        x should equal(Done)
+      }
+    }
+
+    "retrieve data using committable source" in {
+      val topic = createTopic()
+      val groupId = createGroupId()
+      system.eventStream.subscribe(testActor, classOf[KafkaEvent.All])
+
+      awaitProduce(produce(topic, 1 to 100))
+
+      val control = KafkaSource.committable(KafkaSource.Config(
+        bootstrapServers = bootstrapServers,
+        groupId = groupId,
+        topics = KafkaSource.StaticTopicConfig(Set(topic)),
+        autoOffsetReset = AutoOffsetReset.Earliest,
+        binding = Binding(
+          key = Some("key"),
+          offset = Some("offset"),
+          value = Some("value"),
+          partition = Some("partition"),
+          topic = Some("topic"),
+          timestamp = Some("timestamp")
+        )
+      )).toMat(KafkaSink.committer())(DrainingControl.apply)
+        .run()
+
+      // Wait for topic consumer and then drain
+      receiveOne(1 minute)
+      sleep()
+      val streamComplete = control.drainAndShutdown()
+      whenReady(streamComplete, timeout(120 seconds), interval(100 millis)) { x =>
+        receiveOne(1 minute)
+        x should equal(Done)
+      }
+    }
+
+    "retrieve data using committable partitioned source" in {
+      val topic = createTopic()
+      val groupId = createGroupId()
+      system.eventStream.subscribe(testActor, classOf[KafkaEvent.All])
+
+      awaitProduce(produce(topic, 1 to 100))
+
+      val control = KafkaSource.committablePartitioned(KafkaSource.Config(
+        bootstrapServers = bootstrapServers,
+        groupId = groupId,
+        topics = KafkaSource.StaticTopicConfig(Set(topic)),
+        autoOffsetReset = AutoOffsetReset.Earliest,
+        binding = Binding(
+          key = Some("key"),
+          offset = Some("offset"),
+          value = Some("value"),
+          partition = Some("partition"),
+          topic = Some("topic"),
+          timestamp = Some("timestamp")
+        )
+      )).flatMapMerge(10, _._2)
+        .toMat(KafkaSink.committer())(DrainingControl.apply)
+        .run()
+
+      // Wait for topic consumer and then drain
+      receiveOne(1 minute)
+      sleep()
+      val streamComplete = control.drainAndShutdown()
+      whenReady(streamComplete, timeout(120 seconds), interval(100 millis)) { x =>
+        receiveOne(1 minute)
         x should equal(Done)
       }
     }
