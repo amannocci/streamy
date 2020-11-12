@@ -23,11 +23,12 @@
  */
 package io.techcode.streamy.tcp.component
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
 import akka.stream.IgnoreComplete
 import akka.stream.scaladsl.Tcp.{IncomingConnection, ServerBinding}
-import akka.stream.scaladsl.{Flow, RunnableGraph, Sink, Source, Tcp}
+import akka.stream.scaladsl.{Flow, Sink, Source, Tcp}
 import akka.util.ByteString
 import io.techcode.streamy.tcp.event.TcpEvent
 import io.techcode.streamy.tcp.util.TlsContext
@@ -48,7 +49,6 @@ object TcpSource {
     val DefaultBacklog: Int = 100
 
     case class Config(
-      handler: Flow[ByteString, ByteString, _],
       host: String,
       port: Int,
       secured: Boolean = false,
@@ -64,21 +64,19 @@ object TcpSource {
     *
     * @param config flow configuration.
     */
-  def server(config: Server.Config)(implicit system: ActorSystem): RunnableGraph[Future[ServerBinding]] = {
+  def server(config: Server.Config)(implicit system: ActorSystem): Source[Flow[ByteString, ByteString, NotUsed], Future[ServerBinding]] = {
     {
       if (config.secured) {
         tlsServer(config)
       } else {
         plainServer(config)
       }
-    }.to(Sink.foreach { conn: IncomingConnection =>
+    }.map { conn =>
       system.eventStream.publish(TcpEvent.Server.ConnectionCreated(conn.localAddress, conn.remoteAddress))
       conn.flow.alsoTo(Sink.onComplete { _ =>
         system.eventStream.publish(TcpEvent.Server.ConnectionClosed(conn.localAddress, conn.remoteAddress))
-      }).join(Flow.lazyFutureFlow { () =>
-        Future.successful(config.handler)
-      }).run()
-    })
+      })
+    }
   }
 
   /**
