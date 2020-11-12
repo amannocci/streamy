@@ -20,12 +20,14 @@ It is fully free and fully open source. The license is MIT, meaning you are pret
 ## Features
 * Coming soon
 
-## Setup
+## Develop
+
+### Setup
 The following steps will ensure your project is cloned properly.
 1. git clone https://github.com/amannocci/streamy
 2. cd streamy && ./scripts/workflow.sh setup
 
-## Build
+### Build
 * To build you have to use the workflow script.
 
 ```bash
@@ -34,7 +36,7 @@ The following steps will ensure your project is cloned properly.
 
 * It will compile project code with the current environment.
 
-## Test
+### Test
 * To test `streamy` you have to use the workflow script.
 * Tests are based on sbt and testcontainers capabilities.
 
@@ -42,7 +44,7 @@ The following steps will ensure your project is cloned properly.
 ./scripts/workflow.sh test
 ```
 
-## Package
+### Package
 * This project contains best effort debian packaging support.
 * To package `streamy` you have to use the workflow script.
 
@@ -50,7 +52,7 @@ The following steps will ensure your project is cloned properly.
 ./scripts/workflow.sh package
 ```
 
-## Release (or prepare)
+### Release (or prepare)
 * To release or prepare a release you have to use the workflow script.
 
 ```bash
