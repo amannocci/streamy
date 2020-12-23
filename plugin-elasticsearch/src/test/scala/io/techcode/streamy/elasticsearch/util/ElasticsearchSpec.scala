@@ -37,7 +37,7 @@ import org.elasticsearch.client.{RestClient, RestHighLevelClient}
 trait ElasticsearchSpec extends TestSystem with ForAllTestContainer {
 
   override val container: ElasticsearchContainer = ElasticsearchContainer(
-    "docker.elastic.co/elasticsearch/elasticsearch:7.9.2"
+    "docker.elastic.co/elasticsearch/elasticsearch:7.10.1"
   )
 
   var restClient: RestHighLevelClient = _
