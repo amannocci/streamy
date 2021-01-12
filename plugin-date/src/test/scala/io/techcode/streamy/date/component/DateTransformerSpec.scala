@@ -100,25 +100,25 @@ object DateTransformerSpec {
 
   object Transformer {
 
-    val Idempotent: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
+    val Idempotent: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTransformer.Iso8601
     ))
 
-    val FromIsoToCustom: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
+    val FromIsoToCustom: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTransformer.Iso8601,
       outputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy")
     ))
 
-    val FromCustomToIso: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
+    val FromCustomToIso: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer(DateTransformer.Config(
       source = Root / "date",
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy").withZone(ZoneId.of("UTC")),
       outputFormatter = DateTransformer.Iso8601.withZone(ZoneOffset.UTC)
     ))
 
-    val Validation: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer[NotUsed](DateTransformer.Config(
+    val Validation: Flow[StreamEvent, StreamEvent, NotUsed] = DateTransformer(DateTransformer.Config(
       source = Root / "date",
       onError = ErrorBehaviour.Discard,
       inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy").withZone(ZoneId.of("UTC")),

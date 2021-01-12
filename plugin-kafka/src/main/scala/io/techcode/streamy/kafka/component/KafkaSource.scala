@@ -27,7 +27,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.kafka.ConsumerMessage.CommittableOffset
 import akka.kafka._
-import akka.kafka.scaladsl.{Committer, Consumer, PartitionAssignmentHandler}
+import akka.kafka.scaladsl.{Consumer, PartitionAssignmentHandler}
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.techcode.streamy.event.{AttributeKey, StreamEvent}
