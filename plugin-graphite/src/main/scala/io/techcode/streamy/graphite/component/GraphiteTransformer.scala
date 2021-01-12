@@ -31,11 +31,20 @@ import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.graphite.util.parser.GraphiteParser
 import io.techcode.streamy.util.json.Json
 import io.techcode.streamy.util.parser.ByteStringParser
+import pureconfig._
+import pureconfig.generic.semiauto._
 
 /**
   * Graphite transformer companion.
   */
 object GraphiteTransformer {
+
+  // Default values
+  val DefaultBinding: Binding = Binding()
+
+  // Configuration readers
+  implicit val configReader: ConfigReader[Config] = deriveReader[GraphiteTransformer.Config]
+  implicit val configBindingReader: ConfigReader[Binding] = deriveReader[GraphiteTransformer.Binding]
 
   // New line byte delimiter
   private val NewLineDelimiter: ByteString = ByteString("\n")
@@ -64,7 +73,7 @@ object GraphiteTransformer {
   // Configuration
   case class Config(
     maxSize: Int = Int.MaxValue,
-    binding: Binding = Binding()
+    binding: Binding = DefaultBinding
   )
 
 }

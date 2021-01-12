@@ -167,7 +167,7 @@ lazy val `plugin-graphite` = project
     name := "streamy-" + name.value
   )
   .settings(Publish.settings)
-  .dependsOn(core % "provided->compile")
+  .dependsOn(core % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
 
