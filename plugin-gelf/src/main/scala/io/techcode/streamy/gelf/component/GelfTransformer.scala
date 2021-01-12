@@ -49,12 +49,11 @@ object GelfTransformer {
     * @param conf flow configuration.
     * @return new gelf flow compliant with Gelf protocol.
     */
-  def parser(conf: Config = DefaultConfig): Flow[ByteString, StreamEvent, NotUsed] = {
+  def parser(conf: Config = DefaultConfig): Flow[ByteString, StreamEvent, NotUsed] =
     Framing.delimiter(NullByteDelimiter, conf.maxSize, allowTruncation = true)
       .via(Flow.fromGraph(new SourceTransformer {
         override def factory(): ByteStringParser[Json] = JsonParser.byteStringParser()
       }))
-  }
 
   // Configuration
   case class Config(

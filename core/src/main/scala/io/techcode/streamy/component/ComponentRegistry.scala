@@ -39,11 +39,11 @@ import java.util.concurrent.ConcurrentHashMap
 class ComponentRegistry(system: ActorSystem) extends Extension {
 
   // All registries
-  private val sourceRegistry = new ConcurrentHashMap[String, Config => Source[StreamEvent, NotUsed]]
+  private val sourceRegistry = new ConcurrentHashMap[String, Config => Source[StreamEvent, _]]
 
-  private val flowRegistry = new ConcurrentHashMap[String, Config => Flow[StreamEvent, StreamEvent, NotUsed]]
+  private val flowRegistry = new ConcurrentHashMap[String, Config => Flow[StreamEvent, StreamEvent, _]]
 
-  private val sinkRegistry = new ConcurrentHashMap[String, Config => Sink[StreamEvent, NotUsed]]
+  private val sinkRegistry = new ConcurrentHashMap[String, Config => Sink[StreamEvent, _]]
 
   /**
     * Register a source factory.
@@ -51,7 +51,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref           id reference of the source factory.
     * @param sourceFactory source factory.
     */
-  def registerSource(ref: String, sourceFactory: Config => Source[StreamEvent, NotUsed]): Unit = {
+  def registerSource(ref: String, sourceFactory: Config => Source[StreamEvent, _]): Unit = {
     sourceRegistry.putIfAbsent(ref, sourceFactory)
   }
 
@@ -61,7 +61,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref         id reference of the flow factory.
     * @param flowFactory flow factory.
     */
-  def registerFlow(ref: String, flowFactory: Config => Flow[StreamEvent, StreamEvent, NotUsed]): Unit = {
+  def registerFlow(ref: String, flowFactory: Config => Flow[StreamEvent, StreamEvent, _]): Unit = {
     flowRegistry.putIfAbsent(ref, flowFactory)
   }
 
@@ -71,7 +71,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref         id reference of the sink factory.
     * @param sinkFactory sink factory.
     */
-  def registerSink(ref: String, sinkFactory: Config => Sink[StreamEvent, NotUsed]): Unit = {
+  def registerSink(ref: String, sinkFactory: Config => Sink[StreamEvent, _]): Unit = {
     sinkRegistry.putIfAbsent(ref, sinkFactory)
   }
 
@@ -81,7 +81,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref ref of the source.
     * @return optional source.
     */
-  def source(ref: String): Option[Config => Source[StreamEvent, NotUsed]] =
+  def source(ref: String): Option[Config => Source[StreamEvent, _]] =
     Option(sourceRegistry.get(ref))
 
   /**
@@ -90,7 +90,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref ref of the flow.
     * @return optional flow.
     */
-  def flow(ref: String): Option[Config => Flow[StreamEvent, StreamEvent, NotUsed]] =
+  def flow(ref: String): Option[Config => Flow[StreamEvent, StreamEvent, _]] =
     Option(flowRegistry.get(ref))
 
   /**
@@ -99,7 +99,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref ref of the sink.
     * @return optional sink.
     */
-  def sink(ref: String): Option[Config => Sink[StreamEvent, NotUsed]] =
+  def sink(ref: String): Option[Config => Sink[StreamEvent, _]] =
     Option(sinkRegistry.get(ref))
 
 }
