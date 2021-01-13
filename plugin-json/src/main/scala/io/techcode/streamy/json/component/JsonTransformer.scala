@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2021
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,14 +33,37 @@ import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.json.component.JsonTransformer.Bind
-import io.techcode.streamy.json.component.JsonTransformer.Bind.Bind
+import io.techcode.streamy.json.component.JsonTransformer.Bind.{Bind, Bytes}
 import io.techcode.streamy.json.component.JsonTransformer.Mode.Mode
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.config._
+import pureconfig._
+import pureconfig.error.FailureReason
+import pureconfig.generic.semiauto._
 
 /**
   * Json transformer companion.
   */
 object JsonTransformer {
+
+  // Configuration readers
+  implicit val bindReader: ConfigReader[Bind] = ConfigReader.fromString[Bind] {
+    case "bytes" => Right(Bind.Bytes)
+    case "string" => Right(Bind.String)
+    case _ => Left(new FailureReason {
+      override def description: String = "Bind must be either 'bytes' or 'string'"
+    })
+  }
+
+  implicit val modeReader: ConfigReader[Mode] = ConfigReader.fromString[Mode] {
+    case "deserialize" => Right(Mode.Deserialize)
+    case "serialize" => Right(Mode.Serialize)
+    case _ => Left(new FailureReason {
+      override def description: String = "Mode must be either 'serialize' or 'deserialize'"
+    })
+  }
+
+  implicit val configReader: ConfigReader[JsonTransformer.Config] = deriveReader[JsonTransformer.Config]
 
   // Component configuration
   case class Config(
