@@ -238,7 +238,7 @@ lazy val `plugin-riemann` = project
   )
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
-  .dependsOn(`plugin-protobuf` % "provided->compile")
+  .dependsOn(`plugin-protobuf` % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
   .enablePlugins(ProtobufPlugin)
