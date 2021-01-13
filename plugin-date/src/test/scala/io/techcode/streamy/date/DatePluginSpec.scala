@@ -37,8 +37,8 @@ class DatePluginSpec extends TestPlugin {
   "Date plugin" should {
     "register a materializable date component" in {
       create(classOf[DatePlugin], ConfigFactory.empty())
-      eventually { ComponentRegistry(system).flow("date").isDefined should equal(true) }
-      val component = ComponentRegistry(system).flow("date").get
+      eventually { ComponentRegistry(system).getFlow("date").isDefined should equal(true) }
+      val component = ComponentRegistry(system).getFlow("date").get
       component(ConfigFactory.parseString("""{"source":"/foobar", "input-formatter":"HH:mm", "output-formatter":"HH:mm"}"""))
     }
   }

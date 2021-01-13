@@ -37,8 +37,8 @@ class GelfPluginSpec extends TestPlugin {
   "Gelf plugin" should {
     "register a materializable gelf source component" in {
       create(classOf[GelfPlugin], ConfigFactory.empty())
-      eventually { ComponentRegistry(system).source("gelf").isDefined should equal(true) }
-      val component = ComponentRegistry(system).source("gelf").get
+      eventually { ComponentRegistry(system).getSource("gelf").isDefined should equal(true) }
+      val component = ComponentRegistry(system).getSource("gelf").get
       component(ConfigFactory.parseString("""{"host":"127.0.0.1", "port": 8080}"""))
     }
   }

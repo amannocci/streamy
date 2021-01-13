@@ -38,8 +38,8 @@ class FingerprintPluginSpec extends TestPlugin {
   "Fingerprint plugin" should {
     "register a materializable fingerprint component" in {
       create(classOf[FingerprintPlugin], ConfigFactory.empty())
-      eventually { ComponentRegistry(system).flow("fingerprint").isDefined should equal(true) }
-      val component = ComponentRegistry(system).flow("fingerprint").get
+      eventually { ComponentRegistry(system).getFlow("fingerprint").isDefined should equal(true) }
+      val component = ComponentRegistry(system).getFlow("fingerprint").get
       component(ConfigFactory.parseString("""{"source":"/foobar", "hashing":"md5"}"""))
     }
   }

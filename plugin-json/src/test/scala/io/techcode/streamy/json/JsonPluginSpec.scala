@@ -37,8 +37,8 @@ class JsonPluginSpec extends TestPlugin {
   "Json plugin" should {
     "register a materializable graphite flow component" in {
       create(classOf[JsonPlugin], ConfigFactory.empty())
-      eventually { ComponentRegistry(system).flow("json").isDefined should equal(true) }
-      val component = ComponentRegistry(system).flow("json").get
+      eventually { ComponentRegistry(system).getFlow("json").isDefined should equal(true) }
+      val component = ComponentRegistry(system).getFlow("json").get
       component(ConfigFactory.parseString("""{"source":"/"}"""))
     }
   }

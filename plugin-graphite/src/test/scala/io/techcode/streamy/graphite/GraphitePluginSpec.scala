@@ -37,8 +37,8 @@ class GraphitePluginSpec extends TestPlugin {
   "Graphite plugin" should {
     "register a materializable graphite source component" in {
       create(classOf[GraphitePlugin], ConfigFactory.empty())
-      eventually { ComponentRegistry(system).source("graphite").isDefined should equal(true) }
-      val component = ComponentRegistry(system).source("graphite").get
+      eventually { ComponentRegistry(system).getSource("graphite").isDefined should equal(true) }
+      val component = ComponentRegistry(system).getSource("graphite").get
       component(ConfigFactory.parseString("""{"host":"127.0.0.1", "port": 8080}"""))
     }
   }

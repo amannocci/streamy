@@ -81,7 +81,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref ref of the source.
     * @return optional source.
     */
-  def source(ref: String): Option[Config => Source[StreamEvent, _]] =
+  def getSource(ref: String): Option[Config => Source[StreamEvent, _]] =
     Option(sourceRegistry.get(ref))
 
   /**
@@ -90,7 +90,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref ref of the flow.
     * @return optional flow.
     */
-  def flow(ref: String): Option[Config => Flow[StreamEvent, StreamEvent, _]] =
+  def getFlow(ref: String): Option[Config => Flow[StreamEvent, StreamEvent, _]] =
     Option(flowRegistry.get(ref))
 
   /**
@@ -99,7 +99,7 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
     * @param ref ref of the sink.
     * @return optional sink.
     */
-  def sink(ref: String): Option[Config => Sink[StreamEvent, _]] =
+  def getSink(ref: String): Option[Config => Sink[StreamEvent, _]] =
     Option(sinkRegistry.get(ref))
 
 }

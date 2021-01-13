@@ -21,33 +21,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package io.techcode.streamy.elasticsearch
 
-package io.techcode.streamy.riemann
-
-import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.component.ComponentRegistry
-import io.techcode.streamy.plugin.TestPlugin
-import org.scalatest.concurrent.Eventually.eventually
+import io.techcode.streamy.elasticsearch.component.{ElasticsearchFlow, ElasticsearchSink, ElasticsearchSource}
+import io.techcode.streamy.plugin.{Plugin, PluginData}
+import pureconfig._
 
 /**
-  * Riemann plugin spec.
+  * Elasticsearch plugin implementation.
   */
-class RiemannPluginSpec extends TestPlugin {
+class ElasticsearchPlugin(
+  data: PluginData
+) extends Plugin(data) {
 
-  "Riemann plugin" should {
-    "register a materializable riemann source component" in {
-      create(classOf[RiemannPlugin], ConfigFactory.empty())
-      eventually { ComponentRegistry(system).getSource("riemann").isDefined should equal(true) }
-      val component = ComponentRegistry(system).getSource("riemann").get
-      component(ConfigFactory.parseString("""{"host":"127.0.0.1", "port": 8080}"""))
-    }
+  import system.dispatcher
 
-    "register a materializable riemann sink component" in {
-      create(classOf[RiemannPlugin], ConfigFactory.empty())
-      eventually { ComponentRegistry(system).getSink("riemann").isDefined should equal(true) }
-      val component = ComponentRegistry(system).getSink("riemann").get
-      component(ConfigFactory.parseString("""{"host":"127.0.0.1", "port": 8080}"""))
-    }
+  override def onStart(): Unit = {
+    val componentRegistry = ComponentRegistry(system)
+    componentRegistry.registerSource("elasticsearch-single", conf => {
+      ElasticsearchSource.single(ConfigSource.fromConfig(conf).loadOrThrow[ElasticsearchSource.Config])
+    })
+    componentRegistry.registerSource("elasticsearch-paginate", conf => {
+      ElasticsearchSource.paginate(ConfigSource.fromConfig(conf).loadOrThrow[ElasticsearchSource.Config])
+    })
+    componentRegistry.registerFlow("elasticsearch", conf => {
+      ElasticsearchFlow(ConfigSource.fromConfig(conf).loadOrThrow[ElasticsearchFlow.Config])
+    })
+    componentRegistry.registerSink("elasticsearch", conf => {
+      ElasticsearchSink(ConfigSource.fromConfig(conf).loadOrThrow[ElasticsearchFlow.Config])
+    })
   }
+
+  override def onStop(): Unit = ()
 
 }
