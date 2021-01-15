@@ -25,10 +25,10 @@ package io.techcode.streamy.kafka.component
 
 import akka.Done
 import akka.kafka.scaladsl.Consumer.DrainingControl
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.stream.scaladsl.{Keep, Source}
 import akka.util.ByteString
 import io.techcode.streamy.event.StreamEvent
-import io.techcode.streamy.kafka.component.KafkaSource.{AutoOffsetReset, Binding}
+import io.techcode.streamy.kafka.component.KafkaSource.AutoOffsetReset
 import io.techcode.streamy.kafka.event.KafkaEvent
 import io.techcode.streamy.kafka.util.KafkaSpec
 import io.techcode.streamy.util.json.Json
@@ -86,7 +86,7 @@ class KafkaSinkSpec extends KafkaSpec {
         binding = KafkaSink.Binding(
           key = Some("key"),
           value = Some("value")
-        )), committerDefaults))(DrainingControl.apply).run()
+        ))))(DrainingControl.apply).run()
 
       // Wait for topic consumer and then drain
       receiveOne(1 minute)

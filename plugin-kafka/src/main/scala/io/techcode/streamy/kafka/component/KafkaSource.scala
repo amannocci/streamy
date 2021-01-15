@@ -37,6 +37,9 @@ import io.techcode.streamy.util.json._
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
+import pureconfig._
+import pureconfig.error.FailureReason
+import pureconfig.generic.semiauto._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -48,18 +51,35 @@ object KafkaSource {
 
   // Defaults
   val DefaultMaxPartition: Int = 1024
+  val DefaultBinding: Binding = Binding()
 
   // Commitable offset attribute key
   val CommittableOffsetKey: AttributeKey[CommittableOffset] = AttributeKey("kafka-commitable-offset")
+
+  // Configuration readers
+  implicit val staticTopicConfigReader: ConfigReader[StaticTopicConfig] = deriveReader[StaticTopicConfig]
+  implicit val patternTopicConfigReader: ConfigReader[PatternTopicConfig] = deriveReader[PatternTopicConfig]
+  implicit val topicConfigReader: ConfigReader[TopicConfig] = ConfigReader.fromFunction[TopicConfig](conf =>
+    staticTopicConfigReader.from(conf).orElse(patternTopicConfigReader.from(conf))
+  )
+  implicit val bindingConfigReader: ConfigReader[Binding] = deriveReader[Binding]
+  implicit val autoOffsetResetConfigReader: ConfigReader[AutoOffsetReset] = ConfigReader.fromString[AutoOffsetReset] {
+    case "earliest" => Right(AutoOffsetReset.Earliest)
+    case "latest" => Right(AutoOffsetReset.Latest)
+    case _ => Left(new FailureReason {
+      override def description: String = "Auto offset reset must be either 'earliest' or 'latest'"
+    })
+  }
+  implicit val configReader: ConfigReader[Config] = deriveReader[Config]
 
   // Component configuration
   case class Config(
     bootstrapServers: String,
     groupId: String,
-    autoOffsetReset: AutoOffsetReset = AutoOffsetReset.Latest,
     topics: TopicConfig,
+    autoOffsetReset: AutoOffsetReset = AutoOffsetReset.Latest,
     properties: Map[String, String] = Map.empty,
-    binding: Binding = Binding()
+    binding: Binding = DefaultBinding
   ) {
     def toConsumerSettings()(implicit system: ActorSystem): ConsumerSettings[String, Array[Byte]] =
       ConsumerSettings(system, new StringDeserializer, new ByteArrayDeserializer)
