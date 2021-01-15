@@ -336,7 +336,7 @@ object SyslogTransformerSpec {
     }
 
     object Transformer {
-      val Binding = SyslogTransformer.Rfc3164.Binding(
+      val Binding: SyslogTransformer.Rfc3164.Binding = SyslogTransformer.Rfc3164.Binding(
         facility = Some(SyslogTransformer.Rfc3164.Id.Facility),
         severity = Some(SyslogTransformer.Rfc3164.Id.Severity),
         timestamp = Some(SyslogTransformer.Rfc3164.Id.Timestamp),
@@ -381,11 +381,11 @@ object SyslogTransformerSpec {
         bypassMessageParsing = true
       ))
 
-      val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc3164.Config(
+      val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc3164.Config(
         binding = Binding
       ))
 
-      val PrinterCount: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc3164.Config(
+      val PrinterCount: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc3164.Config(
         framing = Framing.Count,
         binding = Binding
       ))
@@ -452,7 +452,7 @@ object SyslogTransformerSpec {
 
     object Transformer {
 
-      private val Binding = SyslogTransformer.Rfc5424.Binding(
+      val Binding: SyslogTransformer.Rfc5424.Binding = SyslogTransformer.Rfc5424.Binding(
         facility = Some(SyslogTransformer.Rfc5424.Id.Facility),
         severity = Some(SyslogTransformer.Rfc5424.Id.Severity),
         timestamp = Some(SyslogTransformer.Rfc5424.Id.Timestamp),
@@ -499,16 +499,16 @@ object SyslogTransformerSpec {
         bypassMessageParsing = true
       ))
 
-      val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
+      val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         binding = Binding
       ))
 
-      val PrinterCount: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
+      val PrinterCount: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val PrinterDefault: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
+      val PrinterDefault: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         binding = Binding.copy(
           facility = None,
           severity = None,
