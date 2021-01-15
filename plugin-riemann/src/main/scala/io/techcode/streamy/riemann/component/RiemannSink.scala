@@ -79,8 +79,10 @@ object RiemannSink {
       host,
       port,
       secured,
-      idleTimeout
+      idleTimeout,
+      reconnect = reconnect.map(c => TcpFlow.Client.ReconnectConfig(c.minBackoff, c.maxBackoff, c.randomFactor))
     )
+
   }
 
   // Reconnect component configuration
