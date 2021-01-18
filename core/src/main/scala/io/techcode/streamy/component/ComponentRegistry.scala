@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2020
+ * Copyright (c) 2017-2021
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,12 @@
  */
 package io.techcode.streamy.component
 
-import akka.NotUsed
 import akka.actor.{ActorSystem, ExtendedActorSystem, Extension, ExtensionId}
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.typesafe.config.Config
+import io.techcode.streamy.component.flow.BufferFlow
 import io.techcode.streamy.event.StreamEvent
+import pureconfig.ConfigSource
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -44,6 +45,11 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
   private val flowRegistry = new ConcurrentHashMap[String, Config => Flow[StreamEvent, StreamEvent, _]]
 
   private val sinkRegistry = new ConcurrentHashMap[String, Config => Sink[StreamEvent, _]]
+
+  // Fill registries
+  registerFlow("buffer", conf => {
+    BufferFlow(ConfigSource.fromConfig(conf).loadOrThrow[BufferFlow.Config])
+  })
 
   /**
     * Register a source factory.
@@ -104,8 +110,15 @@ class ComponentRegistry(system: ActorSystem) extends Extension {
 
 }
 
+/**
+  * Component registry companion.
+  */
 object ComponentRegistry extends ExtensionId[ComponentRegistry] {
 
+  /**
+    * Is used by Akka to instantiate the Extension identified by this ExtensionId,
+    * internal use only.
+    */
   def createExtension(system: ExtendedActorSystem): ComponentRegistry = new ComponentRegistry(system)
 
 }
