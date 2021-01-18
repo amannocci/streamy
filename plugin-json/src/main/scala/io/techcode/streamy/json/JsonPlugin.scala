@@ -25,14 +25,14 @@ package io.techcode.streamy.json
 
 import io.techcode.streamy.component.ComponentRegistry
 import io.techcode.streamy.json.component.JsonTransformer
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.plugin.Plugin
 import pureconfig._
 
 /**
   * Json plugin implementation.
   */
 class JsonPlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
   override def onStart(): Unit = {
@@ -40,7 +40,5 @@ class JsonPlugin(
       JsonTransformer(ConfigSource.fromConfig(conf).loadOrThrow[JsonTransformer.Config])
     })
   }
-
-  override def onStop(): Unit = ()
 
 }

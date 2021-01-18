@@ -25,11 +25,11 @@ package io.techcode.streamy.fingerprint
 
 import io.techcode.streamy.component.ComponentRegistry
 import io.techcode.streamy.fingerprint.component.FingerprintTransformer
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.plugin.Plugin
 import pureconfig.ConfigSource
 
 class FingerprintPlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
   override def onStart(): Unit = {
@@ -37,7 +37,5 @@ class FingerprintPlugin(
       FingerprintTransformer(ConfigSource.fromConfig(conf).loadOrThrow[FingerprintTransformer.Config])
     })
   }
-
-  override def onStop(): Unit = ()
 
 }

@@ -34,10 +34,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
   * Component registry system.
-  *
-  * @param system actor system.
   */
-class ComponentRegistry(system: ActorSystem) extends Extension {
+class ComponentRegistry extends Extension {
 
   // All registries
   private val sourceRegistry = new ConcurrentHashMap[String, Config => Source[StreamEvent, _]]
@@ -119,6 +117,6 @@ object ComponentRegistry extends ExtensionId[ComponentRegistry] {
     * Is used by Akka to instantiate the Extension identified by this ExtensionId,
     * internal use only.
     */
-  def createExtension(system: ExtendedActorSystem): ComponentRegistry = new ComponentRegistry(system)
+  def createExtension(system: ExtendedActorSystem): ComponentRegistry = new ComponentRegistry
 
 }

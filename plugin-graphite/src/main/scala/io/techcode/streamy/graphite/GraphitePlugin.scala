@@ -25,14 +25,14 @@ package io.techcode.streamy.graphite
 
 import io.techcode.streamy.component.ComponentRegistry
 import io.techcode.streamy.graphite.component.GraphiteSource
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.plugin.Plugin
 import pureconfig.ConfigSource
 
 /**
   * Graphite plugin implementation.
   */
 class GraphitePlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
   override def onStart(): Unit = {

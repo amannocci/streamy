@@ -24,7 +24,7 @@
 package io.techcode.streamy.date
 
 import io.techcode.streamy.component.ComponentRegistry
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.plugin.Plugin
 import io.techcode.streamy.date.component.DateTransformer
 import pureconfig._
 
@@ -32,15 +32,13 @@ import pureconfig._
   * Date plugin implementation.
   */
 class DatePlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
-  override def onStart(): Unit = {
+  def onStart(): Unit = {
     ComponentRegistry(system).registerFlow("date", conf => {
       DateTransformer(ConfigSource.fromConfig(conf).loadOrThrow[DateTransformer.Config])
     })
   }
-
-  override def onStop(): Unit = ()
 
 }

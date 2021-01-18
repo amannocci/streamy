@@ -25,14 +25,14 @@ package io.techcode.streamy.gelf
 
 import io.techcode.streamy.component.ComponentRegistry
 import io.techcode.streamy.gelf.component.GelfSource
-import io.techcode.streamy.plugin.{Plugin, PluginData}
-import pureconfig.ConfigSource
+import io.techcode.streamy.plugin.Plugin
+import pureconfig._
 
 /**
   * Gelf plugin implementation.
   */
 class GelfPlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
   override def onStart(): Unit = {
@@ -40,7 +40,5 @@ class GelfPlugin(
       GelfSource.server(ConfigSource.fromConfig(conf).loadOrThrow[GelfSource.Config])
     })
   }
-
-  override def onStop(): Unit = ()
 
 }

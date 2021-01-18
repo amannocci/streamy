@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.event
 
-import io.techcode.streamy.plugin.PluginState
+import io.techcode.streamy.plugin.Plugin
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -34,19 +34,19 @@ class PluginEventSpec extends AnyWordSpecLike with Matchers {
 
   "Plugin event" can {
     "be converted to plugin loading state" in {
-      PluginEvent.Loading("foobar").toState should equal(PluginState.Loading)
+      PluginEvent.Loading("foobar").toState should equal(Plugin.State.Loading)
     }
 
     "be converted to plugin running state" in {
-      PluginEvent.Running("foobar").toState should equal(PluginState.Running)
+      PluginEvent.Running("foobar").toState should equal(Plugin.State.Running)
     }
 
     "be converted to plugin stopping state" in {
-      PluginEvent.Stopping("foobar").toState should equal(PluginState.Stopping)
+      PluginEvent.Stopping("foobar").toState should equal(Plugin.State.Stopping)
     }
 
     "be converted to plugin stopped state" in {
-      PluginEvent.Stopped("foobar").toState should equal(PluginState.Stopped)
+      PluginEvent.Stopped("foobar").toState should equal(Plugin.State.Stopped)
     }
 
     "be converted to string" in {

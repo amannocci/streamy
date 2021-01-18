@@ -25,14 +25,14 @@ package io.techcode.streamy.elasticsearch
 
 import io.techcode.streamy.component.ComponentRegistry
 import io.techcode.streamy.elasticsearch.component.{ElasticsearchFlow, ElasticsearchSink, ElasticsearchSource}
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.plugin.Plugin
 import pureconfig._
 
 /**
   * Elasticsearch plugin implementation.
   */
 class ElasticsearchPlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
   import system.dispatcher
@@ -52,7 +52,5 @@ class ElasticsearchPlugin(
       ElasticsearchSink(ConfigSource.fromConfig(conf).loadOrThrow[ElasticsearchFlow.Config])
     })
   }
-
-  override def onStop(): Unit = ()
 
 }

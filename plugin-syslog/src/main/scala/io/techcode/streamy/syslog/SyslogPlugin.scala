@@ -24,7 +24,7 @@
 package io.techcode.streamy.syslog
 
 import io.techcode.streamy.component.ComponentRegistry
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.plugin.Plugin
 import io.techcode.streamy.syslog.component.{SyslogSink, SyslogSource}
 import pureconfig._
 
@@ -32,7 +32,7 @@ import pureconfig._
   * Syslog plugin implementation.
   */
 class SyslogPlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
   override def onStart(): Unit = {
@@ -50,7 +50,5 @@ class SyslogPlugin(
       SyslogSink.client(ConfigSource.fromConfig(conf).loadOrThrow[SyslogSink.Rfc3164.Config])
     })
   }
-
-  override def onStop(): Unit = ()
 
 }

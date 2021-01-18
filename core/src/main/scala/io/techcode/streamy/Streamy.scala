@@ -58,7 +58,7 @@ object Streamy extends App {
   Monitors.runAll(appConf.monitor)
 
   // Attempt to deploy plugins
-  system.actorOf(Props(classOf[PluginManager], appConf))
+  PluginManager(system)
 
   // Handle dry run
   if (args.length > 0 && args(0).equals("--dry-run")) {

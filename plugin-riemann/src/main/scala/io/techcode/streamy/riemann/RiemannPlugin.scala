@@ -24,7 +24,7 @@
 package io.techcode.streamy.riemann
 
 import io.techcode.streamy.component.ComponentRegistry
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.plugin.Plugin
 import io.techcode.streamy.riemann.component.{RiemannSink, RiemannSource}
 import pureconfig._
 
@@ -32,18 +32,17 @@ import pureconfig._
   * Riemann plugin implementation.
   */
 class RiemannPlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
   override def onStart(): Unit = {
-    ComponentRegistry(system).registerSource("riemann", conf => {
+    val componentRegistry = ComponentRegistry(system)
+    componentRegistry.registerSource("riemann", conf => {
       RiemannSource.server(ConfigSource.fromConfig(conf).loadOrThrow[RiemannSource.Config])
     })
-    ComponentRegistry(system).registerSink("riemann", conf => {
+    componentRegistry.registerSink("riemann", conf => {
       RiemannSink.client(ConfigSource.fromConfig(conf).loadOrThrow[RiemannSink.Config])
     })
   }
-
-  override def onStop(): Unit = ()
 
 }

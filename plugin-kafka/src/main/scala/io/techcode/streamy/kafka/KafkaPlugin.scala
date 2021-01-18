@@ -25,14 +25,14 @@ package io.techcode.streamy.kafka
 
 import io.techcode.streamy.component.ComponentRegistry
 import io.techcode.streamy.kafka.component.{KafkaSink, KafkaSource}
-import io.techcode.streamy.plugin.{Plugin, PluginData}
+import io.techcode.streamy.plugin.Plugin
 import pureconfig._
 
 /**
   * Kafka plugin implementation.
   */
 class KafkaPlugin(
-  data: PluginData
+  data: Plugin.Data
 ) extends Plugin(data) {
 
   override def onStart(): Unit = {
@@ -51,7 +51,5 @@ class KafkaPlugin(
     })
     componentRegistry.registerSink("kafka-committer", _ => KafkaSink.committer())
   }
-
-  override def onStop(): Unit = ()
 
 }

@@ -30,14 +30,13 @@ import akka.actor.{Actor, ActorRef, ActorSystem, DiagnosticActorLogging}
 import akka.stream.Supervision
 import com.typesafe.config.Config
 import io.techcode.streamy.event._
-import io.techcode.streamy.plugin.PluginState.PluginState
 import io.techcode.streamy.util.StreamException
 
 /**
   * Abstract plugin implementation based on Actor.
   */
 abstract class Plugin(
-  val data: PluginData
+  val data: Plugin.Data
 ) extends Actor with DiagnosticActorLogging {
 
   implicit final val system: ActorSystem = context.system
@@ -80,7 +79,7 @@ abstract class Plugin(
   /**
     * Fired when the plugin is stopping.
     */
-  def onStop(): Unit
+  def onStop(): Unit = ()
 
   /**
     * Returns the folder that the plugin data's files are located in.
@@ -98,49 +97,54 @@ abstract class Plugin(
 }
 
 /**
-  * Various plugin state.
+  * Plugin companion.
   */
-object PluginState extends Enumeration {
-  type PluginState = Value
-  val Unknown, Loading, Running, Stopping, Stopped = Value
+object Plugin {
+
+  // Plugin state
+  object State extends Enumeration {
+    type State = Value
+    val Unknown, Loading, Running, Stopping, Stopped = Value
+  }
+
+  /**
+    * Plugin data informations for loose coupling.
+    *
+    * @param description plugin description.
+    * @param conf        plugin configuration.
+    * @param dataFolder  plugin data folder.
+    */
+  case class Data(
+    description: Plugin.Description,
+    conf: Config,
+    dataFolder: Path
+  )
+
+  /**
+    * Plugin container for loose coupling.
+    *
+    * @param ref         plugin actor ref.
+    * @param description plugin description.
+    * @param conf        plugin configuration.
+    */
+  case class Container(
+    ref: ActorRef = ActorRef.noSender,
+    description: Plugin.Description,
+    conf: Config,
+    state: Plugin.State.State = Plugin.State.Unknown
+  )
+
+  /**
+    * Represents some plugin informations.
+    */
+  case class Description(
+    name: String,
+    version: String,
+    main: Option[String] = Option.empty,
+    authors: Seq[String] = Seq.empty,
+    website: Option[String] = None,
+    depends: Seq[String] = Seq.empty,
+    file: Option[URL] = None
+  )
+
 }
-
-/**
-  * Plugin data informations for loose coupling.
-  *
-  * @param description plugin description.
-  * @param conf        plugin configuration.
-  * @param dataFolder  plugin data folder.
-  */
-case class PluginData(
-  description: PluginDescription,
-  conf: Config,
-  dataFolder: Path
-)
-
-/**
-  * Plugin container for loose coupling.
-  *
-  * @param ref         plugin actor ref.
-  * @param description plugin description.
-  * @param conf        plugin configuration.
-  */
-case class PluginContainer(
-  ref: ActorRef = ActorRef.noSender,
-  description: PluginDescription,
-  conf: Config,
-  state: PluginState = PluginState.Unknown
-)
-
-/**
-  * Represents some plugin informations.
-  */
-case class PluginDescription(
-  name: String,
-  version: String,
-  main: Option[String] = Option.empty,
-  authors: Seq[String] = Seq.empty,
-  website: Option[String] = None,
-  depends: Seq[String] = Seq.empty,
-  file: Option[URL] = None
-)

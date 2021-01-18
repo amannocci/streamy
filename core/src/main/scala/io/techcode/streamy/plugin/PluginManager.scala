@@ -23,20 +23,19 @@
  */
 package io.techcode.streamy.plugin
 
+import akka.actor.{ActorSystem, CoordinatedShutdown, ExtendedActorSystem, Extension, ExtensionId, Props}
+import akka.event.Logging
+import akka.pattern.gracefulStop
+import com.typesafe.config.{Config, ConfigFactory}
+import io.techcode.streamy.config.StreamyConfig
+import pureconfig._
+import pureconfig.error.ConfigReaderException
+import pureconfig.generic.auto._
+
 import java.net.URL
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
 import java.util.function.BiPredicate
-
-import akka.actor.{Actor, DiagnosticActorLogging, Props}
-import akka.pattern.gracefulStop
-import com.typesafe.config.{Config, ConfigFactory}
-import io.techcode.streamy.config.StreamyConfig
-import io.techcode.streamy.event._
-import pureconfig._
-import pureconfig.generic.auto._
-import pureconfig.error.ConfigReaderException
-
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -45,24 +44,29 @@ import scala.language.postfixOps
 /**
   * The plugin manager that handle all plugins stuff.
   */
-class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLogging with ActorListener {
-
-  // Actor refs
-  private var plugins: Map[String, PluginContainer] = Map.empty
+class PluginManager(system: ActorSystem) extends Extension {
 
   // Configuration
-  private val lifecycleConfig = conf.lifecycle
+  private val conf: StreamyConfig = ConfigSource.fromConfig(system.settings.config)
+    .at("streamy").loadOrThrow[StreamyConfig]
+  // Logging system
+  private val log = Logging(system, classOf[PluginManager])
+  // Actor refs
+  private var plugins: Map[String, Plugin.Container] = Map.empty
 
-  // Common mdc
-  private val commonMdc = Map("type" -> "application")
+  /**
+    * Get a plugin by his name.
+    *
+    * @param pluginName pluign name.
+    * @return optional plugin container.
+    */
+  def getPlugin(pluginName: String): Option[Plugin.Container] = plugins.get(pluginName)
 
   /**
     * Start all plugins.
     */
-  override def preStart(): Unit = {
-    log.mdc(commonMdc)
+  private def onStart(): Unit = {
     log.info("Starting all plugins")
-    eventStream.subscribe(self, classOf[PluginEvent.All])
 
     // Retrieve all plugin description
     val pluginDescriptions = getPluginDescriptions
@@ -80,54 +84,26 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
         val typed = Class.forName(pluginDescription.main.get)
 
         // Plugin container
-        val pluginData = PluginData(
+        val pluginData = Plugin.Data(
           pluginDescription,
           pluginConf,
           StreamyConfig.DataDirectory
         )
 
         // Start plugin
-        val pluginRef = context.actorOf(Props(typed, pluginData))
+        val pluginRef = system.actorOf(Props(typed, pluginData))
 
         // Add to map
-        plugins += (pluginDescription.name -> PluginContainer(
+        plugins += (pluginDescription.name -> Plugin.Container(
           description = pluginDescription,
           conf = pluginConf,
           ref = pluginRef
         ))
       } catch {
         case ex: Exception =>
-          log.mdc(commonMdc)
           log.error(ex, "Can't load '{}' plugin", pluginDescription.name)
       }
     })
-  }
-
-  /**
-    * Stop all plugins.
-    */
-  override def postStop(): Unit = {
-    log.mdc(commonMdc)
-    log.info("Stopping all plugins")
-    try {
-      val signal = Future.sequence(context.children.map { ref =>
-        // Launch graceful stop
-        gracefulStop(ref, lifecycleConfig.gracefulTimeout)
-      })
-      Await.result(signal, lifecycleConfig.shutdownTimeout)
-      // All plugins are stopped
-    } catch {
-      // the actor wasn't stopped within 5 seconds
-      case ex: akka.pattern.AskTimeoutException =>
-        log.mdc(commonMdc)
-        log.error(ex, "Failed to graceful shutdown")
-    }
-
-    // Unregister listener
-    super.postStop()
-
-    // Clear plugins mapping
-    plugins = Map.empty
   }
 
   /**
@@ -136,7 +112,7 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
     * @param description plugin description.
     * @return configuration merged.
     */
-  private def mergeConfig(description: PluginDescription): Config = {
+  private def mergeConfig(description: Plugin.Description): Config = {
     (if (conf.plugin.hasPath(description.name)) conf.plugin.getConfig(description.name) else PluginManager.EmptyPluginConfig).resolve()
       .withFallback {
         val pluginConf = StreamyConfig.ConfigurationDirectory.resolve(s"${description.name}.conf")
@@ -153,23 +129,22 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
     *
     * @return all plugins descriptions.
     */
-  private def getPluginDescriptions: mutable.AnyRefMap[String, PluginDescription] = {
+  private def getPluginDescriptions: mutable.AnyRefMap[String, Plugin.Description] = {
     // Retrieve all jar files
     val jarMatcher: BiPredicate[Path, BasicFileAttributes] = (path, _) => path.toString.endsWith(".jar")
 
     // Attempt to load all plugins
-    val pluginDescriptions = mutable.AnyRefMap.empty[String, PluginDescription]
+    val pluginDescriptions = mutable.AnyRefMap.empty[String, Plugin.Description]
     Files.find(StreamyConfig.PluginDirectory, 1, jarMatcher).forEach { jar =>
       // Retrieve configuration details
       val conf = ConfigFactory.parseURL(new URL(s"jar:file:${jar.toAbsolutePath.toString}!/plugin.conf"))
 
       // Attempt to convert configuration to plugin description
       try {
-        val description = ConfigSource.fromConfig(conf).loadOrThrow[PluginDescription].copy(file = Some(jar.toUri.toURL))
+        val description = ConfigSource.fromConfig(conf).loadOrThrow[Plugin.Description].copy(file = Some(jar.toUri.toURL))
         pluginDescriptions += (description.name -> description)
       } catch {
         case _: ConfigReaderException[_] =>
-          log.mdc(commonMdc)
           log.error("Can't load '{}' plugin", jar.getFileName.toString)
       }
     }
@@ -183,8 +158,8 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
     * @param pluginDescriptions all plugins descriptions.
     * @return list of plugins to load.
     */
-  private def checkDependencies(pluginDescriptions: mutable.Map[String, PluginDescription]) = {
-    val toLoads = mutable.ArrayBuffer.empty[PluginDescription]
+  private def checkDependencies(pluginDescriptions: mutable.Map[String, Plugin.Description]) = {
+    val toLoads = mutable.ArrayBuffer.empty[Plugin.Description]
     for (pluginDescription <- pluginDescriptions.values) {
       if (pluginDescription.main.isDefined) {
         // Condition
@@ -192,8 +167,6 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
           if (pluginDescriptions.contains(dependency)) {
             true
           } else {
-
-            log.mdc(commonMdc)
             log.error("Can't load '{}' plugin because of unknown dependency '{}'", pluginDescription.name, dependency)
             false
           }
@@ -208,14 +181,26 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
     toLoads
   }
 
-  override def receive: Receive = {
-    case evt: PluginEvent.All =>
-      val container = plugins.get(evt.name)
-      if (container.isDefined) {
-        plugins += (evt.name -> container.get.copy(ref = sender(), state = evt.toState))
-        log.mdc(commonMdc)
-        log.info("Plugin {} is {}", evt.name, evt.toString.toLowerCase())
-      }
+  /**
+    * Stop all plugins.
+    */
+  private def onStop(): Unit = {
+    log.info("Stopping all plugins")
+    try {
+      val signal = Future.sequence(plugins.values.map { container =>
+        // Launch graceful stop
+        gracefulStop(container.ref, conf.lifecycle.gracefulTimeout)
+      })
+      Await.result(signal, conf.lifecycle.shutdownTimeout)
+      // All plugins are stopped
+    } catch {
+      // the actor wasn't stopped within 5 seconds
+      case ex: akka.pattern.AskTimeoutException =>
+        log.error(ex, "Failed to graceful shutdown")
+    }
+
+    // Clear plugins mapping
+    plugins = Map.empty
   }
 
 }
@@ -223,9 +208,20 @@ class PluginManager(conf: StreamyConfig) extends Actor with DiagnosticActorLoggi
 /**
   * Plugin manager companion.
   */
-object PluginManager {
+object PluginManager extends ExtensionId[PluginManager] {
 
   // Empty plugin configuration
   val EmptyPluginConfig: Config = ConfigFactory.empty()
+
+  /**
+    * Is used by Akka to instantiate the Extension identified by this ExtensionId,
+    * internal use only.
+    */
+  def createExtension(system: ExtendedActorSystem): PluginManager = {
+    val pluginManager = new PluginManager(system)
+    pluginManager.onStart()
+    CoordinatedShutdown(system).addJvmShutdownHook(() => pluginManager.onStop())
+    pluginManager
+  }
 
 }
