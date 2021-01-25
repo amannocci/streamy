@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.plugin
 
-import akka.Done
+import akka.{Done, NotUsed}
 import akka.actor.{Actor, ActorSystem, CoordinatedShutdown, DiagnosticActorLogging, ExtendedActorSystem, Extension, ExtensionId, Props}
 import akka.event.Logging
 import akka.pattern.{ask, gracefulStop}
@@ -91,7 +91,7 @@ class PluginManager(system: ActorSystem) extends Extension {
 
     // Run plugin listener before anything
     val pluginListener = system.actorOf(Props(classOf[PluginListener], this))
-    val waitForListener = Await.ready(ask(pluginListener, Done)(Timeout(20, TimeUnit.SECONDS)), Duration.Inf)
+    val waitForListener = Await.ready(ask(pluginListener, NotUsed)(Timeout(20, TimeUnit.SECONDS)), Duration.Inf)
     waitForListener.onComplete {
       case Success(_) =>
         // Retrieve all plugin description
@@ -132,6 +132,7 @@ class PluginManager(system: ActorSystem) extends Extension {
         })
 
         // Wait for loading phase complete
+        pluginListener ! Done
         Await.ready(loadingPhaseComplete.future, Duration.Inf)
       case Failure(ex) => log.error(ex, "Plugin listener doesn't start properly")
     }
@@ -245,8 +246,21 @@ private class PluginListener(
   pluginManager: PluginManager
 ) extends Actor with DiagnosticActorLogging with ActorListener {
 
+  // Check for loading phase completion
+  var checkPhaseComplete: Boolean = false
+
+  private def checkPhaseCompletion(): Unit = {
+    if (!asScala(pluginManager.plugins.values())
+      .exists(c => (c.state == Plugin.State.Loading) || (c.state == Plugin.State.Unknown))) {
+      pluginManager.loadingPhaseComplete.success(Done)
+    }
+  }
+
   override def receive: Receive = {
-    case _: Done => sender() ! Done
+    case _: NotUsed => sender() ! NotUsed
+    case _: Done =>
+      checkPhaseComplete = true
+      checkPhaseCompletion()
     case evt: PluginEvent.All =>
       val container = pluginManager.getPlugin(evt.name)
       container.foreach { c =>
@@ -255,9 +269,8 @@ private class PluginListener(
         log.info("Plugin {} is {}", evt.name, evt.toString.toLowerCase())
 
         // Check if all plugins are ready
-        if (!asScala(pluginManager.plugins.values())
-          .exists(c => (c.state == Plugin.State.Loading) || (c.state == Plugin.State.Unknown))) {
-          pluginManager.loadingPhaseComplete.success(Done)
+        if (checkPhaseComplete) {
+          checkPhaseCompletion()
         }
       }
   }
@@ -279,7 +292,11 @@ object PluginManager extends ExtensionId[PluginManager] {
   def createExtension(system: ExtendedActorSystem): PluginManager = {
     val pluginManager = new PluginManager(system)
     pluginManager.onStart()
-    CoordinatedShutdown(system).addJvmShutdownHook(() => pluginManager.onStop())
+    CoordinatedShutdown(system)
+      .addTask(CoordinatedShutdown.PhaseServiceStop, "plugin-manager-shutdown") { () =>
+        pluginManager.onStop()
+        Future(Done)
+      }
     pluginManager
   }
 

@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.pipeline
 
+import akka.Done
 import akka.actor.{ActorSystem, CoordinatedShutdown, ExtendedActorSystem, Extension, ExtensionId}
 import akka.event.Logging
 import com.typesafe.config.{Config => TConfig}
@@ -31,6 +32,7 @@ import pureconfig.generic.auto._
 
 import scala.jdk.javaapi.CollectionConverters._
 import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.Future
 
 /**
   * Pipeline manager system.
@@ -85,8 +87,16 @@ object PipelineManager extends ExtensionId[PipelineManager] {
     * internal use only.
     */
   def createExtension(system: ExtendedActorSystem): PipelineManager = {
+    import system.dispatcher
+
     val pipelineManager = new PipelineManager(system)
     pipelineManager.onStart()
+    CoordinatedShutdown(system)
+      .addTask(CoordinatedShutdown.PhaseServiceStop, "pipeline-manager-shutdown") { () =>
+        pipelineManager.onStop()
+        Future(Done)
+      }
+
     CoordinatedShutdown(system).addJvmShutdownHook(() => pipelineManager.onStop())
     pipelineManager
   }
