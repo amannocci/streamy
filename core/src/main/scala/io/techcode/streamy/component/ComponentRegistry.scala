@@ -23,7 +23,7 @@
  */
 package io.techcode.streamy.component
 
-import akka.actor.{ActorSystem, ExtendedActorSystem, Extension, ExtensionId}
+import akka.actor.{ExtendedActorSystem, Extension, ExtensionId}
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.typesafe.config.Config
 import io.techcode.streamy.component.flow.BufferFlow

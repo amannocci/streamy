@@ -61,8 +61,14 @@ abstract class Plugin(
 
   override def preStart(): Unit = {
     system.eventStream.publish(PluginEvent.Loading(data.description.name))
-    onStart()
-    system.eventStream.publish(PluginEvent.Running(data.description.name))
+    try {
+      onStart()
+      system.eventStream.publish(PluginEvent.Running(data.description.name))
+    } catch {
+      case ex: Throwable =>
+        log.error(ex, s"Plugin can't '${data.description}' run")
+        context.stop(self)
+    }
   }
 
   override def postStop(): Unit = {

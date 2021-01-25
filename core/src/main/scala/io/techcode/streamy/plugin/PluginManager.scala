@@ -23,11 +23,14 @@
  */
 package io.techcode.streamy.plugin
 
-import akka.actor.{ActorSystem, CoordinatedShutdown, ExtendedActorSystem, Extension, ExtensionId, Props}
+import akka.Done
+import akka.actor.{Actor, ActorSystem, CoordinatedShutdown, DiagnosticActorLogging, ExtendedActorSystem, Extension, ExtensionId, Props}
 import akka.event.Logging
-import akka.pattern.gracefulStop
+import akka.pattern.{ask, gracefulStop}
+import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
 import io.techcode.streamy.config.StreamyConfig
+import io.techcode.streamy.event.{ActorListener, PluginEvent}
 import pureconfig._
 import pureconfig.error.ConfigReaderException
 import pureconfig.generic.auto._
@@ -35,11 +38,15 @@ import pureconfig.generic.auto._
 import java.net.URL
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
+import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 import java.util.function.BiPredicate
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future, Promise}
+import scala.jdk.javaapi.CollectionConverters.asScala
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 /**
   * The plugin manager that handle all plugins stuff.
@@ -49,18 +56,32 @@ class PluginManager(system: ActorSystem) extends Extension {
   // Configuration
   private val conf: StreamyConfig = ConfigSource.fromConfig(system.settings.config)
     .at("streamy").loadOrThrow[StreamyConfig]
+
   // Logging system
   private val log = Logging(system, classOf[PluginManager])
+
   // Actor refs
-  private var plugins: Map[String, Plugin.Container] = Map.empty
+  private[plugin] val plugins = new ConcurrentHashMap[String, Plugin.Container]
+
+  // Wait for loading phase complete
+  private[plugin] val loadingPhaseComplete: Promise[Done] = Promise[Done]()
 
   /**
     * Get a plugin by his name.
     *
-    * @param pluginName pluign name.
+    * @param pluginName plugin name.
     * @return optional plugin container.
     */
-  def getPlugin(pluginName: String): Option[Plugin.Container] = plugins.get(pluginName)
+  def getPlugin(pluginName: String): Option[Plugin.Container] = Option(plugins.get(pluginName))
+
+  /**
+    * Set a plugin by his name.
+    *
+    * @param pluginName plugin name.
+    * @param container  plugin container.
+    */
+  private[plugin] def setPlugin(pluginName: String, container: Plugin.Container): Plugin.Container =
+    plugins.put(pluginName, container)
 
   /**
     * Start all plugins.
@@ -68,42 +89,52 @@ class PluginManager(system: ActorSystem) extends Extension {
   private def onStart(): Unit = {
     log.info("Starting all plugins")
 
-    // Retrieve all plugin description
-    val pluginDescriptions = getPluginDescriptions
+    // Run plugin listener before anything
+    val pluginListener = system.actorOf(Props(classOf[PluginListener], this))
+    val waitForListener = Await.ready(ask(pluginListener, Done)(Timeout(20, TimeUnit.SECONDS)), Duration.Inf)
+    waitForListener.onComplete {
+      case Success(_) =>
+        // Retrieve all plugin description
+        val pluginDescriptions = getPluginDescriptions
 
-    // Check dependencies & prepare loading
-    val toLoads = checkDependencies(pluginDescriptions)
+        // Check dependencies & prepare loading
+        val toLoads = checkDependencies(pluginDescriptions)
 
-    // Waiting response list
-    toLoads.foreach(pluginDescription => {
-      try {
-        // Merge application configuration and plugin configuration
-        val pluginConf = mergeConfig(pluginDescription)
+        // Waiting response list
+        toLoads.foreach(pluginDescription => {
+          try {
+            // Merge application configuration and plugin configuration
+            val pluginConf = mergeConfig(pluginDescription)
 
-        // Load main plugin class
-        val typed = Class.forName(pluginDescription.main.get)
+            // Load main plugin class
+            val typed = Class.forName(pluginDescription.main.get)
 
-        // Plugin container
-        val pluginData = Plugin.Data(
-          pluginDescription,
-          pluginConf,
-          StreamyConfig.DataDirectory
-        )
+            // Plugin container
+            val pluginData = Plugin.Data(
+              pluginDescription,
+              pluginConf,
+              StreamyConfig.DataDirectory
+            )
 
-        // Start plugin
-        val pluginRef = system.actorOf(Props(typed, pluginData))
+            // Start plugin
+            val pluginRef = system.actorOf(Props(typed, pluginData))
 
-        // Add to map
-        plugins += (pluginDescription.name -> Plugin.Container(
-          description = pluginDescription,
-          conf = pluginConf,
-          ref = pluginRef
-        ))
-      } catch {
-        case ex: Exception =>
-          log.error(ex, "Can't load '{}' plugin", pluginDescription.name)
-      }
-    })
+            // Add to map
+            plugins.put(pluginDescription.name, Plugin.Container(
+              description = pluginDescription,
+              conf = pluginConf,
+              ref = pluginRef
+            ))
+          } catch {
+            case ex: Exception =>
+              log.error(ex, "Can't load '{}' plugin", pluginDescription.name)
+          }
+        })
+
+        // Wait for loading phase complete
+        Await.ready(loadingPhaseComplete.future, Duration.Inf)
+      case Failure(ex) => log.error(ex, "Plugin listener doesn't start properly")
+    }
   }
 
   /**
@@ -187,7 +218,7 @@ class PluginManager(system: ActorSystem) extends Extension {
   private def onStop(): Unit = {
     log.info("Stopping all plugins")
     try {
-      val signal = Future.sequence(plugins.values.map { container =>
+      val signal = Future.sequence(asScala(plugins.values).map { container =>
         // Launch graceful stop
         gracefulStop(container.ref, conf.lifecycle.gracefulTimeout)
       })
@@ -200,7 +231,35 @@ class PluginManager(system: ActorSystem) extends Extension {
     }
 
     // Clear plugins mapping
-    plugins = Map.empty
+    plugins.clear()
+  }
+
+}
+
+/**
+  * Plugin listener for state management.
+  *
+  * @param pluginManager plugin manager.
+  */
+private class PluginListener(
+  pluginManager: PluginManager
+) extends Actor with DiagnosticActorLogging with ActorListener {
+
+  override def receive: Receive = {
+    case _: Done => sender() ! Done
+    case evt: PluginEvent.All =>
+      val container = pluginManager.getPlugin(evt.name)
+      container.foreach { c =>
+        // Set new plugin state
+        pluginManager.setPlugin(evt.name, c.copy(ref = sender(), state = evt.toState))
+        log.info("Plugin {} is {}", evt.name, evt.toString.toLowerCase())
+
+        // Check if all plugins are ready
+        if (!asScala(pluginManager.plugins.values())
+          .exists(c => (c.state == Plugin.State.Loading) || (c.state == Plugin.State.Unknown))) {
+          pluginManager.loadingPhaseComplete.success(Done)
+        }
+      }
   }
 
 }

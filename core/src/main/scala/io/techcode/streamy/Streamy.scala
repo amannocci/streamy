@@ -26,6 +26,7 @@ package io.techcode.streamy
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.config.{ConfigClassLoader, StreamyConfig}
+import io.techcode.streamy.pipeline.PipelineManager
 import io.techcode.streamy.plugin.PluginManager
 import io.techcode.streamy.util.monitor.Monitors
 import pureconfig._
@@ -59,6 +60,9 @@ object Streamy extends App {
 
   // Attempt to deploy plugins
   PluginManager(system)
+
+  // Handle pipelines
+  PipelineManager(system)
 
   // Handle dry run
   if (args.length > 0 && args(0).equals("--dry-run")) {

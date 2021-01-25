@@ -24,7 +24,6 @@
 package io.techcode.streamy.plugin
 
 import io.techcode.streamy.StreamyTestSystem
-import io.techcode.streamy.component.ComponentRegistry
 import org.scalatest.concurrent.Eventually.eventually
 
 /**
