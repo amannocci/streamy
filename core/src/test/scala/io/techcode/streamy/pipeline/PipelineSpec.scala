@@ -44,9 +44,7 @@ class PipelineSpec extends StreamyTestSystem {
   componentRegistry.registerFlow("transform", conf => {
     Flow[StreamEvent].map(_.mutate("foobar"))
   })
-  componentRegistry.registerSink("stdout", conf => {
-    Sink.foreach(println)
-  })
+  componentRegistry.registerSink("blackhole", conf => Sink.ignore)
 
   "Pipeline" can {
     "have a source and sink" in {
@@ -59,7 +57,7 @@ class PipelineSpec extends StreamyTestSystem {
         flows = ConfigFactory.empty(),
         sinks = ConfigFactory.parseString(
           """sink {
-            |  type = "stdout"
+            |  type = "blackhole"
             |  inputs = ["source"]
             |}
             |""".stripMargin)
@@ -81,7 +79,7 @@ class PipelineSpec extends StreamyTestSystem {
             |""".stripMargin),
         sinks = ConfigFactory.parseString(
           """sink {
-            |  type = "stdout"
+            |  type = "blackhole"
             |  inputs = ["flow"]
             |}
             |""".stripMargin)
@@ -106,7 +104,7 @@ class PipelineSpec extends StreamyTestSystem {
             |""".stripMargin),
         sinks = ConfigFactory.parseString(
           """sink {
-            |  type = "stdout"
+            |  type = "blackhole"
             |  inputs = ["flow"]
             |}
             |""".stripMargin)
@@ -132,7 +130,7 @@ class PipelineSpec extends StreamyTestSystem {
             |""".stripMargin),
         sinks = ConfigFactory.parseString(
           """sink {
-            |  type = "stdout"
+            |  type = "blackhole"
             |  inputs = ["flow-2"]
             |}
             |""".stripMargin)
@@ -154,12 +152,82 @@ class PipelineSpec extends StreamyTestSystem {
             |""".stripMargin),
         sinks = ConfigFactory.parseString(
           """sink-1 {
-            |  type = "stdout"
+            |  type = "blackhole"
             |  inputs = ["flow"]
             |}
             |sink-2 {
-            |  type = "stdout"
+            |  type = "blackhole"
             |  inputs = ["flow"]
+            |}
+            |""".stripMargin)
+      )).onStart()
+    }
+
+    "have a multiples source, multiples flow and sink" in {
+      new Pipeline(system, "test", Pipeline.Config(
+        sources = ConfigFactory.parseString(
+          """source {
+            |  type = "single"
+            |}
+            |""".stripMargin),
+        flows = ConfigFactory.parseString(
+          """flow-1 {
+            |  inputs = ["source"]
+            |  type = "transform"
+            |}
+            |flow-2 {
+            |  inputs = ["source"]
+            |  type = "transform"
+            |}
+            |""".stripMargin),
+        sinks = ConfigFactory.parseString(
+          """sink {
+            |  type = "blackhole"
+            |  inputs = ["flow-1", "flow-2"]
+            |}
+            |""".stripMargin)
+      )).onStart()
+    }
+
+    "have a multiples source and one sink" in {
+      new Pipeline(system, "test", Pipeline.Config(
+        sources = ConfigFactory.parseString(
+          """source-1 {
+            |  type = "single"
+            |}
+            |source-2 {
+            |  type = "single"
+            |}
+            |""".stripMargin),
+        flows = ConfigFactory.empty(),
+        sinks = ConfigFactory.parseString(
+          """sink {
+            |  type = "blackhole"
+            |  inputs = ["source-1", "source-2"]
+            |}
+            |""".stripMargin)
+      )).onStart()
+    }
+
+    "have a multiples source and multiples sink" in {
+      new Pipeline(system, "test", Pipeline.Config(
+        sources = ConfigFactory.parseString(
+          """source-1 {
+            |  type = "single"
+            |}
+            |source-2 {
+            |  type = "single"
+            |}
+            |""".stripMargin),
+        flows = ConfigFactory.empty(),
+        sinks = ConfigFactory.parseString(
+          """sink-1 {
+            |  type = "blackhole"
+            |  inputs = ["source-1", "source-2"]
+            |}
+            |sink-2 {
+            |  type = "blackhole"
+            |  inputs = ["source-1", "source-2"]
             |}
             |""".stripMargin)
       )).onStart()
@@ -187,11 +255,11 @@ class PipelineSpec extends StreamyTestSystem {
             |""".stripMargin),
         sinks = ConfigFactory.parseString(
           """sink-1 {
-            |  type = "stdout"
+            |  type = "blackhole"
             |  inputs = ["flow-2"]
             |}
             |sink-2 {
-            |  type = "stdout"
+            |  type = "blackhole"
             |  inputs = ["flow-2"]
             |}
             |""".stripMargin)
@@ -209,7 +277,7 @@ class PipelineSpec extends StreamyTestSystem {
           flows = ConfigFactory.empty(),
           sinks = ConfigFactory.parseString(
             """sink {
-              |  type = "stdout"
+              |  type = "blackhole"
               |  inputs = ["source"]
               |}
               |""".stripMargin)
@@ -233,7 +301,7 @@ class PipelineSpec extends StreamyTestSystem {
               |""".stripMargin),
           sinks = ConfigFactory.parseString(
             """sink {
-              |  type = "stdout"
+              |  type = "blackhole"
               |  inputs = ["source"]
               |}
               |""".stripMargin)
