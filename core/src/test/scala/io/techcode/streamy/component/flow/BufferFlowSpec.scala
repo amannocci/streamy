@@ -31,6 +31,7 @@ import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.component.ComponentRegistry
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
+import pureconfig.error.ConfigReaderException
 
 /**
   * Buffer flow spec.
@@ -100,6 +101,13 @@ class BufferFlowSpec extends StreamyTestSystem {
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "bar")))
       stream.expectComplete()
+    }
+
+    "throw error with wrong overflow strategy" in {
+      val conf = ConfigFactory.parseString("""{"max-size":1, "overflow-strategy": "unknown"}""")
+      assertThrows[ConfigReaderException[_]] {
+        componentRegistry.getFlow("buffer").get(conf)
+      }
     }
   }
 

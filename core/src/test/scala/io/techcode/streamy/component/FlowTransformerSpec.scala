@@ -27,6 +27,7 @@ import akka.stream.ActorAttributes.supervisionStrategy
 import akka.stream.Supervision
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
+import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour
 import io.techcode.streamy.component.FlowTransformer.SuccessBehaviour.SuccessBehaviour
@@ -34,6 +35,10 @@ import io.techcode.streamy.component.Transformer.ErrorBehaviour
 import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.config._
+import pureconfig._
+import pureconfig.generic.auto._
+import pureconfig.error.ConfigReaderException
 
 /**
   * Flow transformer spec.
@@ -82,6 +87,44 @@ class FlowTransformerSpec extends StreamyTestSystem {
   ) extends FlowTransformer.Config(source, target, onSuccess, onError)
 
   "Flow transformer" should {
+    "be built from configuration" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString(
+        """{
+          |"source": "/",
+          |"on-success": "skip",
+          |"on-error": "skip"
+          |}""".stripMargin)).loadOrThrow[ImplConfig]
+
+      ConfigSource.fromConfig(ConfigFactory.parseString(
+        """{
+          |"source": "/",
+          |"on-success": "remove",
+          |"on-error": "discard"
+          |}""".stripMargin)).loadOrThrow[ImplConfig]
+
+      ConfigSource.fromConfig(ConfigFactory.parseString(
+        """{
+          |"source": "/",
+          |"on-error": "discard-and-report"
+          |}""".stripMargin)).loadOrThrow[ImplConfig]
+
+      assertThrows[ConfigReaderException[_]] {
+        ConfigSource.fromConfig(ConfigFactory.parseString(
+          """{
+            |"source": "/",
+            |"on-success": "unknown"
+            |}""".stripMargin)).loadOrThrow[ImplConfig]
+      }
+
+      assertThrows[ConfigReaderException[_]] {
+        ConfigSource.fromConfig(ConfigFactory.parseString(
+          """{
+            |"source": "/",
+            |"on-error": "unknown"
+            |}""".stripMargin)).loadOrThrow[ImplConfig]
+      }
+    }
+
     "transform correctly an event inplace" in {
       val transformer = new FlowTransformer {
         def factory(): FlowTransformerLogic = new Impl(ImplConfig(Root / "message"))

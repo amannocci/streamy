@@ -21,10 +21,10 @@ package object config {
   // Success behaviour reader
   implicit val errorBehaviourReader: ConfigReader[ErrorBehaviour] = ConfigReader.fromString[ErrorBehaviour] {
     case "discard" => Right(ErrorBehaviour.Discard)
-    case "discard_and_report" => Right(ErrorBehaviour.DiscardAndReport)
+    case "discard-and-report" => Right(ErrorBehaviour.DiscardAndReport)
     case "skip" => Right(ErrorBehaviour.Skip)
     case _ => Left(new FailureReason {
-      override def description: String = "Error behaviour must be either 'discard' or 'discard_and_report' or 'skip'"
+      override def description: String = "Error behaviour must be either 'discard' or 'discard-and-report' or 'skip'"
     })
   }
 
