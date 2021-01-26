@@ -309,7 +309,11 @@ class PipelineSpec extends StreamyTestSystem {
             |}
             |""".stripMargin),
         sinks = ConfigFactory.parseString(
-          """sink {
+          """sink-1 {
+            |  type = "blackhole"
+            |  inputs = ["flow-1", "flow-2"]
+            |}
+            |sink-2 {
             |  type = "blackhole"
             |  inputs = ["flow-1", "flow-2"]
             |}
