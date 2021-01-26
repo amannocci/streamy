@@ -26,6 +26,7 @@ package io.techcode.streamy.component.flow
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.TestSink
+import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.StreamyTestSystem
 import io.techcode.streamy.component.ComponentRegistry
 import io.techcode.streamy.event.StreamEvent
@@ -36,15 +37,17 @@ import io.techcode.streamy.util.json._
   */
 class BufferFlowSpec extends StreamyTestSystem {
 
+  private val componentRegistry = ComponentRegistry(system)
+
   "Buffer flow" should {
     "be get from component registry" in {
-      val componentRegistry = ComponentRegistry(system)
       componentRegistry.getFlow("buffer").isDefined should equal(true)
     }
 
     "be able to buffer with back-pressure" in {
+      val conf = ConfigFactory.parseString("""{"max-size":1, "overflow-strategy": "back-pressure"}""")
       val stream = Source.single(StreamEvent(Json.obj("message" -> "foo")))
-        .via(BufferFlow(BufferFlow.Config(maxSize = 1, OverflowStrategy.backpressure)))
+        .via(componentRegistry.getFlow("buffer").get(conf))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foo")))
@@ -52,10 +55,11 @@ class BufferFlowSpec extends StreamyTestSystem {
     }
 
     "be able to buffer with drop tail" in {
+      val conf = ConfigFactory.parseString("""{"max-size":1, "overflow-strategy": "drop-tail"}""")
       val stream = Source(Seq(
         StreamEvent(Json.obj("message" -> "foo")),
         StreamEvent(Json.obj("message" -> "bar"))
-      )).via(BufferFlow(BufferFlow.Config(maxSize = 1, OverflowStrategy.dropTail)))
+      )).via(componentRegistry.getFlow("buffer").get(conf))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "bar")))
@@ -63,10 +67,11 @@ class BufferFlowSpec extends StreamyTestSystem {
     }
 
     "be able to buffer with drop new" in {
+      val conf = ConfigFactory.parseString("""{"max-size":1, "overflow-strategy": "drop-new"}""")
       val stream = Source(Seq(
         StreamEvent(Json.obj("message" -> "foo")),
         StreamEvent(Json.obj("message" -> "bar"))
-      )).via(BufferFlow(BufferFlow.Config(maxSize = 1, OverflowStrategy.dropNew)))
+      )).via(componentRegistry.getFlow("buffer").get(conf))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "foo")))
@@ -74,10 +79,11 @@ class BufferFlowSpec extends StreamyTestSystem {
     }
 
     "be able to buffer with drop head" in {
+      val conf = ConfigFactory.parseString("""{"max-size":1, "overflow-strategy": "drop-head"}""")
       val stream = Source(Seq(
         StreamEvent(Json.obj("message" -> "foo")),
         StreamEvent(Json.obj("message" -> "bar"))
-      )).via(BufferFlow(BufferFlow.Config(maxSize = 1, OverflowStrategy.dropHead)))
+      )).via(componentRegistry.getFlow("buffer").get(conf))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "bar")))
@@ -85,10 +91,11 @@ class BufferFlowSpec extends StreamyTestSystem {
     }
 
     "be able to buffer with drop buffer" in {
+      val conf = ConfigFactory.parseString("""{"max-size":1, "overflow-strategy": "drop-buffer"}""")
       val stream = Source(Seq(
         StreamEvent(Json.obj("message" -> "foo")),
         StreamEvent(Json.obj("message" -> "bar"))
-      )).via(BufferFlow(BufferFlow.Config(maxSize = 1, OverflowStrategy.dropBuffer)))
+      )).via(componentRegistry.getFlow("buffer").get(conf))
         .runWith(TestSink.probe[StreamEvent])
 
       stream.requestNext() should equal(StreamEvent(Json.obj("message" -> "bar")))
