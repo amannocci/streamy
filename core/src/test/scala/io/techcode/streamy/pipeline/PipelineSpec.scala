@@ -209,6 +209,27 @@ class PipelineSpec extends StreamyTestSystem {
       )).onStart()
     }
 
+    "have a source and multiples sink" in {
+      new Pipeline(system, "test", Pipeline.Config(
+        sources = ConfigFactory.parseString(
+          """source {
+            |  type = "single"
+            |}
+            |""".stripMargin),
+        flows = ConfigFactory.empty(),
+        sinks = ConfigFactory.parseString(
+          """sink-1 {
+            |  type = "blackhole"
+            |  inputs = ["source"]
+            |}
+            |sink-2 {
+            |  type = "blackhole"
+            |  inputs = ["source"]
+            |}
+            |""".stripMargin)
+      )).onStart()
+    }
+
     "have a multiples source and multiples sink" in {
       new Pipeline(system, "test", Pipeline.Config(
         sources = ConfigFactory.parseString(
@@ -249,18 +270,14 @@ class PipelineSpec extends StreamyTestSystem {
             |  type = "transform"
             |}
             |flow-2 {
-            |  inputs = ["flow-1"]
+            |  inputs = ["source-1", "source-2"]
             |  type = "transform"
             |}
             |""".stripMargin),
         sinks = ConfigFactory.parseString(
-          """sink-1 {
+          """sink {
             |  type = "blackhole"
-            |  inputs = ["flow-2"]
-            |}
-            |sink-2 {
-            |  type = "blackhole"
-            |  inputs = ["flow-2"]
+            |  inputs = ["flow-1", "flow-2"]
             |}
             |""".stripMargin)
       )).onStart()
@@ -322,6 +339,49 @@ class PipelineSpec extends StreamyTestSystem {
             """sink {
               |  type = "unknown"
               |  inputs = ["source"]
+              |}
+              |""".stripMargin)
+        )).onStart()
+      }
+    }
+
+    "have a invalid input on flow" in {
+      assertThrows[PipelineException] {
+        new Pipeline(system, "test", Pipeline.Config(
+          sources = ConfigFactory.parseString(
+            """source {
+              |  type = "single"
+              |}
+              |""".stripMargin),
+          flows = ConfigFactory.parseString(
+            """flow {
+              |  inputs = ["unknown"]
+              |  type = "transform"
+              |}
+              |""".stripMargin),
+          sinks = ConfigFactory.parseString(
+            """sink {
+              |  type = "blackhole"
+              |  inputs = ["flow"]
+              |}
+              |""".stripMargin)
+        )).onStart()
+      }
+    }
+
+    "have a invalid input on sink" in {
+      assertThrows[PipelineException] {
+        new Pipeline(system, "test", Pipeline.Config(
+          sources = ConfigFactory.parseString(
+            """source {
+              |  type = "single"
+              |}
+              |""".stripMargin),
+          flows = ConfigFactory.empty(),
+          sinks = ConfigFactory.parseString(
+            """sink {
+              |  type = "blackhole"
+              |  inputs = ["unknown"]
               |}
               |""".stripMargin)
         )).onStart()
