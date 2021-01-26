@@ -108,21 +108,21 @@ class FlowTransformerSpec extends StreamyTestSystem {
           |"on-error": "discard-and-report"
           |}""".stripMargin)).loadOrThrow[ImplConfig]
 
-      assertThrows[ConfigReaderException[_]] {
+      intercept[ConfigReaderException[_]] {
         ConfigSource.fromConfig(ConfigFactory.parseString(
           """{
             |"source": "/",
             |"on-success": "unknown"
             |}""".stripMargin)).loadOrThrow[ImplConfig]
-      }
+      }.getMessage() should include("Success behaviour must be either 'remove' or 'skip'")
 
-      assertThrows[ConfigReaderException[_]] {
+      intercept[ConfigReaderException[_]] {
         ConfigSource.fromConfig(ConfigFactory.parseString(
           """{
             |"source": "/",
             |"on-error": "unknown"
             |}""".stripMargin)).loadOrThrow[ImplConfig]
-      }
+      }.getMessage() should include("Error behaviour must be either 'discard' or 'discard-and-report' or 'skip'")
     }
 
     "transform correctly an event inplace" in {

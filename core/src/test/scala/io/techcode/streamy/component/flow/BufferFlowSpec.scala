@@ -105,9 +105,9 @@ class BufferFlowSpec extends StreamyTestSystem {
 
     "throw error with wrong overflow strategy" in {
       val conf = ConfigFactory.parseString("""{"max-size":1, "overflow-strategy": "unknown"}""")
-      assertThrows[ConfigReaderException[_]] {
+      intercept[ConfigReaderException[_]] {
         componentRegistry.getFlow("buffer").get(conf)
-      }
+      }.getMessage() should include("Overflow strategy must be one of")
     }
   }
 
