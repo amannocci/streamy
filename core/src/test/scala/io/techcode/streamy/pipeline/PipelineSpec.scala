@@ -209,6 +209,40 @@ class PipelineSpec extends StreamyTestSystem {
       )).onStart()
     }
 
+    "have a source, multiples flow and a sink" in {
+      new Pipeline(system, "test", Pipeline.Config(
+        sources = ConfigFactory.parseString(
+          """source {
+            |  type = "single"
+            |}
+            |""".stripMargin),
+        flows = ConfigFactory.parseString(
+          """flow-1 {
+            |  inputs = ["source"]
+            |  type = "transform"
+            |}
+            |flow-2 {
+            |  inputs = ["source"]
+            |  type = "transform"
+            |}
+            |flow-3 {
+            |  inputs = ["flow-1", "flow-2"]
+            |  type = "transform"
+            |}
+            |flow-4 {
+            |  inputs = ["flow-1", "flow-2"]
+            |  type = "transform"
+            |}
+            |""".stripMargin),
+        sinks = ConfigFactory.parseString(
+          """sink {
+            |  type = "blackhole"
+            |  inputs = ["flow-1", "flow-2"]
+            |}
+            |""".stripMargin)
+      )).onStart()
+    }
+
     "have a source and multiples sink" in {
       new Pipeline(system, "test", Pipeline.Config(
         sources = ConfigFactory.parseString(
