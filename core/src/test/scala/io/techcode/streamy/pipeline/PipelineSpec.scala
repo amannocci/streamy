@@ -353,7 +353,7 @@ class PipelineSpec extends StreamyTestSystem {
             |}
             |sink-3 {
             |  type = "blackhole"
-            |  inputs = ["flow-3"]
+            |  inputs = ["source-1", "flow-3"]
             |}
             |sink-4 {
             |  type = "blackhole"
