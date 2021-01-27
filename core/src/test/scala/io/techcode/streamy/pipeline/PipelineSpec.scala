@@ -163,6 +163,32 @@ class PipelineSpec extends StreamyTestSystem {
       )).onStart()
     }
 
+    "have a source, multiples asymmetric flow and a sink" in {
+      new Pipeline(system, "test", Pipeline.Config(
+        sources = ConfigFactory.parseString(
+          """source {
+            |  type = "single"
+            |}
+            |""".stripMargin),
+        flows = ConfigFactory.parseString(
+          """flow-1 {
+            |  inputs = ["source"]
+            |  type = "transform"
+            |}
+            |flow-2 {
+            |  inputs = ["source", "flow-1"]
+            |  type = "transform"
+            |}
+            |""".stripMargin),
+        sinks = ConfigFactory.parseString(
+          """sink {
+            |  type = "blackhole"
+            |  inputs = ["flow-2"]
+            |}
+            |""".stripMargin)
+      )).onStart()
+    }
+
     "have a multiples source, multiples flow and sink" in {
       new Pipeline(system, "test", Pipeline.Config(
         sources = ConfigFactory.parseString(
@@ -300,22 +326,38 @@ class PipelineSpec extends StreamyTestSystem {
             |""".stripMargin),
         flows = ConfigFactory.parseString(
           """flow-1 {
-            |  inputs = ["source-1", "source-2"]
+            |  inputs = ["source-1"]
             |  type = "transform"
             |}
             |flow-2 {
-            |  inputs = ["source-1", "source-2"]
+            |  inputs = ["flow-1", "source-2"]
+            |  type = "transform"
+            |}
+            |flow-3 {
+            |  inputs = ["flow-1"]
+            |  type = "transform"
+            |}
+            |flow-4 {
+            |  inputs = ["source-2"]
             |  type = "transform"
             |}
             |""".stripMargin),
         sinks = ConfigFactory.parseString(
           """sink-1 {
             |  type = "blackhole"
-            |  inputs = ["flow-1", "flow-2"]
+            |  inputs = ["flow-2"]
             |}
             |sink-2 {
             |  type = "blackhole"
-            |  inputs = ["flow-1", "flow-2"]
+            |  inputs = ["flow-3"]
+            |}
+            |sink-3 {
+            |  type = "blackhole"
+            |  inputs = ["flow-3"]
+            |}
+            |sink-4 {
+            |  type = "blackhole"
+            |  inputs = ["flow-4"]
             |}
             |""".stripMargin)
       )).onStart()
