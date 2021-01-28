@@ -1,10 +1,13 @@
-lazy val root = (project in file(".")).
-  settings(
-    inThisBuild(List(
-      organization := "simple.plugin",
-      scalaVersion := "2.12.6",
-      version := "0.1.0-SNAPSHOT"
-    )),
+
+import Dependencies._
+
+ThisBuild / scalaVersion     := "2.13.4"
+ThisBuild / version          := "0.1.0-SNAPSHOT"
+ThisBuild / organization     := "simple.plugin"
+ThisBuild / organizationName := "foobar"
+
+lazy val root = (project in file("."))
+  .settings(
     name := "plugin-simple-plugin",
-    libraryDependencies ++=  Seq("io.techcode.streamy" %% "streamy-core" % "0.1.0-SNAPSHOT" % Provided)
+    libraryDependencies += streamy
   )

@@ -37,12 +37,12 @@ import pureconfig.generic.auto._
 trait TestPlugin extends TestSystem {
 
   protected def create(typed: Class[_], conf: Config): ActorRef = {
-    val description: PluginDescription =
+    val description: Plugin.Description =
       ConfigSource.fromConfig(ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
-        .loadOrThrow[PluginDescription]
+        .loadOrThrow[Plugin.Description]
     system.actorOf(Props(
       typed,
-      PluginData(
+      Plugin.Data(
         description,
         conf,
         Paths.get(".")

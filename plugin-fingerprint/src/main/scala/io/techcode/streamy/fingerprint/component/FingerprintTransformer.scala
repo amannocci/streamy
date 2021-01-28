@@ -24,7 +24,6 @@
 package io.techcode.streamy.fingerprint.component
 
 import java.nio.charset.StandardCharsets
-
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.google.common.hash.{HashFunction, Hashing}
@@ -35,6 +34,9 @@ import io.techcode.streamy.component.Transformer.ErrorBehaviour.ErrorBehaviour
 import io.techcode.streamy.component.{FlowTransformer, FlowTransformerLogic}
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.json._
+import io.techcode.streamy.config._
+import pureconfig._
+import pureconfig.generic.semiauto._
 
 /**
   * Fingerprint transformer implementation.
@@ -60,6 +62,9 @@ object FingerprintTransformer {
 
   // Generic error message if transform can't happen
   private[component] val genericErrorMsg = "Can't generate fingerprint"
+
+  // Configuration reader
+  implicit val configReader: ConfigReader[Config] = deriveReader[Config]
 
   // All supported hashing
   val Hashings: Map[String, HashFunction] = Map.newBuilder

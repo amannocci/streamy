@@ -39,8 +39,8 @@ class PluginSpec extends StreamyTestSystem with Inside with PrivateMethodTester 
 
   "PluginDescription" should {
     "contains all informations" in {
-      val description = PluginDescription(name = "test", version = "1.0.0", file = Some(Paths.get(".").toUri.toURL))
-      inside(description) { case PluginDescription(name, version, _, _, _, _, _) =>
+      val description = Plugin.Description(name = "test", version = "1.0.0", file = Some(Paths.get(".").toUri.toURL))
+      inside(description) { case Plugin.Description(name, version, _, _, _, _, _) =>
         name should be("test")
         version should be("1.0.0")
       }
@@ -48,7 +48,7 @@ class PluginSpec extends StreamyTestSystem with Inside with PrivateMethodTester 
 
     "be create from Config" in {
       ConfigSource.fromConfig(ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}"""))
-        .loadOrThrow[PluginDescription]
+        .loadOrThrow[Plugin.Description]
     }
   }
 
@@ -72,11 +72,11 @@ class PluginSpec extends StreamyTestSystem with Inside with PrivateMethodTester 
 
   private def create(): ActorRef = {
     val conf: Config = ConfigFactory.empty()
-    val description: PluginDescription = ConfigSource.fromConfig(ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}""")).loadOrThrow[PluginDescription]
+    val description: Plugin.Description = ConfigSource.fromConfig(ConfigFactory.parseString("""{"name":"test","version":"0.1.0"}""")).loadOrThrow[Plugin.Description]
     val typed: Class[_] = classOf[Impl]
     system.actorOf(Props(
       typed,
-      PluginData(
+      Plugin.Data(
         description,
         conf,
         Paths.get(".")
@@ -87,7 +87,7 @@ class PluginSpec extends StreamyTestSystem with Inside with PrivateMethodTester 
 }
 
 class Impl(
-  override val data: PluginData
+  override val data: Plugin.Data
 ) extends Plugin(data) {
 
   override def onStart(): Unit = {

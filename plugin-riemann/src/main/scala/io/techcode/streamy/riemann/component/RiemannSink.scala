@@ -1,0 +1,95 @@
+/*
+ * The MIT License (MIT)
+ * <p>
+ * Copyright (c) 2021
+ * <p>
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * <p>
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * <p>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+package io.techcode.streamy.riemann.component
+
+import akka.Done
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.{Keep, Sink}
+import io.techcode.streamy.event.StreamEvent
+import io.techcode.streamy.tcp.component.{TcpFlow, TcpSink}
+import pureconfig._
+import pureconfig.generic.semiauto._
+
+import scala.concurrent.Future
+import scala.concurrent.duration.{Duration, FiniteDuration}
+
+/**
+  * Riemann sink companion.
+  */
+object RiemannSink {
+
+  // Configuration readers
+  implicit val reconnectConfigReader: ConfigReader[RiemannSink.ReconnectConfig] =
+    deriveReader[RiemannSink.ReconnectConfig]
+
+  implicit val configReader: ConfigReader[RiemannSink.Config] = deriveReader[RiemannSink.Config]
+
+  /**
+    * Create a riemann sink that receive [[StreamEvent]].
+    * This client is compliant with Riemann protocol.
+    *
+    * @param config sink configuration.
+    * @return new riemann sink compliant with Riemann protocol.
+    */
+  def client(config: Config)(implicit system: ActorSystem): Sink[StreamEvent, Future[Done]] = {
+    RiemannTransformer.printer(config.toTransformConfig)
+      .toMat(TcpSink.client(config.toTcpConfig))(Keep.right)
+  }
+
+
+  // Configuration
+  case class Config(
+    host: String,
+    port: Int,
+    secured: Boolean = false,
+    idleTimeout: Duration = Duration.Inf,
+    connectTimeout: Duration = Duration.Inf,
+    reconnect: Option[ReconnectConfig] = None,
+    maxSize: Int = RiemannTransformer.Parser.DefaultMaxSize,
+    binding: RiemannTransformer.Printer.Binding = RiemannTransformer.Printer.DefaultBinding
+  ) {
+
+    def toTransformConfig: RiemannTransformer.Printer.Config = RiemannTransformer.Printer.Config(
+      maxSize,
+      binding
+    )
+
+    def toTcpConfig: TcpFlow.Client.Config = TcpFlow.Client.Config(
+      host,
+      port,
+      secured,
+      idleTimeout,
+      reconnect = reconnect.map(c => TcpFlow.Client.ReconnectConfig(c.minBackoff, c.maxBackoff, c.randomFactor))
+    )
+
+  }
+
+  // Reconnect component configuration
+  case class ReconnectConfig(
+    minBackoff: FiniteDuration,
+    maxBackoff: FiniteDuration,
+    randomFactor: Double
+  )
+
+}

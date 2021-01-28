@@ -24,7 +24,6 @@
 package io.techcode.streamy.config
 
 import java.nio.file.{Path, Paths}
-
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.FiniteDuration
@@ -35,14 +34,21 @@ import scala.concurrent.duration.FiniteDuration
 case class StreamyConfig(
   lifecycle: StreamyConfig.Lifecycle,
   monitor: StreamyConfig.Monitor,
-  plugin: Config
+  plugin: Config,
+  pipeline: Config
 )
 
+/**
+  * Streamy configuration companion.
+  */
 object StreamyConfig {
 
-  val PluginDirectory: Path = Paths.get(".").resolve("plugin")
-  val ConfigurationDirectory: Path = Paths.get(".").resolve("conf")
-  val DataDirectory: Path = Paths.get(".").resolve("data")
+  // Path directories
+  private val workingDirectory: Path = Paths.get(".").toAbsolutePath
+  val PluginDirectory: Path = workingDirectory.resolve("plugin")
+  val ConfigurationDirectory: Path = workingDirectory.resolve("conf")
+  val PipelineDirectory: Path = workingDirectory.resolve("pipeline")
+  val DataDirectory: Path = workingDirectory.resolve("data")
 
   // Streamy lifecycle config
   case class Lifecycle(

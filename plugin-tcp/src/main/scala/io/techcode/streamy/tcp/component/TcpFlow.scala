@@ -24,7 +24,6 @@
 package io.techcode.streamy.tcp.component
 
 import java.net.InetSocketAddress
-
 import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
 import akka.stream.{IgnoreComplete, TLSClientAuth, TLSProtocol}

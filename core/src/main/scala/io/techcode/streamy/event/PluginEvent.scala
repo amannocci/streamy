@@ -24,8 +24,7 @@
 package io.techcode.streamy.event
 
 import akka.actor.DeadLetterSuppression
-import io.techcode.streamy.plugin.PluginState
-import io.techcode.streamy.plugin.PluginState.PluginState
+import io.techcode.streamy.plugin.Plugin
 
 /**
   * All plugin events.
@@ -42,7 +41,7 @@ object PluginEvent {
       *
       * @return plugin lifecycle state.
       */
-    def toState: PluginState
+    def toState: Plugin.State.State
 
     override def toString: String = toState.toString
 
@@ -53,7 +52,7 @@ object PluginEvent {
     * This event is fired when a plugin is loading.
     */
   case class Loading(override val name: String) extends All(name) {
-    def toState: PluginState = PluginState.Loading
+    def toState: Plugin.State.State = Plugin.State.Loading
   }
 
   /**
@@ -61,7 +60,7 @@ object PluginEvent {
     * This event is fired when a plugin is running.
     */
   case class Running(override val name: String) extends All(name) {
-    def toState: PluginState = PluginState.Running
+    def toState: Plugin.State.State = Plugin.State.Running
   }
 
   /**
@@ -69,7 +68,7 @@ object PluginEvent {
     * This event is fired when a plugin is stopping.
     */
   case class Stopping(override val name: String) extends All(name) {
-    def toState: PluginState = PluginState.Stopping
+    def toState: Plugin.State.State = Plugin.State.Stopping
   }
 
   /**
@@ -77,7 +76,7 @@ object PluginEvent {
     * This event is fired when a plugin is stopped.
     */
   case class Stopped(override val name: String) extends All(name) {
-    def toState: PluginState = PluginState.Stopped
+    def toState: Plugin.State.State = Plugin.State.Stopped
   }
 
 }

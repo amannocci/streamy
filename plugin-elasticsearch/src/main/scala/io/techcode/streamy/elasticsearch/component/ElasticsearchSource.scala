@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2018-2021
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,8 @@ import io.techcode.streamy.elasticsearch.event.ElasticsearchEvent
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
+import pureconfig.ConfigReader
+import pureconfig.generic.semiauto._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
@@ -54,6 +56,17 @@ object ElasticsearchSource {
     val ScrollId: JsonPointer = Root / "_scroll_id"
     val Size: JsonPointer = Root / "size"
   }
+
+  // Configuration readers
+  implicit val basicAuthConfig: ConfigReader[BasicAuthConfig] = deriveReader[BasicAuthConfig]
+
+  implicit val authConfigReader: ConfigReader[AuthConfig] = ConfigReader.fromFunction[AuthConfig](conf =>
+    basicAuthConfig.from(conf)
+  )
+
+  implicit val hostConfigReader: ConfigReader[HostConfig] = deriveReader[HostConfig]
+
+  implicit val configReader: ConfigReader[Config] = deriveReader[Config]
 
   // Component configuration
   case class Config(

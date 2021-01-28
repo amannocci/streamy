@@ -23,6 +23,7 @@
  */
 package io.techcode.streamy.util
 
+import akka.event.Logging
 import akka.util.ByteString
 
 package object json extends JsonImplicit {

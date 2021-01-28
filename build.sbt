@@ -25,6 +25,10 @@
 import sbt.Keys._
 import sbt._
 
+import java.nio.file.{Files, Paths}
+import java.util.stream.Collectors
+import scala.collection.JavaConverters._
+
 
 // Common settings
 ThisBuild / version := "0.13.0-SNAPSHOT"
@@ -87,6 +91,10 @@ lazy val core = project
       """.stripMargin,
     fork := true,
     javaOptions in Test += s"-Duser.dir=${baseDirectory.in(ThisBuild).value}/core/runtime",
+    fullClasspath in Test := (fullClasspath in Test).value ++
+      Files.walk(Paths.get(s"${baseDirectory.in(ThisBuild).value}/core/runtime/plugin"))
+        .map[java.io.File](_.toFile)
+        .collect(Collectors.toList[java.io.File]).asScala.classpath,
 
     maintainer := "Adrien Mannocci <adrien.mannocci@gmail.com>",
     packageSummary := "High Performance events processing",
@@ -156,7 +164,7 @@ lazy val `plugin-gelf` = project
     name := "streamy-" + name.value
   )
   .settings(Publish.settings)
-  .dependsOn(core % "provided->compile")
+  .dependsOn(core % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
 
@@ -167,7 +175,7 @@ lazy val `plugin-graphite` = project
     name := "streamy-" + name.value
   )
   .settings(Publish.settings)
-  .dependsOn(core % "provided->compile")
+  .dependsOn(core % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
 
@@ -238,7 +246,7 @@ lazy val `plugin-riemann` = project
   )
   .settings(Publish.settings)
   .dependsOn(core % "provided->compile")
-  .dependsOn(`plugin-protobuf` % "provided->compile")
+  .dependsOn(`plugin-protobuf` % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
   .enablePlugins(ProtobufPlugin)
@@ -250,7 +258,7 @@ lazy val `plugin-syslog` = project
     name := "streamy-" + name.value
   )
   .settings(Publish.settings)
-  .dependsOn(core % "provided->compile")
+  .dependsOn(core % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
 

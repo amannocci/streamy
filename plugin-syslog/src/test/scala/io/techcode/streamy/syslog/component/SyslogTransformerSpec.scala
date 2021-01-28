@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2017-2019
+ * Copyright (c) 2017-2021
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,20 +24,58 @@
 package io.techcode.streamy.syslog.component
 
 import java.net.InetAddress
-
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
+import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.syslog.component.SyslogTransformer.Framing
 import io.techcode.streamy.syslog.component.SyslogTransformer.Rfc5424.Mode
 import io.techcode.streamy.util.json._
+import pureconfig.ConfigSource
+import pureconfig.error.ConfigReaderException
 
 /**
   * Syslog transformer spec.
   */
 class SyslogTransformerSpec extends TestTransformer {
+
+  "Syslog transformer config" should {
+    "be build with framing delimiter" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "framing":"delimiter"}"""))
+        .loadOrThrow[SyslogTransformer.Rfc5424.Config]
+    }
+
+    "be build with framing count" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "framing":"count"}"""))
+        .loadOrThrow[SyslogTransformer.Rfc5424.Config]
+    }
+
+    "raise an error with invalid framing" in {
+      intercept[ConfigReaderException[_]] {
+        ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "framing":"invalid"}"""))
+          .loadOrThrow[SyslogTransformer.Rfc5424.Config]
+      }.getMessage() should include("Framing must be either 'count' or 'delemiter'")
+    }
+
+    "be build with mode strict" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "mode":"strict"}"""))
+        .loadOrThrow[SyslogTransformer.Rfc5424.Config]
+    }
+
+    "be build with mode lenient" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "mode":"lenient"}"""))
+        .loadOrThrow[SyslogTransformer.Rfc5424.Config]
+    }
+
+    "raise an error with invalid mode" in {
+      intercept[ConfigReaderException[_]] {
+        ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "mode":"invalid"}"""))
+          .loadOrThrow[SyslogTransformer.Rfc5424.Config]
+      }.getMessage() should include("Mode must be either 'strict' or 'lenient'")
+    }
+  }
 
   "Syslog transformer" should {
     "parse Rfc3164 with delimiter handle correctly simple syslog message in strict mode" in {
@@ -336,7 +374,7 @@ object SyslogTransformerSpec {
     }
 
     object Transformer {
-      val Binding = SyslogTransformer.Rfc3164.Binding(
+      val Binding: SyslogTransformer.Rfc3164.Binding = SyslogTransformer.Rfc3164.Binding(
         facility = Some(SyslogTransformer.Rfc3164.Id.Facility),
         severity = Some(SyslogTransformer.Rfc3164.Id.Severity),
         timestamp = Some(SyslogTransformer.Rfc3164.Id.Timestamp),
@@ -381,11 +419,11 @@ object SyslogTransformerSpec {
         bypassMessageParsing = true
       ))
 
-      val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc3164.Config(
+      val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc3164.Config(
         binding = Binding
       ))
 
-      val PrinterCount: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc3164.Config(
+      val PrinterCount: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc3164.Config(
         framing = Framing.Count,
         binding = Binding
       ))
@@ -452,7 +490,7 @@ object SyslogTransformerSpec {
 
     object Transformer {
 
-      private val Binding = SyslogTransformer.Rfc5424.Binding(
+      val Binding: SyslogTransformer.Rfc5424.Binding = SyslogTransformer.Rfc5424.Binding(
         facility = Some(SyslogTransformer.Rfc5424.Id.Facility),
         severity = Some(SyslogTransformer.Rfc5424.Id.Severity),
         timestamp = Some(SyslogTransformer.Rfc5424.Id.Timestamp),
@@ -499,16 +537,16 @@ object SyslogTransformerSpec {
         bypassMessageParsing = true
       ))
 
-      val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
+      val PrinterDelimiter: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         binding = Binding
       ))
 
-      val PrinterCount: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
+      val PrinterCount: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         framing = Framing.Count,
         binding = Binding
       ))
 
-      val PrinterDefault: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer[NotUsed](SyslogTransformer.Rfc5424.Config(
+      val PrinterDefault: Flow[StreamEvent, ByteString, NotUsed] = SyslogTransformer.printer(SyslogTransformer.Rfc5424.Config(
         binding = Binding.copy(
           facility = None,
           severity = None,

@@ -24,7 +24,6 @@
 package io.techcode.streamy.elasticsearch.component
 
 import java.util.concurrent.ThreadLocalRandom
-
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -36,9 +35,11 @@ import akka.stream.stage._
 import akka.util.ByteString
 import com.google.common.base.Throwables
 import io.techcode.streamy.elasticsearch.event._
-import io.techcode.streamy.event.StreamEvent
+import io.techcode.streamy.event.{AttributeKey, StreamEvent}
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
+import pureconfig._
+import pureconfig.generic.semiauto._
 
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext
@@ -59,9 +60,34 @@ object ElasticsearchFlow {
     randomFactor = 0.3
   )
   val DefaultFlushTimeout: FiniteDuration = 10 seconds
+  val DefaultBinding: Binding = Binding()
 
   // New line delimiter
   private val NewLineDelimiter: ByteString = ByteString("\n")
+
+  // Attribute keys
+  val DocIdKey: AttributeKey[String] = AttributeKey("elasticsearch-doc-id")
+  val DocVersionKey: AttributeKey[Long] = AttributeKey("elasticsearch-doc-version")
+  val DocVersionTypeKey: AttributeKey[String] = AttributeKey("elasticsearch-doc-version-type")
+  val DocTypeKey: AttributeKey[String] = AttributeKey("elasticsearch-doc-type")
+  val IndexNameKey: AttributeKey[String] = AttributeKey("elasticsearch-index-name")
+
+  // Configuration readers
+  implicit val basicAuthConfig: ConfigReader[BasicAuthConfig] = deriveReader[BasicAuthConfig]
+
+  implicit val authConfigReader: ConfigReader[AuthConfig] = ConfigReader.fromFunction[AuthConfig](conf =>
+    basicAuthConfig.from(conf)
+  )
+  implicit val errorHandlerReader: ConfigReader[() => ErrorHandler] = ConfigReader.fromString[() => ErrorHandler](_ =>
+    Right(() => DefaultErrorHandler)
+  )
+  implicit val retryConfigReader: ConfigReader[RetryConfig] = deriveReader[RetryConfig]
+
+  implicit val bindingConfigReader: ConfigReader[Binding] = deriveReader[Binding]
+
+  implicit val hostConfigReader: ConfigReader[HostConfig] = deriveReader[HostConfig]
+
+  implicit val configReader: ConfigReader[Config] = deriveReader[Config]
 
   // Relevant http status
   private object HttpStatus {
@@ -73,11 +99,6 @@ object ElasticsearchFlow {
 
   // Precomputed path
   private object ElasticPath {
-    val Id: JsonPointer = Root / "_id"
-    val Type: JsonPointer = Root / "_type"
-    val Version: JsonPointer = Root / "_version"
-    val VersionType: JsonPointer = Root / "_version_type"
-    val Index: JsonPointer = Root / "_index"
     val Document: JsonPointer = Root
     val Errors: JsonPointer = Root / "errors"
     val Items: JsonPointer = Root / "items"
@@ -101,7 +122,7 @@ object ElasticsearchFlow {
     action: String,
     bulk: Int = DefaultBulk,
     retry: RetryConfig = DefaultRetry,
-    binding: Binding = Binding(),
+    binding: Binding = DefaultBinding,
     onError: () => ErrorHandler = () => DefaultErrorHandler,
     flushTimeout: FiniteDuration = DefaultFlushTimeout,
     bypassDocumentParsing: Boolean = false
@@ -109,11 +130,6 @@ object ElasticsearchFlow {
 
   // Binding configuration
   case class Binding(
-    id: JsonPointer = ElasticPath.Id,
-    `type`: JsonPointer = ElasticPath.Type,
-    version: JsonPointer = ElasticPath.Version,
-    versionType: JsonPointer = ElasticPath.VersionType,
-    index: JsonPointer = ElasticPath.Index,
     document: JsonPointer = ElasticPath.Document
   )
 
@@ -228,11 +244,11 @@ object ElasticsearchFlow {
     private def marshalMessage(event: StreamEvent): ByteString = {
       // Retrive header information
       val payload = event.payload
-      val id = payload.evaluate(ElasticPath.Id)
-      val `type` = payload.evaluate(ElasticPath.Type).getOrElse[String]("doc")
-      val version = payload.evaluate(ElasticPath.Version)
-      val versionType = payload.evaluate(ElasticPath.VersionType)
-      val index = payload.evaluate(ElasticPath.Index).getOrElse[String](config.indexName)
+      val id = event.attribute(DocIdKey)
+      val `type` = event.attribute(DocTypeKey).getOrElse[String]("doc")
+      val version = event.attribute(DocVersionKey)
+      val versionType = event.attribute(DocVersionKey)
+      val index = event.attribute(IndexNameKey).getOrElse[String](config.indexName)
 
       // Build header
       val header = Json.obj(
@@ -242,19 +258,13 @@ object ElasticsearchFlow {
             .+=(ElasticHeaders.Type -> `type`)
 
           // Add version if present
-          version.ifExists[Long] { x =>
-            builder += (ElasticHeaders.Version -> x)
-          }
+          version.foreach(x => builder += (ElasticHeaders.Version -> x))
 
           // Add version type if present
-          versionType.ifExists[String] { x =>
-            builder += (ElasticHeaders.VersionType -> x)
-          }
+          versionType.foreach(x => builder += (ElasticHeaders.VersionType -> x))
 
           // Add id if present
-          id.ifExists[String] { x =>
-            builder += (ElasticHeaders.Id -> x)
-          }
+          id.foreach(x => builder += (ElasticHeaders.Id -> x))
           builder.result()
         }
       )

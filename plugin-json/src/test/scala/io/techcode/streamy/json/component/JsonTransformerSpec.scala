@@ -25,15 +25,54 @@ package io.techcode.streamy.json.component
 
 import akka.NotUsed
 import akka.util.ByteString
+import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.component.TestTransformer
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.json.component.JsonTransformer.{Bind, Config, Mode}
 import io.techcode.streamy.util.json.{Json, _}
+import pureconfig.ConfigSource
+import pureconfig.error.ConfigReaderException
 
 /**
   * Json transformer spec.
   */
 class JsonTransformerSpec extends TestTransformer {
+
+  "Json transformer config" should {
+    "be build with mode deserialize" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "mode":"deserialize"}"""))
+        .loadOrThrow[JsonTransformer.Config]
+    }
+
+    "be build with mode serialize" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "mode":"serialize"}"""))
+        .loadOrThrow[JsonTransformer.Config]
+    }
+
+    "raise an error with invalid mode" in {
+      intercept[ConfigReaderException[_]] {
+        ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "mode":"invalid"}"""))
+          .loadOrThrow[JsonTransformer.Config]
+      }.getMessage() should include("Mode must be either 'serialize' or 'deserialize'")
+    }
+
+    "be build with bind bytes" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "bind":"bytes"}"""))
+        .loadOrThrow[JsonTransformer.Config]
+    }
+
+    "be build with bind string" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "bind":"string"}"""))
+        .loadOrThrow[JsonTransformer.Config]
+    }
+
+    "raise an error with invalid bind" in {
+      intercept[ConfigReaderException[_]] {
+        ConfigSource.fromConfig(ConfigFactory.parseString("""{"source":"/", "bind":"invalid"}"""))
+          .loadOrThrow[JsonTransformer.Config]
+      }.getMessage() should include("Bind must be either 'bytes' or 'string'")
+    }
+  }
 
   "Json transformer" should {
     "deserialize correctly a packet inplace from string" in {

@@ -65,7 +65,7 @@ object GraphiteTransformerSpec {
   }
 
   object Transformer {
-    val Binding = GraphiteTransformer.Binding(
+    val Binding: GraphiteTransformer.Binding = GraphiteTransformer.Binding(
       path = Some("key"),
       value = Some("value"),
       timestamp = Some("timestamp"),

@@ -23,25 +23,21 @@
  */
 package io.techcode.streamy.plugin
 
-import akka.actor.{ActorRef, PoisonPill, Props}
-import com.typesafe.config.ConfigFactory
 import io.techcode.streamy.StreamyTestSystem
-import io.techcode.streamy.config.StreamyConfig
-import pureconfig._
-import pureconfig.generic.auto._
+import org.scalatest.concurrent.Eventually.eventually
 
 /**
   * PluginManager spec.
   */
 class PluginManagerSpec extends StreamyTestSystem {
 
-  val conf: StreamyConfig = ConfigSource.fromConfig(ConfigFactory.load()).at("streamy")
-    .loadOrThrow[StreamyConfig]
-
   "Plugin manager" should {
     "be started and stopped" in {
-      val manager: ActorRef = system.actorOf(Props(classOf[PluginManager], conf))
-      manager ! PoisonPill
+      PluginManager(system)
+    }
+
+    "return a plugin by his name" in {
+      eventually { PluginManager(system).getPlugin("unknown").isDefined should equal(false) }
     }
   }
 

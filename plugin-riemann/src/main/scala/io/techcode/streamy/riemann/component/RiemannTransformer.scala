@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2018
+ * Copyright (c) 2018-2021
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,8 @@ import io.riemann.riemann.Proto
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.protobuf.component.ProtobufTransformer
 import io.techcode.streamy.util.json._
+import pureconfig.ConfigReader
+import pureconfig.generic.semiauto.deriveReader
 
 /**
   * Riemann transformer companion.
@@ -165,6 +167,20 @@ object RiemannTransformer {
   // Parser related stuff
   object Parser {
 
+    // Default values
+    val DefaultBinding: RiemannTransformer.Parser.Binding = RiemannTransformer.Parser.Binding()
+    val DefaultMaxSize: Int = Int.MaxValue - 4
+
+    // Configuration readers
+    implicit val eventBindingReader: ConfigReader[RiemannTransformer.Parser.EventBinding] =
+      deriveReader[RiemannTransformer.Parser.EventBinding]
+
+    implicit val bindingReader: ConfigReader[RiemannTransformer.Parser.Binding] =
+      deriveReader[RiemannTransformer.Parser.Binding]
+
+    implicit val configReader: ConfigReader[RiemannTransformer.Parser.Config] =
+      deriveReader[RiemannTransformer.Parser.Config]
+
     // Binding
     case class Binding(
       ok: String = "ok",
@@ -191,14 +207,28 @@ object RiemannTransformer {
 
     // Configuration
     case class Config(
-      maxSize: Int = Int.MaxValue - 4,
-      binding: Binding = Binding()
+      maxSize: Int = DefaultMaxSize,
+      binding: Binding = DefaultBinding
     )
 
   }
 
   // Printer related stuff
   object Printer {
+
+    // Default values
+    val DefaultBinding: RiemannTransformer.Printer.Binding = RiemannTransformer.Printer.Binding()
+    val DefaultMaxSize: Int = Int.MaxValue - 4
+
+    // Configuration readers
+    implicit val eventBindingReader: ConfigReader[RiemannTransformer.Printer.EventBinding] =
+      deriveReader[RiemannTransformer.Printer.EventBinding]
+
+    implicit val bindingReader: ConfigReader[RiemannTransformer.Printer.Binding] =
+      deriveReader[RiemannTransformer.Printer.Binding]
+
+    implicit val configReader: ConfigReader[RiemannTransformer.Printer.Config] =
+      deriveReader[RiemannTransformer.Printer.Config]
 
     // Binding
     case class Binding(
@@ -226,8 +256,8 @@ object RiemannTransformer {
 
     // Configuration
     case class Config(
-      maxSize: Int = Int.MaxValue - 4,
-      binding: Binding = Binding()
+      maxSize: Int = DefaultMaxSize,
+      binding: Binding = DefaultBinding
     )
 
   }

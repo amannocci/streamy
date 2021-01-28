@@ -119,7 +119,9 @@ private class Rfc5424Parser(config: Rfc5424.Config) extends ByteStringParser[Jso
 
   def run(): Json = {
     if (root()) {
-      binding.structData.foreach(bind => builder += bind -> structDataBuilder.result())
+      if (!structDataBuilder.result().isEmpty) {
+        binding.structData.foreach(bind => builder += bind -> structDataBuilder.result())
+      }
       builder.result()
     } else {
       throw new ParseException(s"Unexpected input at index ${cursor}:\n${data.utf8String}\n${" " * cursor}^")

@@ -25,15 +25,17 @@ package io.techcode.streamy.kafka.component
 
 import akka.Done
 import akka.actor.ActorSystem
-import akka.kafka.{CommitterSettings, ConsumerSettings, ProducerMessage, ProducerSettings}
 import akka.kafka.scaladsl.{Committer, Producer}
+import akka.kafka.{CommitterSettings, ProducerMessage, ProducerSettings}
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import akka.util.ByteString
 import com.google.common.base.Strings
 import io.techcode.streamy.event.StreamEvent
-import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer, StringDeserializer, StringSerializer}
 import io.techcode.streamy.util.json._
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
+import pureconfig._
+import pureconfig.generic.semiauto._
 
 import scala.concurrent.Future
 
@@ -42,15 +44,22 @@ import scala.concurrent.Future
   */
 object KafkaSink {
 
+  // Default values
+  val DefaultBinding: Binding = Binding()
+
   // Represent an empty key
   private val emptyKey: String = ""
+
+  // Configuration readers
+  implicit val bindingConfigReader: ConfigReader[Binding] = deriveReader[Binding]
+  implicit val configReader: ConfigReader[Config] = deriveReader[Config]
 
   // Component configuration
   case class Config(
     bootstrapServers: String,
     properties: Map[String, String] = Map.empty,
     topic: String,
-    binding: Binding = Binding()
+    binding: Binding = DefaultBinding
   ) {
     def toProducerSettings()(implicit system: ActorSystem): ProducerSettings[String, Array[Byte]] =
       ProducerSettings(system, new StringSerializer, new ByteArraySerializer)
@@ -99,9 +108,10 @@ object KafkaSink {
     *
     * @param config sink configuration.
     */
-  def committable(config: Config, committerSettings: CommitterSettings)(implicit system: ActorSystem): Sink[StreamEvent, Future[Done]] = {
+  def committable(config: Config)(implicit system: ActorSystem): Sink[StreamEvent, Future[Done]] = {
     // Set producer settings
     val producerSettings = config.toProducerSettings()
+    val committerSettings = CommitterSettings(system)
 
     // Run source
     Flow[StreamEvent]

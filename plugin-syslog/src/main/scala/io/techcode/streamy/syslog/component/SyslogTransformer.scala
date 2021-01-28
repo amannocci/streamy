@@ -34,6 +34,9 @@ import io.techcode.streamy.syslog.util.printer.SyslogPrinter
 import io.techcode.streamy.util.json._
 import io.techcode.streamy.util.parser.ByteStringParser
 import io.techcode.streamy.util.printer.ByteStringPrinter
+import pureconfig._
+import pureconfig.error.FailureReason
+import pureconfig.generic.semiauto._
 
 /**
   * Syslog transformer companion.
@@ -92,7 +95,7 @@ object SyslogTransformer {
     * @param conf flow configuration.
     * @return new syslog flow Rfc5424 compliant.
     */
-  def printer[T](conf: Rfc5424.Config): Flow[StreamEvent, ByteString, NotUsed] =
+  def printer(conf: Rfc5424.Config): Flow[StreamEvent, ByteString, NotUsed] =
     Flow.fromGraph(new SinkTransformer {
       def factory(): ByteStringPrinter[Json] = SyslogPrinter.rfc5424(conf)
     })
@@ -104,10 +107,19 @@ object SyslogTransformer {
     * @param conf flow configuration.
     * @return new syslog flow Rfc3164 compliant.
     */
-  def printer[T](conf: Rfc3164.Config): Flow[StreamEvent, ByteString, NotUsed] =
+  def printer(conf: Rfc3164.Config): Flow[StreamEvent, ByteString, NotUsed] =
     Flow.fromGraph(new SinkTransformer {
       def factory(): ByteStringPrinter[Json] = SyslogPrinter.rfc3164(conf)
     })
+
+  // Configuration readers
+  implicit val framingConfigReader: ConfigReader[Framing] = ConfigReader.fromString[Framing] {
+    case "count" => Right(Framing.Count)
+    case "delimiter" => Right(Framing.Delimiter)
+    case _ => Left(new FailureReason {
+      override def description: String = "Framing must be either 'count' or 'delemiter'"
+    })
+  }
 
   // Common related stuff
   object Framing extends Enumeration {
@@ -118,6 +130,23 @@ object SyslogTransformer {
 
   // Rfc 5424 related stuff
   object Rfc5424 {
+
+    // Default values
+    val DefaultBinding: Binding = Binding()
+    val DefaultMaxSize: Int = Int.MaxValue
+    val DefaultFraming: Framing = Framing.Delimiter
+    val DefaultMode: Mode = Mode.Strict
+
+    // Configuration readers
+    implicit val modeConfigReader: ConfigReader[Rfc5424.Mode] = ConfigReader.fromString[Rfc5424.Mode] {
+      case "strict" => Right(Rfc5424.Mode.Strict)
+      case "lenient" => Right(Rfc5424.Mode.Lenient)
+      case _ => Left(new FailureReason {
+        override def description: String = "Mode must be either 'strict' or 'lenient'"
+      })
+    }
+    implicit val bindingConfigReader: ConfigReader[Rfc5424.Binding] = deriveReader[Rfc5424.Binding]
+    implicit val configReader: ConfigReader[Rfc5424.Config] = deriveReader[Rfc5424.Config]
 
     object Id {
       val Facility = "facility"
@@ -154,10 +183,10 @@ object SyslogTransformer {
     }
 
     case class Config(
-      mode: Mode = Rfc5424.Mode.Strict,
-      maxSize: Int = Int.MaxValue,
-      framing: Framing = Framing.Delimiter,
-      binding: Binding = Binding(),
+      mode: Mode = DefaultMode,
+      maxSize: Int = DefaultMaxSize,
+      framing: Framing = DefaultFraming,
+      binding: Binding = DefaultBinding,
       bypassMessageParsing: Boolean = false
     )
 
@@ -195,6 +224,23 @@ object SyslogTransformer {
 
   // Rfc 3164 related stuff
   object Rfc3164 {
+
+    // Default values
+    val DefaultBinding: Binding = Binding()
+    val DefaultMaxSize: Int = Int.MaxValue
+    val DefaultFraming: Framing = Framing.Delimiter
+    val DefaultMode: Mode = Mode.Strict
+
+    // Configuration readers
+    implicit val modeConfigReader: ConfigReader[Rfc3164.Mode] = ConfigReader.fromString[Rfc3164.Mode] {
+      case "strict" => Right(Rfc3164.Mode.Strict)
+      case "lenient" => Right(Rfc3164.Mode.Lenient)
+      case _ => Left(new FailureReason {
+        override def description: String = "Mode must be either 'strict' or 'lenient'"
+      })
+    }
+    implicit val bindingConfigReader: ConfigReader[Rfc3164.Binding] = deriveReader[Rfc3164.Binding]
+    implicit val configReader: ConfigReader[Rfc3164.Config] = deriveReader[Rfc3164.Config]
 
     object Id {
       val Facility = "facility"
@@ -253,10 +299,10 @@ object SyslogTransformer {
     }
 
     case class Config(
-      mode: Mode = Rfc3164.Mode.Strict,
+      mode: Mode = DefaultMode,
       maxSize: Int = Int.MaxValue,
-      framing: Framing = Framing.Delimiter,
-      binding: Binding = Binding(),
+      framing: Framing = DefaultFraming,
+      binding: Binding = DefaultBinding,
       bypassMessageParsing: Boolean = false
     )
 
