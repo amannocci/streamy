@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2021
+ * Copyright (c) 2018-2021
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,26 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package io.techcode.streamy.syslog.component
 
-package io.techcode.streamy.json
-
+import akka.stream.scaladsl.{Keep, Source}
+import akka.stream.testkit.scaladsl.TestSink
 import com.typesafe.config.ConfigFactory
-import io.techcode.streamy.component.ComponentRegistry
-import io.techcode.streamy.plugin.TestPlugin
-import org.scalatest.concurrent.Eventually.eventually
+import io.techcode.streamy.TestSystem
+import io.techcode.streamy.event.StreamEvent
+import pureconfig.ConfigSource
+
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 /**
-  * Json plugin spec.
+  * Syslog sink spec.
   */
-class JsonPluginSpec extends TestPlugin {
+class SyslogSinkSpec extends TestSystem {
 
-  "Json plugin" should {
-    "register a materializable json flow component" in {
-      create(classOf[JsonPlugin], ConfigFactory.empty())
-      eventually { ComponentRegistry(system).getFlow("json").isDefined should equal(true) }
-      val component = ComponentRegistry(system).getFlow("json").get
-      component(ConfigFactory.parseString("""{"source":"/"}"""))
+  import system.dispatcher
+
+  "Syslog sink config" should {
+    "be build for rfc5424" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"host":"127.0.0.1", "port":8888}"""))
+        .loadOrThrow[SyslogSink.Rfc5424.Config]
+    }
+
+    "be build for rfc3164" in {
+      ConfigSource.fromConfig(ConfigFactory.parseString("""{"host":"127.0.0.1", "port":8888}"""))
+        .loadOrThrow[SyslogSink.Rfc3164.Config]
     }
   }
 
 }
+
+
+

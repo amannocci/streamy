@@ -33,6 +33,7 @@ import io.techcode.streamy.util.json.Json
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
+import scala.concurrent.duration._
 
 /**
   * Syslog source spec.
@@ -127,13 +128,23 @@ object SyslogSourceSpec {
     val Rfc5424: SyslogSink.Rfc5424.Config = SyslogSink.Rfc5424.Config(
       host = "localhost",
       port = 8080,
-      binding = SyslogTransformerSpec.Rfc5424.Transformer.Binding
+      binding = SyslogTransformerSpec.Rfc5424.Transformer.Binding,
+      reconnect = Some(SyslogSink.ReconnectConfig(
+        minBackoff = 10 millis,
+        maxBackoff = 5 seconds,
+        randomFactor = 0.3D
+      ))
     )
 
     val Rfc3164: SyslogSink.Rfc3164.Config = SyslogSink.Rfc3164.Config(
       host = "localhost",
       port = 8081,
-      binding = SyslogTransformerSpec.Rfc3164.Transformer.Binding
+      binding = SyslogTransformerSpec.Rfc3164.Transformer.Binding,
+      reconnect = Some(SyslogSink.ReconnectConfig(
+        minBackoff = 10 millis,
+        maxBackoff = 5 seconds,
+        randomFactor = 0.3D
+      ))
     )
 
   }

@@ -48,6 +48,20 @@ class SyslogPluginSpec extends TestPlugin {
       val component = ComponentRegistry(system).getSource("syslog-rfc3164").get
       component(ConfigFactory.parseString("""{"host":"127.0.0.1", "port": 8080}"""))
     }
+
+    "register a materializable syslog rfc5424 sink component" in {
+      create(classOf[SyslogPlugin], ConfigFactory.empty())
+      eventually { ComponentRegistry(system).getSink("syslog-rfc5424").isDefined should equal(true) }
+      val component = ComponentRegistry(system).getSink("syslog-rfc5424").get
+      component(ConfigFactory.parseString("""{"host":"127.0.0.1", "port": 8080}"""))
+    }
+
+    "register a materializable syslog rfc3164 sink component" in {
+      create(classOf[SyslogPlugin], ConfigFactory.empty())
+      eventually { ComponentRegistry(system).getSink("syslog-rfc3164").isDefined should equal(true) }
+      val component = ComponentRegistry(system).getSink("syslog-rfc3164").get
+      component(ConfigFactory.parseString("""{"host":"127.0.0.1", "port": 8080}"""))
+    }
   }
 
 }
