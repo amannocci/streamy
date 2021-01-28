@@ -26,13 +26,20 @@ package io.techcode.streamy.pipeline
 import akka.Done
 import akka.actor.{ActorSystem, CoordinatedShutdown, ExtendedActorSystem, Extension, ExtensionId}
 import akka.event.Logging
-import com.typesafe.config.{Config => TConfig}
+import com.typesafe.config.{ConfigFactory, Config => TConfig}
+import io.techcode.streamy.config.StreamyConfig
 import pureconfig._
 import pureconfig.generic.auto._
 
+import java.net.URL
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.{Files, Path}
 import scala.jdk.javaapi.CollectionConverters._
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.BiPredicate
+import java.util.stream.Collectors
 import scala.concurrent.Future
+import com.google.common.io.{Files => GFiles}
 
 /**
   * Pipeline manager system.
@@ -53,8 +60,26 @@ class PipelineManager(system: ActorSystem) extends Extension {
     */
   private def onStart(): Unit = {
     log.info("Starting all pipelines")
-    for (pipelineId <- asScala(conf.root().entrySet()).map(_.getKey)) {
-      val pipelineConf = ConfigSource.fromConfig(conf.getConfig(pipelineId)).loadOrThrow[Pipeline.Config]
+
+    // Retrieve all pipeline files
+    val confMatcher: BiPredicate[Path, BasicFileAttributes] = (path, _) => path.toString.endsWith(".conf")
+    val pipelineIds = (asScala(Files.find(StreamyConfig.PipelineDirectory, 1, confMatcher)
+      .map(x => GFiles.getNameWithoutExtension(x.getFileName.toString))
+      .collect(Collectors.toList[String])) ++ asScala(conf.root().entrySet()).map(_.getKey)).toSet[String]
+
+    // Build and start each pipeline
+    for (pipelineId <- pipelineIds) {
+      val rawConf = (if (conf.hasPath(pipelineId)) conf.getConfig(pipelineId) else ConfigFactory.empty()).resolve()
+        .withFallback {
+          val pipelineConf = StreamyConfig.PipelineDirectory.resolve(s"$pipelineId.conf")
+          if (Files.exists(pipelineConf) && Files.isRegularFile(pipelineConf) && Files.isReadable(pipelineConf)) {
+            ConfigFactory.parseFile(pipelineConf.toFile).resolve()
+          } else {
+            ConfigFactory.empty()
+          }
+        }.resolve()
+
+      val pipelineConf = ConfigSource.fromConfig(rawConf).loadOrThrow[Pipeline.Config]
       val pipeline = new Pipeline(system, pipelineId, pipelineConf)
 
       try {
@@ -97,7 +122,6 @@ object PipelineManager extends ExtensionId[PipelineManager] {
         Future(Done)
       }
 
-    CoordinatedShutdown(system).addJvmShutdownHook(() => pipelineManager.onStop())
     pipelineManager
   }
 

@@ -38,12 +38,17 @@ case class StreamyConfig(
   pipeline: Config
 )
 
+/**
+  * Streamy configuration companion.
+  */
 object StreamyConfig {
 
-  val PluginDirectory: Path = Paths.get(".").resolve("plugin")
-  val ConfigurationDirectory: Path = Paths.get(".").resolve("conf")
-  val PipelineDirectory: Path = Paths.get(".").resolve("pipeline")
-  val DataDirectory: Path = Paths.get(".").resolve("data")
+  // Path directories
+  private val workingDirectory: Path = Paths.get(".").toAbsolutePath
+  val PluginDirectory: Path = workingDirectory.resolve("plugin")
+  val ConfigurationDirectory: Path = workingDirectory.resolve("conf")
+  val PipelineDirectory: Path = workingDirectory.resolve("pipeline")
+  val DataDirectory: Path = workingDirectory.resolve("data")
 
   // Streamy lifecycle config
   case class Lifecycle(
