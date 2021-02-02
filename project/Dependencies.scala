@@ -29,7 +29,7 @@ object Dependencies {
 
   val AkkaHttpVersion = "10.2.3"
   val AkkaStreamKafkaVersion = "2.0.6"
-  val AkkaVersion = "2.6.11"
+  val AkkaVersion = "2.6.12"
   val ElasticClientVersion = "7.10.1"
   val GuavaVersion = "30.1-jre"
   val LogbackClassicVersion = "1.2.3"
