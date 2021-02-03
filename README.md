@@ -16,6 +16,7 @@ It is fully free and fully open source. The license is MIT, meaning you are pret
 * [Java 11](http://www.oracle.com/technetwork/java/javase/downloads/index.html) for runtime
 * [Sbt](http://www.scala-sbt.org/)
 * [Bats](https://github.com/sstephenson/bats)
+* [Protobuf Compiler](https://developers.google.com/protocol-buffers) for build
 
 ## Features
 * Coming soon
@@ -45,11 +46,18 @@ The following steps will ensure your project is cloned properly.
 ```
 
 ### Package
-* This project contains best effort debian packaging support.
+* This project contains best effort universal & debian packaging support.
 * To package `streamy` you have to use the workflow script.
 
 ```bash
+# Package universal & debian
 ./scripts/workflow.sh package
+
+# Package only debian
+./scripts/workflow.sh package debian
+
+# Package only universal
+./scripts/workflow.sh package universal
 ```
 
 ### Release (or prepare)

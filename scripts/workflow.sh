@@ -56,7 +56,18 @@ function test() {
 }
 
 function package() {
-  try "create a debian package" sbt -batch -mem 2048 debian:packageBin
+  case "${1}" in
+    debian)
+      try "create a debian package" sbt -batch -mem 2048 debian:packageBin
+      ;;
+    universal)
+      try "create a universal package" sbt -batch -mem 2048 universal:packageBin
+      ;;
+    *)
+      try "create a universal package" sbt -batch -mem 2048 universal:packageBin
+      try "create a debian package" sbt -batch -mem 2048 debian:packageBin
+      ;;
+  esac
 }
 
 function release() {
@@ -91,7 +102,7 @@ else
       ;;
     package)
       check "package"
-      package
+      package "${2}"
       ;;
     release)
       release
