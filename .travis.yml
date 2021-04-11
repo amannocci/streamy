@@ -6,7 +6,7 @@ dist: bionic
 # Specify lang
 language: scala
 scala:
-  - 2.13.4
+  - 2.13.5
 
 # Test against various jvm
 jdk:

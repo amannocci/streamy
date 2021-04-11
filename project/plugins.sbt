@@ -23,7 +23,7 @@
  */
 
 // Native Packager
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.7.6")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.1")
 
 // Scalastyle checker
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
@@ -35,4 +35,4 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.0")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
 
 // Protobuf
-addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.6.5")
+addSbtPlugin("com.github.sbt" % "sbt-protobuf" % "0.7.0")
