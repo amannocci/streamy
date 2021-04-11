@@ -32,7 +32,7 @@ import scala.collection.JavaConverters._
 
 // Common settings
 ThisBuild / version := "0.13.0-SNAPSHOT"
-ThisBuild / scalaVersion := "2.13.4"
+ThisBuild / scalaVersion := "2.13.5"
 ThisBuild / organization := "io.techcode.streamy"
 
 // Disable parallel execution
