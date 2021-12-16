@@ -76,9 +76,26 @@ class CharBuilderSpec extends StreamyTestSystem {
       builder.toString should equal("foobar123-")
     }
 
-    "be able to append char" in {
+    "be able to append string" in {
       val builder = new CharBuilder
       builder.append("foo").append("bar")
+      builder.toString should equal("foobar")
+    }
+
+    "be able to append char" in {
+      val builder = new CharBuilder
+      builder.append('f')
+        .append('o')
+        .append('o')
+        .append('b')
+        .append('a')
+        .append('r')
+      builder.toString should equal("foobar")
+    }
+
+    "be able to append chars" in {
+      val builder = new CharBuilder
+      builder.append('f', 'o', 'o', 'b', 'a', 'r')
       builder.toString should equal("foobar")
     }
 

@@ -364,6 +364,21 @@ final class CharBuilder {
   }
 
   /**
+    * Appends the string representation of chars.
+    *
+    * @param chs characters.
+    * @return this object for chaining.
+    */
+  def append(chs: Char*): CharBuilder = {
+    resizeIfNecessary(len + chs.length)
+    for (ch <- chs) {
+      buf(len) = ch
+      len += 1
+    }
+    this
+  }
+
+  /**
     * Appends the string representation of the value arguments.
     *
     * @param value any object.

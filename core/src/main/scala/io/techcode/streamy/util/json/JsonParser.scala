@@ -333,14 +333,16 @@ private class ByteStringJsonParser(
     builder.sizeHint(8)
     val x = octa & 0xFF00FF00FF00FF00L
     val y = octa & 0x00FF00FF00FF00FFL
-    builder.append((octa >>> 56).toChar)
-      .append((y >>> 48).toChar)
-      .append((x >>> 40).toChar)
-      .append((y >>> 32).toChar)
-      .append((x >>> 24).toChar)
-      .append((y >>> 16).toChar)
-      .append((x >>> 8).toChar)
-      .append(y.toChar)
+    builder.append(
+      (octa >>> 56).toChar,
+      (y >>> 48).toChar,
+      (x >>> 40).toChar,
+      (y >>> 32).toChar,
+      (x >>> 24).toChar,
+      (y >>> 16).toChar,
+      (x >>> 8).toChar,
+      y.toChar
+    )
 
     builder.dropRight(8 - charCount)
     if (nlz < 64) {
