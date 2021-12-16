@@ -40,10 +40,10 @@ concurrentRestrictions in Global += Tags.limit(Tags.Test, 1)
 
 lazy val commonSettings = Seq(
   // Disable test in assembly
-  test in assembly := {},
+  assembly / test := {},
 
   // Scala compiler options
-  scalacOptions in(Compile, doc) ++= Seq(
+  Compile / doc/ scalacOptions ++= Seq(
     "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
   ),
 
@@ -90,9 +90,9 @@ lazy val core = project
         |make_template
       """.stripMargin,
     fork := true,
-    javaOptions in Test += s"-Duser.dir=${baseDirectory.in(ThisBuild).value}/core/runtime",
-    fullClasspath in Test := (fullClasspath in Test).value ++
-      Files.walk(Paths.get(s"${baseDirectory.in(ThisBuild).value}/core/runtime/plugin"))
+    Test / javaOptions += s"-Duser.dir=${(ThisBuild / baseDirectory).value}/core/runtime",
+    Test / fullClasspath := (Test / fullClasspath).value ++
+      Files.walk(Paths.get(s"${(ThisBuild / baseDirectory).value}/core/runtime/plugin"))
         .map[java.io.File](_.toFile)
         .collect(Collectors.toList[java.io.File]).asScala.classpath,
 
@@ -101,7 +101,7 @@ lazy val core = project
     packageDescription := "Transport and process your logs, events, or other data"
   )
   .settings(Dependencies.core)
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .enablePlugins(JavaServerAppPackaging, SystemdPlugin, SystemloaderPlugin)
   .disablePlugins(AssemblyPlugin)
 
@@ -111,7 +111,7 @@ lazy val `plugin-date` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -123,26 +123,26 @@ lazy val `plugin-elasticsearch` = project
     name := "streamy-" + name.value,
 
     // Don't include scala in assembly
-    assemblyOption in assembly ~= {
+    assembly / assemblyOption ~= {
       _.copy(includeScala = false)
     },
 
-    assemblyExcludedJars in assembly := {
-      val cp = (fullClasspath in assembly).value
+    assembly / assemblyExcludedJars := {
+      val cp = (assembly / fullClasspath).value
       cp.filter { x =>
         x.data.getName.startsWith("scala-library")
       }
     },
 
     // Publish fat jars
-    artifact in(Compile, assembly) := {
-      val art = (artifact in(Compile, assembly)).value
+    Compile / assembly / artifact := {
+      val art = (Compile / assembly / artifact).value
       art.withClassifier(Some("assembly"))
     },
-    addArtifact(artifact in(Compile, assembly), assembly)
+    addArtifact(Compile / assembly / artifact, assembly)
   )
   .settings(Dependencies.elasticsearch)
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
@@ -152,7 +152,7 @@ lazy val `plugin-fingerprint` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -163,7 +163,7 @@ lazy val `plugin-gelf` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -174,7 +174,7 @@ lazy val `plugin-graphite` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -185,7 +185,7 @@ lazy val `plugin-json` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -197,12 +197,12 @@ lazy val `plugin-kafka` = project
     name := "streamy-" + name.value,
 
     // Don't include scala in assembly
-    assemblyOption in assembly ~= {
+    assembly / assemblyOption ~= {
       _.copy(includeScala = false)
     },
 
-    assemblyExcludedJars in assembly := {
-      val cp = (fullClasspath in assembly).value
+    assembly / assemblyExcludedJars := {
+      val cp = (assembly / fullClasspath).value
       cp.filterNot { x =>
         x.data.getName.startsWith("classes") ||
           x.data.getName.startsWith("akka-stream-kafka") ||
@@ -215,14 +215,14 @@ lazy val `plugin-kafka` = project
     },
 
     // Publish fat jars
-    artifact in(Compile, assembly) := {
-      val art = (artifact in(Compile, assembly)).value
+    Compile / assembly / artifact := {
+      val art = (Compile / assembly / artifact).value
       art.withClassifier(Some("assembly"))
     },
-    addArtifact(artifact in(Compile, assembly), assembly)
+    addArtifact(Compile / assembly / artifact, assembly)
   )
   .settings(Dependencies.kafka)
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
 
@@ -232,7 +232,7 @@ lazy val `plugin-protobuf` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -244,7 +244,7 @@ lazy val `plugin-riemann` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(`plugin-protobuf` % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
@@ -257,7 +257,7 @@ lazy val `plugin-syslog` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile", `plugin-tcp` % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -269,7 +269,7 @@ lazy val `plugin-tcp` = project
     name := "streamy-" + name.value
   )
   .settings(Dependencies.tcp)
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -280,7 +280,7 @@ lazy val `plugin-xymon` = project
     commonSettings,
     name := "streamy-" + name.value
   )
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .dependsOn(testkit % "test->test")
   .disablePlugins(AssemblyPlugin)
@@ -293,7 +293,7 @@ lazy val testkit = project
     coverageEnabled := false
   )
   .settings(Dependencies.testkit)
-  .settings(Publish.settings)
+  //.settings(Publish.settings)
   .dependsOn(core % "provided->compile")
   .disablePlugins(AssemblyPlugin)
 

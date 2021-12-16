@@ -28,7 +28,7 @@ import sbt._
 object Publish {
 
   // Publish settings
-  val settings = Seq(
+  /**val settings = Seq(
     organization := "io.techcode.streamy",
     publishTo := {
       val nexus = "https://nexus.techcode.io/"
@@ -40,6 +40,6 @@ object Publish {
     },
     isSnapshot := true,
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
-  )
+  )*/
 
 }

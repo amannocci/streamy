@@ -30,11 +30,11 @@ object Benchs {
 
   // Jmh settings
   val settings = Seq(
-    sourceDirectory in Jmh := (sourceDirectory in Test).value,
-    classDirectory in Jmh := (classDirectory in Test).value,
-    dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
-    compile in Jmh := (compile in Jmh).dependsOn(compile in Test).value,
-    run in Jmh := (run in Jmh).dependsOn(Keys.compile in Jmh).evaluated
+    Jmh / sourceDirectory := (Test / sourceDirectory).value,
+    Jmh / classDirectory := (Test / classDirectory).value,
+    Jmh / dependencyClasspath := (Test / dependencyClasspath).value,
+    Jmh / compile := (Jmh / compile).dependsOn(Test / compile).value,
+    Jmh / run := (Jmh / run).dependsOn(Jmh / Keys.compile).evaluated
   )
 
 }
