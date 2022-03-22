@@ -24,12 +24,11 @@
 package io.techcode.streamy.elasticsearch.util
 
 import java.util.UUID
-
 import akka.http.scaladsl.Http
 import com.dimafeng.testcontainers.{ElasticsearchContainer, ForAllTestContainer}
+import com.sksamuel.elastic4s.http.JavaClient
+import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties}
 import io.techcode.streamy.TestSystem
-import org.apache.http.HttpHost
-import org.elasticsearch.client.{RestClient, RestHighLevelClient}
 
 /**
   * Helper for elasticsearch spec.
@@ -37,10 +36,10 @@ import org.elasticsearch.client.{RestClient, RestHighLevelClient}
 trait ElasticsearchSpec extends TestSystem with ForAllTestContainer {
 
   override val container: ElasticsearchContainer = ElasticsearchContainer(
-    "docker.elastic.co/elasticsearch/elasticsearch:7.10.1"
+    "docker.elastic.co/elasticsearch/elasticsearch:7.16.2"
   )
 
-  var restClient: RestHighLevelClient = _
+  var restClient: ElasticClient = _
   var elasticHost: String = _
   var elasticPort: Int = _
 
@@ -50,7 +49,8 @@ trait ElasticsearchSpec extends TestSystem with ForAllTestContainer {
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    restClient = new RestHighLevelClient(RestClient.builder(HttpHost.create(container.httpHostAddress)))
+    val props = ElasticProperties(s"http://${container.httpHostAddress}")
+    restClient = ElasticClient(JavaClient(props))
     elasticHost = container.containerIpAddress
     elasticPort = container.mappedPort(9200)
   }

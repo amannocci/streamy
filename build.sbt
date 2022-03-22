@@ -124,7 +124,7 @@ lazy val `plugin-elasticsearch` = project
 
     // Don't include scala in assembly
     assembly / assemblyOption ~= {
-      _.copy(includeScala = false)
+      _.withIncludeScala(includeScala = false)
     },
 
     assembly / assemblyExcludedJars := {
@@ -198,7 +198,7 @@ lazy val `plugin-kafka` = project
 
     // Don't include scala in assembly
     assembly / assemblyOption ~= {
-      _.copy(includeScala = false)
+      _.withIncludeScala(includeScala = false)
     },
 
     assembly / assemblyExcludedJars := {

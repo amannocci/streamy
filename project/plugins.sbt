@@ -23,16 +23,16 @@
  */
 
 // Native Packager
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.1")
+addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.9.7")
 
 // Scalastyle checker
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
 
 // JMH Benchmark
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.0")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
 
 // Code coverage
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.9.2")
 
 // Protobuf
-addSbtPlugin("com.github.sbt" % "sbt-protobuf" % "0.7.0")
+addSbtPlugin("com.github.sbt" % "sbt-protobuf" % "0.7.1")

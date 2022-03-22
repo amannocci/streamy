@@ -23,7 +23,6 @@
  */
 package io.techcode.streamy.elasticsearch.component
 
-import akka.NotUsed
 import akka.stream.scaladsl.Sink
 import akka.stream.testkit.scaladsl.TestSink
 import io.techcode.streamy.elasticsearch.component.ElasticsearchSource.HostConfig
@@ -31,10 +30,8 @@ import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
-import org.elasticsearch.action.index.IndexRequest
-import org.elasticsearch.action.support.WriteRequest
-import org.elasticsearch.client.RequestOptions
-import org.elasticsearch.common.xcontent.XContentType
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.requests.common.RefreshPolicy
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
@@ -49,14 +46,13 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
     "retrieve data from paginate source" in {
       // Prepare for test
       val index = randomIndex()
-      restClient.index(new IndexRequest(index)
-        .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT
-      )
-      restClient.index(new IndexRequest(index)
-        .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT
-      )
+      restClient.execute {
+        indexInto(index).fields("foo" -> "bar").refresh(RefreshPolicy.Immediate)
+      }.await
+
+      restClient.execute {
+        indexInto(index).fields("foo" -> "bar").refresh(RefreshPolicy.Immediate)
+      }.await
 
       // Stream to test
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
@@ -80,10 +76,9 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
     "retrieve data from single source" in {
       // Prepare for test
       val index = randomIndex()
-      restClient.index(new IndexRequest(index)
-        .source("""{"foo": "bar"}""", XContentType.JSON)
-        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT
-      )
+      restClient.execute {
+        indexInto(index).fields("foo" -> "bar").refresh(RefreshPolicy.Immediate)
+      }.await
 
       // Result of query
       val result = ElasticsearchSource.single(ElasticsearchSource.Config(

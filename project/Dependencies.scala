@@ -27,20 +27,20 @@ import sbt._
 
 object Dependencies {
 
-  val AkkaHttpVersion = "10.2.4"
-  val AkkaStreamKafkaVersion = "2.0.7"
-  val AkkaVersion = "2.6.14"
-  val ElasticClientVersion = "7.12.0"
-  val GuavaVersion = "30.1.1-jre"
-  val LogbackClassicVersion = "1.2.3"
+  val AkkaHttpVersion = "10.2.7"
+  val AkkaStreamKafkaVersion = "2.1.1"
+  val AkkaVersion = "2.6.17"
+  val Elastic4sVersion = "7.16.0"
+  val GuavaVersion = "31.0.1-jre"
+  val LogbackClassicVersion = "1.2.9"
   val MockitoCoreVersion = "3.6.28"
-  val PureConfigVersion = "0.14.1"
-  val BorerVersion = "1.7.0"
-  val CirceVersion = "0.13.0"
-  val JacksonVersion = "2.11.4"
-  val ScalaTest = "3.2.2"
-  val TestContainersScalaVersion = "0.39.3"
-  val TestContainersVersion = "1.15.2"
+  val PureConfigVersion = "0.17.1"
+  val BorerVersion = "1.7.2"
+  val CirceVersion = "0.14.1"
+  val JacksonVersion = "2.13.0"
+  val ScalaTest = "3.2.10"
+  val TestContainersScalaVersion = "0.39.11"
+  val TestContainersVersion = "1.16.2"
 
   object Compile {
     val akkaActor = ("com.typesafe.akka" %% "akka-actor" % AkkaVersion).excludeAll(
@@ -84,7 +84,8 @@ object Dependencies {
     val akkaStreamKafkaTestkit = "com.typesafe.akka" %% "akka-stream-kafka-testkit" % AkkaStreamKafkaVersion % "test"
     val akkaStreamTestkit = "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion % "test" // Apache 2 License
     val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test" // Apache 2 License
-    val elasticClient = "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % ElasticClientVersion % "test"
+
+    val elasticClient = "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Elastic4sVersion % "test"
     val mockitoCore = "org.mockito" % "mockito-core" % MockitoCoreVersion % "test"
     val scalaTest = "org.scalatest" %% "scalatest" % ScalaTest % "test"
     val testContainers = "com.dimafeng" %% "testcontainers-scala-scalatest" % TestContainersScalaVersion % "test"
