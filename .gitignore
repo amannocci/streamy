@@ -55,3 +55,5 @@ project/plugins/project/
 .lib/
 .idea
 .bsp
+node_modules/
+docs/.vuepress/dist

@@ -1,0 +1,22 @@
+{
+  "name": "streamy",
+  "version": "1.0.0",
+  "description": "[![TravisCI](https://travis-ci.com/amannocci/streamy.svg?branch=master)](https://travis-ci.com/github/amannocci/streamy) [![codecov](https://codecov.io/gh/amannocci/streamy/branch/master/graph/badge.svg)](https://codecov.io/gh/amannocci/streamy) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Famannocci%2Fstreamy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Famannocci%2Fstreamy?ref=badge_shield)",
+  "scripts": {
+    "docs:dev": "NODE_OPTIONS=--openssl-legacy-provider vuepress dev docs",
+    "docs:build": "NODE_OPTIONS=--openssl-legacy-provider vuepress build docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amannocci/streamy.git"
+  },
+  "author": "Mannocci Adrien",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/amannocci/streamy/issues"
+  },
+  "homepage": "https://github.com/amannocci/streamy#readme",
+  "devDependencies": {
+    "vuepress": "^1.9.7"
+  }
+}
