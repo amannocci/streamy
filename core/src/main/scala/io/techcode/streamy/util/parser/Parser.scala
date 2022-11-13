@@ -352,10 +352,10 @@ trait Parser[In, Out] {
     */
   final def optional(rule: => Boolean): Boolean = {
     val start = _cursor
-    rule || {
+    if (!rule) {
       _cursor = start
-      true
     }
+    true
   }
 
   /**
