@@ -25,13 +25,13 @@ package io.techcode.streamy.elasticsearch.component
 
 import akka.stream.scaladsl.Sink
 import akka.stream.testkit.scaladsl.TestSink
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.requests.common.RefreshPolicy
 import io.techcode.streamy.elasticsearch.component.ElasticsearchSource.HostConfig
 import io.techcode.streamy.elasticsearch.util.ElasticsearchSpec
 import io.techcode.streamy.event.StreamEvent
 import io.techcode.streamy.util.StreamException
 import io.techcode.streamy.util.json._
-import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s.requests.common.RefreshPolicy
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
@@ -43,9 +43,10 @@ import scala.language.postfixOps
 class ElasticsearchSourceSpec extends ElasticsearchSpec {
 
   "Elasticsearch source" should {
-    "retrieve data from paginate source" in {
+    "retrieve data from paginate source" in withContainers { container =>
       // Prepare for test
       val index = randomIndex()
+      val restClient = createClient(container)
       restClient.execute {
         indexInto(index).fields("foo" -> "bar").refresh(RefreshPolicy.Immediate)
       }.await
@@ -58,8 +59,8 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       val stream = ElasticsearchSource.paginate(ElasticsearchSource.Config(
         Seq(HostConfig(
           scheme = "http",
-          host = elasticHost,
-          port = elasticPort
+          host = container.containerIpAddress,
+          port = container.mappedPort(9200)
         )),
         index,
         Json.parseStringUnsafe("""{"query":{"match_all":{}}}"""),
@@ -72,51 +73,51 @@ class ElasticsearchSourceSpec extends ElasticsearchSpec {
       stream.requestNext(5 seconds).payload.evaluate(Root / "_source").get[JsObject] should equal(Json.obj("foo" -> "bar"))
       stream.expectComplete()
     }
+  }
 
-    "retrieve data from single source" in {
-      // Prepare for test
-      val index = randomIndex()
-      restClient.execute {
-        indexInto(index).fields("foo" -> "bar").refresh(RefreshPolicy.Immediate)
-      }.await
+  "retrieve data from single source" in withContainers { container =>
+    // Prepare for test
+    val index = randomIndex()
+    val restClient = createClient(container)
+    restClient.execute {
+      indexInto(index).fields("foo" -> "bar").refresh(RefreshPolicy.Immediate)
+    }.await
 
-      // Result of query
-      val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq(HostConfig(
-          scheme = "http",
-          host = elasticHost,
-          port = elasticPort
-        )),
-        index,
-        Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
-      )
-      ).runWith(Sink.head[StreamEvent])
+    // Result of query
+    val result = ElasticsearchSource.single(ElasticsearchSource.Config(
+      Seq(HostConfig(
+        scheme = "http",
+        host = container.containerIpAddress,
+        port = container.mappedPort(9200)
+      )),
+      index,
+      Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
+    )
+    ).runWith(Sink.head[StreamEvent])
 
-      // Check
-      whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
-        x should not equal Json.obj()
-      }
+    // Check
+    whenReady(result, timeout(30 seconds), interval(100 millis)) { x =>
+      x should not equal Json.obj()
     }
+  }
 
-    "fail on index not found from single source" in {
-      // Prepare for test
-      val index = randomIndex()
+  "fail on index not found from single source" in withContainers { container =>
+    // Prepare for test
+    val index = randomIndex()
 
-      // Result of query
-      val result = ElasticsearchSource.single(ElasticsearchSource.Config(
-        Seq(HostConfig(
-          scheme = "http",
-          host = elasticHost,
-          port = elasticPort
-        )),
-        index,
-        Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
-      )
-      ).runWith(Sink.ignore)
+    // Result of query
+    val result = ElasticsearchSource.single(ElasticsearchSource.Config(
+      Seq(HostConfig(
+        scheme = "http",
+        host = container.containerIpAddress,
+        port = container.mappedPort(9200)
+      )),
+      index,
+      Json.parseStringUnsafe("""{"query":{"match_all":{}}}""")
+    )
+    ).runWith(Sink.ignore)
 
-      assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
-    }
-
+    assert(result.failed.futureValue(timeout(30 seconds), interval(100 millis)).isInstanceOf[StreamException])
   }
 
 }

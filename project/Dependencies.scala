@@ -27,44 +27,43 @@ import sbt._
 
 object Dependencies {
 
-  val AkkaHttpVersion = "10.2.7"
-  val AkkaStreamKafkaVersion = "2.1.1"
-  val AkkaVersion = "2.6.17"
-  val Elastic4sVersion = "7.16.0"
+  val AkkaHttpVersion = "10.5.0"
+  val AkkaStreamKafkaVersion = "4.0.0"
+  val AkkaVersion = "2.8.0"
+  val Elastic4sVersion = "7.17.4"
   val GuavaVersion = "31.0.1-jre"
-  val LogbackClassicVersion = "1.2.9"
+  val LogbackClassicVersion = "1.4.6"
   val MockitoCoreVersion = "3.6.28"
-  val PureConfigVersion = "0.17.1"
-  val BorerVersion = "1.7.2"
-  val CirceVersion = "0.14.1"
-  val JacksonVersion = "2.13.0"
-  val ScalaTest = "3.2.10"
-  val TestContainersScalaVersion = "0.39.11"
-  val TestContainersVersion = "1.16.2"
+  val PureConfigVersion = "0.17.2"
+  val BorerVersion = "1.8.0"
+  val CirceVersion = "0.14.5"
+  val JacksonVersion = "2.14.2"
+  val ScalaTest = "3.2.15"
+  val TestContainersScalaVersion = "0.40.14"
 
   object Compile {
     val akkaActor = ("com.typesafe.akka" %% "akka-actor" % AkkaVersion).excludeAll(
       ExclusionRule("com.typesafe", "config")
-    ) // Apache 2 License
+    ) // BUSL 1.1 License
     val akkaHttp = ("com.typesafe.akka" %% "akka-http" % AkkaHttpVersion).excludeAll(
       ExclusionRule("com.typesafe", "config")
-    ) // Apache 2 License
+    ) // BUSL 1.1 License
     val akkaSlf4j = ("com.typesafe.akka" %% "akka-slf4j" % AkkaVersion).excludeAll(
       ExclusionRule("com.typesafe", "config")
-    ) // Apache 2 License
+    ) // BUSL 1.1 License
     val akkaStream = ("com.typesafe.akka" %% "akka-stream" % AkkaVersion).excludeAll(
       ExclusionRule("com.typesafe", "config")
-    ) // Apache 2 License
+    ) // BUSL 1.1 License
     val akkaStreamKafka = ("com.typesafe.akka" %% "akka-stream-kafka" % AkkaStreamKafkaVersion).excludeAll(
       ExclusionRule("com.typesafe.akka", "akka-stream_2.13"),
       ExclusionRule("org.slf4j", "slf4j-api")
-    ) // Apache 2 License
+    ) // BUSL 1.1 License
     val akkaStreamTestkit = ("com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion).excludeAll(
       ExclusionRule("com.typesafe", "config")
-    ) // Apache 2 License
+    ) // BUSL 1.1 License
     val akkaTestkit = ("com.typesafe.akka" %% "akka-testkit" % AkkaVersion).excludeAll(
       ExclusionRule("com.typesafe", "config")
-    ) // Apache 2 License
+    ) // BUSL 1.1 License
     val googleGuava = "com.google.guava" % "guava" % GuavaVersion // Apache 2 License
     val logbackClassic = "ch.qos.logback" % "logback-classic" % LogbackClassicVersion // EPL/LGPL License
     val mockitoCore = "org.mockito" % "mockito-core" % MockitoCoreVersion
@@ -90,7 +89,7 @@ object Dependencies {
     val scalaTest = "org.scalatest" %% "scalatest" % ScalaTest % "test"
     val testContainers = "com.dimafeng" %% "testcontainers-scala-scalatest" % TestContainersScalaVersion % "test"
     val testContainersElastic = "com.dimafeng" %% "testcontainers-scala-elasticsearch" % TestContainersScalaVersion % "test"
-    val testContainersKafka = "org.testcontainers" % "kafka" % TestContainersVersion % "test"
+    val testContainersKafka = "com.dimafeng" %%  "testcontainers-scala-kafka" % TestContainersScalaVersion % "test"
   }
 
   import Compile._

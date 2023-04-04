@@ -23,16 +23,12 @@
  */
 package io.techcode.streamy.tcp.util
 
-import java.security.KeyStore
-import java.security.cert.CertPathValidatorException
-import java.util
-
 import akka.actor.ActorSystem
-import akka.stream.{TLSClientAuth, TLSProtocol}
 import com.typesafe.sslconfig.ssl._
 import com.typesafe.sslconfig.util.{LoggerFactory, NoDepsLogger}
-import javax.net.ssl.{SSLContext, TrustManagerFactory, X509TrustManager}
 import org.slf4j.{ILoggerFactory, LoggerFactory => SLoggerFactory}
+
+import javax.net.ssl.SSLContext
 
 object TlsContext {
 
@@ -53,10 +49,10 @@ object TlsContext {
 
     // Initial ssl context
     val sslContext = if (sslConfig.default) {
-      validateDefaultTrustManager(sslConfig)
+      logger.info("ssl-config.default is true, using the JDK's default SSLContext")
       SSLContext.getDefault
     } else {
-      // Break out the static methods as much as we can...
+      // break out the static methods as much as we can...
       val keyManagerFactory = buildKeyManagerFactory(sslConfig)
       val trustManagerFactory = buildTrustManagerFactory(sslConfig)
       new ConfigSSLContextBuilder(loggerFactory, sslConfig, keyManagerFactory, trustManagerFactory).build()
@@ -108,19 +104,12 @@ object TlsContext {
         // If we are given a specific list of protocols, then return it in exactly that order,
         // assuming that it's actually possible in the SSL context.
         configuredProtocols.filter(existingProtocols.contains).toArray
+
       case None =>
         // Otherwise, we return the default protocols in the given list.
         Protocols.recommendedProtocols.filter(existingProtocols.contains)
     }
 
-    if (!sslConfig.loose.allowWeakProtocols) {
-      val deprecatedProtocols = Protocols.deprecatedProtocols
-      for (deprecatedProtocol <- deprecatedProtocols) {
-        if (definedProtocols.contains(deprecatedProtocol)) {
-          throw new IllegalStateException(s"Weak protocol $deprecatedProtocol found in ssl-config.protocols!")
-        }
-      }
-    }
     definedProtocols
   }
 
@@ -138,57 +127,10 @@ object TlsContext {
         configuredCiphers.filter(existingCiphers.contains(_)).toArray
 
       case None =>
-        Ciphers.recommendedCiphers.filter(existingCiphers.contains(_)).toArray
+        existingCiphers
     }
 
-    if (!sslConfig.loose.allowWeakCiphers) {
-      val deprecatedCiphers = Ciphers.deprecatedCiphers
-      for (deprecatedCipher <- deprecatedCiphers) {
-        if (definedCiphers.contains(deprecatedCipher)) {
-          throw new IllegalStateException(s"Weak cipher $deprecatedCipher found in ssl-config.ciphers!")
-        }
-      }
-    }
     definedCiphers
-  }
-
-  /**
-    * Validate default trust manager based on ssl configuration.
-    *
-    * @param sslConfig ssl configuration.
-    */
-  private def validateDefaultTrustManager(sslConfig: SSLConfigSettings): Unit = {
-    // If we are using a default SSL context, we can't filter out certificates with weak algorithms
-    // We ALSO don't have access to the trust manager from the SSLContext without doing horrible things
-    // with reflection.
-    //
-    // However, given that the default SSLContextImpl will call out to the TrustManagerFactory and any
-    // configuration with system properties will also apply with the factory, we can use the factory
-    // method to recreate the trust manager and validate the trust certificates that way.
-    //
-    // This is really a last ditch attempt to satisfy https://wiki.mozilla.org/CA:MD5and1024 on root certificates.
-    //
-    // http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/7-b147/sun/security/ssl/SSLContextImpl.java#79
-
-    val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
-    tmf.init(null.asInstanceOf[KeyStore])
-    val trustManager: X509TrustManager = tmf.getTrustManagers()(0).asInstanceOf[X509TrustManager]
-
-    val constraints = sslConfig.disabledKeyAlgorithms
-      .map(a => AlgorithmConstraintsParser.parseAll(AlgorithmConstraintsParser.expression, a).get)
-      .toSet
-    val algorithmChecker = new AlgorithmChecker(loggerFactory, Set(), constraints)
-    for (cert <- trustManager.getAcceptedIssuers) {
-      try {
-        algorithmChecker.checkKeyAlgorithms(cert)
-      } catch {
-        case e: CertPathValidatorException =>
-          logger.warn(
-            "You are using ssl-config.default=true and have a weak certificate in your default trust store! (You can modify akka.ssl-config.disabledKeyAlgorithms to remove this message.)",
-            e
-          )
-      }
-    }
   }
 
 }

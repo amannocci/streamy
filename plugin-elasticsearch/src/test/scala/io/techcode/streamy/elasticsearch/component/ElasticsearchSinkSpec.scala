@@ -41,13 +41,13 @@ import scala.language.postfixOps
 class ElasticsearchSinkSpec extends ElasticsearchSpec {
 
   "Elasticsearch sink" should {
-    "send data" in {
+    "send data" in withContainers { container =>
       val result = Source.single(StreamEvent(Json.obj("foo" -> "bar")))
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
-            host = elasticHost,
-            port = elasticPort
+            host = container.containerIpAddress,
+            port = container.mappedPort(9200)
           )),
           randomIndex(),
           "index",
@@ -59,13 +59,13 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
       }
     }
 
-    "send data with document parsing bypass" in {
+    "send data with document parsing bypass" in withContainers { container =>
       val result = Source.single(StreamEvent(Json.printByteStringUnsafe(Json.obj("foo" -> "bar"))))
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
-            host = elasticHost,
-            port = elasticPort
+            host = container.containerIpAddress,
+            port = container.mappedPort(9200)
           )),
           randomIndex(),
           "index",
@@ -78,13 +78,13 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
       }
     }
 
-    "send data in bulk" in {
+    "send data in bulk" in withContainers { container =>
       val result = Source.fromIterator[StreamEvent](() => Seq(StreamEvent(Json.obj("foo" -> "bar")), StreamEvent(Json.obj("foo" -> "bar"))).iterator)
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
-            host = elasticHost,
-            port = elasticPort
+            host = container.containerIpAddress,
+            port = container.mappedPort(9200)
           )),
           randomIndex(),
           "index",
@@ -96,15 +96,15 @@ class ElasticsearchSinkSpec extends ElasticsearchSpec {
       }
     }
 
-    "try to send data to unresponsive elasticsearch" in {
+    "try to send data to unresponsive elasticsearch" in withContainers { container =>
       system.eventStream.subscribe(testActor, classOf[ElasticsearchEvent.Failure])
 
       Source.fromIterator[StreamEvent](() => Seq(StreamEvent(Json.obj("foo" -> "bar")), StreamEvent(Json.obj("foo" -> "bar"))).iterator)
         .runWith(ElasticsearchSink(ElasticsearchFlow.Config(
           Seq(HostConfig(
             scheme = "http",
-            host = elasticHost,
-            port = elasticPort + 1
+            host = container.containerIpAddress,
+            port = container.mappedPort(9200) + 1
           )),
           randomIndex(),
           "index",

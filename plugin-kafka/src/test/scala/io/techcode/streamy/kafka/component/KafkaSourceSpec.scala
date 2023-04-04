@@ -24,7 +24,6 @@
 package io.techcode.streamy.kafka.component
 
 import akka.Done
-import akka.kafka.scaladsl.Committer
 import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.stream.scaladsl.Sink
 import io.techcode.streamy.kafka.component.KafkaSource.{AutoOffsetReset, Binding}

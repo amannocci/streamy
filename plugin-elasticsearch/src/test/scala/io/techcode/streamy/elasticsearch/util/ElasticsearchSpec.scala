@@ -25,39 +25,39 @@ package io.techcode.streamy.elasticsearch.util
 
 import java.util.UUID
 import akka.http.scaladsl.Http
+import com.dimafeng.testcontainers.scalatest.TestContainerForAll
 import com.dimafeng.testcontainers.{ElasticsearchContainer, ForAllTestContainer}
 import com.sksamuel.elastic4s.http.JavaClient
 import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties}
 import io.techcode.streamy.TestSystem
+import org.testcontainers.utility.DockerImageName
 
 /**
   * Helper for elasticsearch spec.
   */
-trait ElasticsearchSpec extends TestSystem with ForAllTestContainer {
+trait ElasticsearchSpec extends TestSystem with TestContainerForAll {
 
-  override val container: ElasticsearchContainer = ElasticsearchContainer(
-    "docker.elastic.co/elasticsearch/elasticsearch:7.16.2"
+  override val containerDef: ElasticsearchContainer.Def = ElasticsearchContainer.Def(
+    dockerImageName = {
+      if (System.getProperty("os.arch") == "amd64") {
+        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.17.9-amd64")
+      } else {
+        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.17.9-arm64")
+      }
+    }
   )
 
-  var restClient: ElasticClient = _
-  var elasticHost: String = _
-  var elasticPort: Int = _
+  def createClient(container: Containers): ElasticClient = {
+    val props = ElasticProperties(s"http://${container.containerIpAddress}:${container.mappedPort(9200)}")
+    ElasticClient(JavaClient(props))
+  }
 
   def randomIndex(): String = {
     UUID.randomUUID().toString
   }
 
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    val props = ElasticProperties(s"http://${container.httpHostAddress}")
-    restClient = ElasticClient(JavaClient(props))
-    elasticHost = container.containerIpAddress
-    elasticPort = container.mappedPort(9200)
-  }
-
   override def afterAll(): Unit = {
     Http().shutdownAllConnectionPools()
-    restClient.close()
     super.afterAll()
   }
 
